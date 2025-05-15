@@ -1,0 +1,95 @@
+<nav class="sidebar sidebar-offcanvas" id="sidebar" style="background-color: #02245b">
+    <ul class="nav">
+      <li class="nav-item sidebar-category">
+        <p>Agence : {{ Auth::guard('agence')->user()->name }}</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{{ route('agence.dashboard') }}">
+          <i class="mdi mdi-view-quilt menu-icon"></i>
+          <span class="menu-title">Tableau de bord</span>
+        </a>
+      </li>
+      <li class="nav-item sidebar-category">
+        <p>Bien - immobilier</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+          <i class="mdi mdi-palette menu-icon"></i>
+          <span class="menu-title">Biens</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('bien.create.agence') }}">Ajout d'un bien</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('bien.index.agence') }}">Liste des biens</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('bien.rented') }}">Liste des biens loués</a></li>
+          </ul>
+        </div>
+      </li>
+      {{-- <li class="nav-item">
+        <a class="nav-link" href="{{ route('visite.index.agence') }}">
+          <i class="mdi mdi-view-headline menu-icon"></i>
+          <span class="menu-title">Liste des visites</span>
+        </a>
+      </li> --}}
+      <li class="nav-item sidebar-category">
+        <p>Visite</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">
+          <i class="mdi mdi-home menu-icon"></i>
+          <span class="menu-title">Visites</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="auth">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('visite.index.agence') }}">Visite demandée </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('visite.done.agence') }}"> Visite effectuée </a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item sidebar-category">
+        <p>Comptabilité</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#compt" aria-expanded="false" aria-controls="compt">
+          <i class="mdi mdi-account menu-icon"></i>
+          <span class="menu-title">Comptabilité</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="compt">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.create') }}"> Ajout d'un comptable </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.index') }}"> Liste des comptables </a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item sidebar-category">
+        <p>Locataire</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#loca" aria-expanded="false" aria-controls="loca">
+          <i class="mdi mdi-account-key menu-icon"></i>
+          <span class="menu-title">Locataire</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="loca">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('locataire.create') }}"> Ajout d'un locataire </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('locataire.index') }}"> Liste des locatiares </a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{{ route('locataire.indexSerieux') }}">
+           <i class="mdi mdi-account-multiple-minus menu-icon"></i>
+          <span class="menu-title">Locataire pas sérieux</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
