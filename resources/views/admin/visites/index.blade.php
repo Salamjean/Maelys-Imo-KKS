@@ -70,7 +70,7 @@
                     <th>Heure</th>
                     <th>Message</th>
                     <th>Statut</th>
-                    <th>Agence</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -103,7 +103,30 @@
                         <td>
                             <span class="badge {{ $statusClass }}">{{ $visite->statut }}</span>
                         </td>
-                        <td><strong>{{ $visite->bien->agence->name ?? 'Maelys-Imo'  }} </strong></td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-primary confirm-visite-btn" 
+                                        data-visite-id="{{ $visite->id }}"
+                                        title="Confirmer">
+                                    <i class="mdi mdi-check"></i>
+                                </button>
+                                <button class="btn btn-sm btn-success done-visite-btn" 
+                                        data-visite-id="{{ $visite->id }}"
+                                        title="Marquer comme effectuée">
+                                    <i class="mdi mdi-checkbox-multiple-marked-circle"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger cancel-visite-btn" 
+                                        data-visite-id="{{ $visite->id }}"
+                                        title="Annuler">
+                                    <i class="mdi mdi-close"></i>
+                                </button>
+                                <button class="btn btn-sm btn-info view-visite-btn" 
+                                        data-visite-id="{{ $visite->id }}"
+                                        title="Détails">
+                                    <i class="mdi mdi-eye"></i>
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr>
@@ -209,7 +232,7 @@
     });
     </script>
     <script>
-           $(document).ready(function() {
+       $(document).ready(function() {
     const confirmUrlTemplate = "{{ route('visites.confirm', ['visite' => ':id']) }}";
     const doneUrlTemplate = "{{ route('visites.done', ['visite' => ':id']) }}";
     const cancelUrlTemplate = "{{ route('visites.cancel', ['visite' => ':id']) }}";
@@ -331,6 +354,48 @@
             }
         });
     });
+    
+            // Gestion de la visite effectuée
+            $('.done-visite-btn').on('click', function() {
+                const visiteId = $(this).data('visite-id');
+    
+                Swal.fire({
+                    title: 'Visite effectuée',
+                    text: "Voulez-vous marquer cette visite comme effectuée ?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Oui, marquer',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: generateUrl(doneUrlTemplate, visiteId),
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                Swal.fire(
+                                    'Effectuée!',
+                                    'La visite a été marquée comme effectuée.',
+                                    'success'
+                                ).then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function() {
+                                Swal.fire(
+                                    'Erreur!',
+                                    'Une erreur est survenue.',
+                                    'error'
+                                );
+                            }
+                        });
+                    }
+                });
+            });
     
             // Gestion de l'annulation de visite
             $('.cancel-visite-btn').on('click', function() {

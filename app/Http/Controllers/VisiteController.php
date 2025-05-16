@@ -18,10 +18,13 @@ class VisiteController extends Controller
     {
         $visites = Visite::where('statut', '!=', 'effectuée')
                         ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) {
+                            $query->whereNull('agence_id'); 
+                        })
                         ->paginate(10);
+        
         return view('admin.visites.index', compact('visites'));
-    }
-    public function indexAgence()
+    }    public function indexAgence()
     {
         $agenceId = Auth::guard('agence')->user()->id;
         $visites = Visite::where('statut', '!=', 'effectuée')
@@ -41,6 +44,15 @@ class VisiteController extends Controller
                         })
                         ->paginate(10);
         return view('agence.visites.done', compact('visites'));
+    }
+    public function doneAdmin()
+    {
+        $visites = Visite::where('statut','effectuée')
+                       ->whereHas('bien', function ($query) {
+                            $query->whereNull('agence_id'); 
+                        })
+                        ->paginate(10);
+        return view('admin.visites.done', compact('visites'));
     }
     public function store(Request $request)
     {
@@ -180,4 +192,63 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
     // Utilisez votre système d'envoi d'email (Mail, Notification, etc.)
     Mail::to($details['to'])->send(new \App\Mail\VisitUpdated($details));
 }
+
+//fonction des visites gerer par l'administrateur 
+ public function allVisit(){
+    $visites = Visite::paginate(10);
+    return view('admin.visites.allList', compact('visites'));
+ }
+
+  public function adminConfirm(Visite $visite)
+    {
+        $visite->statut = 'confirmée';
+        $visite->save();
+
+        // Envoyer un email de confirmation
+        Mail::to($visite->email)->send(new ConfirmVisite($visite, $visite->bien));
+
+        return response()->json(['success' => true]);
+    }
+
+
+    public function adminMarkAsDone(Visite $visite)
+    {
+        $visite->statut = 'effectuée';
+        $visite->save();
+
+        // Envoyer un email d'effectuation 
+        Mail::to($visite->email)->send(new DoneVisite($visite, $visite->bien));
+
+        return response()->json(['success' => true]);
+    }
+
+    public function adminCancel(Visite $visite)
+    {
+        $visite->statut = 'annulée';
+        $visite->save();
+
+        // Envoyer un email d'annulation 
+        Mail::to($visite->email)->send(new CancelVisite($visite, $visite->bien));
+
+        return response()->json(['success' => true]);
+    }
+
+    public function adminShow(Visite $visite)
+    {
+        return response()->json([
+            'nom' => $visite->nom,
+            'email' => $visite->email,
+            'telephone' => $visite->telephone,
+            'date_visite' => $visite->date_visite,
+            'heure_visite' => $visite->heure_visite,
+            'statut' => $visite->statut,
+            'message' => $visite->message,
+            'bien' => [
+                'type' => $visite->bien->type,
+                'commune' => $visite->bien->commune,
+                'prix' => $visite->bien->prix
+            ]
+        ]);
+    }
+ 
 }

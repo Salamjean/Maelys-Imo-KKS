@@ -132,7 +132,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Date fixe de paiement de loyer dans le mois <span style="color: red">*</span></label>
+                                <label>Date fixe de paiement de loyer <span style="color: red">*</span></label>
                                 <input type="text" class="form-control" name="disponibilite" style="border: 1px solid black; border-radius: 5px;">
                             </div>
                         </div>

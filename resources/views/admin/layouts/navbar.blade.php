@@ -14,55 +14,7 @@
               <span id="live-clock"></span>
           </h4>
       </li>
-        <li class="nav-item dropdown mr-1">
-          <a class="nav-link count-indicator dropdown-toggle d-flex justify-content-center align-items-center" id="messageDropdown" href="#" data-toggle="dropdown">
-            <i class="mdi mdi-calendar mx-0"></i>
-            <span class="count bg-info">2</span>
-          </a>
-          <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="messageDropdown">
-            <p class="mb-0 font-weight-normal float-left dropdown-header">Messages</p>
-            <a class="dropdown-item preview-item">
-              <div class="preview-thumbnail">
-                  <img src="images/faces/face4.jpg" alt="image" class="profile-pic">
-              </div>
-              <div class="preview-item-content flex-grow">
-                <h6 class="preview-subject ellipsis font-weight-normal">David Grey
-                </h6>
-                <p class="font-weight-light small-text text-muted mb-0">
-                  The meeting is cancelled
-                </p>
-              </div>
-            </a>
-            <a class="dropdown-item preview-item">
-              <div class="preview-thumbnail">
-                  <img src="images/faces/face2.jpg" alt="image" class="profile-pic">
-              </div>
-              <div class="preview-item-content flex-grow">
-                <h6 class="preview-subject ellipsis font-weight-normal">Tim Cook
-                </h6>
-                <p class="font-weight-light small-text text-muted mb-0">
-                  New product launch
-                </p>
-              </div>
-            </a>
-            <a class="dropdown-item preview-item">
-              <div class="preview-thumbnail">
-                  <img src="images/faces/face3.jpg" alt="image" class="profile-pic">
-              </div>
-              <div class="preview-item-content flex-grow">
-                <h6 class="preview-subject ellipsis font-weight-normal"> Johnson
-                </h6>
-                <p class="font-weight-light small-text text-muted mb-0">
-                  Upcoming board meeting
-                </p>
-              </div>
-            </a>
-          </div>
-        </li>
-      </ul>
-      <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
-        <span class="mdi mdi-menu"></span>
-      </button>
+        
     </div>
     <div class="navbar-menu-wrapper navbar-search-wrapper d-none d-lg-flex align-items-center" style="background-color: #ff5e14">
       <ul class="navbar-nav navbar-nav-right">
@@ -72,10 +24,7 @@
             <span class="nav-profile-name">{{ Auth::guard('admin')->user()->name }}</span>
           </a>
           <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-            <a href="#" class="dropdown-item">
-                <i class="mdi mdi-account text-primary"></i>
-              Profil
-            </a>
+           
             <a href="{{ route('admin.logout') }}" class="dropdown-item">
               <i class="mdi mdi-logout text-primary"></i>
               Déconnexion

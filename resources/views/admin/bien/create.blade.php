@@ -132,13 +132,12 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Date fixe de paiement de loyer dans le mois <span style="color: red">*</span></label>
+                                <label>Date fixe de paiement de loyer <span style="color: red">*</span></label>
                                 <input type="text" class="form-control" name="disponibilite" style="border: 1px solid black; border-radius: 5px;">
                             </div>
                         </div>
                     </div>
                 </fieldset>
-
                <!-- Section 4: Documents -->
                 <fieldset style="border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
                     <legend style="font-size: 1.5em; font-weight: bold;">Documents à fournir</legend>
@@ -228,16 +227,18 @@
                     </div>
                 </div>
 
-                <!-- Boutons de soumission -->
-                <div class="row mt-4">
-                    <div class="col-md-12 text-center">
-                        <button type="submit" class="btn text-white mr-2" style="background-color: #02245b; color:white">Enregistrer</button>
+                    <!-- Boutons de soumission -->
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-center">
+                            <button type="submit" class="btn text-white mr-2" style="background-color: #02245b; color:white">Enregistrer</button>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {

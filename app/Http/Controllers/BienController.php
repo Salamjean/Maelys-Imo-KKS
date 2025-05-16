@@ -13,7 +13,8 @@ class BienController extends Controller
     public function index()
     {
         // Récupération de tous les biens
-        $biens = Bien::where('status','!=', 'Loué')
+        $biens = Bien::whereNull('agence_id')
+                    ->where('status','!=', 'Loué')
                     ->paginate(4);
         return view('admin.bien.index', compact('biens'));
     }
@@ -433,7 +434,8 @@ public function rented(){
 
 public function rentedAdmin(){
     // Récupération des biens loués
-    $biens = Bien::where('status', 'Loué') ->paginate();
+    $biens = Bien::whereNull('agence_id')
+                ->where('status', 'Loué') ->paginate();
     return view('admin.bien.rented', compact('biens'));
 }
 

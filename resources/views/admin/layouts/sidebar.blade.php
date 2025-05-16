@@ -28,11 +28,23 @@
           </ul>
         </div>
       </li>
+      <li class="nav-item sidebar-category">
+        <p>Visite</p>
+        <span></span>
+      </li>
       <li class="nav-item">
-        <a class="nav-link" href="{{ route('visite.index') }}">
-          <i class="mdi mdi-view-headline menu-icon"></i>
-          <span class="menu-title">Liste des visites</span>
+        <a class="nav-link" data-toggle="collapse" href="#visi" aria-expanded="false" aria-controls="visi">
+          <i class="mdi mdi-home menu-icon"></i>
+          <span class="menu-title">Visites</span>
+          <i class="menu-arrow"></i>
         </a>
+        <div class="collapse" id="visi">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('visite.index') }}">Visite demandée </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('visite.done') }}"> Visite effectuée </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('visit.list') }}">Historique des visites</a></li>
+          </ul>
+        </div>
       </li>
       <li class="nav-item sidebar-category">
         <p>Partenariat</p>
@@ -56,12 +68,12 @@
         <span></span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-toggle="collapse" href="#loca" aria-expanded="false" aria-controls="loca">
+        <a class="nav-link" data-toggle="collapse" href="#local" aria-expanded="false" aria-controls="local">
           <i class="mdi mdi-account-key menu-icon"></i>
           <span class="menu-title">Locataire</span>
           <i class="menu-arrow"></i>
         </a>
-        <div class="collapse" id="loca">
+        <div class="collapse" id="local">
           <ul class="nav flex-column sub-menu">
             <li class="nav-item"> <a class="nav-link" href="{{ route('locataire.admin.create') }}"> Ajout d'un locataire </a></li>
             <li class="nav-item"> <a class="nav-link" href="{{ route('locataire.admin.index') }}"> Liste des locatiares </a></li>

@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('image2')->nullable();
             $table->string('image3')->nullable();
             $table->string('image4')->nullable();
+            $table->string('profile_image')->nullable();
             $table->string('status')->default('Actif'); // 'Inactif' or 'Actif'
             $table->string('motif')->nullable(); // Motif de l'inactivité
             $table->string('contrat');

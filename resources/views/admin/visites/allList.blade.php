@@ -1,4 +1,4 @@
-@extends('agence.layouts.template')
+@extends('admin.layouts.template')
 @section('content')
 <style>
     /* Style personnalisé pour la pagination */
@@ -52,9 +52,9 @@
 <div class="col-lg-12 stretch-card">
     <div class="card">
       <div class="card-body">
-        <h4 class="card-title text-center">Historique des visites</h4>
+        <h4 class="card-title text-center">Historique de toutes les visites</h4>
         <p class="card-description text-center">
-          Liste des visites déjà effectuée
+          Ici vous verrez toutes les visits qui on été initier sur la plate-forme par les agences
         </p>
 
         <div class="table-responsive pt-3">
@@ -103,13 +103,13 @@
                         <td>
                             <span class="badge {{ $statusClass }}">{{ $visite->statut }}</span>
                         </td>
-                        <td><strong>{{ $visite->bien->agence->name ?? 'Maelys-Imo' }}</strong></td>
+                        <td><strong>{{ $visite->bien->agence->name ?? 'Maelys-Imo'  }} </strong></td>
                     </tr>
                 @empty
                     <tr>
                         <td colspan="10" class="text-center py-4">
                             <div class="alert alert-info">
-                                Aucune visite effectuée pour le moment.
+                                Aucune visite programmée pour le moment.
                             </div>
                         </td>
                     </tr>
@@ -209,99 +209,128 @@
     });
     </script>
     <script>
-        $(document).ready(function() {
-            const confirmUrlTemplate = "{{ route('visites.confirm.agence', ['visite' => ':id']) }}";
-            const doneUrlTemplate = "{{ route('visites.done.agence', ['visite' => ':id']) }}";
-            const cancelUrlTemplate = "{{ route('visites.cancel.agence', ['visite' => ':id']) }}";
-            const viewUrlTemplate = "{{ route('visites.show.agence', ['visite' => ':id']) }}";
-    
-            function generateUrl(template, id) {
-                return template.replace(':id', id);
+           $(document).ready(function() {
+    const confirmUrlTemplate = "{{ route('visites.confirm', ['visite' => ':id']) }}";
+    const doneUrlTemplate = "{{ route('visites.done', ['visite' => ':id']) }}";
+    const cancelUrlTemplate = "{{ route('visites.cancel', ['visite' => ':id']) }}";
+    const viewUrlTemplate = "{{ route('visites.show', ['visite' => ':id']) }}";
+    const updateDateUrlTemplate = "{{ route('visites.updateDate.admin', ['visite' => ':id']) }}";
+
+    function generateUrl(template, id) {
+        return template.replace(':id', id);
+    }
+
+    // Gestion de la confirmation de visite avec choix de date
+    $('.confirm-visite-btn').on('click', function() {
+        const visiteId = $(this).data('visite-id');
+        const row = $(this).closest('tr');
+        const currentDate = row.find('td:nth-child(6)').text(); // Date actuelle
+        const currentTime = row.find('td:nth-child(7)').text(); // Heure actuelle
+        
+        Swal.fire({
+            title: 'Confirmer la visite',
+            html: `Voulez-vous confirmer cette visite pour le <br> <strong>${currentDate}</strong> à <strong>${currentTime}</strong> ?`,
+            icon: 'question',
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Oui, confirmer',
+            denyButtonText: 'Changer date/heure',
+            cancelButtonText: 'Annuler',
+            confirmButtonColor: '#3085d6',
+            denyButtonColor: '#02245b',
+            cancelButtonColor: '#d33'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Confirmer avec la date actuelle
+                $.ajax({
+                    url: generateUrl(confirmUrlTemplate, visiteId),
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire(
+                            'Confirmée!',
+                            'La visite a été confirmée pour la date prévue.',
+                            'success'
+                        ).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function() {
+                        Swal.fire(
+                            'Erreur!',
+                            'Une erreur est survenue.',
+                            'error'
+                        );
+                    }
+                });
+            } else if (result.isDenied) {
+                // Proposer de changer la date et l'heure
+                Swal.fire({
+                    title: 'Modifier date et heure',
+                    html: `
+                        <form id="dateForm">
+                            <div class="form-group">
+                                <label for="newDate">Nouvelle date</label>
+                                <input type="date" id="newDate" class="form-control" required>
+                            </div>
+                            <div class="form-group mt-3">
+                                <label for="newTime">Nouvelle heure</label>
+                                <input type="time" id="newTime" class="form-control" required>
+                            </div>
+                        </form>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmer',
+                    cancelButtonText: 'Annuler',
+                    focusConfirm: false,
+                    preConfirm: () => {
+                        const newDate = Swal.getPopup().querySelector('#newDate').value;
+                        const newTime = Swal.getPopup().querySelector('#newTime').value;
+                        
+                        if (!newDate || !newTime) {
+                            Swal.showValidationMessage('Veuillez remplir tous les champs');
+                            return false;
+                        }
+                        
+                        return { newDate, newTime };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const { newDate, newTime } = result.value;
+                        
+                        // Envoyer la nouvelle date et heure au serveur
+                        $.ajax({
+                            url: generateUrl(updateDateUrlTemplate, visiteId),
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                date_visite: newDate,
+                                heure_visite: newTime
+                            },
+                            success: function(response) {
+                                Swal.fire(
+                                    'Modifié et confirmé!',
+                                    'La visite a été replanifiée et confirmée.',
+                                    'success'
+                                ).then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function() {
+                                Swal.fire(
+                                    'Erreur!',
+                                    'Une erreur est survenue lors de la modification.',
+                                    'error'
+                                );
+                            }
+                        });
+                    }
+                });
             }
-    
-            // Gestion de la confirmation de visite
-            $('.confirm-visite-btn').on('click', function() {
-                const visiteId = $(this).data('visite-id');
-                
-                Swal.fire({
-                    title: 'Confirmer la visite',
-                    text: "Voulez-vous confirmer cette visite ?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Oui, confirmer',
-                    cancelButtonText: 'Annuler'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: generateUrl(confirmUrlTemplate, visiteId),
-                            method: 'POST',
-                            data: {
-                                _token: '{{ csrf_token() }}'
-                            },
-                            success: function(response) {
-                                Swal.fire(
-                                    'Confirmée!',
-                                    'La visite a été confirmée.',
-                                    'success'
-                                ).then(() => {
-                                    location.reload();
-                                });
-                            },
-                            error: function() {
-                                Swal.fire(
-                                    'Erreur!',
-                                    'Une erreur est survenue.',
-                                    'error'
-                                );
-                            }
-                        });
-                    }
-                });
-            });
-    
-            // Gestion de la visite effectuée
-            $('.done-visite-btn').on('click', function() {
-                const visiteId = $(this).data('visite-id');
-    
-                Swal.fire({
-                    title: 'Visite effectuée',
-                    text: "Voulez-vous marquer cette visite comme effectuée ?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Oui, marquer',
-                    cancelButtonText: 'Annuler'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: generateUrl(doneUrlTemplate, visiteId),
-                            method: 'POST',
-                            data: {
-                                _token: '{{ csrf_token() }}'
-                            },
-                            success: function(response) {
-                                Swal.fire(
-                                    'Effectuée!',
-                                    'La visite a été marquée comme effectuée.',
-                                    'success'
-                                ).then(() => {
-                                    location.reload();
-                                });
-                            },
-                            error: function() {
-                                Swal.fire(
-                                    'Erreur!',
-                                    'Une erreur est survenue.',
-                                    'error'
-                                );
-                            }
-                        });
-                    }
-                });
-            });
+        });
+    });
     
             // Gestion de l'annulation de visite
             $('.cancel-visite-btn').on('click', function() {

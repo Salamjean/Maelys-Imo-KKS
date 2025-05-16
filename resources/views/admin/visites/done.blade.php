@@ -1,4 +1,4 @@
-@extends('agence.layouts.template')
+@extends('admin.layouts.template')
 @section('content')
 <style>
     /* Style personnalisé pour la pagination */
@@ -210,10 +210,10 @@
     </script>
     <script>
         $(document).ready(function() {
-            const confirmUrlTemplate = "{{ route('visites.confirm.agence', ['visite' => ':id']) }}";
-            const doneUrlTemplate = "{{ route('visites.done.agence', ['visite' => ':id']) }}";
-            const cancelUrlTemplate = "{{ route('visites.cancel.agence', ['visite' => ':id']) }}";
-            const viewUrlTemplate = "{{ route('visites.show.agence', ['visite' => ':id']) }}";
+            const confirmUrlTemplate = "{{ route('visites.confirm', ['visite' => ':id']) }}";
+            const doneUrlTemplate = "{{ route('visites.done', ['visite' => ':id']) }}";
+            const cancelUrlTemplate = "{{ route('visites.cancel', ['visite' => ':id']) }}";
+            const viewUrlTemplate = "{{ route('visites.show', ['visite' => ':id']) }}";
     
             function generateUrl(template, id) {
                 return template.replace(':id', id);

@@ -309,8 +309,8 @@
                         
                         <div class="tenant-body text-center">
                             <br><br>
-                            @if($locataire->agence && $locataire->agence->profile_image)
-                                <img src="{{ asset('storage/'.$locataire->agence->profile_image) }}" 
+                            @if($locataire->agence && $locataire->profile_image)
+                                <img src="{{ asset('storage/'.$locataire->profile_image) }}" 
                                     class="tenant-avatar" 
                                     alt="Photo agence"
                                     title="Agence: {{ $locataire->agence->name }}">

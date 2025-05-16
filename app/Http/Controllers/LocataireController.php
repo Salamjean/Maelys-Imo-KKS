@@ -76,7 +76,8 @@ class LocataireController extends Controller
     }
     public function createAdmin()
     {
-        $biens = Bien::where('status', 'Disponible')->get();
+        $biens = Bien::whereNull('agence_id')
+                ->where('status', 'Disponible')->get();
         
         return view('admin.locataire.create', compact('biens'));
     }
@@ -841,5 +842,66 @@ public function submitDefineAccess(Request $request)
         }
         
         return view('locataire.show', compact('locataire'));
+    }
+
+
+    //Profil
+    public function editProfile()
+    {
+        $locataire = Auth::guard('locataire')->user();
+        return view('locataire.auth.profile', compact('locataire'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $locataire = Auth::guard('locataire')->user();
+    
+        $rules = [
+            'name' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'email' => 'required|email|unique:locataires,email,'.$locataire->id,
+            'contact' => 'required|string|min:10',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ];
+    
+        // Ajoute les règles de validation pour le mot de passe seulement si un nouveau mot de passe est fourni
+        if ($request->filled('password')) {
+            $rules['password'] = 'string|min:8|same:password_confirm';
+            $rules['password_confirm'] = 'string|min:8|same:password';
+        }
+    
+        $request->validate($rules, [
+            'password.same' => 'Les mots de passe ne correspondent pas',
+            'password_confirm.same' => 'Les mots de passe ne correspondent pas',
+        ]);
+    
+        try {
+            // Mise à jour de l'image de profil
+            if ($request->hasFile('profile_image')) {
+                if ($locataire->profile_image) {
+                    Storage::disk('public')->delete($locataire->profile_image);
+                }
+                $locataire->profile_image = $request->file('profile_image')->store('profile_images', 'public');
+            }
+    
+            // Mise à jour des informations de base
+            $locataire->name = $request->name;
+            $locataire->prenom = $request->prenom;
+            $locataire->email = $request->email;
+            $locataire->contact = $request->contact;
+    
+            // Mise à jour du mot de passe seulement si fourni
+            if ($request->filled('password')) {
+                $locataire->password = Hash::make($request->password);
+            }
+    
+            $locataire->save();
+    
+            return redirect()->route('locataire.dashboard')->with('success', 'Vos informations on bien été mis à jour!');
+    
+        } catch (\Exception $e) {
+            Log::error('Erreur mise à jour profil agence: '.$e->getMessage());
+            return back()->with('error', 'Une erreur est survenue lors de la mise à jour');
+        }
     }
 }
