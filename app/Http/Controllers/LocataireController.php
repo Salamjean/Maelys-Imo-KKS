@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bien;
-use App\Models\Contrat;
 use App\Models\Locataire;
 use App\Models\ResetCodePasswordLocataire;
 use App\Notifications\SendEmailToLocataireAfterRegistrationNotification;
@@ -14,7 +13,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ContactAgencyMail;
 
 class LocataireController extends Controller
 {
@@ -902,6 +902,39 @@ public function submitDefineAccess(Request $request)
         } catch (\Exception $e) {
             Log::error('Erreur mise à jour profil agence: '.$e->getMessage());
             return back()->with('error', 'Une erreur est survenue lors de la mise à jour');
+        }
+    }
+
+    public function sendEmailToAgency(Request $request)
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'content' => 'required|string',
+            'agency_email' => 'required|email'
+        ]);
+
+        try {
+            $user = Auth::guard('locataire')->user();
+            
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            Mail::to($validated['agency_email'])->send(new ContactAgencyMail(
+                $validated['subject'],
+                $validated['content'],
+                $user->name,
+                $user->email
+            ));
+
+            return response()->json(['success' => true]);
+            
+        } catch (Exception $e) {
+            Log::error('Email error: '.$e->getMessage()."\n".$e->getTraceAsString());
+            return response()->json([
+                'error' => 'Erreur lors de l\'envoi du message',
+                'debug' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
         }
     }
 }

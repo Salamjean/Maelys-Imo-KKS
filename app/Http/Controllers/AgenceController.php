@@ -84,7 +84,7 @@ class AgenceController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:agences,email',
             'contact' => 'required|string|min:10',
-            'commune' => 'required|string|max:255|unique:agences,commune',
+            'commune' => 'required|string|max:255',
             'adresse' => 'required|string|max:255',
         ],[
             'name.required' => 'Le nom de l\'agence est obligatoire.',
@@ -94,7 +94,6 @@ class AgenceController extends Controller
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'La commune est obligatoire.',
-            'commune.unique' => 'Cette commune a déjà une agence enregistrée.',
             'adresse.required' => 'L\'adresse est obligatoire.',
         ]);
     
@@ -151,7 +150,7 @@ class AgenceController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:agences,email,'.$agence->id,
             'contact' => 'required|string|min:10',
-            'commune' => 'required|string|max:255|unique:agences,commune,'.$agence->id,
+            'commune' => 'required|string|max:255',
             'adresse' => 'required|string|max:255',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ],[
@@ -162,7 +161,6 @@ class AgenceController extends Controller
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'La commune est obligatoire.',
-            'commune.unique' => 'Cette commune a déjà une agence enregistrée.',
             'adresse.required' => 'L\'adresse est obligatoire.',
         ]);
 

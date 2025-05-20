@@ -304,7 +304,7 @@
                             <span class="tenant-status {{ $locataire->status == 'Actif' ? 'status-active' : 'status-inactive' }}">
                                 {{ $locataire->status }}
                             </span>
-                            <h5 class="mb-0">{{ $locataire->prenom }} {{ $locataire->name }}</h5>
+                            <h5 class="mb-0">Locataire : {{ $locataire->prenom }} {{ $locataire->name }}</h5>
                         </div>
                         
                         <div class="tenant-body text-center">
@@ -319,9 +319,9 @@
                                     class="tenant-avatar" 
                                     alt="Photo locataire">
                             @else
-                                <div class="tenant-avatar d-flex align-items-center justify-content-center">
-                                    <i class="fas fa-user fa-2x" style="color: #6c757d;"></i>
-                                </div>
+                                <img src="{{ asset('assets/images/useriii.jpeg') }}" 
+                                class="tenant-avatar" 
+                                alt="Avatar par défaut">
                             @endif
                             
                             @if($locataire->agence)

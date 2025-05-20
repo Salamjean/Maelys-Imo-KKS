@@ -4,8 +4,12 @@
         <span class="mdi mdi-menu"></span>
       </button>
       <div class="navbar-brand-wrapper">
-        <a class="navbar-brand brand-logo" href="index.html"><img src="{{ asset('storage/' . Auth::guard('locataire')->user()->profile_image) }}" style="width: 100px" alt="logo"/></a>
-        <a class="navbar-brand brand-logo-mini" href="index.html"><img src="{{ asset('storage/' . Auth::guard('locataire')->user()->profile_image) }}" style="width: 10px" alt="logo"/></a>
+        <a class="navbar-brand brand-logo" href="index.html"><img src="{{ asset('storage/' . Auth::guard('locataire')->user()->profile_image) }}"
+          onerror="this.onerror=null; this.src='{{ asset('assets/images/useriii.jpeg') }}';" 
+          alt="Profil"
+          width="100" style="width: 100px" alt="logo"/></a>
+        <a class="navbar-brand brand-logo-mini" href="index.html"><img src="{{ asset('storage/' . Auth::guard('locataire')->user()->profile_image) }}"
+          onerror="this.onerror=null; this.src='{{ asset('assets/images/useriii.jpeg') }}';" style="width: 10px" alt="logo"/></a>
       </div>
       <h4 class="font-weight-bold mb-0 d-none d-md-block mt-1">Bonjour Mme/M. {{ Auth::guard('locataire')->user()->name  }} {{ Auth::guard('locataire')->user()->prenom  }} </h4>
       <ul class="navbar-nav navbar-nav-right">
@@ -22,7 +26,8 @@
       <ul class="navbar-nav navbar-nav-right">
         <li class="nav-item nav-profile dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
-            <img src="{{ asset('storage/' . Auth::guard('locataire')->user()->profile_image) }}" alt="profile"/>
+            <img src="{{ asset('storage/' . Auth::guard('locataire')->user()->profile_image) }}"
+              onerror="this.onerror=null; this.src='{{ asset('assets/images/useriii.jpeg') }}';" alt="profile"/>
             <span class="nav-profile-name">{{ Auth::guard('locataire')->user()->name }} {{ Auth::guard('locataire')->user()->prenom  }}</span>
           </a>
           <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">

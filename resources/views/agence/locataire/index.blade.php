@@ -162,7 +162,7 @@
                                         <button class="btn btn-sm btn-info preview-image"
                                                 data-image="{{ asset('storage/'.$locataire->piece) }}"
                                                 data-title="Pièce d'identité de {{ $locataire->name }}">
-                                            Voir la pièce
+                                            Voir
                                         </button>
                                     @else
                                         <span class="text-muted">Non fournie</span>
@@ -173,7 +173,7 @@
                                         <button class="btn btn-sm btn-info preview-image"
                                                 data-image="{{ asset('storage/'.$locataire->attestation) }}"
                                                 data-title="Attestation de travail de {{ $locataire->name }}">
-                                            Voir l'attestation
+                                            Voir
                                         </button>
                                     @else
                                         <span class="text-muted">Non fournie</span>
@@ -216,19 +216,19 @@
                                         <a href="{{ route('locataire.edit', $locataire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                             <i class="mdi mdi-pencil"></i>
                                         </a>
-                                        <button class="btn btn-sm btn-secondary change-status-btn"
+                                        <button class="btn btn-sm btn-danger change-status-btn"
                                                 data-locataire-id="{{ $locataire->id }}"
                                                 data-current-status="{{ $locataire->status }}"
                                                 title="Changer statut">
                                             <i class="mdi mdi-account-convert"></i>
                                         </button>
-                                        <form action="#" method="POST" class="d-inline">
+                                        {{-- <form action="#" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-danger delete-btn" title="Supprimer">
                                                 <i class="mdi mdi-delete"></i>
                                             </button>
-                                        </form>
+                                        </form> --}}
                                     </div>
                                 </td>
                                 

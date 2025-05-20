@@ -10,6 +10,29 @@
         border: none;
         transition: transform 0.3s ease;
     }
+
+    .agency-popup .form-group {
+    margin-bottom: 1rem;
+    }
+
+    .agency-popup label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #02245b;
+    }
+
+    .agency-popup .form-control {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .agency-popup textarea.form-control {
+        min-height: 120px;
+    }
     
     .property-card:hover {
         transform: translateY(-5px);
@@ -209,9 +232,9 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="image-container">
-                                        <img src="{{ asset('storage/' . $locataire->bien->image) }}" 
+                                        <img src="  {{ asset('storage/' . $locataire->bien->image) }}" 
                                              alt="Photo principale" 
-                                             class="img-fluid property-image">
+                                             class="img-fluid property-image"  style="width: 100%">
                                         <div class="image-overlay">Photo principale</div>
                                     </div>
                                 </div>
@@ -219,7 +242,7 @@
                                     <div class="image-container">
                                         <img src="{{ asset('storage/' . $locataire->bien->image1) }}" 
                                              alt="Photo secondaire" 
-                                             class="img-fluid property-image">
+                                             class="img-fluid property-image" style="width: 100%">
                                         <div class="image-overlay">Photo secondaire</div>
                                     </div>
                                 </div>
@@ -240,7 +263,7 @@
                             </button>
                             <button class="btn btn-outline-secondary" id="contact-agency-btn"
                                 data-agence-name="{{ $locataire->agence->name ?? 'Maelys-Imo' }}"
-                                data-agence-email="{{ $locataire->agence->email ?? 'contact@immoplus.com' }}"
+                                data-agence-email="{{ $locataire->agence->email ?? 'salamjeanlouis8@gmail.com' }}"
                                 data-agence-phone="{{ $locataire->agence->contact ?? '+225 07 07 07 07 07' }}"
                                 data-agence-address="{{ $locataire->agence->adresse ?? 'Abidjan, Cocody Riviera' }}">
                             <i class="mdi mdi-message-text-outline mr-1"></i> Contacter l'agence
@@ -292,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Gestion du clic sur le bouton "Contacter l'agence"
+// Gestion du clic sur le bouton "Contacter l'agence"
 document.getElementById('contact-agency-btn').addEventListener('click', function() {
     // Récupérer les données de l'agence depuis les attributs data
     const agenceName = this.getAttribute('data-agence-name');
@@ -301,22 +324,73 @@ document.getElementById('contact-agency-btn').addEventListener('click', function
     const agenceAddress = this.getAttribute('data-agence-address');
     
     Swal.fire({
-        title: 'Informations de l\'agence',
+        title: 'Contacter l\'agence',
         html: `
-            <div style="text-align: center;">
-                <p style="font-size:20px"><strong ><i class="mdi mdi-office-building mr-2" ></i>Nom de l'agence:</strong> ${agenceName || 'Non spécifié'}</p>
-                <p style="font-size:20px"><strong><i class="mdi mdi-email mr-2"></i>Email:</strong> ${agenceEmail || 'Non spécifié'}</p>
-                <p style="font-size:20px"><strong><i class="mdi mdi-phone mr-2"></i>Téléphone:</strong> ${agencePhone || 'Non spécifié'}</p>
-                <p style="font-size:20px"><strong><i class="mdi mdi-map-marker mr-2"></i>Adresse:</strong> ${agenceAddress || 'Non spécifié'}</p>
+            <div style="text-align: left;">
+                <p><strong><i class="mdi mdi-office-building mr-2"></i>Nom de l'agence:</strong> ${agenceName || 'Non spécifié'}</p>
+                <p><strong><i class="mdi mdi-email mr-2"></i>Email:</strong> ${agenceEmail || 'Non spécifié'}</p>
+                <p><strong><i class="mdi mdi-phone mr-2"></i>Téléphone:</strong> ${agencePhone || 'Non spécifié'}</p>
+                <p><strong><i class="mdi mdi-map-marker mr-2"></i>Adresse:</strong> ${agenceAddress || 'Non spécifié'}</p>
                 <hr>
-                <p class="text-muted">Disponible du lundi au vendredi, 8h-17h</p>
+                <form id="contact-agency-form">
+                    <div class="form-group">
+                        <label for="message-subject">Objet</label>
+                        <input type="text" class="form-control" id="message-subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message-content">Message</label>
+                        <textarea class="form-control" id="message-content" rows="5" required></textarea>
+                    </div>
+                </form>
             </div>
         `,
         icon: 'info',
-        confirmButtonText: 'Fermer',
+        showCancelButton: true,
+        confirmButtonText: 'Envoyer',
+        cancelButtonText: 'Annuler',
         confirmButtonColor: '#02245b',
         customClass: {
             popup: 'agency-popup'
+        },
+        preConfirm: () => {
+            const subject = document.getElementById('message-subject').value;
+            const content = document.getElementById('message-content').value;
+            
+            if (!subject || !content) {
+                Swal.showValidationMessage('Veuillez remplir tous les champs');
+                return false;
+            }
+            
+            // Envoyer l'email via une requête AJAX
+            return fetch('{{ route("locataire.sendEmailToAgency") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    subject: subject,
+                    content: content,
+                    agency_email: agenceEmail
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText);
+                }
+                return response.json();
+            })
+            .catch(error => {
+                Swal.showValidationMessage(`Erreur lors de l'envoi: ${error}`);
+            });
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire(
+                'Envoyé!',
+                'Votre message a été envoyé à l\'agence.',
+                'success'
+            );
         }
     });
 });

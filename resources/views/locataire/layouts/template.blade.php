@@ -33,7 +33,8 @@
     <!-- page-body-wrapper ends -->
   </div>
   <!-- container-scroller -->
-
+  
+</div>
   <!-- base:js -->
   <script src="{{asset('assets/vendors/js/vendor.bundle.base.js')}}"></script>
   <!-- endinject -->

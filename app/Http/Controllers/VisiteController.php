@@ -24,7 +24,8 @@ class VisiteController extends Controller
                         ->paginate(10);
         
         return view('admin.visites.index', compact('visites'));
-    }    public function indexAgence()
+    }    
+    public function indexAgence()
     {
         $agenceId = Auth::guard('agence')->user()->id;
         $visites = Visite::where('statut', '!=', 'effectuée')
@@ -38,16 +39,22 @@ class VisiteController extends Controller
     public function done()
     {
         $agenceId = Auth::guard('agence')->user()->id;
-        $visites = Visite::where('statut','effectuée')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->paginate(10);
+        
+        $visites = Visite::where(function($query) {
+                        $query->where('statut', 'effectuée')
+                            ->orWhere('statut', 'annulée');
+                    })
+                    ->whereHas('bien', function ($query) use ($agenceId) {
+                        $query->where('agence_id', $agenceId);
+                    })
+                    ->paginate(10);
+        
         return view('agence.visites.done', compact('visites'));
     }
     public function doneAdmin()
     {
         $visites = Visite::where('statut','effectuée')
+                        ->where('statut', 'annulée')
                        ->whereHas('bien', function ($query) {
                             $query->whereNull('agence_id'); 
                         })

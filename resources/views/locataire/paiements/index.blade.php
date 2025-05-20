@@ -28,7 +28,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($locataire->paiements as $paiement)
+                                @forelse($locataire->paiements as $paiement)
                                 <tr class="text-center">
                                     <td class="text-center">{{ \Carbon\Carbon::parse($paiement->mois_couvert)->translatedFormat('F Y') }}</td>
                                     <td class="text-center">{{ number_format($paiement->montant, 0, ',', ' ') }} FCFA</td>
@@ -51,7 +51,11 @@
                                         @endif
                                     </td>
                                 </tr>
-                                @endforeach
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center">Aucun paiement effectué.</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

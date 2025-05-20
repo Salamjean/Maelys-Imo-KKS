@@ -158,9 +158,6 @@
                             <div class="alert alert-info">
                                 Aucun bien immobilier enregistré pour le moment.
                             </div>
-                            <a href="{{ route('bien.create.agence') }}" class="btn btn-primary mt-2">
-                                <i class="mdi mdi-plus-circle"></i> Ajouter un nouveau bien
-                            </a>
                         </td>
                     </tr>
                 @endforelse

@@ -55,8 +55,8 @@
                         <option value="Espèces" {{ old('methode_paiement') == 'Espèces' ? 'selected' : '' }}>
                             <i class="fas fa-money-bill-wave me-2"></i> Espèces
                         </option>
-                        <option value="CinetPay" {{ old('methode_paiement') == 'CinetPay' ? 'selected' : '' }}>
-                            <i class="fas fa-mobile-alt me-2"></i> Paiement en ligne (CinetPay)
+                        <option value="Mobile Money" {{ old('methode_paiement') == 'Mobile Money' ? 'selected' : '' }}>
+                            <i class="fas fa-mobile-alt me-2"></i> Mobile Money
                         </option>
                     </select>
                     <div class="invalid-feedback">Veuillez sélectionner une méthode de paiement</div>

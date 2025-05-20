@@ -110,6 +110,8 @@
     .recent-payments {
         max-height: 400px;
         overflow-y: auto;
+         -webkit-overflow-scrolling: touch; /* Pour mobile */
+    overscroll-behavior: contain; /* Empêche le scroll sur le parent */
     }
     
     .payment-item {

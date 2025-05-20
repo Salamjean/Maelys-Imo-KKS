@@ -17,7 +17,7 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">
-          <i class="mdi mdi-home menu-icon"></i>
+          <i class="mdi mdi-cash-multiple menu-icon"></i>
           <span class="menu-title">Loyer</span>
           <i class="menu-arrow"></i>
         </a>

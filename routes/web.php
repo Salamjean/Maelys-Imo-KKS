@@ -209,6 +209,7 @@ Route::middleware('auth:locataire')->prefix('locataire')->group(function () {
     Route::get('/profile/edit', [LocataireController::class, 'editProfile'])->name('locataire.edit.profile');
     Route::put('/profile/edit', [LocataireController::class, 'updateProfile'])->name('locataire.update.profile');
 });
+    Route::post('/locataire/envoyer-email-agence', [LocataireController::class, 'sendEmailToAgency'])->name('locataire.sendEmailToAgency');
 
 
 //routes pour la gestion des comptables 

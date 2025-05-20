@@ -16,7 +16,7 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
-          <i class="mdi mdi-palette menu-icon"></i>
+          <i class="mdi mdi-animation menu-icon"></i>
           <span class="menu-title">Biens</span>
           <i class="menu-arrow"></i>
         </a>
@@ -34,7 +34,7 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#visi" aria-expanded="false" aria-controls="visi">
-          <i class="mdi mdi-home menu-icon"></i>
+          <i class="mdi mdi-clipboard-account menu-icon"></i>
           <span class="menu-title">Visites</span>
           <i class="menu-arrow"></i>
         </a>

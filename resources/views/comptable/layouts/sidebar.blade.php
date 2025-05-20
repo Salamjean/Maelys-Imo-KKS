@@ -16,7 +16,7 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" href="{{ route('accounting.tenant') }}">
-          <i class="mdi mdi-view-headline menu-icon"></i>
+          <i class="mdi mdi-account-card-details menu-icon"></i>
           <span class="menu-title">Listes de locataires</span>
         </a>
       </li>
@@ -32,7 +32,7 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" href="{{ route('accounting.payment') }}">
-          <i class="mdi mdi-view-headline menu-icon"></i>
+          <i class="mdi mdi-cash-multiple menu-icon"></i>
           <span class="menu-title">Rappel de paiement</span>
         </a>
       </li>

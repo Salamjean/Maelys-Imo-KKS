@@ -75,7 +75,7 @@ class PaymentController extends Controller
 
         if ($paiementExistant) {
             return redirect()->route('locataire.paiements.index', $locataire)
-                ->with('warning', 'Le loyer pour '.$moisAPayer->translatedFormat('F Y').' a déjà été payé.');
+                ->with('error', 'Le loyer pour '.$moisAPayer->translatedFormat('F Y').' a déjà été payé.');
         }
 
         return view('locataire.paiements.create', [
@@ -86,12 +86,19 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function store(Request $request, Locataire $locataire)
+ public function store(Request $request, Locataire $locataire)
 {
-    $request->validate([
-        'methode_paiement' => 'required|in:Espèces,CinetPay',
-        'verif_espece' => 'required_if:methode_paiement,Espèces|string|size:6'
-    ]);
+    $rules = [
+        'methode_paiement' => 'required|in:Espèces,Mobile Money',
+        'mois_couvert' => 'required|date_format:Y-m',
+    ];
+
+    // Ajout conditionnel des règles pour verif_espece
+    if ($request->methode_paiement === 'Espèces') {
+        $rules['verif_espece'] = 'required|string|size:6';
+    }
+
+    $request->validate($rules);
 
     // Déterminer automatiquement le mois à payer
     $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
@@ -129,16 +136,22 @@ class PaymentController extends Controller
     }
 
     // Création du paiement
-    $paiement = Paiement::create([
-        'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix, // Utilise le montant majoré s'il existe
+    $paiementData = [
+        'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
         'date_paiement' => now(),
         'mois_couvert' => $moisAPayer->format('Y-m'),
         'methode_paiement' => $request->methode_paiement,
-        'verif_espece' => $request->methode_paiement === 'Espèces' ? $request->verif_espece : null,
         'statut' => $request->methode_paiement === 'Espèces' ? 'payé' : 'En attente',
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
-    ]);
+    ];
+
+    // Ajout conditionnel du code de vérification
+    if ($request->methode_paiement === 'Espèces') {
+        $paiementData['verif_espece'] = $request->verif_espece;
+    }
+
+    $paiement = Paiement::create($paiementData);
 
     // Si paiement en espèces, supprimer le code utilisé
     if ($request->methode_paiement === 'Espèces') {
@@ -155,7 +168,7 @@ class PaymentController extends Controller
     }
 
     // Redirection selon la méthode de paiement
-    if ($request->methode_paiement === 'CinetPay') {
+    if ($request->methode_paiement === 'Mobile Money') {
         return $this->initierPaiementCinetPay($paiement);
     }
 
