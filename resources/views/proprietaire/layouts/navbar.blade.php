@@ -4,23 +4,10 @@
         <span class="mdi mdi-menu"></span>
       </button>
       <div class="navbar-brand-wrapper">
-        @php
-            $user = Auth::guard('comptable')->user();
-            $route = route('accounting.dashboard'); // valeur par défaut
-
-            if ($user->user_type === 'Agent de recouvrement') {
-                $route = route('accounting.agent.dashboard');
-            } elseif ($user->user_type === 'Comptable') {
-                $route = route('accounting.dashboard');
-            }
-        @endphp
-
-        <a class="navbar-brand brand-logo" href="{{ $route }}">
-            <img src="{{ asset('storage/' . $user->agence->profile_image) }}" style="width: 100px" alt="logo"/>
-        </a>
-        <a class="navbar-brand brand-logo-mini" href="{{ $route }}"><img src="{{ asset('storage/' . Auth::guard('comptable')->user()->agence->profile_image) }}" style="width: 10px" alt="logo"/></a>
+        <a class="navbar-brand brand-logo" href="{{ route('owner.dashboard') }}"><img src="{{ asset('storage/' . Auth::guard('owner')->user()->agence->profile_image) }}" style="width: 100px" alt="logo"/></a>
+        <a class="navbar-brand brand-logo-mini" href="{{ route('owner.dashboard') }}"><img src="{{ asset('storage/' . Auth::guard('owner')->user()->agence->profile_image) }}" style="width: 10px" alt="logo"/></a>
       </div>
-      <h4 class="font-weight-bold mb-0 d-none d-md-block mt-1">Bienvenu M./Mme {{ Auth::guard('comptable')->user()->name }} {{ Auth::guard('comptable')->user()->prenom }}</h4>
+      <h4 class="font-weight-bold mb-0 d-none d-md-block mt-1">Bienvenu M./Mme {{ Auth::guard('owner')->user()->name }} {{ Auth::guard('owner')->user()->prenom }}</h4>
       <ul class="navbar-nav navbar-nav-right">
         <li class="nav-item">
           <h4 class="mb-0 font-weight-bold d-none d-xl-block">
@@ -36,11 +23,15 @@
       <ul class="navbar-nav navbar-nav-right">
         <li class="nav-item nav-profile dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
-            <img src="{{ asset('storage/' . Auth::guard('comptable')->user()->agence->profile_image) }}" alt="profile"/>
-            <span class="nav-profile-name">{{ Auth::guard('comptable')->user()->prenom }} </span>
+            <img src="{{ asset('storage/' . Auth::guard('owner')->user()->agence->profile_image) }}" alt="profile"/>
+            <span class="nav-profile-name">{{ Auth::guard('owner')->user()->prenom }} </span>
           </a>
           <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-            <a href="{{ route('accounting.logout') }}" class="dropdown-item">
+            <a href="#" class="dropdown-item">
+              <i class="mdi mdi-account text-primary"></i>
+              Mon compte
+            </a>
+            <a href="{{ route('owner.logout') }}" class="dropdown-item">
               <i class="mdi mdi-logout text-primary"></i>
               Déconnexion
             </a>

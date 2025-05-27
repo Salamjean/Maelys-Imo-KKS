@@ -12,7 +12,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -119,6 +118,7 @@ class ComptableController extends Controller
             'email' => 'required|email|unique:comptables,email',
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
+            'user_type' =>'required',
             'date_naissance' => 'required|max:255',
         ],[
             'name.required' => 'Le nom du comptable est obligatoire.',
@@ -130,6 +130,7 @@ class ComptableController extends Controller
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'Lieu de residence est obligatoire.',
             'date_naissance.required' => 'La date de naissance est obligatoire.',
+            'user_type.required' => 'Le type d\'agent est obligatoire'
         ]);
     
         try {
@@ -149,6 +150,7 @@ class ComptableController extends Controller
             $comptable->commune = $request->commune;
             $comptable->date_naissance = $request->date_naissance;
             $comptable->password = Hash::make('password');
+            $comptable->user_type = $request->user_type;
             $comptable->profile_image = $profileImagePath;
             $comptable->agence_id = $agenceId;
             $comptable->save();
@@ -165,10 +167,10 @@ class ComptableController extends Controller
                 ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email));
         
             return redirect()->route('accounting.index')
-                ->with('success', 'Comptable enregistrée avec succès.');
+                ->with('success', 'Agent enregistrée avec succès.');
     
         } catch (\Exception $e) {
-            Log::error('Error creating comptable: ' . $e->getMessage());
+            Log::error('Error creating Agent: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
     }
@@ -191,6 +193,7 @@ class ComptableController extends Controller
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
             'date_naissance' => 'required|date',
+            'user_type' => 'required',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ],[
             'name.required' => 'Le nom du comptable est obligatoire.',
@@ -206,6 +209,7 @@ class ComptableController extends Controller
             'profile_image.image' => 'Le fichier doit être une image.',
             'profile_image.mimes' => 'L\'image doit être de type: jpeg, png, jpg ou gif.',
             'profile_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
+            'user_type.required' => 'Le type d\'agent est obligatoire'
         ]);
 
         try {
@@ -227,11 +231,12 @@ class ComptableController extends Controller
                 'contact' => $validatedData['contact'],
                 'commune' => $validatedData['commune'],
                 'date_naissance' => $validatedData['date_naissance'],
+                'user_type' => $validatedData['user_type'],
                 'profile_image' => $validatedData['profile_image'] ?? $comptable->profile_image
             ]);
 
             return redirect()->route('accounting.index')
-                ->with('success', 'Comptable mis à jour avec succès.');
+                ->with('success', 'Agent mis à jour avec succès.');
 
         } catch (\Exception $e) {
             Log::error('Erreur lors de la mise à jour du comptable: ' . $e->getMessage());
@@ -311,12 +316,20 @@ class ComptableController extends Controller
          ]);
      
          try {
-            if(auth('comptable')->attempt($request->only('email', 'password')))
-            {
-                return redirect()->route('accounting.dashboard')->with('Bienvenu sur votre page ');
-            }else{
+            if (auth('comptable')->attempt($request->only('email', 'password'))) {
+                $user = auth('comptable')->user();
+                
+                if ($user->user_type === 'Agent de recouvrement') {
+                    return redirect()->route('accounting.agent.dashboard')->with('success', 'Bienvenue sur votre page Agent');
+                } elseif ($user->user_type === 'Comptable') {
+                    return redirect()->route('accounting.dashboard')->with('success', 'Bienvenue sur votre page Comptable');
+                } else {
+                    return redirect()->back()->with('error', 'Type d\'utilisateur inconnu.');
+                }
+            } else {
                 return redirect()->back()->with('error', 'Mot de passe incorrect.');
             }
+
         } catch (Exception $e) {
             dd($e);
         }
@@ -346,16 +359,22 @@ class ComptableController extends Controller
     }
 
     public function payment(){
-        // Récupération des locataires avec les relations nécessaires
+         // Récupérer le comptable connecté
+        $comptable = Auth::guard('comptable')->user();
+
+        // Récupérer l'agence du comptable
+        $agence = $comptable->agence;
+
+        // Récupération des locataires de l'agence du comptable
         $locataires = Locataire::with(['bien', 'paiements' => function($query) {
             $query->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year);
         }])
         ->where('status', '!=', 'Pas sérieux')
-        ->where('agence_id', Auth::guard('comptable')->user()->id)
+        ->where('agence_id', $agence->id)
         ->paginate(6);
 
-        // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
+        // Ajout d'une propriété à chaque locataire pour afficher ou non le bouton
         $locataires->getCollection()->transform(function($locataire) {
             $today = now()->format('d');
             $currentMonthPaid = $locataire->paiements->isNotEmpty();

@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgenceController;
+use App\Http\Controllers\AgentRecouvrementController;
 use App\Http\Controllers\BienController;
 use App\Http\Controllers\ComptableController;
 use App\Http\Controllers\ContratController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\LocataireController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProprietaireController;
 use App\Http\Controllers\VisiteController;
 use App\Models\Bien;
 use Illuminate\Support\Facades\Route;
@@ -89,30 +91,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
             Route::get('/visites/list',[VisiteController::class, 'allVisit'])->name('visit.list');
         });
     });
-
-
-
-
-
-    Route::middleware('guest:admin')->prefix('admin')->group(function () {
-        Route::get('/register',[AdminController::class, 'register'])->name('admin.register');
-        Route::post('/register',[AdminController::class, 'store'])->name('admin.store');
-        Route::get('/login',[AdminController::class, 'login'])->name('admin.login');
-        Route::post('/login',[AdminController::class, 'authenticate'])->name('admin.authenticate');
-    });
-
-    //routes de gestions des onglets du menus 
-    Route::get('/maelys/about',[HomePageController::class,'about'])->name('maelys.about');
-    Route::get('/maelys/service',[HomePageController::class,'service'])->name('maelys.service');
-
-    Route::get('/biens/appartemnets',[BienController::class, 'appartements'])->name('bien.appartement');
-    Route::get('/biens/maisons',[BienController::class, 'maisons'])->name('bien.maison');
-    Route::get('/biens/terrains',[BienController::class, 'terrains'])->name('bien.terrain');
-    Route::get('/visiter-bien/{id}', [BienController::class, 'visiter'])->name('bien.visiter');
-
-    //Les routes de gestion des visites
-    Route::post('/visite', [VisiteController::class, 'store'])->name('visite.store');
-
+   
 //routes de gestion des agences
 Route::middleware('auth:agence')->prefix('agence')->group(function () {
     Route::get('/dashboard',[AgenceController::class, 'dashboard'])->name('agence.dashboard');
@@ -159,17 +138,15 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
         Route::get('/edit/{comptable}',[ComptableController::class,'edit'])->name('accounting.edit');
         Route::put('/{id}', [ComptableController::class, 'update'])->name('accounting.update');
     });
+
+    Route::prefix('owner')->group(function(){
+        Route::get('/',[ProprietaireController::class,'index'])->name('owner.index');
+        Route::get('/ownercreate',[ProprietaireController::class,'create'])->name('owner.create');
+        Route::post('/create',[ProprietaireController::class,'store'])->name('owner.store');
+        Route::get('/edit/{proprietaire}',[ProprietaireController::class,'edit'])->name('owner.edit');
+        Route::put('/{id}', [ProprietaireController::class, 'update'])->name('owner.update');
+    });
 });
-
-//routes de gestions des definitions des accès email
-Route::get('/validate-agence-account/{email}', [AgenceController::class, 'defineAccess']);
-Route::post('/validate-agence-account/{email}', [AgenceController::class, 'submitDefineAccess'])->name('agence.validate');
-Route::get('/validate-locataire-account/{email}', [LocataireController::class, 'defineAccess']);
-Route::post('/validate-locataire-account/{email}', [LocataireController::class, 'submitDefineAccess'])->name('locataire.validate');
-Route::get('/validate-comptable-account/{email}', [ComptableController::class, 'defineAccess']);
-Route::post('/validate-comptable-account/{email}', [ComptableController::class, 'submitDefineAccess'])->name('accounting.validate');
-
-
 // Routes pour la gestion des paiements
 Route::post('/locataires/send-payment-reminder', [PaymentController::class, 'sendPaymentReminder'])->name('locataires.sendPaymentReminder');
 Route::prefix('locataire/{locataire}/paiements')->group(function() {
@@ -177,6 +154,67 @@ Route::prefix('locataire/{locataire}/paiements')->group(function() {
     Route::get('create', [PaymentController::class, 'create'])->name('locataire.paiements.create');
     Route::post('/', [PaymentController::class, 'store'])->name('locataire.paiements.store');
 });
+
+Route::post('/paiements/verify-cash-code', [PaymentController::class, 'verifyCashCode'])
+    ->name('paiements.verifyCashCode');
+    
+// Routes pour la gestion des locataires
+Route::middleware('auth:locataire')->prefix('locataire')->group(function () {
+    Route::get('/dashboard',[LocataireController::class, 'dashboard'])->name('locataire.dashboard');
+    Route::get('/logout',[LocataireController::class, 'logout'])->name('locataire.logout');
+    Route::get('locataire/bien/show/{id}', [LocataireController::class, 'show'])->name('locataire.bien.show');
+    Route::get('/profile/edit', [LocataireController::class, 'editProfile'])->name('locataire.edit.profile');
+    Route::put('/profile/edit', [LocataireController::class, 'updateProfile'])->name('locataire.update.profile');
+});
+Route::post('/locataire/envoyer-email-agence', [LocataireController::class, 'sendEmailToAgency'])->name('locataire.sendEmailToAgency');
+//routes pour la gestion des comptables 
+Route::middleware('auth:comptable')->prefix('accounting')->group(function () {
+    Route::get('/dashboard',[ComptableController::class,'dashboard'])->name('accounting.dashboard');
+    Route::get('/logout',[ComptableController::class, 'logout'])->name('accounting.logout');
+    Route::get('/listes/tenant',[ComptableController::class,'tenant'])->name('accounting.tenant');
+    Route::get('/rappel/payment',[ComptableController::class,'payment'])->name('accounting.payment');
+    Route::get('/agent/dashboard',[AgentRecouvrementController::class,'dashboard'])->name('accounting.agent.dashboard');
+    Route::get('/agent/rappel/payment',[AgentRecouvrementController::class,'payment'])->name('accounting.agent.payment');
+    Route::get('/agent/listes/tenant',[AgentRecouvrementController::class,'tenant'])->name('accounting.agent.tenant');
+});
+// Routes pour la gestion des propriétaires
+Route::middleware('auth:owner')->prefix('owner')->group(function () {
+    Route::get('/dashboard',[ProprietaireController::class,'dashboard'])->name('owner.dashboard');
+    Route::get('/logout',[ProprietaireController::class, 'logout'])->name('owner.logout');
+    Route::get('/profile/edit', [ProprietaireController::class, 'editProfile'])->name('owner.edit.profile');
+    Route::put('/profile/edit', [ProprietaireController::class, 'updateProfile'])->name('owner.update.profile');
+});
+
+
+// toutes les routes d'authentification pour les différents rôles
+// Routes pour l'authentification de l'administrateur
+Route::middleware('guest:admin')->prefix('admin')->group(function () {
+    Route::get('/register',[AdminController::class, 'register'])->name('admin.register');
+    Route::post('/register',[AdminController::class, 'store'])->name('admin.store');
+    Route::get('/login',[AdminController::class, 'login'])->name('admin.login');
+    Route::post('/login',[AdminController::class, 'authenticate'])->name('admin.authenticate');
+});
+// Routes pour l'authentification de l'agence
+Route::middleware('guest:agence')->prefix('agence')->group(function () {
+    Route::get('/login',[AgenceController::class, 'login'])->name('agence.login');
+    Route::post('/login',[AgenceController::class, 'authenticate'])->name('agence.authenticate');
+});
+// Routes pour l'authentification du comptable
+Route::middleware('guest:comptable')->prefix('accounting')->group(function () {
+    Route::get('/login',[ComptableController::class, 'login'])->name('comptable.login');
+    Route::post('/login',[ComptableController::class, 'authenticate'])->name('comptable.authenticate');
+});
+// Routes pour l'authentification du locataire
+Route::prefix('locataire')->group(function () {
+    Route::get('/login',[LocataireController::class, 'login'])->name('locataire.login');
+    Route::post('/login',[LocataireController::class, 'authenticate'])->name('locataire.authenticate');
+});
+// Routes pour l'authentification du propriétaire
+Route::prefix('owner')->group(function () {
+    Route::get('/login',[ProprietaireController::class, 'login'])->name('owner.login');
+    Route::post('/login',[ProprietaireController::class, 'authenticate'])->name('owner.authenticate');
+});
+
 
 //routes de paiement
 Route::post('/paiements/generate-cash-code', [PaymentController::class, 'generateCashCode'])->name('paiements.generateCashCode');
@@ -187,45 +225,30 @@ Route::get('/paiements/{paiement}/receipt', [PaymentController::class, 'generate
 Route::get('/locataires/get-montant-loyer', [PaymentController::class, 'getMontantLoyer'])->name('locataires.getMontantLoyer');
 
 
-//les routes de connexion de l'agence
-Route::middleware('guest:agence')->prefix('agence')->group(function () {
-    Route::get('/login',[AgenceController::class, 'login'])->name('agence.login');
-    Route::post('/login',[AgenceController::class, 'authenticate'])->name('agence.authenticate');
-});
-
-//les routes de connexion du comptable
-Route::middleware('guest:comptable')->prefix('accounting')->group(function () {
-    Route::get('/login',[ComptableController::class, 'login'])->name('comptable.login');
-    Route::post('/login',[ComptableController::class, 'authenticate'])->name('comptable.authenticate');
-});
+//routes de gestions des definitions des accès email
+Route::get('/validate-agence-account/{email}', [AgenceController::class, 'defineAccess']);
+Route::post('/validate-agence-account/{email}', [AgenceController::class, 'submitDefineAccess'])->name('agence.validate');
+Route::get('/validate-locataire-account/{email}', [LocataireController::class, 'defineAccess']);
+Route::post('/validate-locataire-account/{email}', [LocataireController::class, 'submitDefineAccess'])->name('locataire.validate');
+Route::get('/validate-comptable-account/{email}', [ComptableController::class, 'defineAccess']);
+Route::post('/validate-comptable-account/{email}', [ComptableController::class, 'submitDefineAccess'])->name('accounting.validate');
+Route::get('/validate-owner-account/{email}', [ProprietaireController::class, 'defineAccess']);
+Route::post('/validate-owner-account/{email}', [ProprietaireController::class, 'submitDefineAccess'])->name('owner.validate');
 
 
-
-// Routes pour la gestion des locataires
-Route::middleware('auth:locataire')->prefix('locataire')->group(function () {
-    Route::get('/dashboard',[LocataireController::class, 'dashboard'])->name('locataire.dashboard');
-    Route::get('/logout',[LocataireController::class, 'logout'])->name('locataire.logout');
-    Route::get('locataire/bien/show/{id}', [LocataireController::class, 'show'])->name('locataire.bien.show');
-    Route::get('/profile/edit', [LocataireController::class, 'editProfile'])->name('locataire.edit.profile');
-    Route::put('/profile/edit', [LocataireController::class, 'updateProfile'])->name('locataire.update.profile');
-});
-    Route::post('/locataire/envoyer-email-agence', [LocataireController::class, 'sendEmailToAgency'])->name('locataire.sendEmailToAgency');
+ //routes de gestions des onglets du menus 
+Route::get('/maelys/about',[HomePageController::class,'about'])->name('maelys.about');
+Route::get('/maelys/service',[HomePageController::class,'service'])->name('maelys.service');
+Route::get('/biens/appartemnets',[BienController::class, 'appartements'])->name('bien.appartement');
+Route::get('/biens/maisons',[BienController::class, 'maisons'])->name('bien.maison');
+Route::get('/biens/terrains',[BienController::class, 'terrains'])->name('bien.terrain');
+Route::get('/visiter-bien/{id}', [BienController::class, 'visiter'])->name('bien.visiter');
+Route::post('/visite', [VisiteController::class, 'store'])->name('visite.store'); //Les routes de gestion des visites
 
 
-//routes pour la gestion des comptables 
-Route::middleware('auth:comptable')->prefix('accounting')->group(function () {
-    Route::get('/dashboard',[ComptableController::class,'dashboard'])->name('accounting.dashboard');
-    Route::get('/logout',[ComptableController::class, 'logout'])->name('accounting.logout');
-    Route::get('/listes/tenant',[ComptableController::class,'tenant'])->name('accounting.tenant');
-    Route::get('/rappel/payment',[ComptableController::class,'payment'])->name('accounting.payment');
-});
-
-Route::prefix('locataire')->group(function () {
-    Route::get('/login',[LocataireController::class, 'login'])->name('locataire.login');
-    Route::post('/login',[LocataireController::class, 'authenticate'])->name('locataire.authenticate');
-});
-Route::get('/locataires/{locataire}/infos-contrat', [ContratController::class, 'getInfosContrat'])->name('locataires.infos-contrat');
-Route::post('/locataires/{locataire}/generate-contrat', [ContratController::class, 'generateAndAssociateContrat'])->name('locataires.generateContrat') ;
+//routes pour la gestion des contrats
+// Route::get('/locataires/{locataire}/infos-contrat', [ContratController::class, 'getInfosContrat'])->name('locataires.infos-contrat');
+// Route::post('/locataires/{locataire}/generate-contrat', [ContratController::class, 'generateAndAssociateContrat'])->name('locataires.generateContrat') ;
 Route::get('/contrats/{contrat}/show', [ContratController::class, 'show'])->name('contrats.show');
 Route::get('/locataires/{locataire}/download-contrat', [ContratController::class, 'downloadContrat'])->name('locataires.downloadContrat');
 Route::delete('/contrats/{contrat}', [ContratController::class, 'destroy'])->name('contrats.destroy');

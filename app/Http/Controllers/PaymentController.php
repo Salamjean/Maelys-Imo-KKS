@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\CashPaymentCodeMail;
 use App\Mail\PaymentReminderMail;
 use App\Models\Bien;
 use App\Models\CashVerificationCode;
@@ -291,48 +292,121 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function generateCashCode(Request $request)
-    {
-        $request->validate([
-            'locataire_id' => 'required|exists:locataires,id'
-        ]);
+public function generateCashCode(Request $request)
+{
+    $request->validate([
+        'locataire_id' => 'required|exists:locataires,id'
+    ]);
+
+    $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
     
-        // Générer un code aléatoire de 6 caractères (chiffres et lettres majuscules)
-        $code = Str::upper(Str::random(6));
+    // Générer un code aléatoire de 6 caractères
+    $code = Str::upper(Str::random(6));
+    
+    // Créer ou mettre à jour le code
+    CashVerificationCode::updateOrCreate(
+        ['locataire_id' => $locataire->id],
+        [
+            'code' => $code,
+            'expires_at' => now()->addHours(24)
+        ]
+    );
+
+    // Envoyer le code par email au locataire
+    try {
+        Mail::to($locataire->email)->send(new \App\Mail\CashPaymentCodeMail(
+            $code, 
+            $locataire,
+            $montant = $locataire->bien->montant_majore ?? $locataire->bien->prix
+        ));
         
-        // Créer ou mettre à jour le code
-        CashVerificationCode::updateOrCreate(
-            ['locataire_id' => $request->locataire_id],
-            [
-                'code' => $code,
-                'expires_at' => now()->addHours(24)
-            ]
-        );
-    
+        Log::info("Code espèces envoyé à {$locataire->email}: {$code}");
+        
         return response()->json([
             'success' => true,
-            'code' => $code,
-            'message' => 'Code généré avec succès'
+            'message' => 'Le code de vérification a été envoyé par email au locataire.'
         ]);
-    }
-    
-    public function verifyCashCode(Request $request)
-    {
-        $request->validate([
-            'locataire_id' => 'required|exists:locataires,id',
-            'code' => 'required|string|size:6'
-        ]);
-    
-        $valid = CashVerificationCode::where('locataire_id', $request->locataire_id)
-                    ->where('code', $request->code)
-                    ->where('expires_at', '>', now())
-                    ->exists();
-    
+    } catch (\Exception $e) {
+        Log::error("Erreur envoi email code espèces: " . $e->getMessage());
+        
         return response()->json([
-            'valid' => $valid,
-            'message' => $valid ? 'Code valide' : 'Code invalide ou expiré'
-        ]);
+            'success' => false,
+            'message' => 'Le code a été généré mais l\'envoi par email a échoué. Veuillez vérifier l\'email du locataire.'
+        ], 500);
     }
+}
+    
+public function verifyCashCode(Request $request)
+{
+    $request->validate([
+        'locataire_id' => 'required|exists:locataires,id',
+        'code' => 'required|string|size:6'
+    ]);
+
+    $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+
+    // Vérifier le code
+    $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
+        ->where('code', $request->code)
+        ->where('expires_at', '>', now())
+        ->first();
+
+    if (!$codeValide) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Code invalide ou expiré'
+        ], 400);
+    }
+
+    // Déterminer le mois à payer
+    $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
+        ->where('statut', 'payé')
+        ->orderBy('mois_couvert', 'desc')
+        ->first();
+
+    $moisAPayer = $dernierPaiement 
+        ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
+        : now();
+
+    // Vérifier si le mois n'a pas déjà été payé
+    $paiementExistant = Paiement::where('locataire_id', $locataire->id)
+        ->where('mois_couvert', $moisAPayer->format('Y-m'))
+        ->where('statut', 'payé')
+        ->exists();
+
+    if ($paiementExistant) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Le loyer pour ce mois a déjà été payé'
+        ], 400);
+    }
+
+    // Enregistrement du paiement
+    $paiement = Paiement::create([
+        'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
+        'date_paiement' => now(),
+        'mois_couvert' => $moisAPayer->format('Y-m'),
+        'methode_paiement' => 'Espèces',
+        'statut' => 'payé',
+        'locataire_id' => $locataire->id,
+        'bien_id' => $locataire->bien_id,
+        'verif_espece' => $request->code
+    ]);
+
+    // Supprimer le code utilisé
+    $codeValide->delete();
+
+    // Réinitialiser le montant majoré si nécessaire
+    if ($locataire->bien->montant_majore) {
+        $locataire->bien->update(['montant_majore' => null]);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Paiement enregistré avec succès pour ' . $moisAPayer->translatedFormat('F Y'),
+        'redirect_url' => route('locataire.index', $locataire->id)
+    ]);
+}
 
     public function generateReceipt(Locataire $locataire, Paiement $paiement)
 {

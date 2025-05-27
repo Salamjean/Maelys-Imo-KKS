@@ -29,4 +29,9 @@ class Agence extends Authenticatable
     {
         return $this->hasMany(Comptable::class);
     }
+    public function proprietaire()
+    {
+        return $this->hasMany(Proprietaire::class);
+    }
+    
 }

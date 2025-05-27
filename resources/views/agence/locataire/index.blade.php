@@ -127,6 +127,7 @@
                     </div>
                 </div>
             </div>
+           
 
             <div class="table-responsive pt-3">
                 <table class="table table-bordered table-hover">
@@ -495,64 +496,126 @@ $(document).ready(function() {
     });
 });
 
-// Gestion de la génération du code pour paiement en espèces
-$(document).ready(function() {
-    $('body').on('click', '.generate-cash-code', function() {
-        const locataireId = $(this).data('locataire-id');
-        const button = $(this);
-        
-        // Afficher un modal de confirmation
-        Swal.fire({
-            title: 'Générer un code de vérification',
-            text: 'Ce code permettra au locataire de valider un paiement en espèces. Continuer?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#02245b',
-            cancelButtonColor: '#ff5e14',
-            confirmButtonText: 'Générer',
-            cancelButtonText: 'Annuler',
-            showLoaderOnConfirm: true,
-            preConfirm: () => {
-                return fetch('{{ route("paiements.generateCashCode") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        locataire_id: locataireId
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(response.statusText);
+$('body').on('click', '.generate-cash-code', function() {
+    const locataireId = $(this).data('locataire-id');
+    const button = $(this);
+    
+    button.prop('disabled', true);
+    button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+    // D'abord générer le code
+    $.ajax({
+        url: "{{ route('paiements.generateCashCode') }}",
+        type: 'POST',
+        data: { locataire_id: locataireId },
+        success: function(response) {
+            if (response.success) {
+                // Afficher le champ de saisie après envoi réussi
+                Swal.fire({
+                    title: 'Code envoyé',
+                    html: `
+                        <p>${response.message}</p>
+                        <div class="mb-3 mt-3">
+                            <label for="cashVerificationCode" class="form-label">
+                                Entrez le code reçu par le locataire :
+                            </label>
+                            <input type="text" class="form-control" id="cashVerificationCode" 
+                                   placeholder="Code à 6 caractères" maxlength="6">
+                        </div>
+                    `,
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: 'Valider le paiement',
+                    cancelButtonText: 'Annuler',
+                    preConfirm: () => {
+                        const code = $('#cashVerificationCode').val().trim();
+                        if (!code || code.length !== 6) {
+                            Swal.showValidationMessage('Veuillez entrer un code valide (6 caractères)');
+                            return false;
+                        }
+                        return { code: code };
                     }
-                    return response.json();
-                })
-                .catch(error => {
-                    Swal.showValidationMessage(
-                        `Erreur: ${error}`
-                    );
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Vérifier le code
+                        verifyAndSubmitPayment(locataireId, result.value.code);
+                    }
                 });
-            },
-            allowOutsideClick: () => !Swal.isLoading()
-        }).then((result) => {
-            if (result.isConfirmed) {
-                if (result.value.success) {
-                    Swal.fire({
-                        title: 'Code généré',
-                        html: `Le code de vérification est: <strong>${result.value.code || result.value.message}</strong>`,
-                        icon: 'success',
-                        confirmButtonColor: '#02245b'
-                    });
-                } else {
-                    Swal.fire('Erreur', result.value.message || 'Erreur inconnue', 'error');
-                }
+            } else {
+                Swal.fire('Erreur', response.message, 'error');
             }
-        });
+        },
+        error: function(xhr) {
+            Swal.fire('Erreur', xhr.responseJSON?.message || 'Erreur lors de la génération du code', 'error');
+        },
+        complete: function() {
+            button.prop('disabled', false);
+            button.html('<i class="mdi mdi-cash"></i> Code Espèces');
+        }
     });
 });
+
+function verifyAndSubmitPayment(locataireId, code) {
+    Swal.fire({
+        title: 'Validation en cours',
+        html: 'Vérification du code...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    $.ajax({
+        url: "{{ route('paiements.verifyCashCode') }}",
+        type: 'POST',
+        data: { 
+            locataire_id: locataireId,
+            code: code 
+        },
+        success: function(response) {
+            if (response.success) {
+                Swal.fire({
+                    title: 'Paiement réussi',
+                    text: response.message,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    if (response.redirect_url) {
+                        window.location.href = response.redirect_url;
+                    }
+                });
+            } else {
+                Swal.fire('Erreur', response.message, 'error');
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = xhr.responseJSON?.message || 'Erreur lors du paiement';
+            Swal.fire('Erreur', errorMsg, 'error');
+        }
+    });
+}
+
+function submitCashPayment(locataireId, code) {
+    const form = $('<form>', {
+        'method': 'POST',
+        'action': "{{ route('locataire.paiements.store', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId)
+    }).append($('<input>', {
+        'type': 'hidden',
+        'name': '_token',
+        'value': '{{ csrf_token() }}'
+    })).append($('<input>', {
+        'type': 'hidden',
+        'name': 'methode_paiement',
+        'value': 'Espèces'
+    })).append($('<input>', {
+        'type': 'hidden',
+        'name': 'verif_espece',
+        'value': code
+    }));
+
+    $('body').append(form);
+    form.submit();
+}
 </script>
 
 @endsection

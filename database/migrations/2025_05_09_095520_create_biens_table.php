@@ -35,6 +35,7 @@ return new class extends Migration
             $table->string('image5')->nullable();
             $table->string('status')->default('Disponible');
             $table->foreignId('agence_id')->nullable()->constrained('agences')->onDelete('cascade');
+            $table->foreignId('proprietaire_id')->nullable()->constrained('proprietaires')->onDelete('cascade');
             $table->timestamps();
         });
     }

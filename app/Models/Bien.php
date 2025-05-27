@@ -25,18 +25,48 @@ class Bien extends Model
     ];
 
     public function agence()
-{
-    return $this->belongsTo(Agence::class);
-}
+    {
+        return $this->belongsTo(Agence::class);
+    }
     public function visites()
     {
         return $this->hasMany(Visite::class);
     }
 
     public function locataire()
-{
-    return $this->hasOne(Locataire::class);
-}
+    {
+        return $this->hasOne(Locataire::class);
+    }
+
+    public function proprietaire()
+    {
+        return $this->belongsTo(Proprietaire::class);
+    }
+
+    public function getImage1Attribute($value)
+    {
+        return $value ? asset('storage/' . $value) : null;
+    }
+
+    public function getImage2Attribute($value)
+    {
+        return $value ? asset('storage/' . $value) : null;
+    }
+
+    public function getImage3Attribute($value)
+    {
+        return $value ? asset('storage/' . $value) : null;
+    }
+
+    public function getImage4Attribute($value)
+    {
+        return $value ? asset('storage/' . $value) : null;
+    }
+
+    public function getImage5Attribute($value)
+    {
+        return $value ? asset('storage/' . $value) : null;
+    }
 
 public function getImages()
 {

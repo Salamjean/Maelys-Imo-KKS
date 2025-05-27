@@ -52,9 +52,9 @@
 <div class="col-lg-12 stretch-card">
     <div class="card">
       <div class="card-body">
-        <h4 class="card-title text-center">Comptable inscrire pour votre agence</h4>
+        <h4 class="card-title text-center">Propriétaire de bien inscrire dans votre agence</h4>
         <p class="card-description text-center">
-          Listes des comptables de votre agence
+          Listes des propriétaire de votre agence
         </p>
 
         <!-- Modal pour afficher les images -->
@@ -81,27 +81,25 @@
           <table class="table table-bordered table-hover">
             <thead style="background-color: #02245b; color: white;">
                 <tr class="text-center">
-                    <th>Nom du comptable</th>
+                    <th>Nom du propriétaire</th>
                     <th>Email</th>
                     <th>Lieu de résidence</th>
                     <th>Contact</th>
-                    <th>Date de naissance</th>
-                    <th>Rôle de l'agent</th>
+                    <th>Fonction</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($comptables as $comptable)
+                @forelse($proprietaires as $proprietaire)
                     <tr class="text-center pt-3" style="height: 30px">
-                        <td ><strong>{{ $comptable->name. ' '. $comptable->prenom }}</strong></td>
-                        <td>{{ $comptable->email }}</td>
-                        <td>{{ $comptable->commune }}</td>
-                        <td>{{ $comptable->contact }}</td>
-                        <td>{{ $comptable->date_naissance }}</td>
-                        <td>{{ $comptable->user_type }}</td>
+                        <td ><strong>{{ $proprietaire->name. ' '. $proprietaire->prenom }}</strong></td>
+                        <td>{{ $proprietaire->email }}</td>
+                        <td>{{ $proprietaire->commune }}</td>
+                        <td>{{ $proprietaire->contact }}</td>
+                        <td>{{ $proprietaire->fonction }}</td>
                         <td class="text-center">
                             <div class="btn-group " role="group" style="gap: 10px">
-                                <a href="{{ route('accounting.edit', $comptable) }}" class="btn btn-sm btn-warning" title="Modifier">
+                                <a href="{{ route('owner.edit', $proprietaire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                     <i class="mdi mdi-pencil"></i>
                                 </a>
                                 <form action="#" method="POST" class="d-inline">
@@ -126,24 +124,24 @@
             </tbody>
           </table>
           
-          @if($comptables->hasPages())
+          @if($proprietaires->hasPages())
 <div class="mt-4 d-flex justify-content-center">
     <nav aria-label="Page navigation">
         <ul class="pagination pagination-rounded">
             {{-- Previous Page Link --}}
-            @if ($comptables->onFirstPage())
+            @if ($proprietaires->onFirstPage())
                 <li class="page-item disabled">
                     <span class="page-link" aria-hidden="true">&laquo;</span>
                 </li>
             @else
                 <li class="page-item">
-                    <a class="page-link" href="{{ $comptables->previousPageUrl() }}" rel="prev" aria-label="Previous">&laquo;</a>
+                    <a class="page-link" href="{{ $proprietaires->previousPageUrl() }}" rel="prev" aria-label="Previous">&laquo;</a>
                 </li>
             @endif
 
             {{-- Pagination Elements --}}
-            @foreach ($comptables->getUrlRange(1, $comptables->lastPage()) as $page => $url)
-                @if ($page == $comptables->currentPage())
+            @foreach ($proprietaires->getUrlRange(1, $proprietaires->lastPage()) as $page => $url)
+                @if ($page == $proprietaires->currentPage())
                     <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
                 @else
                     <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
@@ -151,9 +149,9 @@
             @endforeach
 
             {{-- Next Page Link --}}
-            @if ($comptables->hasMorePages())
+            @if ($proprietaires->hasMorePages())
                 <li class="page-item">
-                    <a class="page-link" href="{{ $comptables->nextPageUrl() }}" rel="next" aria-label="Next">&raquo;</a>
+                    <a class="page-link" href="{{ $proprietaires->nextPageUrl() }}" rel="next" aria-label="Next">&raquo;</a>
                 </li>
             @else
                 <li class="page-item disabled">

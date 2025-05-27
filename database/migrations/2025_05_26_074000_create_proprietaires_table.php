@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('comptables', function (Blueprint $table) {
+        Schema::create('proprietaires', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('prenom');
             $table->string('email')->unique();
-            $table->string('commune');
             $table->string('password');
+            $table->string('commune');
             $table->string('contact');
-            $table->string('date_naissance');
-            $table->string('user_type');
-            $table->string('profile_image')->nullable();
+            $table->string('fonction')->nullable();
+            $table->string('profil_image')->nullable();
             $table->foreignId('agence_id')->nullable()->constrained('agences')->onDelete('cascade');
             $table->timestamps();
         });
@@ -32,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('comptables');
+        Schema::dropIfExists('proprietaires');
     }
 };

@@ -11,6 +11,23 @@
         </a>
       </li>
       <li class="nav-item sidebar-category">
+        <p>Proprietaire - Bien</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#ui-proprio" aria-expanded="false" aria-controls="ui-proprio">
+          <i class="mdi mdi-account menu-icon"></i>
+          <span class="menu-title">Propriétaire</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-proprio">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('owner.create') }}">Ajout d'un propriétaire</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('owner.index') }}">Liste des propriétaires</a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item sidebar-category">
         <p>Bien - immobilier</p>
         <span></span>
       </li>
@@ -58,13 +75,13 @@
       <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#compt" aria-expanded="false" aria-controls="compt">
           <i class="mdi mdi-account menu-icon"></i>
-          <span class="menu-title">Comptabilité</span>
+          <span class="menu-title">Agent</span>
           <i class="menu-arrow"></i>
         </a>
         <div class="collapse" id="compt">
           <ul class="nav flex-column sub-menu">
-            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.create') }}"> Ajout d'un comptable </a></li>
-            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.index') }}"> Liste des comptables </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.create') }}"> Ajout d'un agent </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.index') }}"> Liste des agents </a></li>
           </ul>
         </div>
       </li>

@@ -51,10 +51,6 @@
                 <div class="mb-4 " style="text-align: center;">
                     <label class="form-label fw-bold"><i class="fas fa-credit-card me-2"></i>  Méthode de paiement</label><br>
                     <select class="form-select form-select-lg py-3 w-full" name="methode_paiement" id="methodeSelect" required>
-                        <option value="">Sélectionnez une méthode...</option>
-                        <option value="Espèces" {{ old('methode_paiement') == 'Espèces' ? 'selected' : '' }}>
-                            <i class="fas fa-money-bill-wave me-2"></i> Espèces
-                        </option>
                         <option value="Mobile Money" {{ old('methode_paiement') == 'Mobile Money' ? 'selected' : '' }}>
                             <i class="fas fa-mobile-alt me-2"></i> Mobile Money
                         </option>

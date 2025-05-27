@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bien;
+use App\Models\Proprietaire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -30,11 +31,15 @@ class BienController extends Controller
 
     public function create()
     {
+
         return view('admin.bien.create');
     }
     public function createAgence()
     {
-        return view('agence.bien.create');
+        $proprietaires = Proprietaire::where('agence_id', Auth::guard('agence')->user()->id)
+                                ->orWhereNull('agence_id')
+                                ->get();
+        return view('agence.bien.create', compact('proprietaires'));
     }
 
 public function store(Request $request)
@@ -117,6 +122,7 @@ public function storeAgence(Request $request)
 {
     // Validation des données
     $validatedData = $request->validate([
+        'proprietaire_id' => 'nullable|exists:proprietaires,id',
         'type' => 'required|string',
         'description' => 'required|string',
         'superficie' => 'required|string',
@@ -136,12 +142,35 @@ public function storeAgence(Request $request)
         'additional_images3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         'additional_images4' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         'additional_images5' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+   ], [
+        'type.required' => 'Le champ type est obligatoire',
+        'description.required' => 'Le champ description est obligatoire',
+        'superficie.required' => 'Le champ superficie est obligatoire',
+        'prix.required' => 'Le champ prix est obligatoire',
+        'commune.required' => 'Le champ commune est obligatoire',
+        'disponibilite.required' => 'Le champ disponibilité est obligatoire',
+        'main_image.required' => 'L\'image principale est obligatoire',
+        'main_image.image' => 'L\'image principale doit être une image valide',
+        'main_image.mimes' => 'L\'image principale doit être au format jpeg, png, jpg ou gif',
+        'main_image.max' => 'L\'image principale ne doit pas dépasser 2 Mo',
+        'additional_images1.required' => 'La première image supplémentaire est obligatoire',
+        'additional_images1.image' => 'La première image supplémentaire doit être une image valide',
+        'additional_images1.mimes' => 'La première image supplémentaire doit être au format jpeg, png, jpg ou gif',
+        'additional_images1.max' => 'La première image supplémentaire ne doit pas dépasser 2 Mo',
+        'additional_images2.image' => 'La deuxième image supplémentaire doit être une image valide',
+        'additional_images2.mimes' => 'La deuxième image supplémentaire doit être au format jpeg, png, jpg ou gif',
+        'additional_images2.max' => 'La deuxième image supplémentaire ne doit pas dépasser 2 Mo',
+        'additional_images3.image' => 'La troisième image supplémentaire doit être une image valide',
+        'proprietaire_id.required' => 'Le champ propriétaire est obligatoire',
+        'proprietaire_id.required_unless' => 'Le champ propriétaire est obligatoire',
+        'proprietaire_id.exists' => 'Le propriétaire sélectionné est invalide'
     ]);
 
     // Création d'une nouvelle instance de Bien
     $bien = new Bien();
 
     // Assignation des propriétés obligatoires
+    $bien->proprietaire_id = $validatedData['proprietaire_id'];
     $bien->type = $validatedData['type'];
     $bien->description = $validatedData['description'];
     $bien->superficie = $validatedData['superficie'];

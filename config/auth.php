@@ -58,6 +58,10 @@ return [
             'driver' => 'session',
             'provider' => 'comptables',
         ],
+        'owner' => [
+            'driver' => 'session',
+            'provider' => 'owners',
+        ],
     ],
 
     /*
@@ -99,6 +103,10 @@ return [
         'comptables' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\Comptable::class),
+        ],
+        'owners' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Proprietaire::class),
         ],
 
         // 'users' => [

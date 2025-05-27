@@ -2,22 +2,25 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Comptable extends Authenticatable
+class Proprietaire extends Authenticatable
 {
+    protected $table = 'proprietaires';
     protected $fillable = [
         'name',
         'prenom',
         'email',
-        'commune',
         'password',
         'contact',
-        'date_naisance',
-        'user_type',
-        'profile_image',
+        'commune',
+        'fonction',
+        'profil_image',
     ];
+    public function biens()
+    {
+        return $this->hasMany(Bien::class);
+    }
     public function agence()
     {
         return $this->belongsTo(Agence::class);

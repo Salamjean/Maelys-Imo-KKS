@@ -1,12 +1,12 @@
 @extends('locataire.layouts.template')
 
 @section('content')
-<div class="container py-5">
-    <div class="row">
-        <div class="col-md-12">
+<div class="container py-5"  >
+    <div class="row ">
+        <div class="col-md-12" >
             <h2>Historique des Paiements</h2>
             
-            <div class="card">
+            <div class="card" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 100%;">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Mes paiements de loyer</span>
                     <a href="{{ route('locataire.paiements.create', $locataire->id) }}" class="btn" style="background-color: #ff5e14; color: white;">

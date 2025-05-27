@@ -71,7 +71,7 @@
 <div class="col-lg-12 stretch-card">
     <div class="card">
         <div class="card-body">
-            <h4 class="card-title text-center">Locataires actuels</h4>
+            <h4 class="card-title text-center">Locataires qui n'ont pas encore régler le loyer du mois en cours </h4>
             <p class="card-description text-center">
                 Listes des locations de votre agence
             </p>
@@ -139,10 +139,9 @@
                             <th>Contact</th>
                             <th>Profession</th>
                             <th>Adresse complète</th>
-                            <th>Pièce d'identité</th>
-                            <th>Attestation de travail</th>
+                            {{-- <th>Pièce d'identité</th>
+                            <th>Attestation de travail</th> --}}
                             <th>Statut</th>
-                            <th>Contrat</th>
                             <th>Paiement</th>
                         </tr>
                     </thead>
@@ -157,7 +156,7 @@
                                 <td>{{ $locataire->contact }}</td>
                                 <td>{{ $locataire->profession }}</td>
                                 <td>{{ $locataire->adresse }}</td>
-                                <td>
+                                {{-- <td>
                                     @if($locataire->piece)
                                         <button class="btn btn-sm btn-info preview-image"
                                                 data-image="{{ asset('storage/'.$locataire->piece) }}"
@@ -178,7 +177,7 @@
                                     @else
                                         <span class="text-muted">Non fournie</span>
                                     @endif
-                                </td>
+                                </td> --}}
                                 
                                 <td>
                                     @if($locataire->status == 'Actif')
@@ -189,7 +188,7 @@
                                         <span class="badge bg-warning text-dark">Pas sérieux</span>
                                     @endif
                                 </td>
-                                <td>
+                                {{-- <td>
                                     @if($locataire->contrat)
                                         <div class="btn-group d-flex gap-2" role="group">
                                             <!-- Bouton Voir -->
@@ -210,7 +209,7 @@
                                     @else
                                         <span class="text-muted">Aucun contrat</span>
                                     @endif
-                                </td>
+                                </td> --}}
                                 {{-- <td class="text-center ">
                                     <div class="btn-group gap-2" role="group">
                                         <a href="{{ route('locataire.edit', $locataire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
