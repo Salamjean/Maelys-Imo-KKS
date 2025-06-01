@@ -11,13 +11,13 @@
         </a>
       </li>
       <li class="nav-item sidebar-category">
-        <p>Locataire</p>
+        <p>Biens</p>
         <span></span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">
+        <a class="nav-link" href="{{ route('owner.bienList') }}">
           <i class="mdi mdi-account-card-details menu-icon"></i>
-          <span class="menu-title">Listes de locataires</span>
+          <span class="menu-title">Listes de mes biens</span>
         </a>
       </li>
       {{-- <li class="nav-item">

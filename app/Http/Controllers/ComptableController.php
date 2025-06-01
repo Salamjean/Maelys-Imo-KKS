@@ -383,4 +383,6 @@ class ComptableController extends Controller
         });
         return view('comptable.locataire.paiement',compact('locataires'));
     }
+
+    
 }

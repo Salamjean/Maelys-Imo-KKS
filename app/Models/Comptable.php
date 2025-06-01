@@ -22,4 +22,33 @@ class Comptable extends Authenticatable
     {
         return $this->belongsTo(Agence::class);
     }
+
+    public function paiements()
+    {
+        return $this->hasMany(Paiement::class);
+    }
+
+    // Relation : Versements effectués par un agent (pour dashboard agent)
+    public function versementsEnvoyes()
+    {
+        return $this->hasMany(Versement::class, 'agent_id');
+    }
+
+    // Relation : Versements reçus par un comptable (pour dashboard comptable)
+    public function versementsRecus()
+    {
+        return $this->hasMany(Versement::class, 'comptable_id');
+    }
+
+    // Vérifie si l'utilisateur est un comptable
+    public function isComptable()
+    {
+        return $this->user_type === 'Comptable';
+    }
+
+    // Vérifie si l'utilisateur est un agent
+    public function isAgent()
+    {
+        return $this->user_type === 'Agent de recouvrement';
+    }
 }

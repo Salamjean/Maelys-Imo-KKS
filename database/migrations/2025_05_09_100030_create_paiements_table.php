@@ -24,6 +24,7 @@ return new class extends Migration
             // Clés étrangères
             $table->foreignId('locataire_id')->constrained()->onDelete('cascade');
             $table->foreignId('bien_id')->constrained()->onDelete('cascade');
+            $table->foreignId('comptable_id')->nullable()->constrained('comptables')->onDelete('cascade');
             
             $table->timestamps();
         });

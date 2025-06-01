@@ -12,6 +12,7 @@ use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\LocataireController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProprietaireController;
+use App\Http\Controllers\VersementController;
 use App\Http\Controllers\VisiteController;
 use App\Models\Bien;
 use Illuminate\Support\Facades\Route;
@@ -155,8 +156,9 @@ Route::prefix('locataire/{locataire}/paiements')->group(function() {
     Route::post('/', [PaymentController::class, 'store'])->name('locataire.paiements.store');
 });
 
-Route::post('/paiements/verify-cash-code', [PaymentController::class, 'verifyCashCode'])
-    ->name('paiements.verifyCashCode');
+Route::post('/paiements/verify-cash-code', [PaymentController::class, 'verifyCashCode'])->name('paiements.verifyCashCode');
+Route::post('/paiements/verify-cash-code/comptable', [PaymentController::class, 'verifyCashCodeComptable'])->name('paiements.verifyCashCodeComptable');
+Route::post('/paiements/verify-cash-code/agent', [PaymentController::class, 'verifyCashCodeAgent'])->name('paiements.verifyCashCodeAgent');
     
 // Routes pour la gestion des locataires
 Route::middleware('auth:locataire')->prefix('locataire')->group(function () {
@@ -173,13 +175,19 @@ Route::middleware('auth:comptable')->prefix('accounting')->group(function () {
     Route::get('/logout',[ComptableController::class, 'logout'])->name('accounting.logout');
     Route::get('/listes/tenant',[ComptableController::class,'tenant'])->name('accounting.tenant');
     Route::get('/rappel/payment',[ComptableController::class,'payment'])->name('accounting.payment');
+    Route::get('/paid',[VersementController::class,'paid'])->name('accounting.paid');
+    Route::post('/versements', [VersementController::class, 'store'])->name('versement.store');
     Route::get('/agent/dashboard',[AgentRecouvrementController::class,'dashboard'])->name('accounting.agent.dashboard');
     Route::get('/agent/rappel/payment',[AgentRecouvrementController::class,'payment'])->name('accounting.agent.payment');
     Route::get('/agent/listes/tenant',[AgentRecouvrementController::class,'tenant'])->name('accounting.agent.tenant');
+    Route::get('/agent/paid',[AgentRecouvrementController::class,'paid'])->name('accounting.agent.paid');
+    Route::get('/agent/history',[AgentRecouvrementController::class,'history'])->name('accounting.agent.history');
+    Route::get('/locataires/{locataire}/generate-code', [AgentRecouvrementController::class, 'showGenerateCodePage'])->name('locataires.generateCodePage');
 });
 // Routes pour la gestion des propriétaires
 Route::middleware('auth:owner')->prefix('owner')->group(function () {
     Route::get('/dashboard',[ProprietaireController::class,'dashboard'])->name('owner.dashboard');
+    Route::get('/biens/list',[ProprietaireController::class,'bienList'])->name('owner.bienList');
     Route::get('/logout',[ProprietaireController::class, 'logout'])->name('owner.logout');
     Route::get('/profile/edit', [ProprietaireController::class, 'editProfile'])->name('owner.edit.profile');
     Route::put('/profile/edit', [ProprietaireController::class, 'updateProfile'])->name('owner.update.profile');

@@ -9,7 +9,7 @@ class Paiement extends Model
     protected $fillable = [
         'montant', 'date_paiement', 'mois_couvert',
         'methode_paiement', 'verif_espece', 'transaction_id', 'statut',
-        'locataire_id', 'bien_id', 'contrat_id'
+        'locataire_id', 'bien_id','comptable_id', 'contrat_id'
     ];
 
     public function locataire()
@@ -25,5 +25,9 @@ class Paiement extends Model
     public function contrat()
     {
         return $this->belongsTo(Contrat::class);
+    }
+    public function comptable()
+    {
+        return $this->belongsTo(Comptable::class);
     }
 }

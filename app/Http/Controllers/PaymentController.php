@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class PaymentController extends Controller
@@ -145,6 +146,7 @@ class PaymentController extends Controller
         'statut' => $request->methode_paiement === 'Espèces' ? 'payé' : 'En attente',
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
+        'comptable_id' => Auth('comptable')->id, // Assurez-vous que l'agent comptable est authentifié
     ];
 
     // Ajout conditionnel du code de vérification
@@ -390,6 +392,7 @@ public function verifyCashCode(Request $request)
         'statut' => 'payé',
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
+        'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
         'verif_espece' => $request->code
     ]);
 
@@ -405,6 +408,150 @@ public function verifyCashCode(Request $request)
         'success' => true,
         'message' => 'Paiement enregistré avec succès pour ' . $moisAPayer->translatedFormat('F Y'),
         'redirect_url' => route('locataire.index', $locataire->id)
+    ]);
+}
+public function verifyCashCodeComptable(Request $request)
+{
+    $request->validate([
+        'locataire_id' => 'required|exists:locataires,id',
+        'code' => 'required|string|size:6'
+    ]);
+
+    $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+
+    // Vérifier le code
+    $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
+        ->where('code', $request->code)
+        ->where('expires_at', '>', now())
+        ->first();
+
+    if (!$codeValide) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Code invalide ou expiré'
+        ], 400);
+    }
+
+    // Déterminer le mois à payer
+    $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
+        ->where('statut', 'payé')
+        ->orderBy('mois_couvert', 'desc')
+        ->first();
+
+    $moisAPayer = $dernierPaiement 
+        ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
+        : now();
+
+    // Vérifier si le mois n'a pas déjà été payé
+    $paiementExistant = Paiement::where('locataire_id', $locataire->id)
+        ->where('mois_couvert', $moisAPayer->format('Y-m'))
+        ->where('statut', 'payé')
+        ->exists();
+
+    if ($paiementExistant) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Le loyer pour ce mois a déjà été payé'
+        ], 400);
+    }
+
+    // Enregistrement du paiement
+    $paiement = Paiement::create([
+        'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
+        'date_paiement' => now(),
+        'mois_couvert' => $moisAPayer->format('Y-m'),
+        'methode_paiement' => 'Espèces',
+        'statut' => 'payé',
+        'locataire_id' => $locataire->id,
+        'bien_id' => $locataire->bien_id,
+        'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
+        'verif_espece' => $request->code
+    ]);
+
+    // Supprimer le code utilisé
+    $codeValide->delete();
+
+    // Réinitialiser le montant majoré si nécessaire
+    if ($locataire->bien->montant_majore) {
+        $locataire->bien->update(['montant_majore' => null]);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Paiement enregistré avec succès pour ' . $moisAPayer->translatedFormat('F Y'),
+        'redirect_url' => route('accounting.payment', $locataire->id)
+    ]);
+}
+public function verifyCashCodeAgent(Request $request)
+{
+    $request->validate([
+        'locataire_id' => 'required|exists:locataires,id',
+        'code' => 'required|string|size:6'
+    ]);
+
+    $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+
+    // Vérifier le code
+    $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
+        ->where('code', $request->code)
+        ->where('expires_at', '>', now())
+        ->first();
+
+    if (!$codeValide) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Code invalide ou expiré'
+        ], 400);
+    }
+
+    // Déterminer le mois à payer
+    $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
+        ->where('statut', 'payé')
+        ->orderBy('mois_couvert', 'desc')
+        ->first();
+
+    $moisAPayer = $dernierPaiement 
+        ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
+        : now();
+
+    // Vérifier si le mois n'a pas déjà été payé
+    $paiementExistant = Paiement::where('locataire_id', $locataire->id)
+        ->where('mois_couvert', $moisAPayer->format('Y-m'))
+        ->where('statut', 'payé')
+        ->exists();
+
+    if ($paiementExistant) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Le loyer pour ce mois a déjà été payé'
+        ], 400);
+    }
+
+    // Enregistrement du paiement
+    $paiement = Paiement::create([
+        'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
+        'date_paiement' => now(),
+        'mois_couvert' => $moisAPayer->format('Y-m'),
+        'methode_paiement' => 'Espèces',
+        'statut' => 'payé',
+        'locataire_id' => $locataire->id,
+        'bien_id' => $locataire->bien_id,
+        'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
+        'verif_espece' => $request->code
+    ]);
+
+    // Supprimer le code utilisé
+    $codeValide->delete();
+
+    // Réinitialiser le montant majoré si nécessaire
+    if ($locataire->bien->montant_majore) {
+        $locataire->bien->update(['montant_majore' => null]);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Paiement enregistré avec succès pour ' . $moisAPayer->translatedFormat('F Y'),
+        'redirect_url' => route('accounting.agent.paid')
     ]);
 }
 

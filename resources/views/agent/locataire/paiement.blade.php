@@ -238,16 +238,22 @@
                                                 data-locataire-id="{{ $locataire->id }}"
                                                 data-locataire-email="{{ $locataire->email }}"
                                                 title="Envoyer un rappel de paiement">
-                                            <i class="mdi mdi-email-open"></i> Rappel paiement
+                                                <i class="mdi mdi-email-open"></i> Rappel paiement
                                         </button>
                                     @endif
 
-                                    <button class="btn btn-sm btn-success generate-cash-code"
-                                        data-locataire-id="{{ $locataire->id }}"
-                                        title="Générer un code pour paiement en espèces">
-                                    <i class="mdi mdi-cash"></i> Code Espèces
-                                    </button>
-                        </td>
+                                        <button class="btn btn-sm btn-success generate-cash-code"
+                                                data-locataire-id="{{ $locataire->id }}"
+                                                title="Générer un code pour paiement en espèces">
+                                                <i class="mdi mdi-cash"></i> Code Espèces
+                                        </button>
+
+                                        <button class="btn btn-sm btn-warning verify-cash-code"
+                                            data-locataire-id="{{ $locataire->id }}"
+                                            title="Saisir le code de vérification">
+                                            <i class="mdi mdi-key"></i>
+                                        </button>
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -613,6 +619,81 @@ function submitCashPayment(locataireId, code) {
 
     $('body').append(form);
     form.submit();
+}
+
+// Gestion du nouveau bouton de vérification
+$('body').on('click', '.verify-cash-code', function() {
+    const locataireId = $(this).data('locataire-id');
+    
+    Swal.fire({
+        title: 'Validation du paiement en espèces',
+        html: `
+            <div class="mb-3 mt-3">
+                <label for="cashVerificationCode" class="form-label">
+                    Entrez le code reçu par le locataire :
+                </label>
+                <input type="text" class="form-control" id="cashVerificationCode" 
+                       placeholder="Code à 6 caractères" maxlength="6">
+            </div>
+        `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Valider le paiement',
+        cancelButtonText: 'Annuler',
+        preConfirm: () => {
+            const code = $('#cashVerificationCode').val().trim();
+            if (!code || code.length !== 6) {
+                Swal.showValidationMessage('Veuillez entrer un code valide (6 caractères)');
+                return false;
+            }
+            return { code: code };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            verifyAndSubmitPayment(locataireId, result.value.code);
+        }
+    });
+});
+
+// Fonction pour vérifier et soumettre le paiement (existante)
+function verifyAndSubmitPayment(locataireId, code) {
+    Swal.fire({
+        title: 'Validation en cours',
+        html: 'Vérification du code...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    $.ajax({
+        url: "{{ route('paiements.verifyCashCode') }}",
+        type: 'POST',
+        data: { 
+            locataire_id: locataireId,
+            code: code 
+        },
+        success: function(response) {
+            if (response.success) {
+                Swal.fire({
+                    title: 'Paiement réussi',
+                    text: response.message,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    if (response.redirect_url) {
+                        window.location.href = response.redirect_url;
+                    }
+                });
+            } else {
+                Swal.fire('Erreur', response.message, 'error');
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = xhr.responseJSON?.message || 'Erreur lors du paiement';
+            Swal.fire('Erreur', errorMsg, 'error');
+        }
+    });
 }
 </script>
 

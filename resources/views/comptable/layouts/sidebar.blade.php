@@ -4,6 +4,7 @@
         <p>Agent : {{ Auth::guard('comptable')->user()->name }} {{ Auth::guard('comptable')->user()->prenom }}</p>
         <span></span>
       </li>
+     
       @php
           $user = Auth::guard('comptable')->user();
           $dashboardRoute = route('accounting.dashboard'); // par défaut
@@ -21,7 +22,54 @@
               <span class="menu-title">Tableau de bord</span>
           </a>
       </li>
+      <li class="nav-item sidebar-category">
+        <p>Paiement</p>
+        <span></span>
+      </li>
+      @if(auth()->user()->user_type == 'Agent de recouvrement')
+        <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#compt" aria-expanded="false" aria-controls="compt">
+          <i class="mdi mdi-cash-multiple menu-icon"></i>
+          <span class="menu-title">Valider un paiement</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="compt">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.agent.paid') }}"> Valider un paiement </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.agent.history') }}"> Historiques </a></li>
+          </ul>
+        </div>
+      </li>
+        @endif
 
+         @php
+            $user = Auth::guard('comptable')->user();
+        @endphp
+
+        @if($user->user_type === 'Comptable')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('accounting.paid') }}">
+                    <i class="mdi mdi-cash-multiple menu-icon"></i>
+                    <span class="menu-title">Versement</span>
+                </a>
+            </li>
+        @endif
+
+
+      @php
+            $user = Auth::guard('comptable')->user();
+        @endphp
+
+        @if($user->user_type === 'Comptable')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('accounting.payment') }}">
+                    <i class="mdi mdi-cash-multiple menu-icon"></i>
+                    <span class="menu-title">Rappel de paiement</span>
+                </a>
+            </li>
+        @endif
+
+      
       <li class="nav-item sidebar-category">
         <p>Locataire</p>
         <span></span>
@@ -48,24 +96,6 @@
           <span class="menu-title">Liste des visites</span>
         </a>
       </li> --}}
-      <li class="nav-item sidebar-category">
-        <p>Paiement</p>
-        <span></span>
-      </li>
-      @php
-          $user = Auth::guard('comptable')->user();
-          $paymentRoute = route('accounting.payment'); // route par défaut
-
-          if ($user->user_type === 'Agent de recouvrement') {
-              $paymentRoute = route('accounting.agent.payment');
-          }
-      @endphp
-
-      <li class="nav-item">
-          <a class="nav-link" href="{{ $paymentRoute }}">
-              <i class="mdi mdi-cash-multiple menu-icon"></i>
-              <span class="menu-title">Rappel de paiement</span>
-          </a>
-      </li>
+      
     </ul>
   </nav>

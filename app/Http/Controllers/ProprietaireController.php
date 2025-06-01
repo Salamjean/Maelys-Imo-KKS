@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bien;
 use App\Models\Proprietaire;
 use App\Models\ResetCodePasswordProprietaire;
 use App\Notifications\SendEmailToOwnerAfterRegistrationNotification;
@@ -17,7 +18,49 @@ class ProprietaireController extends Controller
 {
     public function dashboard()
     {
-        return view('proprietaire.dashboard');
+        // Vérifier si l'utilisateur est connecté en tant que propriétaire
+        $proprietaireId = Auth::guard('owner')->user()->id;
+        
+        $totalBiens = Bien::where('proprietaire_id', $proprietaireId)->count();
+        $cumulLoyers = Bien::where('proprietaire_id', $proprietaireId)->sum('prix');
+        
+        $biensDisponibles = Bien::where('proprietaire_id', $proprietaireId)
+                            ->where('status', 'Disponible')
+                            ->count();
+        
+        $biensOccupes = Bien::where('proprietaire_id', $proprietaireId)
+                        ->where('status', 'Loué')
+                        ->count();
+        
+        $pourcentageDisponibles = $totalBiens > 0 ? round(($biensDisponibles / $totalBiens) * 100) : 0;
+        $pourcentageOccupes = $totalBiens > 0 ? round(($biensOccupes / $totalBiens) * 100) : 0;
+
+        // Récupérer les 5 derniers biens ajoutés
+        $derniersBiens = Bien::where('proprietaire_id', $proprietaireId)
+                            ->latest()
+                            ->take(5)
+                            ->get();
+
+        return view('proprietaire.dashboard', compact(
+            'totalBiens',
+            'cumulLoyers',
+            'biensDisponibles',
+            'biensOccupes',
+            'pourcentageDisponibles',
+            'pourcentageOccupes',
+            'derniersBiens'
+        ));
+    }
+
+    public function bienList()
+    {
+        // Vérifier si l'utilisateur est connecté en tant que propriétaire
+        $proprietaireId = Auth::guard('owner')->user()->id;
+        
+        // Récupérer les biens du propriétaire connecté
+        $biens = Bien::where('proprietaire_id', $proprietaireId)->paginate(6);
+        
+        return view('proprietaire.bien.index', compact('biens'));
     }
 
     public function index(){
