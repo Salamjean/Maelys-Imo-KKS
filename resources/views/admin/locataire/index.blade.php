@@ -222,13 +222,13 @@
                                                 title="Changer statut">
                                             <i class="mdi mdi-account-convert"></i>
                                         </button>
-                                        <form action="#" method="POST" class="d-inline">
+                                        {{-- <form action="#" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-danger delete-btn" title="Supprimer">
                                                 <i class="mdi mdi-delete"></i>
                                             </button>
-                                        </form>
+                                        </form> --}}
                                     </div>
                                 </td>
                                 

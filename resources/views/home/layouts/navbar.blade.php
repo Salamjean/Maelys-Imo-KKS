@@ -51,6 +51,15 @@
              </div>
          </div>
      </div>
-     <a href="#" class="btn btn-primary font-bold px-3 d-none d-lg-block">Contact</a>
+     <div class="d-flex align-items-center">
+        <!-- Menu déroulant -->
+        <select class="btn btn-primary font-bold px-3 d-none d-lg-block text-white" style="width: auto;" onchange="window.location.href=this.value">
+            <option value="" selected disabled style="font-weight: bold">Se connecter</option>
+            <option value="{{ route('agence.login') }}">Agence</option>
+            <option value="{{ route('owner.login') }}">Propriétaire</option>
+            <option value="{{ route('locataire.login') }}">Locataire</option>
+            <option value="{{ route('comptable.login') }}">Agent</option>
+        </select>
+    </div>
  </div>
 </nav>

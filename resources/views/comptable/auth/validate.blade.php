@@ -17,7 +17,7 @@
     <div class="uf-form-signin">
       <div class="text-center">
         <a href="#"><img src="{{ asset('login/assets/img/logo-fb.png') }}" alt="" width="100" height="100"></a>
-      <h1 class="text-white h3">Definir - accès - comptable</h1>
+      <h1 class="text-white h3">Definir - accès - Agent</h1>
       </div>
       <form class="mt-4" action="{{ route('accounting.validate', $email) }}" method="POST" id="registerForm">
         @csrf
