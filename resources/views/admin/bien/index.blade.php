@@ -113,7 +113,7 @@
                     @endphp
                     
                     <tr class="{{ $rowClass }} text-center pt-3" style="height: 30px">
-                        <td ><strong>{{ $bien->agence->name ?? 'Maelys-Imo' }}</strong></td>
+                        <td ><strong>{{ $bien->proprietaire->name .' '.$bien->proprietaire->prenom ?? 'Maelys-Imo' }}</strong></td>
                         <td ><strong>{{ $bien->type }}</strong></td>
                         <td>{{ $bien->superficie }}</td>
                         <td>{{ $bien->commune }}</td>
