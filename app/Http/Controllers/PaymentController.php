@@ -392,7 +392,6 @@ public function verifyCashCode(Request $request)
         'statut' => 'payé',
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
-        'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
         'verif_espece' => $request->code
     ]);
 

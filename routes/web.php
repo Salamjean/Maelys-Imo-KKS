@@ -91,7 +91,25 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
             Route::post('/visites/{visite}/update-date', [VisiteController::class, 'updateDateAdmin'])->name('visites.updateDate.admin');
             Route::get('/visites/list',[VisiteController::class, 'allVisit'])->name('visit.list');
         });
+
+    //routes de gestion des comptables par l'administrateur
+    Route::prefix('accounting')->group(function(){
+        Route::get('/',[ComptableController::class,'indexAdmin'])->name('accounting.index.admin');
+        Route::get('/accountingcreate',[ComptableController::class,'createAdmin'])->name('accounting.create.admin');
+        Route::post('/create',[ComptableController::class,'storeAdmin'])->name('accounting.store.admin');
+        Route::get('/edit/{comptable}',[ComptableController::class,'editAdmin'])->name('accounting.edit.admin');
+        Route::put('/{id}', [ComptableController::class, 'updateAdmin'])->name('accounting.update.admin');
     });
+
+    //routes de gestion des propriétaires par l'administrateur
+    Route::prefix('owner')->group(function(){
+        Route::get('/',[ProprietaireController::class,'indexAdmin'])->name('owner.index.admin');
+        Route::get('/ownercreate',[ProprietaireController::class,'createAdmin'])->name('owner.create.admin');
+        Route::post('/create',[ProprietaireController::class,'storeAdmin'])->name('owner.store.admin');
+        Route::get('/edit/{proprietaire}',[ProprietaireController::class,'editAdmin'])->name('owner.edit.admin');
+        Route::put('/{id}', [ProprietaireController::class, 'updateAdmin'])->name('owner.update.admin');
+    });
+});
    
 //routes de gestion des agences
 Route::middleware('auth:agence')->prefix('agence')->group(function () {

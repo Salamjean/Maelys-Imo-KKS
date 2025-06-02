@@ -11,6 +11,36 @@
         </a>
       </li>
       <li class="nav-item sidebar-category">
+        <p>Partenariat</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#ui-proprio" aria-expanded="false" aria-controls="ui-proprio">
+          <i class="mdi mdi-account menu-icon"></i>
+          <span class="menu-title">Propriétaire</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-proprio">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('owner.create.admin') }}">Ajout d'un propriétaire</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('owner.index.admin') }}">Liste des propriétaires</a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">
+          <i class="mdi mdi-home menu-icon"></i>
+          <span class="menu-title">Agence</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="auth">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('agence.create') }}"> Ajout d'une agence </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('agence.index') }}"> Liste des agences </a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item sidebar-category">
         <p>Bien - immobilier</p>
         <span></span>
       </li>
@@ -46,20 +76,21 @@
           </ul>
         </div>
       </li>
+      
       <li class="nav-item sidebar-category">
-        <p>Partenariat</p>
+        <p>Comptabilité</p>
         <span></span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">
-          <i class="mdi mdi-home menu-icon"></i>
-          <span class="menu-title">Agence</span>
+        <a class="nav-link" data-toggle="collapse" href="#compt" aria-expanded="false" aria-controls="compt">
+          <i class="mdi mdi-account menu-icon"></i>
+          <span class="menu-title">Agent</span>
           <i class="menu-arrow"></i>
         </a>
-        <div class="collapse" id="auth">
+        <div class="collapse" id="compt">
           <ul class="nav flex-column sub-menu">
-            <li class="nav-item"> <a class="nav-link" href="{{ route('agence.create') }}"> Ajout d'une agence </a></li>
-            <li class="nav-item"> <a class="nav-link" href="{{ route('agence.index') }}"> Liste des agences </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.create.admin') }}"> Ajout d'un agent </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.index.admin') }}"> Liste des agents </a></li>
           </ul>
         </div>
       </li>

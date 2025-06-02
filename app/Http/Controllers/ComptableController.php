@@ -384,5 +384,154 @@ class ComptableController extends Controller
         return view('comptable.locataire.paiement',compact('locataires'));
     }
 
+
+
+
+    // les fonctions de gestions des comptables par l'administrateur 
+
+    public function indexAdmin(){
+        $agenceId = Auth::guard('admin')->user()->id;
+        $comptables = Comptable::whereNull('agence_id')->paginate(6);
+        return view('admin.comptable.index', compact('comptables'));
+    }
+
+    public function createAdmin(){
+        return view('admin.comptable.create');
+    }
+
+    public function storeAdmin(Request $request)
+    {
+        // Validation des données
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'email' => 'required|email|unique:comptables,email',
+            'contact' => 'required|string|min:10',
+            'commune' => 'required|string|max:255',
+            'user_type' =>'required',
+            'date_naissance' => 'required|max:255',
+        ],[
+            'name.required' => 'Le nom du comptable est obligatoire.',
+            'prenom.required' => 'Le prénom du comptable est obligatoire.',
+            'email.required' => 'L\'adresse e-mail est obligatoire.',
+            'email.email' => 'L\'adresse e-mail n\'est pas valide.',
+            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+            'contact.required' => 'Le contact est obligatoire.',
+            'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
+            'commune.required' => 'Lieu de residence est obligatoire.',
+            'date_naissance.required' => 'La date de naissance est obligatoire.',
+            'user_type.required' => 'Le type d\'agent est obligatoire'
+        ]);
     
+        try {
+            $agenceId = Auth::guard('admin')->user()->id;
+            // Traitement de l'image de profil
+            $profileImagePath = null;
+            if ($request->hasFile('profile_image')) {
+                $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+            }
+    
+            // Création de l'agence
+            $comptable = new Comptable();
+            $comptable->name = $request->name;
+            $comptable->prenom = $request->prenom;
+            $comptable->email = $request->email;
+            $comptable->contact = $request->contact;
+            $comptable->commune = $request->commune;
+            $comptable->date_naissance = $request->date_naissance;
+            $comptable->password = Hash::make('password');
+            $comptable->user_type = $request->user_type;
+            $comptable->profile_image = $profileImagePath;
+            $comptable->save();
+    
+            // Envoi de l'e-mail de vérification
+            ResetCodePasswordComptable::where('email', $comptable->email)->delete();
+            $code = rand(1000, 4000);
+            ResetCodePasswordComptable::create([
+                'code' => $code,
+                'email' => $comptable->email,
+            ]);
+
+            Notification::route('mail', $comptable->email)
+                ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email));
+        
+            return redirect()->route('accounting.index.admin')
+                ->with('success', 'Agent enregistrée avec succès.');
+    
+        } catch (\Exception $e) {
+            Log::error('Error creating Agent: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
+        }
+    }
+
+    public function editAdmin($id)
+    {
+        $comptable = Comptable::findOrFail($id);
+        return view('admin.comptable.edit', compact('comptable'));
+    }
+
+     public function updateAdmin(Request $request, $id)
+    {
+        $comptable = Comptable::findOrFail($id);
+
+        // Validation des données
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'email' => 'required|email|unique:comptables,email,'.$comptable->id,
+            'contact' => 'required|string|min:10',
+            'commune' => 'required|string|max:255',
+            'date_naissance' => 'required|date',
+            'user_type' => 'required',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ],[
+            'name.required' => 'Le nom du comptable est obligatoire.',
+            'prenom.required' => 'Le prénom du comptable est obligatoire.',
+            'email.required' => 'L\'adresse e-mail est obligatoire.',
+            'email.email' => 'L\'adresse e-mail n\'est pas valide.',
+            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+            'contact.required' => 'Le contact est obligatoire.',
+            'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
+            'commune.required' => 'La commune est obligatoire.',
+            'date_naissance.required' => 'La date de naissance est obligatoire.',
+            'date_naissance.date' => 'La date de naissance doit être une date valide.',
+            'profile_image.image' => 'Le fichier doit être une image.',
+            'profile_image.mimes' => 'L\'image doit être de type: jpeg, png, jpg ou gif.',
+            'profile_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
+            'user_type.required' => 'Le type d\'agent est obligatoire'
+        ]);
+
+        try {
+            // Traitement de l'image de profil
+            if ($request->hasFile('profile_image')) {
+                // Supprimer l'ancienne image si elle existe
+                if ($comptable->profile_image) {
+                    Storage::disk('public')->delete($comptable->profile_image);
+                }
+                $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+                $validatedData['profile_image'] = $profileImagePath;
+            }
+
+            // Mise à jour des informations
+            $comptable->update([
+                'name' => $validatedData['name'],
+                'prenom' => $validatedData['prenom'],
+                'email' => $validatedData['email'],
+                'contact' => $validatedData['contact'],
+                'commune' => $validatedData['commune'],
+                'date_naissance' => $validatedData['date_naissance'],
+                'user_type' => $validatedData['user_type'],
+                'profile_image' => $validatedData['profile_image'] ?? $comptable->profile_image
+            ]);
+
+            return redirect()->route('accounting.index.admin')
+                ->with('success', 'Agent mis à jour avec succès.');
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la mise à jour du comptable: ' . $e->getMessage());
+            return back()
+                ->with('error', 'Une erreur est survenue lors de la mise à jour. Veuillez réessayer.')
+                ->withInput();
+        }
+    }
 }

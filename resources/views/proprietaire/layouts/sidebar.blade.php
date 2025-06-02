@@ -26,7 +26,7 @@
           <span class="menu-title">Liste des visites</span>
         </a>
       </li> --}}
-      <li class="nav-item sidebar-category">
+      {{-- <li class="nav-item sidebar-category">
         <p>Paiement</p>
         <span></span>
       </li>
@@ -35,6 +35,6 @@
           <i class="mdi mdi-cash-multiple menu-icon"></i>
           <span class="menu-title">Rappel de paiement</span>
         </a>
-      </li>
+      </li> --}}
     </ul>
   </nav>

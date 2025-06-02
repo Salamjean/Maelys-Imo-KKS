@@ -6,7 +6,17 @@
   <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Comptable-Dashboard</title>
+  <title>
+        @php
+            $user = Auth::guard('comptable')->user();
+        @endphp
+
+        @if($user->user_type === 'Comptable')
+          Espace Comptable
+        @elseif($user->user_type === 'Agent de recouvrement')
+          Espace Agent de recouvrement
+        @endif
+  </title>
   <!-- base:css -->
   <link rel="stylesheet" href="{{asset('assets/vendors/mdi/css/materialdesignicons.min.css')}}">
   <link rel="stylesheet" href="{{asset('assets/vendors/css/vendor.bundle.base.css')}}">

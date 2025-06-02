@@ -785,46 +785,47 @@ public function submitDefineAccess(Request $request)
      }
 
      public function authenticate(Request $request)
-{
-    // Validation des champs du formulaire
-    $request->validate([
-        'email' => 'required|exists:locataires,email',
-        'password' => 'required|min:8',
-    ], [
-        'email.required' => 'Le mail est obligatoire.',
-        'email.exists' => 'Cette adresse mail n\'existe pas.',
-        'password.required' => 'Le mot de passe est obligatoire.',
-        'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
-    ]);
+    {
+        // Validation des champs du formulaire
+        $request->validate([
+            'email' => 'required|exists:locataires,email',
+            'password' => 'required|min:8',
+        ], [
+            'email.required' => 'Le mail est obligatoire.',
+            'email.exists' => 'Cette adresse mail n\'existe pas.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
+        ]);
 
-    try {
-        // Récupérer le locataire avant tentative de connexion
-        $locataire = Locataire::where('email', $request->email)->first();
+        try {
+            
+            // Récupérer le locataire avant tentative de connexion
+            $locataire = Locataire::where('email', $request->email)->first();
 
-        // Vérifier le statut du locataire
-        if ($locataire && in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
-            return back()->withInput()->with('account_error', [
-                'title' => 'Compte désactivé',
-                'message' => 'Votre compte est désactivé. Veuillez contacter votre agence',
-                'status' => $locataire->status
-            ]);
-        }
+            // Vérifier le statut du locataire
+            if ($locataire && in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
+                return back()->withInput()->with('account_error', [
+                    'title' => 'Compte désactivé',
+                    'message' => 'Votre compte est désactivé. Veuillez contacter votre agence',
+                    'status' => $locataire->status
+                ]);
+            }
 
-        // Tentative d'authentification
-        if(auth('locataire')->attempt($request->only('email', 'password'))) {
-            return redirect()->route('locataire.dashboard')->with('success', 'Bienvenue sur votre page');
-        } else {
+            // Tentative d'authentification
+            if(auth('locataire')->attempt($request->only('email', 'password'))) {
+                return redirect()->route('locataire.dashboard')->with('success', 'Bienvenue sur votre page');
+            } else {
+                return redirect()->back()
+                    ->withInput($request->only('email'))
+                    ->with('error', 'Mot de passe incorrect.');
+            }
+        } catch (Exception $e) {
+            // En production, vous devriez logger l'erreur plutôt que de la dd()
             return redirect()->back()
                 ->withInput($request->only('email'))
-                ->with('error', 'Mot de passe incorrect.');
+                ->with('error', 'Une erreur est survenue lors de la connexion.');
         }
-    } catch (Exception $e) {
-        // En production, vous devriez logger l'erreur plutôt que de la dd()
-        return redirect()->back()
-            ->withInput($request->only('email'))
-            ->with('error', 'Une erreur est survenue lors de la connexion.');
     }
-}
 
      public function logout(){
         auth('locataire')->logout();

@@ -249,7 +249,12 @@
                                         title="Générer un code pour paiement en espèces">
                                     <i class="mdi mdi-cash"></i> Code Espèces
                                     </button>
-                        </td>
+                                    <button class="btn btn-sm btn-warning verify-cash-code"
+                                        data-locataire-id="{{ $locataire->id }}"
+                                        title="Saisir le code de vérification">
+                                        <i class="mdi mdi-key"></i>
+                                    </button>
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -551,6 +556,40 @@ $('body').on('click', '.generate-cash-code', function() {
         complete: function() {
             button.prop('disabled', false);
             button.html('<i class="mdi mdi-cash"></i> Code Espèces');
+        }
+    });
+});
+
+// Gestion du nouveau bouton de vérification
+$('body').on('click', '.verify-cash-code', function() {
+    const locataireId = $(this).data('locataire-id');
+    
+    Swal.fire({
+        title: 'Validation du paiement en espèces',
+        html: `
+            <div class="mb-3 mt-3">
+                <label for="cashVerificationCode" class="form-label">
+                    Entrez le code reçu par le locataire :
+                </label>
+                <input type="text" class="form-control" id="cashVerificationCode" 
+                       placeholder="Code à 6 caractères" maxlength="6">
+            </div>
+        `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Valider le paiement',
+        cancelButtonText: 'Annuler',
+        preConfirm: () => {
+            const code = $('#cashVerificationCode').val().trim();
+            if (!code || code.length !== 6) {
+                Swal.showValidationMessage('Veuillez entrer un code valide (6 caractères)');
+                return false;
+            }
+            return { code: code };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            verifyAndSubmitPayment(locataireId, result.value.code);
         }
     });
 });
