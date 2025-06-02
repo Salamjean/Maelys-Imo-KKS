@@ -116,9 +116,9 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center py-4">
+                        <td colspan="7" class="text-center py-4">
                             <div class="alert alert-info">
-                                Aucune agence partenaire disponible pour le moment.
+                                Aucun agent inscrire .
                             </div>
                         </td>
                     </tr>

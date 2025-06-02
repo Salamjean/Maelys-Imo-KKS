@@ -64,7 +64,7 @@
                                 <div class="form-group">
                                     <label for="email">Email <span class="text-danger">*</span></label>
                                     <input type="email" class="form-control form-control-lg" id="email" name="email" 
-                                           value="{{ old('email', $agence->email) }}" style="border: 1px solid black; border-radius: 5px;">
+                                           value="{{ old('email', $agence->email) }}" style="border: 1px solid black; border-radius: 5px;" readonly>
                                     @error('email')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
