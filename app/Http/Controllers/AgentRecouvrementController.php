@@ -149,13 +149,23 @@ class AgentRecouvrementController extends Controller
     {
         Carbon::setLocale('fr');
         $comptable = Auth::guard('comptable')->user();
-        $agence = $comptable->agence;
-        
-        // Mois en cours au format 'YYYY-MM' pour la comparaison
+      // Vérifier si le comptable n'a pas d'agence associée
+
+      // Mois en cours au format 'YYYY-MM' pour la comparaison
         $moisEnCoursFormatDB = now()->format('Y-m');
         
         // Mois en cours au format texte en français (ex: "Janvier 2023")
         $moisEnCoursAffichage = now()->translatedFormat('F Y');
+        if (!$comptable || !$comptable->agence) {
+            return view('agent.locataire.paid', [
+                'locataires' => Locataire::whereNull('agence_id')->paginate(10), // Retourne un paginateur vide
+                'moisEnCours' => $moisEnCoursAffichage,
+                'error' => 'Aucune agence n\'est associée à votre compte comptable.'
+            ]);
+        }
+    $agence = $comptable->agence;
+        
+        
 
         $locataires = Locataire::where('agence_id', $agence->id)
             ->where('status', '!=', 'Pas sérieux')

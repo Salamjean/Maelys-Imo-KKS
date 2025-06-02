@@ -140,7 +140,6 @@
                                     <th>Loyer mensuel</th>
                                     <th>Commune</th>
                                     <th>Statut</th>
-                                    <th>Statut du paiement du mois</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -160,11 +159,6 @@
                                     <td>
                                         <span class="badge badge-pill badge-{{ $bien->status == 'Disponible' ? 'success' : 'warning' }}">
                                             <i class="fas fa-{{ $bien->status == 'Disponible' ? 'check' : 'clock' }} me-1"></i> {{ $bien->status }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-pill badge-{{ $bien->status == 'payé' ? 'success' : 'danger' }}">
-                                            <i class="fas fa-{{ $bien->status == 'payé' ? 'check' : 'clock' }} me-1"></i> {{ $bien->paiement->statut ?? 'Non payé' }}
                                         </span>
                                     </td>
                                 </tr>
