@@ -31,13 +31,14 @@ class BienController extends Controller
 
     public function create()
     {
-
-        return view('admin.bien.create');
+        $proprietaires = Proprietaire::whereNull('agence_id')
+                                ->get();
+        return view('admin.bien.create', compact('proprietaires'));
     }
     public function createAgence()
     {
-        $proprietaires = Proprietaire::where('agence_id', Auth::guard('agence')->user()->id)
-                                ->orWhereNull('agence_id')
+        $agence_id = Auth::guard('agence')->user()->id;
+        $proprietaires = Proprietaire::where('agence_id', $agence_id)
                                 ->get();
         return view('agence.bien.create', compact('proprietaires'));
     }
@@ -46,6 +47,7 @@ public function store(Request $request)
 {
     // Validation des données
     $validatedData = $request->validate([
+        'proprietaire_id' => 'nullable|exists:proprietaires,id',
         'type' => 'required|string',
         'description' => 'required|string',
         'superficie' => 'required|string',
@@ -71,6 +73,7 @@ public function store(Request $request)
     $bien = new Bien();
 
     // Assignation des propriétés obligatoires
+    $bien->proprietaire_id = $validatedData['proprietaire_id'];
     $bien->type = $validatedData['type'];
     $bien->description = $validatedData['description'];
     $bien->superficie = $validatedData['superficie'];

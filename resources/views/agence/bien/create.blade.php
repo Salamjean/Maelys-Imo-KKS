@@ -18,7 +18,7 @@
                                 <label>Sélectionnez le propriétaire<span style="color: red">*</span></label>
                                 <select class="form-control" name="proprietaire_id" required style="border: 1px solid black; border-radius: 5px;">
                                     <option value="">Choisir un propriétaire</option>
-                                    <option value="">Maelys-Imo</option>
+                                    <option value="">{{ Auth::guard('agence')->user()->name }}</option>
                                     @foreach($proprietaires as $proprietaire)
                                         <option value="{{ $proprietaire->id }}">
                                             {{ $proprietaire->name }} {{ $proprietaire->prenom }} - {{ $proprietaire->contact }}

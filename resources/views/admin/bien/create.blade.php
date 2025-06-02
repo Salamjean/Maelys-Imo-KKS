@@ -13,7 +13,24 @@
                 <fieldset style="border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
                     <legend style="font-size: 1.5em; font-weight: bold;">Informations du bien</legend>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Sélectionnez le propriétaire<span style="color: red">*</span></label>
+                                <select class="form-control" name="proprietaire_id" required style="border: 1px solid black; border-radius: 5px;">
+                                    <option value="">Choisir un propriétaire</option>
+                                    <option value="">Maelys-Imo</option>
+                                    @foreach($proprietaires as $proprietaire)
+                                        <option value="{{ $proprietaire->id }}">
+                                            {{ $proprietaire->name }} {{ $proprietaire->prenom }} - {{ $proprietaire->contact }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @error('proprietaire_id')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Type de bien <span style="color: red">*</span></label>
                                 <select class="form-control" name="type" style="border: 1px solid black; border-radius: 5px;">
@@ -22,18 +39,27 @@
                                     <option value="Bureau">Bureau</option>
                                 </select>
                             </div>
+                            @error('type')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Superficie (m²) <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Superficie" name="superficie" style="border: 1px solid black; border-radius: 5px;">
+                                @error('superficie')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
     
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Commune <span style="color: red">*</span></label>
                                 <input type="text" class="form-control" placeholder="Commune" name="commune" style="border: 1px solid black; border-radius: 5px;">
+                                @error('commune')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -44,12 +70,18 @@
                             <div class="form-group">
                                 <label>Nombre de chambres <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de chambres" name="nombre_de_chambres" style="border: 1px solid black; border-radius: 5px;">
+                                @error('nombre_de_chambres')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Nombre de toilettes <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de toilettes" name="nombre_de_toilettes" style="border: 1px solid black; border-radius: 5px;">
+                                @error('nombre_de_toilettes')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
     
@@ -61,6 +93,9 @@
                                     <option value="Oui">Oui</option>
                                     <option value="Non">Non</option>
                                 </select>
+                                @error('garage')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -79,6 +114,9 @@
                                         <span class="input-group-text text-white" style="border: 1px solid black; border-radius: 5px; background-color: #02245b; ">FCFA</span>
                                     </div>
                                 </div>
+                                @error('prix')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -95,6 +133,9 @@
                                            style="border: 1px solid black; border-radius: 5px;">
                                 </div>
                             </div>
+                            @error('avance')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
@@ -110,6 +151,9 @@
                                            style="border: 1px solid black; border-radius: 5px;">
                                 </div>
                             </div>
+                            @error('caution')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
@@ -129,15 +173,23 @@
                                     </div>
                                 </div>
                             </div>
+                            @error('montant_total')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
+
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label>Date fixe de paiement de loyer <span style="color: red">*</span></label>
                                 <input type="text" class="form-control" name="disponibilite" style="border: 1px solid black; border-radius: 5px;">
+                                @error('disponibilite')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
                 </fieldset>
+
                <!-- Section 4: Documents -->
                 <fieldset style="border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
                     <legend style="font-size: 1.5em; font-weight: bold;">Documents à fournir</legend>
@@ -152,7 +204,11 @@
                                         <button class="file-upload-browse btn text-white" style="background-color:#02245b" type="button">Télécharger</button>
                                     </span>
                                 </div>
+                                @error('main_image')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
+
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
@@ -164,6 +220,9 @@
                                         <button class="file-upload-browse btn text-white" style="background-color:#02245b" type="button">Télécharger</button>
                                     </span>
                                 </div>
+                                @error('additional_images1')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -176,6 +235,9 @@
                                         <button class="file-upload-browse btn text-white" style="background-color:#02245b" type="button">Télécharger</button>
                                     </span>
                                 </div>
+                                @error('additional_images2')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -188,6 +250,9 @@
                                         <button class="file-upload-browse btn text-white" style="background-color:#02245b" type="button">Télécharger</button>
                                     </span>
                                 </div>
+                                @error('additional_images3')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -201,6 +266,9 @@
                                     </span>
                                 </div>
                             </div>
+                            @error('additional_images4')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
@@ -213,6 +281,9 @@
                                     </span>
                                 </div>
                             </div>
+                            @error('additional_images5')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </fieldset>
@@ -227,18 +298,16 @@
                     </div>
                 </div>
 
-                    <!-- Boutons de soumission -->
-                    <div class="row mt-4">
-                        <div class="col-md-12 text-center">
-                            <button type="submit" class="btn text-white mr-2" style="background-color: #02245b; color:white">Enregistrer</button>
-                        </div>
+                <!-- Boutons de soumission -->
+                <div class="row mt-4">
+                    <div class="col-md-12 text-center">
+                        <button type="submit" class="btn text-white mr-2" style="background-color: #02245b; color:white">Enregistrer</button>
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
@@ -358,6 +427,25 @@
             $(this).closest('.input-group').find('.img-preview').hide();
         });
     });
+
+
+    // Dans votre section script
+    $(document).ready(function() {
+        // Initialiser Select2 pour une meilleure recherche
+        $('select[name="proprietaire_id"]').select2({
+            placeholder: "Rechercher un propriétaire",
+            allowClear: true
+        });
+
+        // Optionnel: Ajouter un bouton pour créer un nouveau propriétaire
+        $('select[name="proprietaire_id"]').after(
+            '<a href="{{ route("owner.create") }}" class="btn btn-sm btn-outline-primary mt-2">' +
+            '<i class="fas fa-plus"></i> Ajouter un nouveau propriétaire' +
+            '</a>'
+        );
+    });
     </script>
+
+    
     
 @endsection
