@@ -88,6 +88,7 @@
                     <th>Chambres</th>
                     <th>Toilettes</th>
                     <th>Garage</th>
+                    <th>Type d'utilisation</th>
                     <th>Avance</th>
                     <th>Caution</th>
                     <th>Loyer</th>
@@ -130,6 +131,7 @@
                         <td class="text-center">{{ $bien->nombre_de_chambres ?? 'N/A' }}</td>
                         <td class="text-center">{{ $bien->nombre_de_toilettes ?? 'N/A' }}</td>
                         <td class="text-center">{{ $bien->garage ?? 'N/A' }}</td>
+                        <td class="text-center">{{ $bien->utilisation ?? 'N/A' }}</td>
                         <td>{{ $bien->avance ? number_format($bien->avance, 0, ',', ' ').' Mois' : 'N/A' }}</td>
                         <td>{{ $bien->caution ? number_format($bien->caution, 0, ',', ' ').' Mois' : 'N/A' }}</td>
                         <td class="font-weight-bold">{{ number_format($bien->prix, 0, ',', ' ').' FCFA' }}</td>
@@ -177,7 +179,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="16" class="text-center py-4">
+                        <td colspan="17" class="text-center py-4">
                             <div class="alert alert-info">
                                 Aucun bien immobilier enregistré pour le moment.
                             </div>

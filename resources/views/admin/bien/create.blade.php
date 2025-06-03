@@ -66,7 +66,7 @@
     
                     <!-- Section 2: Détails du bien -->
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Nombre de chambres <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de chambres" name="nombre_de_chambres" style="border: 1px solid black; border-radius: 5px;">
@@ -75,7 +75,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Nombre de toilettes <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de toilettes" name="nombre_de_toilettes" style="border: 1px solid black; border-radius: 5px;">
@@ -85,7 +85,7 @@
                             </div>
                         </div>
     
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Garage <span style="color: red">*</span></label>
                                 <select class="form-control" name="garage" style="border: 1px solid black; border-radius: 5px;">
@@ -97,6 +97,19 @@
                                     <div class="alert alert-danger">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>type d'utilisation <span style="color: red">*</span></label>
+                                <select class="form-control" name="utilisation" style="border: 1px solid black; border-radius: 5px;">
+                                    <option value="Habitation">Habitation</option>
+                                    <option value="Bureau">Bureau</option>
+                                    <option value="Autre">Autre</option>
+                                </select>
+                            </div>
+                            @error('utilisation')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </fieldset>

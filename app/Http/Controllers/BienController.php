@@ -49,6 +49,7 @@ public function store(Request $request)
     $validatedData = $request->validate([
         'proprietaire_id' => 'nullable|exists:proprietaires,id',
         'type' => 'required|string',
+        'utilisation' => 'required|string',
         'description' => 'required|string',
         'superficie' => 'required|string',
         'nombre_de_chambres' => 'nullable|string',
@@ -75,6 +76,7 @@ public function store(Request $request)
     // Assignation des propriétés obligatoires
     $bien->proprietaire_id = $validatedData['proprietaire_id'];
     $bien->type = $validatedData['type'];
+    $bien->utilisation = $validatedData['utilisation'];
     $bien->description = $validatedData['description'];
     $bien->superficie = $validatedData['superficie'];
     $bien->prix = $validatedData['prix'];
@@ -127,6 +129,7 @@ public function storeAgence(Request $request)
     $validatedData = $request->validate([
         'proprietaire_id' => 'nullable|exists:proprietaires,id',
         'type' => 'required|string',
+        'utilisation' => 'required|string',
         'description' => 'required|string',
         'superficie' => 'required|string',
         'nombre_de_chambres' => 'nullable|string',
@@ -175,6 +178,7 @@ public function storeAgence(Request $request)
     // Assignation des propriétés obligatoires
     $bien->proprietaire_id = $validatedData['proprietaire_id'];
     $bien->type = $validatedData['type'];
+    $bien->utilisation = $validatedData['utilisation'];
     $bien->description = $validatedData['description'];
     $bien->superficie = $validatedData['superficie'];
     $bien->prix = $validatedData['prix'];

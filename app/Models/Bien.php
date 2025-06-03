@@ -8,6 +8,7 @@ class Bien extends Model
 {
     protected $fillable = [
         'type',
+        'utilisation',
         'description',
         'superficie',
         'nombre_de_chambres',
