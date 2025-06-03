@@ -4,12 +4,14 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Agence\AgencePasswordResetController;
 use App\Http\Controllers\Agence\AgenceController;
-use App\Http\Controllers\AgentRecouvrementController;
+use App\Http\Controllers\Agent\AgentRecouvrementController;
 use App\Http\Controllers\BienController;
-use App\Http\Controllers\ComptableController;
+use App\Http\Controllers\Agent\ComptableController;
+use App\Http\Controllers\Agent\ComptablePasswordResetController;
 use App\Http\Controllers\ContratController;
 use App\Http\Controllers\HomePageController;
-use App\Http\Controllers\LocataireController;
+use App\Http\Controllers\Locataire\LocataireController;
+use App\Http\Controllers\Locataire\LocatairePasswordResetController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Proprietaire\OwnerPasswordResetController;
 use App\Http\Controllers\Proprietaire\ProprietaireController;
@@ -296,6 +298,20 @@ Route::prefix('owner')->group(function(){ //proprietaire password reset routes
     Route::post('/mot-de-passe/email', [OwnerPasswordResetController::class, 'sendResetLinkEmail'])->name('owner.email');
     Route::get('/mot-de-passe/reinitialiser/{email}/{token}', [OwnerPasswordResetController::class, 'showResetForm'])->name('owner.reset');
     Route::post('/mot-de-passe/reinitialiser', [OwnerPasswordResetController::class, 'reset'])->name('owner.update');
+});
+
+Route::prefix('locataire')->group(function(){ //locataire password reset routes
+    Route::get('/mot-de-passe/oublie', [LocatairePasswordResetController::class, 'showLinkRequestForm'])->name('locataire.request');
+    Route::post('/mot-de-passe/email', [LocatairePasswordResetController::class, 'sendResetLinkEmail'])->name('locataire.email');
+    Route::get('/mot-de-passe/reinitialiser/{email}/{token}', [LocatairePasswordResetController::class, 'showResetForm'])->name('locataire.reset');
+    Route::post('/mot-de-passe/reinitialiser', [LocatairePasswordResetController::class, 'reset'])->name('locataire.password.update');
+});
+
+Route::prefix('accounting')->group(function(){ //agent password reset routes
+    Route::get('/mot-de-passe/oublie', [ComptablePasswordResetController::class, 'showLinkRequestForm'])->name('comptable.request');
+    Route::post('/mot-de-passe/email', [ComptablePasswordResetController::class, 'sendResetLinkEmail'])->name('comptable.email');
+    Route::get('/mot-de-passe/reinitialiser/{email}/{token}', [ComptablePasswordResetController::class, 'showResetForm'])->name('comptable.reset');
+    Route::post('/mot-de-passe/reinitialiser', [ComptablePasswordResetController::class, 'reset'])->name('comptable.password.update');
 });
 
 

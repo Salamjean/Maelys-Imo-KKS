@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Locataire;
+use App\Http\Controllers\Controller;
 
 use App\Models\Bien;
 use App\Models\Locataire;
