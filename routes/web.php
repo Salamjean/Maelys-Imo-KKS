@@ -214,19 +214,19 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
 
 // toutes les routes d'authentification pour les différents rôles
 // Routes pour l'authentification de l'administrateur
-Route::middleware('guest:admin')->prefix('admin')->group(function () {
+Route::middleware('admin')->prefix('admin')->group(function () {
     Route::get('/register',[AdminController::class, 'register'])->name('admin.register');
     Route::post('/register',[AdminController::class, 'store'])->name('admin.store');
     Route::get('/login',[AdminController::class, 'login'])->name('admin.login');
     Route::post('/login',[AdminController::class, 'authenticate'])->name('admin.authenticate');
 });
 // Routes pour l'authentification de l'agence
-Route::middleware('guest:agence')->prefix('agence')->group(function () {
+Route::middleware('agence')->prefix('agence')->group(function () {
     Route::get('/login',[AgenceController::class, 'login'])->name('agence.login');
     Route::post('/login',[AgenceController::class, 'authenticate'])->name('agence.authenticate');
 });
 // Routes pour l'authentification du comptable
-Route::middleware('guest:comptable')->prefix('accounting')->group(function () {
+Route::middleware('comptable')->prefix('accounting')->group(function () {
     Route::get('/login',[ComptableController::class, 'login'])->name('comptable.login');
     Route::post('/login',[ComptableController::class, 'authenticate'])->name('comptable.authenticate');
 });
