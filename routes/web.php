@@ -2,16 +2,17 @@
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\AgenceController;
+use App\Http\Controllers\Agence\AgencePasswordResetController;
+use App\Http\Controllers\Agence\AgenceController;
 use App\Http\Controllers\AgentRecouvrementController;
 use App\Http\Controllers\BienController;
 use App\Http\Controllers\ComptableController;
 use App\Http\Controllers\ContratController;
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\LocataireController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\ProprietaireController;
+use App\Http\Controllers\Proprietaire\OwnerPasswordResetController;
+use App\Http\Controllers\Proprietaire\ProprietaireController;
 use App\Http\Controllers\VersementController;
 use App\Http\Controllers\VisiteController;
 use App\Models\Bien;
@@ -280,6 +281,22 @@ Route::get('/locataires/{locataire}/download-contrat', [ContratController::class
 Route::delete('/contrats/{contrat}', [ContratController::class, 'destroy'])->name('contrats.destroy');
 
 
+
+// Routes pour la réinitialisation du mot de passe
+
+Route::prefix('agence')->group(function(){ //agence password reset routes
+    Route::get('/mot-de-passe/oublie', [AgencePasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/mot-de-passe/email', [AgencePasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/mot-de-passe/reinitialiser/{email}/{token}', [AgencePasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/mot-de-passe/reinitialiser', [AgencePasswordResetController::class, 'reset'])->name('password.update');
+});
+
+Route::prefix('owner')->group(function(){ //proprietaire password reset routes
+    Route::get('/mot-de-passe/oublie', [OwnerPasswordResetController::class, 'showLinkRequestForm'])->name('owner.request');
+    Route::post('/mot-de-passe/email', [OwnerPasswordResetController::class, 'sendResetLinkEmail'])->name('owner.email');
+    Route::get('/mot-de-passe/reinitialiser/{email}/{token}', [OwnerPasswordResetController::class, 'showResetForm'])->name('owner.reset');
+    Route::post('/mot-de-passe/reinitialiser', [OwnerPasswordResetController::class, 'reset'])->name('owner.update');
+});
 
 
 

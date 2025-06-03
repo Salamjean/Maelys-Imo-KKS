@@ -59,6 +59,10 @@
                                    placeholder="Mot de passe"
                                    required>
                         </div>
+                         <!-- Lien Mot de passe oublié -->
+                        <div class="text-end mb-3">
+                            <a href="{{ route('owner.request') }}" class="text-white">Mot de passe oublié ?</a>
+                        </div>
                         
                         <!-- Boutons -->
                         <div class="d-grid gap-3">

@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Proprietaire;
+use App\Http\Controllers\Controller;
+
 
 use App\Models\Bien;
 use App\Models\Proprietaire;
