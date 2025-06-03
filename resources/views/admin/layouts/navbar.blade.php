@@ -4,17 +4,20 @@
         <span class="mdi mdi-menu"></span>
       </button>
       <div class="navbar-brand-wrapper">
-        <a class="navbar-brand brand-logo" href="index.html"><img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 100px" alt="logo"/></a>
-        <a class="navbar-brand brand-logo-mini" href="index.html"><img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 10px" alt="logo"/></a>
+        <a class="navbar-brand brand-logo" href="{{ route('admin.dashboard') }}"><img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 65px" alt="logo"/></a>
+        <a class="navbar-brand brand-logo-mini" href="{{ route('admin.dashboard') }}"><img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 30px" alt="logo"/></a>
       </div>
-      <h4 class="font-weight-bold mb-0 d-none d-md-block mt-1">Bienvenu chez {{ Auth::guard('admin')->user()->name }} </h4>
+      <h4 class="font-weight-bold mb-0 d-none d-md-block mt-1">Bienvenu chez {{ Auth::guard('admin')->user()->name }}</h4>
       <ul class="navbar-nav navbar-nav-right">
         <li class="nav-item">
           <h4 class="mb-0 font-weight-bold d-none d-xl-block">
               <span id="live-clock"></span>
           </h4>
-      </li>
-        
+        </li>
+      </ul>
+      <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
+        <span class="mdi mdi-menu"></span>
+      </button>
     </div>
     <div class="navbar-menu-wrapper navbar-search-wrapper d-none d-lg-flex align-items-center" style="background-color: #ff5e14">
       <ul class="navbar-nav navbar-nav-right">
@@ -24,7 +27,6 @@
             <span class="nav-profile-name">{{ Auth::guard('admin')->user()->name }}</span>
           </a>
           <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-           
             <a href="{{ route('admin.logout') }}" class="dropdown-item">
               <i class="mdi mdi-logout text-primary"></i>
               Déconnexion
@@ -34,7 +36,6 @@
       </ul>
     </div>
   </nav>
-
   <script>
     function updateClock() {
         const now = new Date();
@@ -50,3 +51,10 @@
     updateClock();
     setInterval(updateClock, 1000);
 </script>
+
+
+
+
+
+
+

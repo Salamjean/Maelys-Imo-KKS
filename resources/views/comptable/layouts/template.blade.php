@@ -33,16 +33,23 @@
     <!-- partial:./partials/_sidebar.html -->
     @include('comptable.layouts.sidebar')
     <!-- partial -->
+    
     <div class="container-fluid page-body-wrapper">
       <!-- partial:./partials/_navbar.html -->
       @include('comptable.layouts.navbar')
       <!-- partial -->
-      @yield('content')
+      
+      <div class="main-panel">
+        <div class="content-wrapper">
+          @yield('content')
+        </div>
+        <!-- content-wrapper ends -->
+      </div>
       <!-- main-panel ends -->
     </div>
     <!-- page-body-wrapper ends -->
   </div>
-  <!-- container-scroller -->
+  <!-- container-scroller ends -->
 
   <!-- base:js -->
   <script src="{{asset('assets/vendors/js/vendor.bundle.base.js')}}"></script>

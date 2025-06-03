@@ -10,11 +10,11 @@
           @endphp
           @if($user && $user->agence)
                 <img src="{{ asset('storage/' . $user->agence->profile_image) }}" 
-                    style="width: 100px" 
+                    style="width: 65px" 
                     onerror="this.onerror=null; this.src='{{ asset('assets/images/kkstevhno.jpeg') }}';" 
                     alt="logo" />
             @else
-                <img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 100px" alt="logo" />
+                <img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 65px" alt="logo" />
             @endif
         </a>
         <a class="navbar-brand brand-logo-mini" href="{{ route('owner.dashboard') }}">@php
@@ -48,11 +48,11 @@
           <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
             @if($user && $user->agence)
                 <img src="{{ asset('storage/' . $user->agence->profile_image) }}" 
-                    style="width: 100px" 
+                    style="width: 40px" 
                     onerror="this.onerror=null; this.src='{{ asset('assets/images/kkstevhno.jpeg') }}';" 
                     alt="logo" />
             @else
-                <img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 50px" alt="logo" />
+                <img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 40px" alt="logo" />
             @endif
             <span class="nav-profile-name">{{ Auth::guard('owner')->user()->prenom }} </span>
           </a>

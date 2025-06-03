@@ -5,7 +5,7 @@
       </button>
       <div class="navbar-brand-wrapper">
         <a class="navbar-brand brand-logo" href="{{ route('agence.dashboard') }}"><img src="{{ asset('storage/' . Auth::guard('agence')->user()->profile_image) }}"
-              onerror="this.onerror=null; this.src='{{ asset('assets/images/agence.jpg') }}';" style="width: 100px" alt="logo"/></a>
+              onerror="this.onerror=null; this.src='{{ asset('assets/images/agence.jpg') }}';" style="width: 65px" alt="logo"/></a>
         <a class="navbar-brand brand-logo-mini" href="{{ route('agence.dashboard') }}"><img src="{{ asset('storage/' . Auth::guard('agence')->user()->profile_image) }}"
               onerror="this.onerror=null; this.src='{{ asset('assets/images/agence.jpg') }}';" style="width: 10px" alt="logo"/></a>
       </div>

@@ -7,7 +7,7 @@
         <a class="navbar-brand brand-logo" href="index.html"><img src="{{ asset('storage/' . Auth::guard('locataire')->user()->profile_image) }}"
           onerror="this.onerror=null; this.src='{{ asset('assets/images/useriii.jpeg') }}';" 
           alt="Profil"
-          width="100" style="width: 100px" alt="logo"/></a>
+          width="100" style="width: 65px" alt="logo"/></a>
         <a class="navbar-brand brand-logo-mini" href="index.html"><img src="{{ asset('storage/' . Auth::guard('locataire')->user()->profile_image) }}"
           onerror="this.onerror=null; this.src='{{ asset('assets/images/useriii.jpeg') }}';" style="width: 10px" alt="logo"/></a>
       </div>

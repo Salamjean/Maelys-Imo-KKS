@@ -1,6 +1,5 @@
 @extends('agence.layouts.template')
 @section('content')
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
     /* Style personnalisé pour la pagination */
     .pagination {

@@ -25,11 +25,6 @@
                             <i class="fas fa-home"></i>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <a href="{{ route('owner.bienList') }}" class="text-sm text-primary font-weight-bold">
-                            Voir la liste <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
@@ -41,16 +36,11 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="card-title text-muted mb-0">Revenu Mensuel</h6>
-                            <h2 class="font-weight-bold mb-0">{{ number_format($cumulLoyers, 0, ',', ' ') }} FCFA</h2>
+                            <h2 class="font-weight-bold mb-0" style="font-size: 25px">{{ number_format($cumulLoyers, 0, ',', ' ') }} FCFA</h2>
                         </div>
                         <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
                             <i class="fas fa-money-bill-wave"></i>
                         </div>
-                    </div>
-                    <div class="mt-4">
-                        <span class="text-sm text-muted">
-                            <i class="fas fa-calendar me-1"></i> Mise à jour quotidienne
-                        </span>
                     </div>
                 </div>
             </div>
@@ -69,21 +59,7 @@
                             <i class="fas fa-check-circle"></i>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <div class="progress-wrapper">
-                            <div class="progress-info">
-                                <span class="text-sm font-weight-bold">{{ $pourcentageDisponibles }}%</span>
-                                <span class="text-sm ms-2">de vos biens</span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar bg-gradient-info" role="progressbar" 
-                                     style="width: {{ $pourcentageDisponibles }}%"
-                                     aria-valuenow="{{ $pourcentageDisponibles }}" 
-                                     aria-valuemin="0" 
-                                     aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                    </div>
+                   
                 </div>
             </div>
         </div>
@@ -101,21 +77,7 @@
                             <i class="fas fa-user-clock"></i>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <div class="progress-wrapper">
-                            <div class="progress-info">
-                                <span class="text-sm font-weight-bold">{{ $pourcentageOccupes }}%</span>
-                                <span class="text-sm ms-2">de vos biens</span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar bg-gradient-warning" role="progressbar" 
-                                     style="width: {{ $pourcentageOccupes }}%"
-                                     aria-valuenow="{{ $pourcentageOccupes }}" 
-                                     aria-valuemin="0" 
-                                     aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                    </div>
+                   
                 </div>
             </div>
         </div>

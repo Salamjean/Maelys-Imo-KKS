@@ -1,74 +1,84 @@
 @extends('admin.layouts.template')
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
+    /* Boutons personnalisés */
     .send-reminder-btn {
-        color: white;
         background-color: #3a7bd5;
         border-color: #3a7bd5;
     }
-
     .send-reminder-btn:hover {
         background-color: #2c5fb3;
         border-color: #2c5fb3;
     }
     
-    .pagination {
+    /* Pagination personnalisée */
+    .pagination.pagination-custom {
         --bs-pagination-color: #02245b;
-        --bs-pagination-bg: #fff;
-        --bs-pagination-border-color: #dee2e6;
         --bs-pagination-hover-color: #fff;
         --bs-pagination-hover-bg: #02245b;
         --bs-pagination-hover-border-color: #02245b;
         --bs-pagination-focus-color: #fff;
         --bs-pagination-focus-bg: #02245b;
-        --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(2, 36, 91, 0.25);
-        --bs-pagination-active-color: #fff;
         --bs-pagination-active-bg: #02245b;
         --bs-pagination-active-border-color: #02245b;
-        --bs-pagination-disabled-color: #6c757d;
-        --bs-pagination-disabled-bg: #fff;
-        --bs-pagination-disabled-border-color: #dee2e6;
     }
-
+    
     .pagination-rounded .page-item:first-child .page-link {
-        border-top-left-radius: 20px;
-        border-bottom-left-radius: 20px;
+        border-radius: 20px 0 0 20px;
     }
-
+    
     .pagination-rounded .page-item:last-child .page-link {
-        border-top-right-radius: 20px;
-        border-bottom-right-radius: 20px;
+        border-radius: 0 20px 20px 0;
     }
-
-    .page-link {
+    
+    .pagination-rounded .page-link {
         padding: 0.5rem 1rem;
         margin: 0 0.15rem;
-        border-radius: 50%;
         min-width: 40px;
         text-align: center;
         transition: all 0.3s ease;
     }
-
-    .page-item.active .page-link {
+    
+    .pagination-rounded .page-item.active .page-link {
         font-weight: bold;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
-
-    .page-item:not(.active):not(.disabled) .page-link:hover {
+    
+    .pagination-rounded .page-item:not(.active):not(.disabled) .page-link:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-
+    
+    /* Images preview */
+    .preview-image {
+        transition: all 0.3s ease;
+    }
+    
     .preview-image:hover {
         transform: scale(1.05);
-        transition: transform 0.3s ease;
         box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    
+    /* Tableau */
+    .table-custom thead {
+        background-color: #02245b;
+        color: white;
+    }
+    
+    /* Modal image */
+    .modal-image {
+        max-height: 80vh;
+        width: auto;
+    }
+    
+    /* Hauteur des lignes du tableau */
+    .table-row-custom {
+        height: 30px;
     }
 </style>
 
-<div class="col-lg-12 stretch-card">
+<div class="col-12 grid-margin stretch-card mb-4">
     <div class="card">
         <div class="card-body">
             <h4 class="card-title text-center">Locataires actuels</h4>

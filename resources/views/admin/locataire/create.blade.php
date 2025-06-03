@@ -1,6 +1,5 @@
 @extends('admin.layouts.template')
 @section('content')
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <!-- Ajout de SweetAlert2 CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
@@ -89,8 +88,8 @@
                 <div class="row">
                     <div class="col-md-2">
                         <div class="form-group">
-                            <label>Pièce d'identité <span style="color: red">*</span></label> <br>
-                            <small class="text-muted">Format acceptés: jpeg, png, jpg, gif (max 2MB)</small>
+                            <label>Pièce d'identité<span style="color: red">*</span></label> <br>
+                            
                             <div class="input-group">
                                 <input type="file" name="piece" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden>
                                 <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Choisir une image">
@@ -105,8 +104,8 @@
                     </div>
                     <div class="col-md-2">
                         <div class="form-group">
-                            <label>Attestation de travail <span style="color: red">*</span></label> <br>
-                            <small class="text-muted">Format acceptés: jpeg, png, jpg, gif (max 2MB)</small>
+                            <label>Attestation travail<span style="color: red">*</span></label> <br>
+                            
                             <div class="input-group">
                                 <input type="file" name="attestation" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
                                 <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Choisir des images">
@@ -122,7 +121,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>Bulletin de salaire</label> <br>
-                            <small class="text-muted">Format acceptés: jpeg, png, jpg, gif (max 2MB)</small>
+                            
                             <div class="input-group">
                                 <input type="file" name="image1" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
                                 <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Choisir des images">
@@ -138,7 +137,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>Image 1</label> <br>
-                            <small class="text-muted">Format acceptés: jpeg, png, jpg, gif (max 2MB)</small>
+                            
                             <div class="input-group">
                                 <input type="file" name="image2" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
                                 <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Choisir des images">
@@ -154,7 +153,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>Image 2</label> <br>
-                            <small class="text-muted">Format acceptés: jpeg, png, jpg, gif (max 2MB)</small>
+                            
                             <div class="input-group">
                                 <input type="file" name="image3" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
                                 <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Choisir des images">
@@ -170,7 +169,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>Image 3</label> <br>
-                            <small class="text-muted">Format acceptés: jpeg, png, jpg, gif (max 2MB)</small>
+                            
                             <div class="input-group">
                                 <input type="file" name="image4" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
                                 <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Choisir des images">

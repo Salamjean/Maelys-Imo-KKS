@@ -19,20 +19,27 @@
   <link rel="shortcut icon" href="images/favicon.png" />
 </head>
 <body>
-  <div class="container-scroller d-flex">
+   <div class="container-scroller d-flex">
     <!-- partial:./partials/_sidebar.html -->
     @include('locataire.layouts.sidebar')
     <!-- partial -->
+    
     <div class="container-fluid page-body-wrapper">
       <!-- partial:./partials/_navbar.html -->
       @include('locataire.layouts.navbar')
       <!-- partial -->
-      @yield('content')
+      
+      <div class="main-panel">
+        <div class="content-wrapper">
+          @yield('content')
+        </div>
+        <!-- content-wrapper ends -->
+      </div>
       <!-- main-panel ends -->
     </div>
     <!-- page-body-wrapper ends -->
   </div>
-  <!-- container-scroller -->
+  <!-- container-scroller ends -->
   
 </div>
   <!-- base:js -->

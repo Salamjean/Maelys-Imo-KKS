@@ -107,7 +107,7 @@
                     <div class="row">
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Loyer mensuel (FCFA) </label><span style="color: red">*</span>
+                                <label>Loyer mensuel</label><span style="color: red">*</span>
                                 <div class="input-group">
                                     <input type="number" class="form-control" placeholder="Montant total" name="prix" style="border: 1px solid black; border-radius: 5px;">
                                     <div class="input-group-append" style="background-color: #02245b; color:white">
@@ -121,7 +121,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Avance (Mois) <span style="color: red">*</span></label>
+                                <label>Avance  <span style="color: red">*</span></label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" 
                                            placeholder="Entrez le nombre de mois d'avance" 
@@ -139,7 +139,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Caution (Mois) <span style="color: red">*</span></label>
+                                <label>Caution <span style="color: red">*</span></label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" 
                                            placeholder="Entrez le nombre de mois de caution" 
@@ -157,7 +157,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Frais d'agence (Mois) <span style="color: red">*</span></label>
+                                <label>Frais d'agence<span style="color: red">*</span></label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" value="1" name="frais" style="border: 1px solid black; border-radius: 5px;" readonly>
                                 </div>
@@ -165,7 +165,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Montant total (FCFA)</label>
+                                <label>Montant total</label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" name="montant_total" style="border: 1px solid black; border-radius: 5px;" readonly>
                                     <div class="input-group-append" style="background-color: #02245b; color:white">
@@ -180,7 +180,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Date fixe de paiement de loyer <span style="color: red">*</span></label>
+                                <label>Date de paiement <span style="color: red">*</span></label>
                                 <input type="text" class="form-control" name="disponibilite" style="border: 1px solid black; border-radius: 5px;">
                                 @error('disponibilite')
                                     <div class="alert alert-danger">{{ $message }}</div>
@@ -212,7 +212,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Photo 1 supplémentaires du bien <span style="color: red">*</span></label>
+                                <label>Photo 1 supplémentaires  <span style="color: red">*</span></label>
                                 <div class="input-group">
                                     <input type="file" name="additional_images1" class="file-upload-default" required style="border: 1px solid black; border-radius: 5px;">
                                     <input type="text" class="form-control file-upload-info" disabled placeholder="Choisir une image" style="border: 1px solid black; border-radius: 5px;">
@@ -227,7 +227,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Photo 2 supplémentaires du bien</label>
+                                <label>Photo 2 supplémentaires </label>
                                 <div class="input-group">
                                     <input type="file" name="additional_images2" class="file-upload-default" style="border: 1px solid black; border-radius: 5px;">
                                     <input type="text" class="form-control file-upload-info" disabled placeholder="Choisir une image" style="border: 1px solid black; border-radius: 5px;">
@@ -242,7 +242,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Photo 3 supplémentaires du bien</label>
+                                <label>Photo 3 supplémentaires </label>
                                 <div class="input-group">
                                     <input type="file" name="additional_images3" class="file-upload-default" style="border: 1px solid black; border-radius: 5px;">
                                     <input type="text" class="form-control file-upload-info" disabled placeholder="Choisir une image" style="border: 1px solid black; border-radius: 5px;">
@@ -257,7 +257,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Photo 4 supplémentaires du bien</label>
+                                <label>Photo 4 supplémentaires </label>
                                 <div class="input-group">
                                     <input type="file" name="additional_images4" class="file-upload-default" style="border: 1px solid black; border-radius: 5px;">
                                     <input type="text" class="form-control file-upload-info" disabled placeholder="Choisir une image" style="border: 1px solid black; border-radius: 5px;">
@@ -272,7 +272,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Photo 5 supplémentaires du bien</label>
+                                <label>Photo 5 supplémentaires </label>
                                 <div class="input-group">
                                     <input type="file" name="additional_images5" class="file-upload-default" style="border: 1px solid black; border-radius: 5px;">
                                     <input type="text" class="form-control file-upload-info" disabled placeholder="Choisir une image" style="border: 1px solid black; border-radius: 5px;">

@@ -1,7 +1,6 @@
 @extends('comptable.layouts.template')
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
 <style>
@@ -223,7 +222,7 @@
                                 <td>
                                     {{ $moisEnCours }} <br><br>
                                     @if($locataire->paiements->isNotEmpty())
-                                        <span class="badge bg-success">Payé</span>
+                                        <span class="badge bg-success text-white">Payé</span>
                                     @else
                                         <span class="badge bg-danger">Non payé</span>
                                     @endif
