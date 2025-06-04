@@ -53,18 +53,6 @@ class ProprietaireController extends Controller
             'derniersBiens'
         ));
     }
-
-    public function bienList()
-    {
-        // Vérifier si l'utilisateur est connecté en tant que propriétaire
-        $proprietaireId = Auth::guard('owner')->user()->id;
-        
-        // Récupérer les biens du propriétaire connecté
-        $biens = Bien::where('proprietaire_id', $proprietaireId)->paginate(6);
-        
-        return view('proprietaire.bien.index', compact('biens'));
-    }
-
     public function index(){
         $agenceId = Auth::guard('agence')->user()->id;
         $proprietaires = Proprietaire::where('agence_id', $agenceId)->paginate(6);

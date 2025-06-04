@@ -13,6 +13,7 @@ use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\Locataire\LocataireController;
 use App\Http\Controllers\Locataire\LocatairePasswordResetController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Proprietaire\AddBienOwnerController;
 use App\Http\Controllers\Proprietaire\OwnerPasswordResetController;
 use App\Http\Controllers\Proprietaire\ProprietaireController;
 use App\Http\Controllers\VersementController;
@@ -190,6 +191,7 @@ Route::middleware('auth:locataire')->prefix('locataire')->group(function () {
     Route::put('/profile/edit', [LocataireController::class, 'updateProfile'])->name('locataire.update.profile');
 });
 Route::post('/locataire/envoyer-email-agence', [LocataireController::class, 'sendEmailToAgency'])->name('locataire.sendEmailToAgency');
+
 //routes pour la gestion des comptables 
 Route::middleware('auth:comptable')->prefix('accounting')->group(function () {
     Route::get('/dashboard',[ComptableController::class,'dashboard'])->name('accounting.dashboard');
@@ -208,10 +210,21 @@ Route::middleware('auth:comptable')->prefix('accounting')->group(function () {
 // Routes pour la gestion des propriétaires
 Route::middleware('auth:owner')->prefix('owner')->group(function () {
     Route::get('/dashboard',[ProprietaireController::class,'dashboard'])->name('owner.dashboard');
-    Route::get('/biens/list',[ProprietaireController::class,'bienList'])->name('owner.bienList');
     Route::get('/logout',[ProprietaireController::class, 'logout'])->name('owner.logout');
     Route::get('/profile/edit', [ProprietaireController::class, 'editProfile'])->name('owner.edit.profile');
     Route::put('/profile/edit', [ProprietaireController::class, 'updateProfile'])->name('owner.update.profile');
+
+    // Routes pour la gestion des biens par le propriétaire
+    Route::prefix('bien')->group(function(){
+        Route::get('/bienscreate',[AddBienOwnerController::class, 'create'])->name('bien.create.owner');
+        Route::post('/biens/store',[AddBienOwnerController::class, 'store'])->name('bien.store.owner');
+        Route::get('/biens',[AddBienOwnerController::class,'bienList'])->name('owner.bienList');
+        Route::get('/biens/list/loué',[AddBienOwnerController::class,'bienListLoue'])->name('owner.bienList.loue');
+        Route::get('/biens/rented',[AddBienOwnerController::class, 'rented'])->name('bien.rented');
+        Route::get('/biens/{bien}/edit', [AddBienOwnerController::class, 'edit'])->name('bien.edit.owner');
+        Route::put('/biens/{bien}', [AddBienOwnerController::class, 'update'])->name('bien.update.owner');
+        Route::delete('/biens/{bien}', [AddBienOwnerController::class, 'destroy'])->name('bien.destroy.owner');
+    });
 });
 
 

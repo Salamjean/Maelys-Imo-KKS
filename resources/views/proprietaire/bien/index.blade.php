@@ -1,153 +1,348 @@
 @extends('proprietaire.layouts.template')
 @section('content')
-<div class="container-fluid px-4 py-5">
-    <div class="d-sm-flex align-items-center justify-content-center mb-5">
-        <h1 class="text-gradient text-primary mb-0">
-            <i class="fas fa-home me-2"></i> Mes Biens Immobiliers
-        </h1>
-    </div>
+<style>
+    /* Style personnalisé pour la pagination */
+    .pagination {
+        --bs-pagination-color: #02245b;
+        --bs-pagination-bg: #fff;
+        --bs-pagination-border-color: #dee2e6;
+        --bs-pagination-hover-color: #fff;
+        --bs-pagination-hover-bg: #02245b;
+        --bs-pagination-hover-border-color: #02245b;
+        --bs-pagination-focus-color: #fff;
+        --bs-pagination-focus-bg: #02245b;
+        --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(2, 36, 91, 0.25);
+        --bs-pagination-active-color: #fff;
+        --bs-pagination-active-bg: #02245b;
+        --bs-pagination-active-border-color: #02245b;
+        --bs-pagination-disabled-color: #6c757d;
+        --bs-pagination-disabled-bg: #fff;
+        --bs-pagination-disabled-border-color: #dee2e6;
+    }
 
-    <div class="row">
-        @forelse($biens as $bien)
-        <div class="col-xl-4 col-lg-6 mb-4">
-            <div class="property-card card h-100 shadow-lg border-0 overflow-hidden">
-                <!-- Badge statut -->
-                <div class="position-absolute end-0 top-0 m-3">
-                    <span class="badge bg-{{ $bien->status == 'Disponible' ? 'success' : 'warning' }} py-2 px-3">
-                        {{ $bien->status }}
-                    </span>
-                </div>
+    .pagination-rounded .page-item:first-child .page-link {
+        border-top-left-radius: 20px;
+        border-bottom-left-radius: 20px;
+    }
 
-                <!-- Image du bien -->
-                <div class="property-img-container">
-                    <img src="{{ asset('storage/' . $bien->image) }}" 
-                         class="card-img-top property-img" 
-                         alt="{{ $bien->titre }}">
-                    <div class="property-price-badge">
-                        {{ number_format($bien->prix, 0, ',', ' ') }} FCFA/mois
+    .pagination-rounded .page-item:last-child .page-link {
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
+    }
+
+    .page-link {
+        padding: 0.5rem 1rem;
+        margin: 0 0.15rem;
+        border-radius: 50%;
+        min-width: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .page-item.active .page-link {
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .page-item:not(.active):not(.disabled) .page-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+<div class="col-lg-12 stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title text-center">Gestion des biens immobiliers</h4>
+        <p class="card-description text-center">
+          Liste des biens classés par type
+        </p>
+
+        <!-- Modal pour afficher les images -->
+        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="imageModalLabel">Visualisation de l'image</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                </div>
-
-                <div class="card-body">
-                    <h5 class="card-title text-primary">{{ $bien->type }}</h5>
-                    <p class="text-muted mb-3">
-                        <i class="fas fa-map-marker-alt text-danger me-2"></i>
-                         {{ $bien->commune }}
-                    </p>
-                    
-                    <div class="property-features d-flex flex-wrap gap-2 mb-3">
-                        @if($bien->nombre_de_chambres)
-                        <span class="badge bg-light text-dark">
-                            <i class="fas fa-bed me-1"></i> {{ $bien->nombre_de_chambres }} chambres
-                        </span>
-                        @endif
-                        @if($bien->superficie)
-                        <span class="badge bg-light text-dark">
-                            <i class="fas fa-ruler-combined me-1"></i> {{ $bien->superficie }} m²
-                        </span>
-                        @endif
-                         @if($bien->nombre_de_toilettes)
-                        <span class="badge bg-light text-dark">
-                            <i class="fas fa-bed me-1"></i> {{ $bien->nombre_de_toilettes }} Toillettes
-                        </span>
-                        @endif
-                         @if($bien->garage)
-                        <span class="badge bg-light text-dark">
-                            <i class="fas fa-bed me-1"></i> Garage: {{ $bien->garage }} 
-                        </span>
-                        @endif
+                    <div class="modal-body text-center p-0">
+                        <img id="modalImage" src="" class="img-fluid" style="max-height: 80vh; width: auto;">
                     </div>
-
-                    <p class="card-text text-muted">{{ Str::limit($bien->description, 120) }}</p>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                    </div>
                 </div>
             </div>
         </div>
-        @empty
-        <div class="col-12">
-            <div class="card shadow border-0 text-center py-5">
-                <div class="card-body">
-                    <i class="fas fa-home fa-4x text-muted mb-4"></i>
-                    <h4 class="text-muted">Aucun bien enregistré</h4>
-                    <p class="text-muted mb-4">Vous n'avez pas encore ajouté de biens immobiliers</p>
-                    
-                </div>
-            </div>
-        </div>
-        @endforelse
-    </div>
 
-    <!-- Pagination -->
-    @if($biens->hasPages())
-    <div class="d-flex justify-content-center mt-4">
-        {{ $biens->links() }}
+        <div class="table-responsive pt-3">
+          <table class="table table-bordered table-hover">
+            <thead style="background-color: #02245b; color: white;">
+                <tr class="text-center">
+                    <th>Appartient à</th>
+                    <th>Type</th>
+                    <th>Superficie (m²)</th>
+                    <th>Localisation</th>
+                    <th>Chambres</th>
+                    <th>Toilettes</th>
+                    <th>Garage</th>
+                    <th>Type d'utilisation</th>
+                    <th>Avance</th>
+                    <th>Caution</th>
+                    <th>Loyer</th>
+                    <th>Montant Total</th>
+                    <th>Date de loyer</th>
+                    <th>Disponibilité</th>
+                    <th>Photo principale</th>
+                    <th>Photo supplementaire</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($biens as $bien)
+                    @php
+                        $rowClass = '';
+                        if ($bien->type === 'Appartement') {
+                            $rowClass = 'table-primary';
+                        } elseif ($bien->type === 'Maison') {
+                            $rowClass = 'table-danger';
+                        } elseif ($bien->type === 'Bureau') {
+                            $rowClass = 'table-success';
+                        }
+                    @endphp
+                    
+                    <tr class="{{ $rowClass }} text-center pt-3" style="height: 30px">
+                        <td>
+                            <strong>
+                                @if($bien->proprietaire)
+                                    {{ $bien->proprietaire->name }} {{ $bien->proprietaire->prenom }}
+                                @elseif($bien->agence)
+                                    {{ $bien->agence->name }}
+                                @else
+                                    Maelys-Imo
+                                @endif
+                            </strong>
+                        </td>
+                        <td ><strong>{{ $bien->type }}</strong></td>
+                        <td>{{ $bien->superficie }}</td>
+                        <td>{{ $bien->commune }}</td>
+                        <td class="text-center">{{ $bien->nombre_de_chambres ?? 'N/A' }}</td>
+                        <td class="text-center">{{ $bien->nombre_de_toilettes ?? 'N/A' }}</td>
+                        <td class="text-center">{{ $bien->garage ?? 'N/A' }}</td>
+                        <td class="text-center">{{ $bien->utilisation ?? 'N/A' }}</td>
+                        <td>{{ $bien->avance ? number_format($bien->avance, 0, ',', ' ').' Mois' : 'N/A' }}</td>
+                        <td>{{ $bien->caution ? number_format($bien->caution, 0, ',', ' ').' Mois' : 'N/A' }}</td>
+                        <td class="font-weight-bold">{{ number_format($bien->prix, 0, ',', ' ').' FCFA' }}</td>
+                        <td class="font-weight-bold">{{ number_format($bien->montant_total, 0, ',', ' ').' FCFA' }}</td>
+                        <td><strong>{{ $bien->date_fixe }}</strong> de chaque mois</td>
+                        <td class="text-center">
+                            @if($bien->status == 'Disponible')
+                                <span class="badge badge-success">Disponible</span>
+                            @else
+                                <span class="badge badge-danger">Loué</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if($bien->image)
+                                <img src="{{ asset('storage/'.$bien->image) }}" 
+                                     class="img-thumbnail preview-image"
+                                     data-image="{{ asset('storage/'.$bien->image) }}"
+                                     style="width: 60px; height: 60px; cursor: zoom-in; object-fit: cover;">
+                            @else
+                                <span class="text-muted">Aucune</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if($bien->image1)
+                                <img src="{{ asset('storage/'.$bien->image1) }}" 
+                                     class="img-thumbnail preview-image"
+                                     data-image="{{ asset('storage/'.$bien->image1) }}"
+                                     style="width: 60px; height: 60px; cursor: zoom-in; object-fit: cover;">
+                            @else
+                                <span class="text-muted">Aucune</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{{ route('bien.edit.owner', $bien->id) }}" class="btn btn-sm btn-warning" title="Modifier">
+                                    <i class="mdi mdi-pencil"></i>
+                                </a>
+                                <button class="btn btn-danger btn-sm delete-bien" 
+                                        data-id="{{ $bien->id }}" 
+                                        data-name="{{ $bien->type }} - {{ $bien->description }}">
+                                    <i class="mdi mdi-delete"></i> 
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="17" class="text-center py-4">
+                            <div class="alert alert-info">
+                                Aucun bien immobilier enregistré pour le moment.
+                            </div>
+                            <a href="{{ route('bien.create.owner') }}" class="btn btn-primary mt-2">
+                                <i class="mdi mdi-plus-circle"></i> Ajouter un nouveau bien
+                            </a>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+          </table>
+          
+          @if($biens->hasPages())
+<div class="mt-4 d-flex justify-content-center">
+    <nav aria-label="Page navigation">
+        <ul class="pagination pagination-rounded">
+            {{-- Previous Page Link --}}
+            @if ($biens->onFirstPage())
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&laquo;</span>
+                </li>
+            @else
+                <li class="page-item">
+                    <a class="page-link" href="{{ $biens->previousPageUrl() }}" rel="prev" aria-label="Previous">&laquo;</a>
+                </li>
+            @endif
+
+            {{-- Pagination Elements --}}
+            @foreach ($biens->getUrlRange(1, $biens->lastPage()) as $page => $url)
+                @if ($page == $biens->currentPage())
+                    <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
+                @else
+                    <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+                @endif
+            @endforeach
+
+            {{-- Next Page Link --}}
+            @if ($biens->hasMorePages())
+                <li class="page-item">
+                    <a class="page-link" href="{{ $biens->nextPageUrl() }}" rel="next" aria-label="Next">&raquo;</a>
+                </li>
+            @else
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&raquo;</span>
+                </li>
+            @endif
+        </ul>
+    </nav>
+</div>
+@endif
+        </div>
+      </div>
     </div>
-    @endif
 </div>
 
+<!-- Scripts nécessaires -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    $(document).ready(function() {
+        // Notification SweetAlert2 modifiée pour ressembler à la confirmation
+        @if(session('success'))
+        Swal.fire({
+            title: 'Succès !',
+            text: '{{ session('success') }}',
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK',
+            allowOutsideClick: false
+        });
+        @endif
+    
+        // Gestion des images
+        $('.preview-image').on('click', function() {
+            const imgUrl = $(this).data('image');
+            $('#modalImage').attr('src', imgUrl);
+            $('#imageModal').modal('show');
+        });
+    
+        // Confirmation de suppression (inchangé)
+        $('.delete-btn').on('click', function(e) {
+            e.preventDefault();
+            const form = $(this).closest('form');
+            
+            Swal.fire({
+                title: 'Confirmer la suppression',
+                text: "Êtes-vous sûr de vouloir supprimer ce bien ?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Oui, supprimer!',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    $(document).ready(function() {
+    // Gestion de la suppression
+    $('.delete-bien').click(function(e) {
+        e.preventDefault();
+        const bienId = $(this).data('id');
+        const bienName = $(this).data('name');
+        
+        Swal.fire({
+            title: 'Confirmer la suppression',
+            html: `Êtes-vous sûr de vouloir supprimer le bien : <b>${bienName}</b> ?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('bien.destroy.owner', ['bien' => 'PLACEHOLDER']) }}".replace('PLACEHOLDER', bienId),
+                    type: 'DELETE',
+                    data: {
+                        "_token": "{{ csrf_token() }}"
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire(
+                                'Supprimé!',
+                                response.message,
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Erreur!',
+                                response.message,
+                                'error'
+                            );
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire(
+                            'Erreur!',
+                            xhr.responseJSON?.message || 'Une erreur est survenue lors de la suppression.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    });
+});
+    </script>
+
 <style>
-    .text-gradient {
-        background-clip: text;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-image: linear-gradient(310deg, #7928CA 0%, #02245b 100%);
-    }
-    
-    .property-card {
-        border-radius: 12px;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .property-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    }
-    
-    .property-img-container {
-        position: relative;
-        height: 200px;
-        overflow: hidden;
-    }
-    
-    .property-img {
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
-    }
-    
-    .property-card:hover .property-img {
-        transform: scale(1.05);
-    }
-    
-    .property-price-badge {
-        position: absolute;
-        bottom: 15px;
-        left: 15px;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-weight: 600;
-    }
-    
-    .property-features .badge {
-        border-radius: 8px;
-        font-weight: 500;
-    }
-    
-    .card-footer {
-        background-color: rgba(241, 243, 245, 0.5);
-    }
-    
-    .pagination .page-item.active .page-link {
-        background-color: #5e72e4;
-        border-color: #5e72e4;
-    }
-    
-    .pagination .page-link {
-        color: #5e72e4;
-        margin: 0 5px;
-        border-radius: 8px;
-    }
+.preview-image:hover {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
 </style>
 @endsection

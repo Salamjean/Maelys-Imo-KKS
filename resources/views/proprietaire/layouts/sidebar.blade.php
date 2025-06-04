@@ -11,6 +11,24 @@
         </a>
       </li>
       <li class="nav-item sidebar-category">
+        <p>Bien - immobilier</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+          <i class="mdi mdi-animation menu-icon"></i>
+          <span class="menu-title">Biens</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('bien.create.owner') }}">Ajout d'un bien</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('owner.bienList') }}">Liste des biens</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('owner.bienList.loue') }}">Liste des biens loués</a></li>
+          </ul>
+        </div>
+      </li>
+      {{-- <li class="nav-item sidebar-category">
         <p>Biens</p>
         <span></span>
       </li>
@@ -19,7 +37,7 @@
           <i class="mdi mdi-account-card-details menu-icon"></i>
           <span class="menu-title">Listes de mes biens</span>
         </a>
-      </li>
+      </li> --}}
       {{-- <li class="nav-item">
         <a class="nav-link" href="{{ route('visite.index.agence') }}">
           <i class="mdi mdi-view-headline menu-icon"></i>
