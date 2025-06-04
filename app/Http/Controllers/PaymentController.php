@@ -557,7 +557,7 @@ public function verifyCashCodeAgent(Request $request)
     public function generateReceipt(Locataire $locataire, Paiement $paiement)
 {
     // Vérifier que l'utilisateur a le droit d'accéder à ce reçu
-   
+   \Carbon\Carbon::setLocale('fr');
     $data = [
         'paiement' => $paiement,
         'locataire' => $paiement->locataire,
