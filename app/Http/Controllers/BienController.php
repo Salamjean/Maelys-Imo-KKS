@@ -13,17 +13,21 @@ class BienController extends Controller
 {
     public function index()
     {
+        // Vérification si l'utilisateur est connecté en tant qu'agence
+        $adminId = Auth::guard('admin')->user()->id;
         // Récupération de tous les biens
         $biens = Bien::whereNull('agence_id')
+                    ->whereNull('proprietaire_id')
                     ->where('status','!=', 'Loué')
                     ->paginate(4);
         return view('admin.bien.index', compact('biens'));
     }
     public function indexAgence()
     {
-        $agence_id = Auth::guard('agence')->user()->id;
+        $agence_id = Auth::guard('agence')->user()->code_id;
         // Récupération des biens publier par l'agence
-        $biens = Bien::where('status','!=', 'Loué')
+        $biens = Bien::with('proprietaire')
+                    ->where('status','!=', 'Loué')
                     ->where('agence_id', $agence_id)
                     ->paginate(4);
         return view('agence.bien.index', compact('biens'));
@@ -31,13 +35,15 @@ class BienController extends Controller
 
     public function create()
     {
-        $proprietaires = Proprietaire::whereNull('agence_id')
+        // Récupération de l'agence connectée
+        $adminId = Auth::guard('admin')->user()->id;
+        $proprietaires = Proprietaire::where('agence_id', $adminId)
                                 ->get();
         return view('admin.bien.create', compact('proprietaires'));
     }
     public function createAgence()
     {
-        $agence_id = Auth::guard('agence')->user()->id;
+        $agence_id = Auth::guard('agence')->user()->code_id;
         $proprietaires = Proprietaire::where('agence_id', $agence_id)
                                 ->get();
         return view('agence.bien.create', compact('proprietaires'));
@@ -118,7 +124,7 @@ public function store(Request $request)
     if ($request->hasFile('additional_images5')) {
         $bien->image5 = $request->file('additional_images5')->store('biens_images', 'public');
     }
-
+    
     $bien->save();
 
     return redirect()->route('bien.index')->with('success', 'Le bien a été enregistré avec succès!');
@@ -127,7 +133,7 @@ public function storeAgence(Request $request)
 {
     // Validation des données
     $validatedData = $request->validate([
-        'proprietaire_id' => 'nullable|exists:proprietaires,id',
+        'proprietaire_id' => 'nullable|exists:proprietaires,code_id',
         'type' => 'required|string',
         'utilisation' => 'required|string',
         'description' => 'required|string',
@@ -221,7 +227,7 @@ public function storeAgence(Request $request)
         $bien->image5 = $request->file('additional_images5')->store('biens_images', 'public');
     }
 
-    $bien->agence_id = Auth::guard('agence')->user()->id;
+    $bien->agence_id = Auth::guard('agence')->user()->code_id;
     $bien->save();
 
     return redirect()->route('bien.index.agence')->with('success', 'Le bien a été enregistré avec succès!');
@@ -415,8 +421,9 @@ public function updateAgence(Request $request, $id)
     }
     public function maisons(Request $request)
     {
-       // Initialisation de la requête pour les appartements disponibles
-        $query = Bien::where('status', 'Disponible')
+        // Initialisation de la requête avec eager loading
+        $query = Bien::with(['proprietaire', 'agence'])
+                    ->where('status', 'Disponible')
                     ->where('type', 'Maison');
         
         // Application des filtres
@@ -430,6 +437,7 @@ public function updateAgence(Request $request, $id)
         
         // Récupération des résultats
         $biens = $query->get();
+        
         return view('home.pages.maisons', compact('biens'));
     }
     public function terrains(Request $request)
@@ -460,17 +468,20 @@ public function updateAgence(Request $request, $id)
 
 public function rented(){
     // Récupération de l'agence connectée
-    $agence_id = Auth::guard('agence')->user()->id;
+    $agence_id = Auth::guard('agence')->user()->code_id;
     // Récupération des biens loués
-    $biens = Bien::where('status', 'Loué')
+    $biens = Bien::with('proprietaire')
+            ->where('status', 'Loué')
             ->where('agence_id', $agence_id)
             ->paginate();
     return view('agence.bien.rented', compact('biens'));
 }
 
 public function rentedAdmin(){
+    // Vérification si l'utilisateur est connecté en tant qu'agence
+        $adminId = Auth::guard('admin')->user()->id;
     // Récupération des biens loués
-    $biens = Bien::whereNull('agence_id')
+    $biens = Bien::where('agence_id', $adminId)
                 ->where('status', 'Loué') ->paginate();
     return view('admin.bien.rented', compact('biens'));
 }

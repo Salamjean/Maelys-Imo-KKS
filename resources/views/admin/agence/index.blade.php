@@ -81,22 +81,49 @@
           <table class="table table-bordered table-hover">
             <thead style="background-color: #02245b; color: white;">
                 <tr class="text-center">
+                    <th>ID Agence</th>
                     <th>Nom de l'agence</th>
                     <th>Email</th>
                     <th>Commune</th>
                     <th>Contact</th>
                     <th>Adresse complète</th>
+                    <th>RIB</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($agences as $agence)
                     <tr class="text-center pt-3" style="height: 30px">
+                        <td ><strong>{{ $agence->code_id }}</strong></td>
                         <td ><strong>{{ $agence->name }}</strong></td>
                         <td>{{ $agence->email }}</td>
                         <td>{{ $agence->commune }}</td>
                         <td>{{ $agence->contact }}</td>
                         <td>{{ $agence->adresse }}</td>
+                         <td>
+                            @if($agence->rib)
+                                @php
+                                    $ribPath = asset('storage/' . $agence->rib);
+                                    $ribPathPdf = strtolower(pathinfo($ribPath, PATHINFO_EXTENSION)) === 'pdf';
+                                @endphp
+                                    @if ($ribPathPdf)
+                                        <a href="{{ $ribPath }}" target="_blank">
+                                            <img src="{{ asset('assets/images/pdf.jpg') }}" alt="PDF" width="30" height="30">
+                                        </a>
+                                    @else
+                                        <img src="{{ $ribPath }}" 
+                                            alt="Pièce du parent" 
+                                            width="50" 
+                                            height=50
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#imageModal" 
+                                            onclick="showImage(this)" 
+                                            onerror="this.onerror=null; this.src='{{ asset('assets/images/profiles/bébé.jpg') }}'">
+                                    @endif
+                                        @else
+                                            <p>Aucun RIB fournir</p>
+                                    @endif
+                            </td>
                         <td class="text-center">
                             <div class="btn-group " role="group" style="gap: 10px">
                                 <a href="{{ route('agence.edit',$agence->id) }}" class="btn btn-sm btn-warning" title="Modifier">
@@ -114,7 +141,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center py-4">
+                        <td colspan="8" class="text-center py-4">
                             <div class="alert alert-info">
                                 Aucune agence partenaire disponible pour le moment.
                             </div>

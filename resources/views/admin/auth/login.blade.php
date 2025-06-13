@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="{{ asset('login/assets/css/uf-style.css') }}">
     <title>Connexion - admin</title>
      <!-- SweetAlert2 CSS -->
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body>
@@ -47,10 +48,46 @@
         });
       </script>
     @endif
-    <!-- JavaScript -->
-
-    <!-- Separate Popper and Bootstrap JS -->
+     <!-- JavaScript -->
     <script src="{{ asset('login/assets/js/popper.min.js') }}"></script>
     <script src="{{ asset('login/assets/js/bootstrap.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Pop-up de succès après connexion -->
+    @if(session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: 'Connexion réussie',
+                text: '{{ session('success') }}',
+                showConfirmButton: false,
+                timer: 2000,
+                showConfirmButton: true,
+                confirmButtonColor: '#3085d6'
+
+            });
+        });
+    </script>
+    @endif
+    <!-- Pop-up de succès après connexion -->
+    @if(session('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: '{{ session('error') }}',
+                showConfirmButton: false,
+                timer: 2000,
+                showConfirmButton: true,
+                confirmButtonColor: '#3085d6'
+
+            });
+        });
+    </script>
+    @endif
   </body>
+
+
 </html>

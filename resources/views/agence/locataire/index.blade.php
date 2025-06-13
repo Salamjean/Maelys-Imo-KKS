@@ -132,7 +132,7 @@
                 <table class="table table-bordered table-hover">
                     <thead style="background-color: #02245b; color: white;">
                         <tr class="text-center">
-                            <th>Agence</th>
+                            <th>ID du locataire</th>
                             <th>Nom</th>
                             <th>Prénom</th>
                             <th>Contact</th>
@@ -149,9 +149,7 @@
                     <tbody>
                         @forelse($locataires as $locataire)
                             <tr class="text-center pt-3" style="height: 30px">
-                                <td>
-                                    {{ $locataire->agence->name ?? 'Non attribuée' }}
-                                </td>
+                                <td><strong>{{ $locataire->code_id }}</strong></td>
                                 <td><strong>{{ $locataire->name }}</strong></td>
                                 <td><strong>{{ $locataire->prenom }}</strong></td>
                                 <td>{{ $locataire->contact }}</td>

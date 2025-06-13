@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Agence\AgencePasswordResetController;
 use App\Http\Controllers\Agence\AgenceController;
+use App\Http\Controllers\Agence\AgenceReversementController;
 use App\Http\Controllers\Agent\AgentRecouvrementController;
 use App\Http\Controllers\BienController;
 use App\Http\Controllers\Agent\ComptableController;
@@ -14,8 +15,11 @@ use App\Http\Controllers\Locataire\LocataireController;
 use App\Http\Controllers\Locataire\LocatairePasswordResetController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Proprietaire\AddBienOwnerController;
+use App\Http\Controllers\Proprietaire\LocataireOwnerController;
 use App\Http\Controllers\Proprietaire\OwnerPasswordResetController;
 use App\Http\Controllers\Proprietaire\ProprietaireController;
+use App\Http\Controllers\Proprietaire\ReversementController;
+use App\Http\Controllers\RibController;
 use App\Http\Controllers\VersementController;
 use App\Http\Controllers\VisiteController;
 use App\Models\Bien;
@@ -110,8 +114,11 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::get('/',[ProprietaireController::class,'indexAdmin'])->name('owner.index.admin');
         Route::get('/ownercreate',[ProprietaireController::class,'createAdmin'])->name('owner.create.admin');
         Route::post('/create',[ProprietaireController::class,'storeAdmin'])->name('owner.store.admin');
-        Route::get('/edit/{proprietaire}',[ProprietaireController::class,'editAdmin'])->name('owner.edit.admin');
+        Route::get('/edit/{proprietaire}/owner',[ProprietaireController::class,'editAdmin'])->name('owner.edit.admin');
         Route::put('/{id}', [ProprietaireController::class, 'updateAdmin'])->name('owner.update.admin');
+        Route::get('/reversement',[ReversementController::class, 'reversementAdmin'])->name('reversement.index.admin');
+        Route::get('/reversement/completed',[ReversementController::class, 'reversementEffectue'])->name('reversement.completed.admin');
+        Route::post('/reversements/{id}/upload-recu', [ReversementController::class, 'uploadRecu'])->name('reversement.upload-recu');
     });
 });
    
@@ -167,7 +174,22 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
         Route::get('/ownercreate',[ProprietaireController::class,'create'])->name('owner.create');
         Route::post('/create',[ProprietaireController::class,'store'])->name('owner.store');
         Route::get('/edit/{proprietaire}',[ProprietaireController::class,'edit'])->name('owner.edit');
-        Route::put('/{id}', [ProprietaireController::class, 'update'])->name('owner.update');
+        Route::put('/{id}/edit', [ProprietaireController::class, 'update'])->name('owner.update.owner');
+    });
+
+    //Les routes pour la gestion des ribs du proprietaire 
+    Route::prefix('rib')->group(function(){
+        Route::get('/createrib',[RibController::class, 'createAgence'])->name('rib.create.agence');
+        Route::post('/storerib',[RibController::class, 'storeAgence'])->name('rib.store.agence');
+        Route::delete('/ribs/{id}', [RibController::class, 'destroyAgence'])->name('rib.destroy.agence');
+    });
+
+    // Routes pour la gestion des reversements du propriétaire
+    Route::prefix('reversement')->group(function(){
+        Route::get('/', [AgenceReversementController::class, 'index'])->name('reversement.index.agence');
+        Route::get('/reversement', [AgenceReversementController::class, 'create'])->name('reversement.create.agence');
+        Route::post('/reversement', [AgenceReversementController::class, 'store'])->name('reversement.store.agence');
+        Route::get('/reversement/solde', [AgenceReversementController::class, 'getSolde'])->name('reversement.solde.agence');
     });
 });
 // Routes pour la gestion des paiements
@@ -205,6 +227,7 @@ Route::middleware('auth:comptable')->prefix('accounting')->group(function () {
     Route::get('/agent/listes/tenant',[AgentRecouvrementController::class,'tenant'])->name('accounting.agent.tenant');
     Route::get('/agent/paid',[AgentRecouvrementController::class,'paid'])->name('accounting.agent.paid');
     Route::get('/agent/history',[AgentRecouvrementController::class,'history'])->name('accounting.agent.history');
+    Route::get('/versement/history',[VersementController::class,'history'])->name('accounting.versement.history');
     Route::get('/locataires/{locataire}/generate-code', [AgentRecouvrementController::class, 'showGenerateCodePage'])->name('locataires.generateCodePage');
 });
 // Routes pour la gestion des propriétaires
@@ -220,10 +243,45 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
         Route::post('/biens/store',[AddBienOwnerController::class, 'store'])->name('bien.store.owner');
         Route::get('/biens',[AddBienOwnerController::class,'bienList'])->name('owner.bienList');
         Route::get('/biens/list/loué',[AddBienOwnerController::class,'bienListLoue'])->name('owner.bienList.loue');
-        Route::get('/biens/rented',[AddBienOwnerController::class, 'rented'])->name('bien.rented');
         Route::get('/biens/{bien}/edit', [AddBienOwnerController::class, 'edit'])->name('bien.edit.owner');
         Route::put('/biens/{bien}', [AddBienOwnerController::class, 'update'])->name('bien.update.owner');
         Route::delete('/biens/{bien}', [AddBienOwnerController::class, 'destroy'])->name('bien.destroy.owner');
+    });
+
+    Route::prefix('manager')->group(function(){
+         //routes de gestion des locataires par l'agence
+        Route::get('/locataires',[LocataireOwnerController::class, 'index'])->name('locataire.index.owner');
+        Route::get('/locataires/not/serieux',[LocataireOwnerController::class, 'indexSerieux'])->name('locataire.indexSerieux.owner');
+        Route::get('/locatairescreate',[LocataireOwnerController::class, 'create'])->name('locataire.create.owner');
+        Route::post('/locataires/store',[LocataireOwnerController::class, 'store'])->name('locataire.store.owner');
+        Route::put('/locataires/{locataire}/status', [LocataireOwnerController::class, 'updateStatus'])->name('locataires.updateStatus.owner');
+        Route::get('/locataires/{locataire}/edit', [LocataireOwnerController::class, 'edit'])->name('locataire.edit.owner');
+        Route::put('/locataires/{locataire}', [LocataireOwnerController::class, 'update'])->name('locataire.update.owner');
+    });
+
+    Route::prefix('visit')->group(function(){
+            Route::get('/visites',[VisiteController::class, 'ownerIndex'])->name('visite.index.owner');
+            Route::get('/visites/done',[VisiteController::class, 'ownerDone'])->name('visite.done.owner');
+            Route::post('/{visite}/confirm', [VisiteController::class, 'ownerConfirm'])->name('visites.confirm.owner');
+            Route::post('/{visite}/done', [VisiteController::class, 'ownerMarkAsDone'])->name('visites.done.owner');
+            Route::post('/{visite}/cancel', [VisiteController::class, 'ownerCancel'])->name('visites.cancel.owner');
+            Route::get('/{visite}', [VisiteController::class, 'ownerShow'])->name('visites.show.owner');
+            Route::post('/visites/{visite}/update-date', [VisiteController::class, 'updateDateOwner'])->name('visites.updateDate.owner');
+    });
+
+    //Les routes pour la gestion des ribs du proprietaire 
+    Route::prefix('rib')->group(function(){
+        Route::get('/createrib',[RibController::class, 'create'])->name('rib.create');
+        Route::post('/storerib',[RibController::class, 'store'])->name('rib.store');
+        Route::delete('/ribs/{id}', [RibController::class, 'destroy'])->name('rib.destroy');
+    });
+
+    // Routes pour la gestion des reversements du propriétaire
+    Route::prefix('reversement')->group(function(){
+        Route::get('/', [ReversementController::class, 'index'])->name('reversement.index');
+        Route::get('/reversement', [ReversementController::class, 'create'])->name('reversement.create');
+        Route::post('/reversement', [ReversementController::class, 'store'])->name('reversement.store');
+        Route::get('/reversement/solde', [ReversementController::class, 'getSolde'])->name('reversement.solde');
     });
 });
 

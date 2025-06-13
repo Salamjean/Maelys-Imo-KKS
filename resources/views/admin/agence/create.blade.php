@@ -13,20 +13,29 @@
                     <legend style="font-size: 1.5em; font-weight: bold;">Informations de l'agence</legend>
                 <!-- Section 1: Informations de base -->
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label>Nom de l'agence</label>
-                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Nom de l'agence" name="name">
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;" value="{{ old('name') }}" class="form-control" placeholder="Nom de l'agence" name="name">
                             @error('name')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label>Email</label>
-                            <input type="email" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Email" name="email">
+                            <input type="email" style="border: 1px solid black; border-radius: 5px;" value="{{ old('email') }}"  class="form-control" placeholder="Email" name="email">
                             @error('email')
+                                <div class="alert alert-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                     <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Commune</label>
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;"  value="{{ old('commune') }}"  class="form-control" placeholder="Commune" name="commune">
+                            @error('commune')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
                         </div>
@@ -37,17 +46,8 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label>Commune</label>
-                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Commune" name="commune">
-                            @error('commune')
-                                <div class="alert alert-danger mt-2">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
                             <label>Contact de l'agence</label>
-                            <input type="number" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Contact de l'agence" name="contact">
+                            <input type="number" style="border: 1px solid black; border-radius: 5px;"  value="{{ old('contact') }}"  class="form-control" placeholder="Contact de l'agence" name="contact">
                             @error('contact')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -56,11 +56,26 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Adresse complete de l'agence</label>
-                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Adresse" name="adresse">
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;"  value="{{ old('adresse') }}"  class="form-control" placeholder="Adresse" name="adresse">
                             @error('adresse')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
                         </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>RIB</label>
+                            <div class="input-group">
+                                <input type="file" name="rib" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
+                                <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Télécharger le RIB" value="{{ old('rib') }}">
+                                <span class="input-group-append">
+                                    <button class="file-upload-browse btn btn-primary" style="background-color: #02245b" type="button">Télécharger</button>
+                                </span>
+                            </div>
+                        </div>
+                        @error('rib')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
                 <!-- Boutons de soumission -->
@@ -74,4 +89,36 @@
     </div>
 </div>
 </fieldset>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Ajout de SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // =============================================
+    // GESTION DU TÉLÉCHARGEMENT DE FICHIERS
+    // =============================================
+    
+    // Déclenche le click sur l'input file lorsque le bouton est cliqué
+    $(document).on('click', '.file-upload-browse', function(e) {
+        e.preventDefault();
+        let fileInput = $(this).closest('.input-group').find('.file-upload-default');
+        fileInput.trigger('click');
+    });
+    
+    // Affiche le nom du fichier sélectionné
+    $(document).on('change', '.file-upload-default', function() {
+        let fileName = $(this).val().split('\\').pop(); // Meilleure gestion des chemins
+        $(this).closest('.input-group').find('.file-upload-info').val(fileName);
+        
+        // Optionnel: Prévisualisation pour les images
+        if (this.files && this.files[0]) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                $(this).closest('.input-group').find('.img-preview').attr('src', e.target.result).show();
+            }.bind(this);
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+</script>
 @endsection

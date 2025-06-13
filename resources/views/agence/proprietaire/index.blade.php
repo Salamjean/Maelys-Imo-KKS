@@ -81,22 +81,53 @@
           <table class="table table-bordered table-hover">
             <thead style="background-color: #02245b; color: white;">
                 <tr class="text-center">
-                    <th>Nom du propriétaire</th>
+                    <th>ID Propriétaire</th>
+                    <th>Nom</th>
                     <th>Email</th>
                     <th>Lieu de résidence</th>
                     <th>Contact</th>
-                    <th>Fonction</th>
+                    <th>Choix de paiement</th>
+                    <th>RIB</th>
+                    <th>Pourcentage</th>
+                    <th>Contrat</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($proprietaires as $proprietaire)
                     <tr class="text-center pt-3" style="height: 30px">
+                        <td><strong>{{ $proprietaire->code_id }}</strong></td>
                         <td ><strong>{{ $proprietaire->name. ' '. $proprietaire->prenom }}</strong></td>
                         <td>{{ $proprietaire->email }}</td>
                         <td>{{ $proprietaire->commune }}</td>
                         <td>{{ $proprietaire->contact }}</td>
-                        <td>{{ $proprietaire->fonction }}</td>
+                        <td>{{ $proprietaire->choix_paiement }}</td>
+                        <td>{{ $proprietaire->rib ?? 'N/A' }}</td>
+                        <td>{{ $proprietaire->pourcentage }}%</td>
+                        <td>
+                            @if($proprietaire->contrat)
+                                @php
+                                    $contratPath = asset('storage/' . $proprietaire->contrat);
+                                    $contratPathPdf = strtolower(pathinfo($contratPath, PATHINFO_EXTENSION)) === 'pdf';
+                                @endphp
+                                @if ($contratPathPdf)
+                                    <a href="{{ $contratPath }}" target="_blank">
+                                        <img src="{{ asset('assets/images/pdf.jpg') }}" alt="PDF" width="30" height="30">
+                                    </a>
+                                @else
+                                    <img src="{{ $contratPath }}" 
+                                        alt="Pièce du parent" 
+                                        width="50" 
+                                        height=50
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#imageModal" 
+                                        onclick="showImage(this)" 
+                                        onerror="this.onerror=null; this.src='{{ asset('assets/images/profiles/bébé.jpg') }}'">
+                                @endif
+                            @else
+                                <p>Non disponible</p>
+                            @endif
+                        </td>
                         <td class="text-center">
                             <div class="btn-group " role="group" style="gap: 10px">
                                 <a href="{{ route('owner.edit', $proprietaire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
@@ -114,7 +145,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center py-4">
+                        <td colspan="10" class="text-center py-4">
                             <div class="alert alert-info">
                                 Aucune agence partenaire disponible pour le moment.
                             </div>

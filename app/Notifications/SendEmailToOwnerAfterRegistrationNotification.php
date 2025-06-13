@@ -41,8 +41,8 @@ class SendEmailToOwnerAfterRegistrationNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Agence : Vous êtes enregistré en tant que propriétaire') 
-            ->from('no-reply@example.com', 'Agence')
+            ->subject('Maelys-imo : Vous êtes enregistré en tant que propriétaire') 
+            ->from('no-reply@example.com', 'Maelys-imo')
             ->view('emails.proprietaire', [
                 'code' => $this->code,
                 'email' => $this->email,

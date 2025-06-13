@@ -20,6 +20,7 @@ class Locataire extends Authenticatable
         'status',
         'motif',
         'agence_id',
+        'proprietaire_id',
         'contrat_id',
         'bien_id',
         'contrat',
@@ -45,19 +46,23 @@ class Locataire extends Authenticatable
     }
 
     public function bien()
-{
-    return $this->belongsTo(Bien::class);
-}
+    {
+        return $this->belongsTo(Bien::class);
+    }
 
-public function paiements()
-{
-    return $this->hasMany(Paiement::class);
-}
+    public function paiements()
+    {
+        return $this->hasMany(Paiement::class);
+    }
 
-public function scopeActive($query)
-{
-    return $query->where('status', 'Actif');
-}
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'Actif');
+    }
+    public function proprietaire()
+    {
+        return $this->belongsTo(Proprietaire::class);
+    }
     
 
 }

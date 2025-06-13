@@ -23,37 +23,37 @@ class AgenceController extends Controller
         $agence = auth('agence')->user();
         // Totaux généraux
         $totalAppartements = Bien::where('type', 'Appartement')
-                            ->where('agence_id', $agence->id)
+                            ->where('agence_id', $agence->code_id)
                             ->count();
         $totalMaisons = Bien::where('type', 'Maison')
-                        ->where('agence_id', $agence->id)
+                        ->where('agence_id', $agence->code_id)
                         ->count();
         $totalMagasins = Bien::where('type', 'Bureau')
-                        ->where('agence_id', $agence->id)   
+                        ->where('agence_id', $agence->code_id)   
                         ->count();
         
         // Statistiques par période
         $stats = [
             'day' => [
-                'appartements' => Bien::where('type', 'Appartement')->where('agence_id', $agence->id)->whereDate('created_at', today())->count(),
-                'maisons' => Bien::where('type', 'Maison')->where('agence_id', $agence->id)->whereDate('created_at', today())->count(),
-                'magasins' => Bien::where('type', 'Bureau')->where('agence_id', $agence->id)->whereDate('created_at', today())->count()
+                'appartements' => Bien::where('type', 'Appartement')->where('agence_id', $agence->code_id)->whereDate('created_at', today())->count(),
+                'maisons' => Bien::where('type', 'Maison')->where('agence_id', $agence->code_id)->whereDate('created_at', today())->count(),
+                'magasins' => Bien::where('type', 'Bureau')->where('agence_id', $agence->code_id)->whereDate('created_at', today())->count()
             ],
             'week' => [
-                'appartements' => Bien::where('type', 'Appartement')->where('agence_id', $agence->id)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-                'maisons' => Bien::where('type', 'Maison')->where('agence_id', $agence->id)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-                'magasins' => Bien::where('type', 'Bureau')->where('agence_id', $agence->id)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count()
+                'appartements' => Bien::where('type', 'Appartement')->where('agence_id', $agence->code_id)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+                'maisons' => Bien::where('type', 'Maison')->where('agence_id', $agence->code_id)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+                'magasins' => Bien::where('type', 'Bureau')->where('agence_id', $agence->code_id)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count()
             ],
             'month' => [
-                'appartements' => Bien::where('type', 'Appartement')->where('agence_id', $agence->id)->whereMonth('created_at', now()->month)->count(),
-                'maisons' => Bien::where('type', 'Maison')->where('agence_id', $agence->id)->whereMonth('created_at', now()->month)->count(),
-                'magasins' => Bien::where('type', 'Bureau')->where('agence_id', $agence->id)->whereMonth('created_at', now()->month)->count()
+                'appartements' => Bien::where('type', 'Appartement')->where('agence_id', $agence->code_id)->whereMonth('created_at', now()->month)->count(),
+                'maisons' => Bien::where('type', 'Maison')->where('agence_id', $agence->code_id)->whereMonth('created_at', now()->month)->count(),
+                'magasins' => Bien::where('type', 'Bureau')->where('agence_id', $agence->code_id)->whereMonth('created_at', now()->month)->count()
             ]
         ];
     
         // Biens récents
         $recentBiens = Bien::with('agence')
-                          ->where('agence_id', $agence->id)
+                          ->where('agence_id', $agence->code_id)
                           ->orderBy('created_at', 'desc')
                           ->take(5)
                           ->get();
@@ -87,6 +87,7 @@ class AgenceController extends Controller
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
             'adresse' => 'required|string|max:255',
+            'rib' => 'required|file|mimes:pdf|max:2048',
         ],[
             'name.required' => 'Le nom de l\'agence est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
@@ -96,22 +97,38 @@ class AgenceController extends Controller
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'La commune est obligatoire.',
             'adresse.required' => 'L\'adresse est obligatoire.',
+            'rib.required' => 'Le RIB est obligatoire.',
+            'rib.max' => 'Le RIB ne doit pas dépasser 2048 caractères.',
+            'rib.mines' => 'le fichier doit etre un pdf'
         ]);
     
         try {
+            // Génération du code PRO unique
+            do {
+                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $codeId = 'AG' . $randomNumber;
+            } while (Agence::where('code_id', $codeId)->exists());
+
             // Traitement de l'image de profil
             $profileImagePath = null;
             if ($request->hasFile('profile_image')) {
                 $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
             }
+
+            $ribPath = null;
+            if ($request->hasFile('rib')) {
+                $ribPath = $request->file('rib')->store('ribs', 'public');
+            }
     
             // Création de l'agence
             $agence = new Agence();
+            $agence->code_id = $codeId;
             $agence->name = $request->name;
             $agence->email = $request->email;
             $agence->contact = $request->contact;
             $agence->commune = $request->commune;
             $agence->adresse = $request->adresse;
+            $agence->rib = $ribPath;
             $agence->password = Hash::make('password');
             $agence->profile_image = $profileImagePath;
             $agence->save();
@@ -153,6 +170,7 @@ class AgenceController extends Controller
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
             'adresse' => 'required|string|max:255',
+            'rib' => 'nullable|string|max:255',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ],[
             'name.required' => 'Le nom de l\'agence est obligatoire.',
@@ -163,6 +181,7 @@ class AgenceController extends Controller
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'La commune est obligatoire.',
             'adresse.required' => 'L\'adresse est obligatoire.',
+            'rib.max' => 'Le RIB ne doit pas dépasser 255 caractères.',
         ]);
 
         try {
@@ -182,6 +201,7 @@ class AgenceController extends Controller
             $agence->contact = $request->contact;
             $agence->commune = $request->commune;
             $agence->adresse = $request->adresse;
+            $agence->rib = $request->rib;
             $agence->save();
 
             return redirect()->route('agence.index')

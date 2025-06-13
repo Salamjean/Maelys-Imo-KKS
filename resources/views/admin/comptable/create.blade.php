@@ -16,7 +16,7 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Nom du comptable</label>
-                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Nom du comptable" name="name">
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;" value="{{ old('name') }}" class="form-control" placeholder="Nom du comptable"  name="name">
                             @error('name')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -25,7 +25,7 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Prénom du comptable</label>
-                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Prénom du comptable" name="prenom">
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;" value="{{ old('prenom') }}" class="form-control" placeholder="Prénom du comptable" name="prenom">
                             @error('prenom')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -34,7 +34,7 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Email</label>
-                            <input type="email" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Email" name="email">
+                            <input type="email" style="border: 1px solid black; border-radius: 5px;" value="{{ old('email') }}" class="form-control" placeholder="Email" name="email">
                             @error('email')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -47,7 +47,7 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Lieu de résidence</label>
-                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Commune" name="commune">
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;" value="{{ old('commune') }}" class="form-control" placeholder="Commune" name="commune">
                             @error('commune')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -56,7 +56,7 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Contact du comptable</label>
-                            <input type="number" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Contact du comptable" name="contact">
+                            <input type="number" style="border: 1px solid black; border-radius: 5px;" value="{{ old('contact') }}" class="form-control" placeholder="Contact du comptable" name="contact">
                             @error('contact')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -65,7 +65,7 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Date de naissance</label>
-                            <input type="date" style="border: 1px solid black; border-radius: 5px;" class="form-control" name="date_naissance">
+                            <input type="date" style="border: 1px solid black; border-radius: 5px;" value="{{ old('date_naissance') }}" class="form-control" name="date_naissance">
                             @error('date_naissance')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror

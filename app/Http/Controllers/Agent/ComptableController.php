@@ -23,16 +23,39 @@ class ComptableController extends Controller
     public function dashboard()
     {
         Carbon::setLocale('fr');
+        $comptable = Auth::guard('comptable')->user();
         // 1. Statistiques de base
-        $totalLocataires = Locataire::count();
-        $locatairesActifs = Locataire::where('status', 'Actif')->count();
+        if($comptable->agence_id){
+            $totalLocataires = Locataire::where('agence_id', $comptable->agence_id)->count();
+        }else{
+            $totalLocataires = Locataire::whereNull('agence_id')->whereNull('proprietaire_id')->count();
+        }
+
+        if($comptable->agence_id){
+            $locatairesActifs = Locataire::where('agence_id', $comptable->agence_id)
+                                        ->where('status', 'Actif')->
+                                        count();
+        }else{
+            $locatairesActifs = Locataire::whereNull('agence_id')->whereNull('proprietaire_id')
+                                            ->where('status', 'Actif')
+                                            ->count();
+        }
         
         // 2. Statistiques des biens (optimisé en une seule requête)
-        $biensStats = Bien::selectRaw('status, count(*) as count')
-                ->whereIn('status', ['Loué', 'Disponible'])
-                ->groupBy('status')
-                ->pluck('count', 'status');
-        
+        if($comptable->agence_id){
+            $biensStats = Bien::where('agence_id', $comptable->agence_id)
+                            ->selectRaw("COUNT(*) as total, 
+                                SUM(CASE WHEN status = 'Loué' THEN 1 ELSE 0 END) as Loué, 
+                                SUM(CASE WHEN status = 'Disponible' THEN 1 ELSE 0 END) as Disponible")
+                            ->first();
+        }else{
+            $biensStats = Bien::whereNull('agence_id')
+                            ->whereNull('proprietaire_id')
+                            ->selectRaw("COUNT(*) as total, 
+                                SUM(CASE WHEN status = 'Loué' THEN 1 ELSE 0 END) as Loué, 
+                                SUM(CASE WHEN status = 'Disponible' THEN 1 ELSE 0 END) as Disponible")
+                            ->first();
+        }
         $biensLoues = $biensStats['Loué'] ?? 0;
         $biensDisponibles = $biensStats['Disponible'] ?? 0;
         
@@ -101,7 +124,7 @@ class ComptableController extends Controller
         ));
     }
     public function index(){
-        $agenceId = Auth::guard('agence')->user()->id;
+        $agenceId = Auth::guard('agence')->user()->code_id;
         $comptables = Comptable::where('agence_id', $agenceId)->paginate(6);
         return view('agence.comptable.index', compact('comptables'));
     }
@@ -135,7 +158,7 @@ class ComptableController extends Controller
         ]);
     
         try {
-            $agenceId = Auth::guard('agence')->user()->id;
+            $agenceId = Auth::guard('agence')->user()->code_id;
             // Traitement de l'image de profil
             $profileImagePath = null;
             if ($request->hasFile('profile_image')) {
@@ -353,7 +376,10 @@ class ComptableController extends Controller
                 ->get();
         } else {
             // Si le comptable n'a pas d'agence, retourner une collection vide
-            $locataires = collect();
+            $locataires = Locataire::with(['bien', 'paiements', 'agence'])
+                ->whereNull('agence_id')
+                ->whereNull('proprietaire_id')
+                ->get();;
         }
         
         return view('comptable.locataire.index', compact('locataires'));
@@ -367,13 +393,28 @@ class ComptableController extends Controller
         $agence = $comptable->agence;
 
         // Récupération des locataires de l'agence du comptable
-        $locataires = Locataire::with(['bien', 'paiements' => function($query) {
-            $query->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year);
-        }])
-        ->where('status', '!=', 'Pas sérieux')
-        ->where('agence_id', $agence->id)
-        ->paginate(6);
+
+        // Vérifier si le comptable a une agence associée
+        if ($comptable->agence_id) {
+             $locataires = Locataire::with(['bien', 'paiements' => function($query) {
+                        $query->whereMonth('created_at', now()->month)
+                            ->whereYear('created_at', now()->year);
+                        }])
+                        ->where('status', '!=', 'Pas sérieux')
+                        ->where('agence_id', $agence->code_id)
+                        ->paginate(6);
+        } else {
+            // Si le comptable n'a pas d'agence, retourner une collection vide
+            $locataires = Locataire::with(['bien', 'paiements' => function($query) {
+                        $query->whereMonth('created_at', now()->month)
+                            ->whereYear('created_at', now()->year);
+                        }])
+                        ->where('status', '!=', 'Pas sérieux')
+                        ->whereNull('agence_id')
+                        ->whereNull('proprietaire_id')
+                        ->paginate(6);
+        }
+       
 
         // Ajout d'une propriété à chaque locataire pour afficher ou non le bouton
         $locataires->getCollection()->transform(function($locataire) {

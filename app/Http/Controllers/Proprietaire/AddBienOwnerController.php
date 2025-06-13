@@ -108,9 +108,7 @@ class AddBienOwnerController extends Controller
         if ($request->hasFile('additional_images5')) {
             $bien->image5 = $request->file('additional_images5')->store('biens_images', 'public');
         }
-
-        $bien->agence_id = Auth::guard('owner')->user()->agence->id;
-        $bien->proprietaire_id = Auth::guard('owner')->user()->id;
+        $bien->proprietaire_id = Auth::guard('owner')->user()->code_id;
         $bien->save();
 
         return redirect()->route('owner.bienList')->with('success', 'Le bien a été enregistré avec succès!');
@@ -119,7 +117,7 @@ class AddBienOwnerController extends Controller
      public function bienList()
     {
         // Vérifier si l'utilisateur est connecté en tant que propriétaire
-        $proprietaireId = Auth::guard('owner')->user()->id;
+        $proprietaireId = Auth::guard('owner')->user()->code_id;
         
         // Récupérer les biens du propriétaire connecté
         $biens = Bien::where('proprietaire_id', $proprietaireId)
@@ -132,7 +130,7 @@ class AddBienOwnerController extends Controller
     public function bienListLoue()
     {
         // Vérifier si l'utilisateur est connecté en tant que propriétaire
-        $proprietaireId = Auth::guard('owner')->user()->id;
+        $proprietaireId = Auth::guard('owner')->user()->code_id;
         
         // Récupérer les biens du propriétaire connecté
         $biens = Bien::where('proprietaire_id', $proprietaireId)

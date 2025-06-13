@@ -113,7 +113,10 @@ class AgentRecouvrementController extends Controller
                 ->get();
         } else {
             // Si le comptable n'a pas d'agence, retourner une collection vide
-            $locataires = collect();
+            $locataires = Locataire::with(['bien', 'paiements', 'agence'])
+                ->whereNull('agence_id')
+                ->whereNull('proprietaire_id')
+                ->get();;
         }
         
         return view('agent.locataire.index', compact('locataires'));
@@ -139,7 +142,7 @@ class AgentRecouvrementController extends Controller
         $locataires->getCollection()->transform(function($locataire) {
             $today = now()->format('d');
             $currentMonthPaid = $locataire->paiements->isNotEmpty();
-            $locataire->show_reminder_button = ($locataire->bien->date_fixe == $today) && !$currentMonthPaid;
+            $locataire->show_reminder_button = ($locataire->bien->date_fixe ?? '10' == $today) && !$currentMonthPaid;
             return $locataire;
         });
 
@@ -159,7 +162,14 @@ class AgentRecouvrementController extends Controller
         $moisEnCoursAffichage = now()->translatedFormat('F Y');
         if (!$comptable || !$comptable->agence) {
             return view('agent.locataire.paid', [
-                'locataires' => Locataire::whereNull('agence_id')->paginate(10), // Retourne un paginateur vide
+                'locataires' => Locataire::whereNull('agence_id')
+                                ->where('status', '!=', 'Pas sérieux')
+                                ->where('status', '!=', 'Inactif')
+                                ->whereNull('proprietaire_id')
+                                ->whereDoesntHave('paiements', function ($query) use ($moisEnCoursFormatDB) {
+                                    $query->where('mois_couvert', $moisEnCoursFormatDB)
+                                        ->where('statut', 'payé');
+                                })->paginate(10), // Retourne un paginateur vide
                 'moisEnCours' => $moisEnCoursAffichage,
                 'error' => 'Aucune agence n\'est associée à votre compte comptable.'
             ]);
@@ -168,8 +178,9 @@ class AgentRecouvrementController extends Controller
         
         
 
-        $locataires = Locataire::where('agence_id', $agence->id)
+        $locataires = Locataire::where('agence_id', $agence->code_id)
             ->where('status', '!=', 'Pas sérieux')
+            ->where('status', '!=', 'Inactif')
             ->whereDoesntHave('paiements', function ($query) use ($moisEnCoursFormatDB) {
                 $query->where('mois_couvert', $moisEnCoursFormatDB)
                     ->where('statut', 'payé');
@@ -192,11 +203,9 @@ class AgentRecouvrementController extends Controller
     }
 
     public function history(){
-         Carbon::setLocale('fr');
-        $comptable = Auth::guard('comptable')->user();
-         $paiements = Paiement::whereHas('locataire', function($query) use ($comptable) {
-            $query->where('agence_id', $comptable->agence_id)->where('comptable_id', $comptable->id);
-        })->paginate(10);
+        Carbon::setLocale('fr');
+        $comptableId = Auth::guard('comptable')->user()->id;
+         $paiements = Paiement::where('comptable_id',$comptableId)->paginate(10);
         return view('agent.locataire.history', compact('paiements'));
     }
 

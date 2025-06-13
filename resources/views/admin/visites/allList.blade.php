@@ -103,7 +103,17 @@
                         <td>
                             <span class="badge {{ $statusClass }}">{{ $visite->statut }}</span>
                         </td>
-                        <td><strong>{{ $visite->bien->agence->name ?? 'Maelys-Imo'  }} </strong></td>
+                        <td>
+                            <strong>
+                                 @if($visite->bien->agence_id)
+                                <i class="fa fa-home text-primary me-2"></i>{{ $visite->bien->agence->name ?? 'ecole' }}
+                                @elseif($visite->bien->proprietaire_id)
+                                    <i class="fa fa-user text-primary me-2"></i>{{ $visite->bien->proprietaire->name.' '.$visite->bien->proprietaire->prenom ?? 'Maelys-imo' }}
+                                @else
+                                    <i class="fa fa-home text-primary me-2"></i>Maelys-imo
+                                @endif
+                            </strong>
+                        </td>
                     </tr>
                 @empty
                     <tr>

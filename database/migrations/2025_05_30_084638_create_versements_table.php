@@ -13,9 +13,11 @@ return new class extends Migration
     {
         Schema::create('versements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('agent_id')->constrained('comptables')->onDelete('cascade'); // L'agent qui verse
-            $table->foreignId('comptable_id')->constrained('comptables')->onDelete('cascade'); // Le comptable qui reçoit
-            $table->decimal('montant', 10, 2); // Ex: 1000000.00
+            $table->foreignId('agent_id')->constrained('comptables')->onDelete('cascade');
+            $table->foreignId('comptable_id')->constrained('comptables')->onDelete('cascade');
+            $table->decimal('montant_verse', 10, 2); // Montant que l'agent donne
+            $table->decimal('montant_percu', 10, 2); // Total des paiements perçus par l'agent
+            $table->decimal('reste_a_verser', 10, 2); // Reste après ce versement
             $table->timestamps();
         });
     }

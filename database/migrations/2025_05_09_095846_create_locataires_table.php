@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('locataires', function (Blueprint $table) {
             $table->id();
+            $table->string('code_id')->unique(); // Code d'identification unique
             $table->string('name');
             $table->string('prenom');
             $table->string('email')->unique();
@@ -21,7 +22,7 @@ return new class extends Migration
             $table->string('piece');
             $table->string('adresse');
             $table->string('profession');
-            $table->string('attestation');
+            $table->string('attestation')->nullable();
             $table->string('image1')->nullable();
             $table->string('image2')->nullable();
             $table->string('image3')->nullable();
@@ -30,8 +31,10 @@ return new class extends Migration
             $table->string('status')->default('Actif'); // 'Inactif' or 'Actif'
             $table->string('motif')->nullable(); // Motif de l'inactivité
             $table->string('contrat');
-            $table->foreignId('agence_id')->nullable()->constrained('agences')->onDelete('cascade');
+            $table->string('agence_id')->nullable();$table->foreign('agence_id')->references('code_id')->on('agences')->onDelete('cascade');
             $table->foreignId('bien_id')->nullable()->constrained('biens')->onDelete('set null');
+            $table->string('proprietaire_id')->nullable();$table->foreign('proprietaire_id')->references('code_id')->on('proprietaires')->onDelete('cascade');
+            
             $table->timestamps();
         });
     }

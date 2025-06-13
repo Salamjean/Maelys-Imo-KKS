@@ -12,7 +12,7 @@
         </tr>
         <tr>
             <td>
-                <h1>Vous avez été bien enregistrer auprès de votre agence</h1>
+                <h1>Vous avez bien été enregistré chez MAELYS-IMO</h1>
                 <p>Votre compte a été créé avec succès sur la plateforme.</p>
                 <p>Cliquez sur le bouton ci-dessous pour valider votre compte.</p>
                 <p>Saisissez le code <strong>{{ $code }}</strong> dans le formulaire qui apparaîtra.</p>

@@ -46,7 +46,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Superficie (m²) <span style="color: red">*</span></label>
-                                <input type="number" class="form-control" placeholder="Superficie" name="superficie" style="border: 1px solid black; border-radius: 5px;">
+                                <input type="number" class="form-control" placeholder="Superficie" value="{{ old('superficie') }}" name="superficie" style="border: 1px solid black; border-radius: 5px;">
                                 @error('superficie')
                                     <div class="alert alert-danger">{{ $message }}</div>
                                 @enderror
@@ -56,7 +56,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Commune <span style="color: red">*</span></label>
-                                <input type="text" class="form-control" placeholder="Commune" name="commune" style="border: 1px solid black; border-radius: 5px;">
+                                <input type="text" class="form-control" placeholder="Commune" value="{{ old('commune') }}" name="commune" style="border: 1px solid black; border-radius: 5px;">
                                 @error('commune')
                                     <div class="alert alert-danger">{{ $message }}</div>
                                 @enderror
@@ -69,7 +69,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Nombre de chambres <span style="color: red">*</span></label>
-                                <input type="number" class="form-control" placeholder="Nombre de chambres" name="nombre_de_chambres" style="border: 1px solid black; border-radius: 5px;">
+                                <input type="number" class="form-control" placeholder="Nombre de chambres" value="{{ old('nombre_de_chambres') }}" name="nombre_de_chambres" style="border: 1px solid black; border-radius: 5px;">
                                 @error('nombre_de_chambres')
                                     <div class="alert alert-danger">{{ $message }}</div>
                                 @enderror
@@ -78,7 +78,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Nombre de toilettes <span style="color: red">*</span></label>
-                                <input type="number" class="form-control" placeholder="Nombre de toilettes" name="nombre_de_toilettes" style="border: 1px solid black; border-radius: 5px;">
+                                <input type="number" class="form-control" placeholder="Nombre de toilettes" value="{{ old('nombre_de_toilettes') }}" name="nombre_de_toilettes" style="border: 1px solid black; border-radius: 5px;">
                                 @error('nombre_de_toilettes')
                                     <div class="alert alert-danger">{{ $message }}</div>
                                 @enderror
@@ -122,7 +122,7 @@
                             <div class="form-group">
                                 <label>Loyer mensuel</label><span style="color: red">*</span>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" placeholder="Montant total" name="prix" style="border: 1px solid black; border-radius: 5px;">
+                                    <input type="number" class="form-control" placeholder="Montant total" value="{{ old('prix') }}" name="prix" style="border: 1px solid black; border-radius: 5px;">
                                     <div class="input-group-append" style="background-color: #02245b; color:white">
                                         <span class="input-group-text text-white" style="border: 1px solid black; border-radius: 5px; background-color: #02245b; ">FCFA</span>
                                     </div>
@@ -141,6 +141,7 @@
                                            name="avance" 
                                            min="1" 
                                            max="99" 
+                                           value="{{ old('avance') }}"
                                            maxlength="2"
                                            oninput="this.value=this.value.slice(0,2)"
                                            style="border: 1px solid black; border-radius: 5px;">
@@ -159,6 +160,7 @@
                                            name="caution" 
                                            min="1" 
                                            max="99" 
+                                           value="{{ old('caution') }}"
                                            maxlength="2"
                                            oninput="this.value=this.value.slice(0,2)"
                                            style="border: 1px solid black; border-radius: 5px;">
@@ -194,7 +196,7 @@
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label>Date de paiement <span style="color: red">*</span></label>
-                                <input type="text" class="form-control" name="disponibilite" style="border: 1px solid black; border-radius: 5px;">
+                                <input type="text" class="form-control" name="disponibilite" value="{{ old('disponibilite') }}" style="border: 1px solid black; border-radius: 5px;">
                                 @error('disponibilite')
                                     <div class="alert alert-danger">{{ $message }}</div>
                                 @enderror
@@ -306,8 +308,11 @@
                     <div class="col-md-12">
                         <div class="form-group">
                             <label>Description détaillée <span style="color: red">*</span></label>
-                            <textarea class="form-control" rows="4" name="description" placeholder="Entrez une description complete du bien" style="border: 1px solid black; border-radius: 5px;"></textarea>
+                            <textarea class="form-control" rows="4" name="description" value="{{ old('description') }}" placeholder="Entrez une description complete du bien" style="border: 1px solid black; border-radius: 5px;"></textarea>
                         </div>
+                        @error('description')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
 

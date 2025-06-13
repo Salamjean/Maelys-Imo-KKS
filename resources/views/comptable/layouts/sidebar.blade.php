@@ -56,10 +56,17 @@
 
         @if($user->user_type === 'Comptable')
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('accounting.paid') }}">
-                    <i class="mdi mdi-cash-multiple menu-icon"></i>
-                    <span class="menu-title">Versement</span>
-                </a>
+              <a class="nav-link" data-toggle="collapse" href="#compt" aria-expanded="false" aria-controls="compt">
+                <i class="mdi mdi-cash-multiple menu-icon"></i>
+                <span class="menu-title">Versement</span>
+                <i class="menu-arrow"></i>
+              </a>
+              <div class="collapse" id="compt">
+                <ul class="nav flex-column sub-menu">
+                  <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.paid') }}">Faire un versement</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.versement.history') }}"> Historiques </a></li>
+                </ul>
+              </div>
             </li>
         @endif
 

@@ -27,7 +27,7 @@ class Bien extends Model
 
     public function agence()
     {
-        return $this->belongsTo(Agence::class);
+        return $this->belongsTo(Agence::class, 'agence_id', 'code_id');
     }
     public function visites()
     {
@@ -41,7 +41,7 @@ class Bien extends Model
 
     public function proprietaire()
     {
-        return $this->belongsTo(Proprietaire::class);
+        return $this->belongsTo(Proprietaire::class, 'proprietaire_id', 'code_id');
     }
 
     public function getImage1Attribute($value)

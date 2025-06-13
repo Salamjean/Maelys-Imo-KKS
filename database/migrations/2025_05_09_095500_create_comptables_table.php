@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('date_naissance');
             $table->string('user_type');
             $table->string('profile_image')->nullable();
-            $table->foreignId('agence_id')->nullable()->constrained('agences')->onDelete('cascade');
+             $table->string('agence_id')->nullable();$table->foreign('agence_id')->references('code_id')->on('agences')->onDelete('cascade');
             $table->timestamps();
         });
     }

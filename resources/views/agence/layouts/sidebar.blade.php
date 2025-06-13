@@ -108,5 +108,24 @@
           <span class="menu-title">Locataire pas sérieux</span>
         </a>
       </li>
+
+       <li class="nav-item sidebar-category">
+        <p>Paiement</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#ui-rev" aria-expanded="false" aria-controls="ui-rev">
+          <i class="mdi mdi-animation menu-icon"></i>
+          <span class="menu-title">Reversement</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-rev">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.create.agence') }}">Faire un reversement</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.index.agence') }}">Historique reversement</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('rib.create.agence') }}">R.I.B</a></li>
+          </ul>
+        </div>
+      </li>
     </ul>
   </nav>

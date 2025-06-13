@@ -242,7 +242,7 @@
                         <div class="list-group-item border-0 mb-2 rounded">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="mb-1">{{ $locataire->name }} {{ $locataire->prenom }} ?? 'lojfkr'</h6>
+                                    <h6 class="mb-1">{{ $locataire->name }} {{ $locataire->prenom }}</h6>
                                     <small class="text-muted">{{ $locataire->contact }}</small>
                                 </div>
                                 <span class="badge bg-danger">+{{ $locataire->days_late }} jours</span>

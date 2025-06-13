@@ -16,18 +16,32 @@ class VisiteController extends Controller
 {
     public function adminIndex()
     {
+        $adminId = Auth::guard('admin')->user()->id;
         $visites = Visite::where('statut', '!=', 'effectuée')
                         ->where('statut', '!=', 'annulée')
                         ->whereHas('bien', function ($query) {
-                            $query->whereNull('agence_id'); 
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id'); 
                         })
                         ->paginate(10);
         
         return view('admin.visites.index', compact('visites'));
     }    
+    public function ownerIndex()
+    {
+        $ownerId = Auth::guard('owner')->user()->code_id;
+        $visites = Visite::where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->paginate(10);
+        
+        return view('proprietaire.visites.index', compact('visites'));
+    }    
     public function indexAgence()
     {
-        $agenceId = Auth::guard('agence')->user()->id;
+        $agenceId = Auth::guard('agence')->user()->code_id;
         $visites = Visite::where('statut', '!=', 'effectuée')
                         ->where('statut', '!=', 'annulée')
                         ->whereHas('bien', function ($query) use ($agenceId) {
@@ -51,12 +65,29 @@ class VisiteController extends Controller
         
         return view('agence.visites.done', compact('visites'));
     }
+    public function ownerDone()
+    {
+        $ownerId = Auth::guard('owner')->user()->code_id;
+        
+        $visites = Visite::where(function($query) {
+                        $query->where('statut', 'effectuée')
+                            ->orWhere('statut', 'annulée');
+                    })
+                    ->whereHas('bien', function ($query) use ($ownerId) {
+                        $query->where('proprietaire_id', $ownerId);
+                    })
+                    ->paginate(10);
+        
+        return view('proprietaire.visites.done', compact('visites'));
+    }
     public function doneAdmin()
     {
+        $adminId = Auth::guard('admin')->user()->id;
         $visites = Visite::where('statut','effectuée')
                         ->where('statut', 'annulée')
                        ->whereHas('bien', function ($query) {
-                            $query->whereNull('agence_id'); 
+                            $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                            $query->whereNull('proprietaire_id'); 
                         })
                         ->paginate(10);
         return view('admin.visites.done', compact('visites'));
@@ -183,6 +214,29 @@ class VisiteController extends Controller
     return response()->json(['success' => true]);
 }
 
+    public function updateDateOwner(Request $request, Visite $visite)
+{
+    $validated = $request->validate([
+        'date_visite' => 'required|date',
+        'heure_visite' => 'required',
+    ]);
+
+    // Sauvegarder l'ancienne date/heure pour l'email
+    $oldDate = $visite->date_visite;
+    $oldTime = $visite->heure_visite;
+
+    // Mettre à jour la date et l'heure et confirmer la visite
+    $visite->date_visite = $validated['date_visite'];
+    $visite->heure_visite = $validated['heure_visite'];
+    $visite->statut = 'confirmée';
+    $visite->save();
+
+    // Envoyer un email au client
+    $this->sendVisitUpdateEmail($visite, $oldDate, $oldTime);
+
+    return response()->json(['success' => true]);
+}
+
 protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
 {
     $details = [
@@ -241,6 +295,57 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
     }
 
     public function adminShow(Visite $visite)
+    {
+        return response()->json([
+            'nom' => $visite->nom,
+            'email' => $visite->email,
+            'telephone' => $visite->telephone,
+            'date_visite' => $visite->date_visite,
+            'heure_visite' => $visite->heure_visite,
+            'statut' => $visite->statut,
+            'message' => $visite->message,
+            'bien' => [
+                'type' => $visite->bien->type,
+                'commune' => $visite->bien->commune,
+                'prix' => $visite->bien->prix
+            ]
+        ]);
+    }
+  public function ownerConfirm(Visite $visite)
+    {
+        $visite->statut = 'confirmée';
+        $visite->save();
+
+        // Envoyer un email de confirmation
+        Mail::to($visite->email)->send(new ConfirmVisite($visite, $visite->bien));
+
+        return response()->json(['success' => true]);
+    }
+
+
+    public function ownerMarkAsDone(Visite $visite)
+    {
+        $visite->statut = 'effectuée';
+        $visite->save();
+
+        // Envoyer un email d'effectuation 
+        Mail::to($visite->email)->send(new DoneVisite($visite, $visite->bien));
+
+        return response()->json(['success' => true]);
+    }
+
+    public function ownerCancel(Visite $visite)
+    {
+        $visite->statut = 'annulée';
+        $visite->save();
+
+        // Envoyer un email d'annulation 
+        Mail::to($visite->email)->send(new CancelVisite($visite, $visite->bien));
+
+        return response()->json(['success' => true]);
+    }
+
+    public function ownerShow(Visite $visite)
     {
         return response()->json([
             'nom' => $visite->nom,

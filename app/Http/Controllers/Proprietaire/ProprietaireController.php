@@ -5,8 +5,10 @@ use App\Http\Controllers\Controller;
 
 
 use App\Models\Bien;
+use App\Models\Paiement;
 use App\Models\Proprietaire;
 use App\Models\ResetCodePasswordProprietaire;
+use App\Models\Reversement;
 use App\Notifications\SendEmailToOwnerAfterRegistrationNotification;
 use Exception;
 use Illuminate\Http\Request;
@@ -18,10 +20,24 @@ use Illuminate\Support\Facades\Storage;
 
 class ProprietaireController extends Controller
 {
+        private function calculerSoldeDisponible($proprietaireId)
+        {
+            $totalPaiements = Paiement::where('methode_paiement', 'Mobile Money')
+                ->whereHas('bien', function($query) use ($proprietaireId) {
+                    $query->where('proprietaire_id', $proprietaireId);
+                })
+                ->where('statut', 'payé')
+                ->sum('montant');
+            
+            $totalReversements = Reversement::where('proprietaire_id', $proprietaireId)
+                ->sum('montant');
+            
+            return $totalPaiements - $totalReversements;
+        }
     public function dashboard()
     {
         // Vérifier si l'utilisateur est connecté en tant que propriétaire
-        $proprietaireId = Auth::guard('owner')->user()->id;
+        $proprietaireId = Auth::guard('owner')->user()->code_id;
         
         $totalBiens = Bien::where('proprietaire_id', $proprietaireId)->count();
         $cumulLoyers = Bien::where('proprietaire_id', $proprietaireId)->sum('prix');
@@ -43,6 +59,8 @@ class ProprietaireController extends Controller
                             ->take(5)
                             ->get();
 
+        $soldeDisponible = $this->calculerSoldeDisponible($proprietaireId);
+
         return view('proprietaire.dashboard', compact(
             'totalBiens',
             'cumulLoyers',
@@ -50,11 +68,12 @@ class ProprietaireController extends Controller
             'biensOccupes',
             'pourcentageDisponibles',
             'pourcentageOccupes',
-            'derniersBiens'
+            'derniersBiens',
+            'soldeDisponible'
         ));
     }
     public function index(){
-        $agenceId = Auth::guard('agence')->user()->id;
+        $agenceId = Auth::guard('agence')->user()->code_id;
         $proprietaires = Proprietaire::where('agence_id', $agenceId)->paginate(6);
         return view('agence.proprietaire.index',compact('proprietaires'));
     }
@@ -73,7 +92,10 @@ class ProprietaireController extends Controller
             'email' => 'required|email|unique:proprietaires,email',
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
-            'fonction' => 'nullable|max:255',
+            'pourcentage' => 'nullable|max:255',
+            'choix_paiement' => 'required|max:255',
+            'rib' => 'nullable|max:255',
+            'contrat' => 'required',
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
             'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -83,44 +105,48 @@ class ProprietaireController extends Controller
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'Lieu de residence est obligatoire.',
-            'fonction.max' => 'La fonction ne doit pas dépasser 255 caractères.',
         ]);
-    
+
         try {
-            $agenceId = Auth::guard('agence')->user()->id;
+            $agenceId = Auth::guard('agence')->user()->code_id;
+            
+            // Génération du code PRO unique
+            do {
+                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $codeId = 'PRO' . $randomNumber;
+            } while (Proprietaire::where('code_id', $codeId)->exists());
+
             // Traitement de l'image de profil
             $profileImagePath = null;
             if ($request->hasFile('profile_image')) {
                 $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
             }
-    
-            // Création de l'agence
+
+            // Traitement du contrat
+             $contratPath = null;
+            if ($request->hasFile('contrat')) {
+                $contratPath = $request->file('contrat')->store('contrats', 'public');
+            }
+
+            // Création du propriétaire
             $owner = new Proprietaire();
+            $owner->code_id = $codeId; // Ajout du code généré
             $owner->name = $request->name;
             $owner->prenom = $request->prenom;
             $owner->email = $request->email;
             $owner->contact = $request->contact;
             $owner->commune = $request->commune;
-            $owner->fonction = $request->fonction;
+            $owner->pourcentage = $request->pourcentage;
+            $owner->choix_paiement = $request->choix_paiement;
+            $owner->rib = $request->rib;
+            $owner->contrat = $contratPath;
             $owner->password = Hash::make('password');
             $owner->profil_image = $profileImagePath;
             $owner->agence_id = $agenceId;
             $owner->save();
-    
-            // Envoi de l'e-mail de vérification
-            ResetCodePasswordProprietaire::where('email', $owner->email)->delete();
-            $code = rand(1000, 4000);
-            ResetCodePasswordProprietaire::create([
-                'code' => $code,
-                'email' => $owner->email,
-            ]);
-
-            Notification::route('mail', $owner->email)
-                ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email));
         
-            return redirect()->route('owner.index')
-                ->with('success', 'Propriétaire de bien enregistrée avec succès.');
-    
+            return redirect()->route('owner.index')->with('success', 'Propriétaire de bien enregistrée avec succès.');
+
         } catch (\Exception $e) {
             Log::error('Error creating propriataire: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -144,8 +170,9 @@ class ProprietaireController extends Controller
             'email' => 'required|email|unique:proprietaires,email,'.$proprietaire->id,
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
-            'fonction' => 'nullable|max:255',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'pourcentage' => 'nullable|max:255',
+            'choix_paiement' => 'required|max:255',
+            'rib' => 'nullable|max:255',
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
             'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -155,10 +182,10 @@ class ProprietaireController extends Controller
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'La commune est obligatoire.',
-            'fonction.max' => 'La fonction ne doit pas dépasser 255 caractères.',
-            'profile_image.image' => 'Le fichier doit être une image.',
-            'profile_image.mimes' => 'L\'image doit être de type: jpeg, png, jpg ou gif.',
-            'profile_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
+            'fonction.max' => 'Le fonction ne doit pas dépasser 255 caractères.',
+            'profil_image.image' => 'Le fichier doit être une image.',
+            'profil_image.mimes' => 'L\'image doit être de type: jpeg, png, jpg ou gif.',
+            'profil_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
         ]);
 
         try {
@@ -169,19 +196,20 @@ class ProprietaireController extends Controller
                     Storage::disk('public')->delete($proprietaire->profile_image);
                 }
                 $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
-                $validatedData['profile_image'] = $profileImagePath;
+                $validatedData['profil_image'] = $profileImagePath;
             }
 
             // Mise à jour des informations
-            $proprietaire->update([
-                'name' => $validatedData['name'],
-                'prenom' => $validatedData['prenom'],
-                'email' => $validatedData['email'],
-                'contact' => $validatedData['contact'],
-                'commune' => $validatedData['commune'],
-                'fonction' => $validatedData['fonction'],
-                'profile_image' => $validatedData['profile_image'] ?? $proprietaire->profile_image
-            ]);
+            $proprietaire->name = $validatedData['name'];
+            $proprietaire->prenom = $validatedData['prenom'];
+            $proprietaire->email = $validatedData['email'];
+            $proprietaire->contact = $validatedData['contact'];
+            $proprietaire->commune = $validatedData['commune'];
+            $proprietaire->rib = $validatedData['rib'];
+            $proprietaire->pourcentage = $validatedData['pourcentage'];
+            $proprietaire->choix_paiement = $validatedData['choix_paiement'];
+            $proprietaire->profil_image = $validatedData['profil_image'] ?? $proprietaire->profil_image;
+            $proprietaire->save();
 
             return redirect()->route('owner.index')
                 ->with('success', 'Proprietaire de bien mis à jour avec succès.');
@@ -286,7 +314,7 @@ class ProprietaireController extends Controller
     //les routes pour les proprietaires gerer par l'administrateur
      public function indexAdmin(){
         $agenceId = Auth::guard('admin')->user()->id;
-        $proprietaires = Proprietaire::whereNull('agence_id')->paginate(6);
+        $proprietaires = Proprietaire::where('agence_id',$agenceId)->paginate(6);
         return view('admin.proprietaire.index',compact('proprietaires'));
     }
 
@@ -304,7 +332,7 @@ class ProprietaireController extends Controller
             'email' => 'required|email|unique:proprietaires,email',
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
-            'fonction' => 'nullable|max:255',
+            'rib' => 'required|file|mimes:pdf|max:2048'
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
             'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -314,27 +342,45 @@ class ProprietaireController extends Controller
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'Lieu de residence est obligatoire.',
-            'fonction.max' => 'La fonction ne doit pas dépasser 255 caractères.',
+            'rib.required' => 'Le RIB est obligatoire.',
+            'rib.max' => 'Le RIB ne doit pas dépasser 2048 caractères.',
+            'rib.mines' => 'le fichier doit etre un pdf'
+
         ]);
     
         try {
-            $agenceId = Auth::guard('admin')->user()->id;
+            $adminId = Auth::guard('admin')->user()->id;
+
+            // Génération du code PRO unique
+            do {
+                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $codeId = 'PRO' . $randomNumber;
+            } while (Proprietaire::where('code_id', $codeId)->exists());
+
             // Traitement de l'image de profil
             $profileImagePath = null;
             if ($request->hasFile('profile_image')) {
                 $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
             }
+
+            $ribPath = null;
+            if ($request->hasFile('rib')) {
+                $ribPath = $request->file('rib')->store('ribs', 'public');
+            }
     
             // Création de l'agence
             $owner = new Proprietaire();
+            $owner->code_id = $codeId; 
             $owner->name = $request->name;
             $owner->prenom = $request->prenom;
             $owner->email = $request->email;
             $owner->contact = $request->contact;
             $owner->commune = $request->commune;
-            $owner->fonction = $request->fonction;
+            $owner->rib = $ribPath;
+            $owner->choix_paiement = 'RIB';
             $owner->password = Hash::make('password');
             $owner->profil_image = $profileImagePath;
+            $owner->agence_id = $adminId;
             $owner->save();
     
             // Envoi de l'e-mail de vérification
@@ -374,7 +420,7 @@ class ProprietaireController extends Controller
             'email' => 'required|email|unique:proprietaires,email,'.$proprietaire->id,
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
-            'fonction' => 'nullable|max:255',
+            'rib' => 'nullable|max:255',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
@@ -385,7 +431,7 @@ class ProprietaireController extends Controller
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'La commune est obligatoire.',
-            'fonction.max' => 'La fonction ne doit pas dépasser 255 caractères.',
+            'rib.max' => 'La rib ne doit pas dépasser 255 caractères.',
             'profile_image.image' => 'Le fichier doit être une image.',
             'profile_image.mimes' => 'L\'image doit être de type: jpeg, png, jpg ou gif.',
             'profile_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
@@ -409,7 +455,7 @@ class ProprietaireController extends Controller
                 'email' => $validatedData['email'],
                 'contact' => $validatedData['contact'],
                 'commune' => $validatedData['commune'],
-                'fonction' => $validatedData['fonction'],
+                'rib' => $validatedData['rib'],
                 'profile_image' => $validatedData['profile_image'] ?? $proprietaire->profile_image
             ]);
 

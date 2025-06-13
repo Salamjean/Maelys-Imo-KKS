@@ -104,7 +104,7 @@
                     </div>
                     <div class="col-md-2">
                         <div class="form-group">
-                            <label>Attestation travail<span style="color: red">*</span></label> <br>
+                            <label>Attestation travail</label> <br>
                             
                             <div class="input-group">
                                 <input type="file" name="attestation" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>

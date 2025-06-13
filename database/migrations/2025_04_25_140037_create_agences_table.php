@@ -13,12 +13,14 @@ return new class extends Migration
     {
         Schema::create('agences', function (Blueprint $table) {
             $table->id();
+            $table->string('code_id')->unique();
             $table->string('name');
             $table->string('email')->unique();
             $table->string('commune');
             $table->string('password');
             $table->string('contact');
             $table->string('adresse');
+            $table->string('rib')->nullable();
             $table->string('profile_image')->nullable();
             $table->timestamps();
         });

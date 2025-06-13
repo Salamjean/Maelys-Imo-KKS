@@ -14,7 +14,7 @@
                     
                     <!-- Section 1: Informations de base -->
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Nom de l'agence</label>
                                 <input type="text" style="border: 1px solid black; border-radius: 5px;" 
@@ -25,7 +25,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Email</label>
                                 <input type="email" style="border: 1px solid black; border-radius: 5px;" 
@@ -36,10 +36,6 @@
                                 @enderror
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Section 2: Détails -->
-                    <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Commune</label>
@@ -51,12 +47,16 @@
                                 @enderror
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Section 2: Détails -->
+                    <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Contact de l'agence</label>
                                 <input type="text" style="border: 1px solid black; border-radius: 5px;" 
                                        class="form-control" placeholder="Contact de l'agence" 
-                                       name="contact" value="{{ old('contact', $agence->contact) }}">
+                                       name="contact" value="{{  $agence->contact }}">
                                 @error('contact')
                                     <div class="alert alert-danger mt-2">{{ $message }}</div>
                                 @enderror
@@ -69,6 +69,17 @@
                                        class="form-control" placeholder="Adresse" 
                                        name="adresse" value="{{ old('adresse', $agence->adresse) }}">
                                 @error('adresse')
+                                    <div class="alert alert-danger mt-2">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                         <div class="col-md-4">
+                            <div class="form-group">
+                                <label>RIB de l'agence</label>
+                                <input type="text" style="border: 1px solid black; border-radius: 5px;" 
+                                       class="form-control" placeholder="Commune" 
+                                       name="rib" value="{{ $agence->rib }}">
+                                @error('rib')
                                     <div class="alert alert-danger mt-2">{{ $message }}</div>
                                 @enderror
                             </div>

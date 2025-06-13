@@ -20,7 +20,7 @@
                                     <option value="">Choisir un propriétaire</option>
                                     <option value="">{{ Auth::guard('agence')->user()->name }}</option>
                                     @foreach($proprietaires as $proprietaire)
-                                        <option value="{{ $proprietaire->id }}">
+                                        <option value="{{ $proprietaire->code_id }}">
                                             {{ $proprietaire->name }} {{ $proprietaire->prenom }} - {{ $proprietaire->contact }}
                                         </option>
                                     @endforeach

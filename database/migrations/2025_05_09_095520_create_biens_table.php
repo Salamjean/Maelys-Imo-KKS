@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('caution')->nullable();
             $table->string('frais')->nullable();
             $table->string('montant_total')->nullable();
-            $table->string('prix');
+            $table->decimal('prix', 10, 2);
             $table->string('commune');
             $table->decimal('montant_majore', 10, 2)->nullable();
             $table->string('date_fixe')->nullable();
@@ -35,8 +35,8 @@ return new class extends Migration
             $table->string('image4')->nullable();
             $table->string('image5')->nullable();
             $table->string('status')->default('Disponible');
-            $table->foreignId('agence_id')->nullable()->constrained('agences')->onDelete('cascade');
-            $table->foreignId('proprietaire_id')->nullable()->constrained('proprietaires')->onDelete('cascade');
+            $table->string('agence_id')->nullable();$table->foreign('agence_id')->references('code_id')->on('agences')->onDelete('cascade');
+            $table->string('proprietaire_id')->nullable();$table->foreign('proprietaire_id')->references('code_id')->on('proprietaires')->onDelete('cascade');
             $table->timestamps();
         });
     }

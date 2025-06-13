@@ -34,7 +34,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Email</label>
-                                <input type="email" style="border: 1px solid black; border-radius: 5px;" class="form-control" value="{{ $proprietaire->email }}" placeholder="Email" name="email">
+                                <input type="email" style="border: 1px solid black; border-radius: 5px;" class="form-control" value="{{ $proprietaire->email }}" readonly name="email">
                                 @error('email')
                                     <div class="alert alert-danger mt-2">{{ $message }}</div>
                                 @enderror
@@ -64,9 +64,9 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Fonction</label>
-                                <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" value="{{ $proprietaire->fonction }}" name="fonction">
-                                @error('fonction')
+                                <label>RIB</label>
+                                <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" value="{{ $proprietaire->rib }}" name="rib">
+                                @error('rib')
                                     <div class="alert alert-danger mt-2">{{ $message }}</div>
                                 @enderror
                             </div>

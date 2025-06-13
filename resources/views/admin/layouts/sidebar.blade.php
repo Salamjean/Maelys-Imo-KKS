@@ -117,5 +117,23 @@
           <span class="menu-title">Locataire pas sérieux</span>
         </a>
       </li>
+
+      <li class="nav-item sidebar-category">
+        <p>Paiement</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#paie" aria-expanded="false" aria-controls="paie">
+          <i class="mdi mdi-clipboard-account menu-icon"></i>
+          <span class="menu-title">Reversement</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="paie">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.index.admin') }}">Reversement demandé </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.completed.admin') }}"> Reversement effectué </a></li>
+          </ul>
+        </div>
+      </li>
     </ul>
   </nav>

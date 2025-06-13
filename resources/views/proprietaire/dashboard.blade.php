@@ -13,7 +13,7 @@
     <div class="row g-4">
 
         <!-- Carte Total des Biens -->
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xl-4 col-md-6">
             <div class="card card-stats">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -29,8 +29,41 @@
             </div>
         </div>
 
-        <!-- Carte Cumul des Loyers -->
-        <div class="col-xl-3 col-md-6">
+        <!-- Carte Biens Disponibles -->
+        <div class="col-xl-4 col-md-3 mb-4">
+                <div class="card card-stats">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-muted mb-0">Biens Disponibles</h6>
+                                <h2 class="font-weight-bold mb-0">{{ $biensDisponibles }}</h2>
+                            </div>
+                            <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+        <!-- Carte Biens Occupés -->
+        <div class="col-xl-4 col-md-4">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-muted mb-0">Biens Loués</h6>
+                            <h2 class="font-weight-bold mb-0">{{ $biensOccupes }}</h2>
+                        </div>
+                        <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                    </div>
+                   
+                </div>
+            </div>
+        </div>
+         <!-- Carte Cumul des Loyers -->
+        <div class="col-xl-6 col-md-6">
             <div class="card card-stats">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -45,36 +78,16 @@
                 </div>
             </div>
         </div>
-
-        <!-- Carte Biens Disponibles -->
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xl-6 col-md-6">
             <div class="card card-stats">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="card-title text-muted mb-0">Biens Disponibles</h6>
-                            <h2 class="font-weight-bold mb-0">{{ $biensDisponibles }}</h2>
+                            <h6 class="card-title text-muted mb-0">Solde disponible</h6>
+                            <h2 class="font-weight-bold mb-0">{{ number_format($soldeDisponible) }} FCFA</h2>
                         </div>
-                        <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                   
-                </div>
-            </div>
-        </div>
-
-        <!-- Carte Biens Occupés -->
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title text-muted mb-0">Biens Loués</h6>
-                            <h2 class="font-weight-bold mb-0">{{ $biensOccupes }}</h2>
-                        </div>
-                        <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
-                            <i class="fas fa-user-clock"></i>
+                        <div class="icon icon-shape text-white rounded-circle shadow" style="background-color: #02245b">
+                            <i class="mdi mdi-cash-multiple"></i>
                         </div>
                     </div>
                    

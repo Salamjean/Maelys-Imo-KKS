@@ -28,31 +28,63 @@
           </ul>
         </div>
       </li>
-      {{-- <li class="nav-item sidebar-category">
-        <p>Biens</p>
+      <li class="nav-item sidebar-category">
+        <p>Visite</p>
         <span></span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{{ route('owner.bienList') }}">
-          <i class="mdi mdi-account-card-details menu-icon"></i>
-          <span class="menu-title">Listes de mes biens</span>
+        <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">
+          <i class="mdi mdi-clipboard-account menu-icon"></i>
+          <span class="menu-title">Visites</span>
+          <i class="menu-arrow"></i>
         </a>
-      </li> --}}
-      {{-- <li class="nav-item">
-        <a class="nav-link" href="{{ route('visite.index.agence') }}">
-          <i class="mdi mdi-view-headline menu-icon"></i>
-          <span class="menu-title">Liste des visites</span>
+        <div class="collapse" id="auth">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('visite.index.owner') }}">Visite demandée </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('visite.done.owner') }}"> Visite effectuée </a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item sidebar-category">
+        <p>Locataire</p>
+        <span></span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#loca" aria-expanded="false" aria-controls="loca">
+          <i class="mdi mdi-account-key menu-icon"></i>
+          <span class="menu-title">Locataire</span>
+          <i class="menu-arrow"></i>
         </a>
-      </li> --}}
-      {{-- <li class="nav-item sidebar-category">
+        <div class="collapse" id="loca">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('locataire.create.owner') }}"> Ajout d'un locataire </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('locataire.index.owner') }}"> Liste des locatiares </a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{{ route('locataire.indexSerieux.owner') }}">
+          <i class="mdi mdi-view-quilt menu-icon"></i>
+          <span class="menu-title">Locataire pas sérieux</span>
+        </a>
+      </li>
+       <li class="nav-item sidebar-category">
         <p>Paiement</p>
         <span></span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">
-          <i class="mdi mdi-cash-multiple menu-icon"></i>
-          <span class="menu-title">Rappel de paiement</span>
+        <a class="nav-link" data-toggle="collapse" href="#ui-rev" aria-expanded="false" aria-controls="ui-rev">
+          <i class="mdi mdi-animation menu-icon"></i>
+          <span class="menu-title">Reversement</span>
+          <i class="menu-arrow"></i>
         </a>
-      </li> --}}
+        <div class="collapse" id="ui-rev">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.create') }}">Faire un reversement</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.index') }}">Historique reversement</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('rib.create') }}">R.I.B</a></li>
+          </ul>
+        </div>
+      </li>
     </ul>
   </nav>

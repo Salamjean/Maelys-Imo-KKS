@@ -99,5 +99,40 @@
         });
     </script>
     @endif
+
+     <!-- Pop-up de succès après connexion -->
+    @if(session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: 'Connexion réussie',
+                text: '{{ session('success') }}',
+                showConfirmButton: false,
+                timer: 2000,
+                showConfirmButton: true,
+                confirmButtonColor: '#3085d6'
+
+            });
+        });
+    </script>
+    @endif
+    <!-- Pop-up de succès après connexion -->
+    @if(session('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: '{{ session('error') }}',
+                showConfirmButton: false,
+                timer: 2000,
+                showConfirmButton: true,
+                confirmButtonColor: '#3085d6'
+
+            });
+        });
+    </script>
+    @endif
 </body>
 </html>

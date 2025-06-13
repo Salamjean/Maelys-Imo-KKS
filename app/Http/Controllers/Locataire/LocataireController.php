@@ -33,14 +33,14 @@ class LocataireController extends Controller
                 ->whereYear('created_at', now()->year);
         }])
         ->where('status', '!=', 'Pas sérieux')
-        ->where('agence_id', Auth::guard('agence')->user()->id)
+        ->where('agence_id', Auth::guard('agence')->user()->code_id)
         ->paginate(6);
 
         // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
         $locataires->getCollection()->transform(function($locataire) {
             $today = now()->format('d');
             $currentMonthPaid = $locataire->paiements->isNotEmpty();
-            $locataire->show_reminder_button = ($locataire->bien->date_fixe == $today) && !$currentMonthPaid;
+            $locataire->show_reminder_button = ($locataire->bien->date_fixe ?? '10' == $today) && !$currentMonthPaid;
             return $locataire;
         });
 
@@ -50,6 +50,7 @@ class LocataireController extends Controller
         // Récupération de tous les locataires
         $locataires = Locataire::where('status', '!=', 'Pas sérieux')
                     ->whereNull('agence_id')
+                    ->whereNull('proprietaire_id')
                     ->paginate(6);
         return view('admin.locataire.index',compact('locataires'));
     }
@@ -68,7 +69,7 @@ class LocataireController extends Controller
     public function create()
     {
         // Récupérer les biens disponibles de l'agence
-        $agenceId = Auth::guard('agence')->user()->id;
+        $agenceId = Auth::guard('agence')->user()->code_id;
         $biens = Bien::where('agence_id', $agenceId)
                     ->where('status', 'Disponible')
                     ->get();
@@ -122,7 +123,6 @@ class LocataireController extends Controller
             'piece' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'adresse' => 'required|string|max:255',
             'profession' => 'required|string|max:255',
-            'attestation' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'contrat' => 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
             'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -145,9 +145,6 @@ class LocataireController extends Controller
             'piece.mimes' => 'La pièce d\'identité doit être de type: jpeg, png, jpg ou gif.',
             'adresse.required' => 'L\'adresse est obligatoire.',
             'profession.required' => 'La profession est obligatoire.',
-            'attestation.required' => 'L\'attestation de travail est obligatoire.',
-            'attestation.image' => 'L\'attestation de travail doit être une image.',
-            'attestation.mimes' => 'L\'attestation de travail doit être de type: jpeg, png, jpg ou gif.',
             'contrat.required' => 'Le contrat est obligatoire.',
             'contrat.file' => 'Le contrat doit être un fichier.',
             'contrat.mimes' => 'Le contrat doit être de type: jpeg, png, jpg, gif ou pdf.',
@@ -195,6 +192,7 @@ class LocataireController extends Controller
 
             // Création du locataire
             $locataire = new Locataire();
+            $locataire->code_id = $this->generateUniqueCodeId();
             $locataire->name = $request->name;
             $locataire->prenom = $request->prenom;
             $locataire->email = $request->email;
@@ -209,7 +207,7 @@ class LocataireController extends Controller
             $locataire->image2 = $image2Path;
             $locataire->image3 = $image3Path;
             $locataire->image4 = $image4Path;
-            $locataire->agence_id = Auth::guard('agence')->user()->id;
+            $locataire->agence_id = Auth::guard('agence')->user()->code_id;
             $locataire->status = $request->input('status', 'Actif');
             $locataire->bien_id = $request->bien_id;
 
@@ -242,6 +240,15 @@ class LocataireController extends Controller
             Log::error('Error creating locataire: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
+    }
+
+        private function generateUniqueCodeId()
+    {
+        do {
+            $code = 'MA' . str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (Locataire::where('code_id', $code)->exists());
+
+        return $code;
     }
 
     public function edit($id)
@@ -539,7 +546,7 @@ class LocataireController extends Controller
             'piece' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'adresse' => 'required|string|max:255',
             'profession' => 'required|string|max:255',
-            'attestation' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'attestation' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'contrat' => 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
             'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -565,7 +572,6 @@ class LocataireController extends Controller
             'attestation.required' => 'L\'attestation de travail est obligatoire.',
             'attestation.image' => 'L\'attestation de travail doit être une image.',
             'attestation.mimes' => 'L\'attestation de travail doit être de type: jpeg, png, jpg ou gif.',
-            'contrat.required' => 'Le contrat est obligatoire.',
             'contrat.file' => 'Le contrat doit être un fichier.',
             'contrat.mimes' => 'Le contrat doit être de type: jpeg, png, jpg, gif ou pdf.',
             'motif.required_if' => 'Le motif est obligatoire lorsque le statut est Inactif ou Pas sérieux.',
@@ -612,6 +618,7 @@ class LocataireController extends Controller
 
             // Création du locataire
             $locataire = new Locataire();
+            $locataire->code_id = $this->generateUniqueCodeId();
             $locataire->name = $request->name;
             $locataire->prenom = $request->prenom;
             $locataire->email = $request->email;
