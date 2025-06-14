@@ -66,7 +66,7 @@
                         <div class="form-group">
                             <label>RIB</label>
                             <div class="input-group">
-                                <input type="file" name="rib" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
+                                <input type="file" name="rib" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden>
                                 <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Télécharger le RIB" value="{{ old('rib') }}">
                                 <span class="input-group-append">
                                     <button class="file-upload-browse btn btn-primary" style="background-color: #02245b" type="button">Télécharger</button>
