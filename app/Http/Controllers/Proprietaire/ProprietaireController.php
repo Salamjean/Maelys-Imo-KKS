@@ -363,10 +363,13 @@ class ProprietaireController extends Controller
                 $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
             }
 
-            $ribPath = null;
-            if ($request->hasFile('rib')) {
+           if ($request->hasFile('rib')) {
                 $ribPath = $request->file('rib')->store('ribs', 'public');
+                if (!$ribPath) {
+                    return back()->withErrors(['rib' => 'Le fichier n’a pas pu être enregistré.'])->withInput();
+                }
             }
+
     
             // Création du Proprietaire
             $owner = new Proprietaire();
