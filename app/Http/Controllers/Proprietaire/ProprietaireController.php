@@ -344,7 +344,10 @@ class ProprietaireController extends Controller
             'email' => 'required|email|unique:proprietaires,email',
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
-            'rib' => 'required|file|mimes:pdf|max:2048'
+            'pourcentage' => 'nullable|max:255',
+            'choix_paiement' => 'required|max:255',
+            'rib' => 'nullable|max:255',
+            'contrat' => 'required',
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
             'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -354,15 +357,11 @@ class ProprietaireController extends Controller
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'Lieu de residence est obligatoire.',
-            'rib.required' => 'Le RIB est obligatoire.',
-            'rib.max' => 'Le RIB ne doit pas dépasser 2048 caractères.',
-            'rib.mines' => 'le fichier doit etre un pdf'
-
         ]);
-    
-        try {
-            $adminId = Auth::guard('admin')->user()->id;
 
+        try {
+            $agenceId = Auth::guard('admin')->user()->id;
+            
             // Génération du code PRO unique
             do {
                 $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
@@ -375,27 +374,30 @@ class ProprietaireController extends Controller
                 $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
             }
 
-            $ribPath = null;
-            if ($request->hasFile('rib')) {
-                $ribPath = $request->file('rib')->store('ribs', 'public');
+            // Traitement du contrat
+             $contratPath = null;
+            if ($request->hasFile('contrat')) {
+                $contratPath = $request->file('contrat')->store('contrats', 'public');
             }
-    
-            // Création du Proprietaire
+
+            // Création du propriétaire
             $owner = new Proprietaire();
-            $owner->code_id = $codeId; 
+            $owner->code_id = $codeId; // Ajout du code généré
             $owner->name = $request->name;
             $owner->prenom = $request->prenom;
             $owner->email = $request->email;
             $owner->contact = $request->contact;
             $owner->commune = $request->commune;
-            $owner->rib = $ribPath;
-            $owner->choix_paiement = 'RIB';
+            $owner->pourcentage = $request->pourcentage;
+            $owner->choix_paiement = $request->choix_paiement;
+            $owner->rib = $request->rib;
+            $owner->contrat = $contratPath;
             $owner->password = Hash::make('password');
             $owner->profil_image = $profileImagePath;
-            $owner->agence_id = $adminId;
+            $owner->agence_id = $agenceId;
             $owner->save();
-    
-            // Envoi de l'e-mail de vérification
+
+             // Envoi de l'e-mail de vérification
             ResetCodePasswordProprietaire::where('email', $owner->email)->delete();
             $code = rand(1000, 4000);
             ResetCodePasswordProprietaire::create([
@@ -406,9 +408,9 @@ class ProprietaireController extends Controller
             Notification::route('mail', $owner->email)
                 ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email));
         
-            return redirect()->route('owner.index.admin')
-                ->with('success', 'Propriétaire de bien enregistrée avec succès.');
-    
+        
+            return redirect()->route('owner.index.admin')->with('success', 'Propriétaire de bien enregistrée avec succès.');
+
         } catch (\Exception $e) {
             Log::error('Error creating propriataire: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
