@@ -332,7 +332,7 @@ class ProprietaireController extends Controller
             'email' => 'required|email|unique:proprietaires,email',
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
-            'rib' => 'required|file|mimes:pdf|max:2048'
+            'rib' => 'nullable|max:255',
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
             'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -342,9 +342,7 @@ class ProprietaireController extends Controller
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'Lieu de residence est obligatoire.',
-            'rib.required' => 'Le RIB est obligatoire.',
             'rib.max' => 'Le RIB ne doit pas dépasser 2048 caractères.',
-            'rib.mines' => 'le fichier doit etre un pdf'
 
         ]);
     
