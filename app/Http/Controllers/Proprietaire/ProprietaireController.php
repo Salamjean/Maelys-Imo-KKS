@@ -144,6 +144,18 @@ class ProprietaireController extends Controller
             $owner->profil_image = $profileImagePath;
             $owner->agence_id = $agenceId;
             $owner->save();
+
+             // Envoi de l'e-mail de vérification
+            ResetCodePasswordProprietaire::where('email', $owner->email)->delete();
+            $code = rand(1000, 4000);
+            ResetCodePasswordProprietaire::create([
+                'code' => $code,
+                'email' => $owner->email,
+            ]);
+
+            Notification::route('mail', $owner->email)
+                ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email));
+        
         
             return redirect()->route('owner.index')->with('success', 'Propriétaire de bien enregistrée avec succès.');
 
@@ -368,7 +380,7 @@ class ProprietaireController extends Controller
                 $ribPath = $request->file('rib')->store('ribs', 'public');
             }
     
-            // Création de l'agence
+            // Création du Proprietaire
             $owner = new Proprietaire();
             $owner->code_id = $codeId; 
             $owner->name = $request->name;
