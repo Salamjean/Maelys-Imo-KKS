@@ -323,68 +323,72 @@ class ProprietaireController extends Controller
         return view('admin.proprietaire.create');
     }
 
-    public function storeAdmin(Request $request)
-    {
-        // Validation des données
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:proprietaires,email',
-            'contact' => 'required|string|min:10',
-            'commune' => 'required|string|max:255',
-            'rib' => 'nullable|max:255',
-        ],[
-            'name.required' => 'Le nom du proprietaire est obligatoire.',
-            'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
-            'email.required' => 'L\'adresse e-mail est obligatoire.',
-            'email.email' => 'L\'adresse e-mail n\'est pas valide.',
-            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-            'contact.required' => 'Le contact est obligatoire.',
-            'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
-            'commune.required' => 'Lieu de residence est obligatoire.',
-            'rib.max' => 'Le RIB ne doit pas dépasser 2048 caractères.',
+  public function storeAdmin(Request $request)
+{
+    // Validation des données
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'prenom' => 'required|string|max:255',
+        'email' => 'required|email|unique:proprietaires,email',
+        'contact' => 'required|string|min:10',
+        'commune' => 'required|string|max:255',
+        'rib' => 'nullable|max:255',
+        'gestion' => 'nullable|boolean',
+    ],[
+        'name.required' => 'Le nom du proprietaire est obligatoire.',
+        'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
+        'email.required' => 'L\'adresse e-mail est obligatoire.',
+        'email.email' => 'L\'adresse e-mail n\'est pas valide.',
+        'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+        'contact.required' => 'Le contact est obligatoire.',
+        'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
+        'commune.required' => 'Lieu de residence est obligatoire.',
+        'rib.max' => 'Le RIB ne doit pas dépasser 2048 caractères.',
+    ]);
 
-        ]);
-    
-        try {
-            $adminId = Auth::guard('admin')->user()->id;
+    try {
+        $adminId = Auth::guard('admin')->user()->id;
 
-            // Génération du code PRO unique
-            do {
-                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-                $codeId = 'PRO' . $randomNumber;
-            } while (Proprietaire::where('code_id', $codeId)->exists());
+        // Génération du code PRO unique
+        do {
+            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            $codeId = 'PRO' . $randomNumber;
+        } while (Proprietaire::where('code_id', $codeId)->exists());
 
-            // Traitement de l'image de profil
-            $profileImagePath = null;
-            if ($request->hasFile('profile_image')) {
-                $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+        // Traitement de l'image de profil
+        $profileImagePath = null;
+        if ($request->hasFile('profile_image')) {
+            $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+        }
+
+        if ($request->hasFile('rib')) {
+            $ribPath = $request->file('rib')->store('ribs', 'public');
+            if (!$ribPath) {
+                return back()->withErrors(['rib' => 'Le fichier n\'a pas pu être enregistré.'])->withInput();
             }
+        }
 
-           if ($request->hasFile('rib')) {
-                $ribPath = $request->file('rib')->store('ribs', 'public');
-                if (!$ribPath) {
-                    return back()->withErrors(['rib' => 'Le fichier n’a pas pu être enregistré.'])->withInput();
-                }
-            }
+        // Création du Proprietaire
+        $owner = new Proprietaire();
+        $owner->code_id = $codeId; 
+        $owner->name = $request->name;
+        $owner->prenom = $request->prenom;
+        $owner->email = $request->email;
+        $owner->contact = $request->contact;
+        $owner->commune = $request->commune;
+        $owner->rib = $ribPath ?? null;
+        $owner->choix_paiement = 'RIB';
+        $owner->password = Hash::make('password');
+        $owner->profil_image = $profileImagePath;
+        $owner->agence_id = $adminId;
+        
+        // Gestion du type de gestion (par agence ou par propriétaire)
+        $gestionParAgence = $request->has('gestion') && $request->gestion;
+        $owner->gestion = $gestionParAgence ? 'agence' : 'proprietaire';
+        $owner->save();
 
-    
-            // Création du Proprietaire
-            $owner = new Proprietaire();
-            $owner->code_id = $codeId; 
-            $owner->name = $request->name;
-            $owner->prenom = $request->prenom;
-            $owner->email = $request->email;
-            $owner->contact = $request->contact;
-            $owner->commune = $request->commune;
-            $owner->rib = $ribPath;
-            $owner->choix_paiement = 'RIB';
-            $owner->password = Hash::make('password');
-            $owner->profil_image = $profileImagePath;
-            $owner->agence_id = $adminId;
-            $owner->save();
-    
-            // Envoi de l'e-mail de vérification
+        // Envoi de l'e-mail de vérification uniquement si gestion par propriétaire
+        if (!$gestionParAgence) {
             ResetCodePasswordProprietaire::where('email', $owner->email)->delete();
             $code = rand(1000, 4000);
             ResetCodePasswordProprietaire::create([
@@ -394,15 +398,16 @@ class ProprietaireController extends Controller
 
             Notification::route('mail', $owner->email)
                 ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email));
-        
-            return redirect()->route('owner.index.admin')
-                ->with('success', 'Propriétaire de bien enregistrée avec succès.');
-    
-        } catch (\Exception $e) {
-            Log::error('Error creating propriataire: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
+    
+        return redirect()->route('owner.index.admin')
+            ->with('success', 'Propriétaire de bien enregistré avec succès.');
+
+    } catch (\Exception $e) {
+        Log::error('Error creating proprietaire: ' . $e->getMessage());
+        return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
     }
+}
 
     public function editAdmin($id)
     {

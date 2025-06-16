@@ -78,6 +78,24 @@
                         @enderror
                     </div>
                 </div>
+
+                <!-- Section 3: Gestion des biens -->
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="form-check-input" name="gestion" value="1" {{ old('gestion') ? 'checked' : '' }}>
+                                    Gestion des biens par l'agence (si coché, l'agence gèrera les biens. Si non coché, le propriétaire gèrera lui-même ses biens)
+                                </label>
+                            </div>
+                            @error('gestion')
+                                <div class="alert alert-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Boutons de soumission -->
                 <div class="row mt-4">
                     <div class="col-md-12 text-center">

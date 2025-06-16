@@ -24,6 +24,7 @@ class Proprietaire extends Authenticatable
         'pourcentage',
         'profil_image',
         'contrat',
+        'gestion',
         'agence_id',
         'solde',
     ];
