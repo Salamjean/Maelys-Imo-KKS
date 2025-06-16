@@ -37,7 +37,7 @@ class BienController extends Controller
     {
         // Récupération de l'agence connectée
         $adminId = Auth::guard('admin')->user()->id;
-        $proprietaires = Proprietaire::where('agence_id', $adminId)
+        $proprietaires = Proprietaire::whereNull('agence_id')
                                     ->where('gestion', 'agence')
                                 ->get();
         return view('admin.bien.create', compact('proprietaires'));

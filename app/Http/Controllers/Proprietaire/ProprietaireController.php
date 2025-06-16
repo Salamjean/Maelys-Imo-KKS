@@ -315,7 +315,7 @@ class ProprietaireController extends Controller
     //les routes pour les proprietaires gerer par l'administrateur
      public function indexAdmin(){
         $agenceId = Auth::guard('admin')->user()->id;
-        $proprietaires = Proprietaire::where('agence_id',$agenceId)->paginate(6);
+        $proprietaires = Proprietaire::whereNull('agence_id')->paginate(6);
         return view('admin.proprietaire.index',compact('proprietaires'));
     }
 
@@ -410,7 +410,6 @@ class ProprietaireController extends Controller
                 'choix_paiement' => 'RIB',
                 'password' => Hash::make('password'),
                 'profil_image' => $profileImagePath,
-                'agence_id' => $adminId,
                 'gestion' => $request->has('gestion') && $request->gestion ? 'agence' : 'proprietaire',
             ];
 
