@@ -115,7 +115,10 @@ class AgentRecouvrementController extends Controller
             // Si le comptable n'a pas d'agence, retourner une collection vide
             $locataires = Locataire::with(['bien', 'paiements', 'agence'])
                 ->whereNull('agence_id')
-                ->whereNull('proprietaire_id')
+                 ->whereNull('proprietaire_id')
+                    ->orWhereHas('proprietaire', function($subQ) {
+                        $subQ->where('gestion', 'agence');
+                    })
                 ->get();;
         }
         

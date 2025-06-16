@@ -93,7 +93,11 @@
                             @if($bien->agence_id)
                                 <i class="fa fa-home text-primary me-2"></i> Agence : {{ $bien->agence->name ?? 'ecole' }}
                             @elseif($bien->proprietaire_id)
-                                <i class="fa fa-user text-primary me-2"></i>Propriétaire : {{ $bien->proprietaire->name.' '.$bien->proprietaire->prenom ?? 'Maelys-imo' }}
+                                @if($bien->proprietaire->gestion == 'agence')
+                                    <i class="fa fa-home text-primary me-2"></i>Agence : Maelys-imo 
+                                @else
+                                    <i class="fa fa-user text-primary me-2"></i>Propriétaire : {{ $bien->proprietaire->name.' '.$bien->proprietaire->prenom ?? 'Maelys-imo' }}
+                                @endif
                             @else
                                 <i class="fa fa-home text-primary me-2"></i>Agence : Maelys-imo
                             @endif

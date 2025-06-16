@@ -75,15 +75,19 @@
                         <h5 class="text-primary mb-3">{{ $bien->commune }}</h5>
                         <p class="d-block h5 mb-2">{{ $bien->type }}</p>
                         <p><i class="fa fa-map-marker-alt text-primary me-2"></i>{{ $bien->commune }}</p>
-                        <p>
-                            @if($bien->agence_id)
-                                <i class="fa fa-home text-primary me-2"></i> Agence : {{ $bien->agence->name ?? 'ecole' }}
-                            @elseif($bien->proprietaire_id)
-                                <i class="fa fa-user text-primary me-2"></i>Propriétaire : {{ $bien->proprietaire->name .' '.$bien->proprietaire->prenom ?? 'Maelys-imo' }}
+                       <p>
+                        @if($bien->agence_id)
+                            <i class="fa fa-home text-primary me-2"></i> Agence : {{ $bien->agence->name ?? 'Maelys-Imo' }}
+                        @elseif($bien->proprietaire_id)
+                            @if($bien->proprietaire->gestion == 'agence')
+                                <i class="fa fa-home text-primary me-2"></i>Agence : Maelys-imo 
                             @else
-                                <i class="fa fa-home text-primary me-2"></i>Agence : Maelys-imo
+                                <i class="fa fa-user text-primary me-2"></i>Propriétaire : {{ $bien->proprietaire->name.' '.$bien->proprietaire->prenom ?? 'Maelys-imo' }}
                             @endif
-                        </p>
+                        @else
+                            <i class="fa fa-home text-primary me-2"></i>Agence : Maelys-imo
+                        @endif
+                    </p>
                     </div>
                     <div class="d-flex border-top">
                         <small class="flex-fill text-center border-end border-start py-2">

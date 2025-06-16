@@ -472,7 +472,7 @@ class ProprietaireController extends Controller
         return view('admin.proprietaire.edit', compact('proprietaire'));
     }
 
-     public function updateAdmin(Request $request, $id)
+  public function updateAdmin(Request $request, $id)
     {
         $proprietaire = Proprietaire::findOrFail($id);
 
@@ -485,6 +485,7 @@ class ProprietaireController extends Controller
             'commune' => 'required|string|max:255',
             'rib' => 'nullable|max:255',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gestion' => 'nullable|boolean',
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
             'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -511,6 +512,16 @@ class ProprietaireController extends Controller
                 $validatedData['profile_image'] = $profileImagePath;
             }
 
+             // Traitement du rib
+             $ribPath = null;
+            if ($request->hasFile('rib')) {
+                $ribPath = $request->file('rib')->store('ribs', 'public');
+            }
+
+            // Gestion du type de gestion (par agence ou par propriétaire)
+            $gestionParAgence = $request->has('gestion') && $request->gestion;
+            $gestionValue = $gestionParAgence ? 'agence' : 'proprietaire';
+
             // Mise à jour des informations
             $proprietaire->update([
                 'name' => $validatedData['name'],
@@ -518,7 +529,7 @@ class ProprietaireController extends Controller
                 'email' => $validatedData['email'],
                 'contact' => $validatedData['contact'],
                 'commune' => $validatedData['commune'],
-                'rib' => $validatedData['rib'],
+                'gestion' => $gestionValue,
                 'profile_image' => $validatedData['profile_image'] ?? $proprietaire->profile_image
             ]);
 

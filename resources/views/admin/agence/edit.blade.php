@@ -78,7 +78,7 @@
                                 <label>RIB de l'agence</label>
                                 <input type="text" style="border: 1px solid black; border-radius: 5px;" 
                                        class="form-control" placeholder="Commune" 
-                                       name="rib" value="{{ $agence->rib }}">
+                                       name="rib" value="{{ $agence->rib }}" readonly>
                                 @error('rib')
                                     <div class="alert alert-danger mt-2">{{ $message }}</div>
                                 @enderror

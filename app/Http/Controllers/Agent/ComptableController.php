@@ -28,7 +28,12 @@ class ComptableController extends Controller
         if($comptable->agence_id){
             $totalLocataires = Locataire::where('agence_id', $comptable->agence_id)->count();
         }else{
-            $totalLocataires = Locataire::whereNull('agence_id')->whereNull('proprietaire_id')->count();
+            $totalLocataires = Locataire::whereNull('agence_id')
+                                        ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                            ->orWhereHas('proprietaire', function($q) {
+                                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                            })
+                                        ->count();
         }
 
         if($comptable->agence_id){
@@ -36,7 +41,11 @@ class ComptableController extends Controller
                                         ->where('status', 'Actif')->
                                         count();
         }else{
-            $locatairesActifs = Locataire::whereNull('agence_id')->whereNull('proprietaire_id')
+            $locatairesActifs = Locataire::whereNull('agence_id')
+                                            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                            ->orWhereHas('proprietaire', function($q) {
+                                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                            })
                                             ->where('status', 'Actif')
                                             ->count();
         }
@@ -50,7 +59,10 @@ class ComptableController extends Controller
                             ->first();
         }else{
             $biensStats = Bien::whereNull('agence_id')
-                            ->whereNull('proprietaire_id')
+                             ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                            ->orWhereHas('proprietaire', function($q) {
+                                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                            })
                             ->selectRaw("COUNT(*) as total, 
                                 SUM(CASE WHEN status = 'Loué' THEN 1 ELSE 0 END) as Loué, 
                                 SUM(CASE WHEN status = 'Disponible' THEN 1 ELSE 0 END) as Disponible")
@@ -60,32 +72,86 @@ class ComptableController extends Controller
         $biensDisponibles = $biensStats['Disponible'] ?? 0;
         
         // 3. Statistiques financières
-        $paiementsStats = Paiement::selectRaw(
-            "SUM(CASE WHEN mois_couvert = ? AND statut = 'payé' THEN montant ELSE 0 END) as mois_courant,
-            SUM(CASE WHEN mois_couvert LIKE ? AND statut = 'payé' THEN montant ELSE 0 END) as annee_courante",
-            [now()->format('Y-m'), now()->year.'-%']
-        )->first();
-        
-        $loyersMoisCourant = $paiementsStats->mois_courant ?? 0;
-        $loyersAnneeCourante = $paiementsStats->annee_courante ?? 0;
-        
-        $paiementsEnAttente = Paiement::where('statut', 'En attente')->count();
-        
-        // 4. Derniers paiements (pour l'activité récente)
-        $recentPayments = Paiement::with(['locataire', 'bien'])
-                            ->where('statut', 'payé')
-                            ->orderBy('date_paiement', 'desc')
-                            ->take(5)
-                            ->get();
-        
-        // 5. Données pour le graphique mensuel (12 derniers mois)
-    $startDate = now()->subMonths(11)->startOfMonth();
-    $endDate = now()->endOfMonth();
+    if($comptable->agence_id) {
+        $paiementsStats = Paiement::whereHas('bien', function($query) use ($comptable) {
+                $query->where('agence_id', $comptable->agence_id);
+            })
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN statut = 'payé' THEN 1 ELSE 0 END) as count_paye,
+                SUM(CASE WHEN statut = 'En attente' THEN 1 ELSE 0 END) as count_attente,
+                SUM(CASE WHEN statut = 'payé' THEN montant ELSE 0 END) as total_paye,
+                SUM(CASE WHEN statut = 'En attente' THEN montant ELSE 0 END) as total_attente,
+                SUM(CASE WHEN mois_couvert = ? AND statut = 'payé' THEN montant ELSE 0 END) as mois_courant,
+                SUM(CASE WHEN mois_couvert LIKE ? AND statut = 'payé' THEN montant ELSE 0 END) as annee_courante",
+                [now()->format('Y-m'), now()->year.'-%']
+            )
+            ->first();
+    } else {
+        $paiementsStats = Paiement::whereHas('bien', function($query) {
+                $query->whereNull('agence_id')
+                    ->whereNull('proprietaire_id')
+                    ->orWhereHas('proprietaire', function($q) {
+                        $q->where('gestion', 'agence');
+                    });
+            })
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN statut = 'payé' THEN 1 ELSE 0 END) as count_paye,
+                SUM(CASE WHEN statut = 'En attente' THEN 1 ELSE 0 END) as count_attente,
+                SUM(CASE WHEN statut = 'payé' THEN montant ELSE 0 END) as total_paye,
+                SUM(CASE WHEN statut = 'En attente' THEN montant ELSE 0 END) as total_attente,
+                SUM(CASE WHEN mois_couvert = ? AND statut = 'payé' THEN montant ELSE 0 END) as mois_courant,
+                SUM(CASE WHEN mois_couvert LIKE ? AND statut = 'payé' THEN montant ELSE 0 END) as annee_courante",
+                [now()->format('Y-m'), now()->year.'-%']
+            )
+            ->first();
+    }
 
-    // Récupérer tous les mois avec leur total, même si 0
-    $loyersParMois = Paiement::selectRaw(
-        "DATE_FORMAT(mois_couvert, '%Y-%m') as mois, 
-         SUM(montant) as total"
+    // Extraction des valeurs
+    $loyersMoisCourant = $paiementsStats->mois_courant ?? 0;
+    $loyersAnneeCourante = $paiementsStats->annee_courante ?? 0;
+    $totalPaiementsPayes = $paiementsStats->total_paye ?? 0;
+    $paiementsEnAttente = $paiementsStats->count_attente ?? 0; // Correction ici
+
+// 2. Derniers paiements (pour l'activité récente)
+$recentPayments = Paiement::with(['locataire', 'bien'])
+    ->where('statut', 'payé')
+    ->when($comptable->agence_id, function($query) use ($comptable) {
+        $query->whereHas('bien', function($q) use ($comptable) {
+            $q->where('agence_id', $comptable->agence_id);
+        });
+    }, function($query) {
+        $query->whereHas('bien', function($q) {
+            $q->whereNull('agence_id')
+              ->whereNull('proprietaire_id')
+              ->orWhereHas('proprietaire', function($subQ) {
+                  $subQ->where('gestion', 'agence');
+              });
+        });
+    })
+    ->orderBy('date_paiement', 'desc')
+    ->take(5)
+    ->get();
+
+// 3. Données pour le graphique mensuel (12 derniers mois)
+$startDate = now()->subMonths(11)->startOfMonth();
+$endDate = now()->endOfMonth();
+
+$loyersParMois = Paiement::whereHas('bien', function($query) use ($comptable) {
+        if($comptable->agence_id) {
+            $query->where('agence_id', $comptable->agence_id);
+        } else {
+            $query->whereNull('agence_id')
+                ->whereNull('proprietaire_id')
+                ->orWhereHas('proprietaire', function($q) {
+                    $q->where('gestion', 'agence');
+                });
+        }
+    })
+    ->selectRaw("
+        DATE_FORMAT(mois_couvert, '%Y-%m') as mois, 
+        SUM(montant) as total"
     )
     ->where('statut', 'payé')
     ->whereBetween('mois_couvert', [
@@ -97,18 +163,18 @@ class ComptableController extends Controller
     ->get()
     ->keyBy('mois');
 
-    // Formatage des données pour Chart.js
-    $labels = [];
-    $data = [];
+// Formatage des données pour Chart.js
+$labels = [];
+$data = [];
 
-    for ($i = 11; $i >= 0; $i--) {
-        $date = now()->subMonths($i);
-        $moisKey = $date->format('Y-m');
-        $label = $date->translatedFormat('M Y');
-        
-        $labels[] = $label;
-        $data[] = $loyersParMois->has($moisKey) ? (int)$loyersParMois[$moisKey]->total : 0;
-    }
+for ($i = 11; $i >= 0; $i--) {
+    $date = now()->subMonths($i);
+    $moisKey = $date->format('Y-m');
+    $label = $date->translatedFormat('M Y');
+    
+    $labels[] = $label;
+    $data[] = $loyersParMois->has($moisKey) ? (int)$loyersParMois[$moisKey]->total : 0;
+}
         
         return view('comptable.dashboard', compact(
             'totalLocataires',

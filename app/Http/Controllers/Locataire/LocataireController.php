@@ -79,6 +79,10 @@ class LocataireController extends Controller
     public function createAdmin()
     {
         $biens = Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                            ->orWhereHas('proprietaire', function($q) {
+                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                            })
                 ->where('status', 'Disponible')->get();
         
         return view('admin.locataire.create', compact('biens'));

@@ -13,13 +13,20 @@ class BienController extends Controller
 {
     public function index()
     {
-        // Vérification si l'utilisateur est connecté en tant qu'agence
         $adminId = Auth::guard('admin')->user()->id;
-        // Récupération de tous les biens
-        $biens = Bien::whereNull('agence_id')
-                    ->whereNull('proprietaire_id')
-                    ->where('status','!=', 'Loué')
+
+        // Récupérer les biens qui répondent à l'une ou l'autre condition
+        $biens = Bien::with('proprietaire')
+                    ->whereNull('agence_id')
+                    ->where(function($query) {
+                        $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                            ->orWhereHas('proprietaire', function($q) {
+                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                            });
+                    })
+                    ->where('status', '!=', 'Loué')
                     ->paginate(4);
+
         return view('admin.bien.index', compact('biens'));
     }
     public function indexAgence()
@@ -54,7 +61,7 @@ public function store(Request $request)
 {
     // Validation des données
     $validatedData = $request->validate([
-        'proprietaire_id' => 'nullable|exists:proprietaires,id',
+        'proprietaire_id' => 'nullable|exists:proprietaires,code_id',
         'type' => 'required|string',
         'utilisation' => 'required|string',
         'description' => 'required|string',
@@ -237,7 +244,10 @@ public function storeAgence(Request $request)
 public function edit($id)
 {
     $bien = Bien::findOrFail($id);
-    return view('admin.bien.edit', compact('bien'));
+     $proprietaires = Proprietaire::whereNull('agence_id')
+                                    ->where('gestion', 'agence')
+                                ->get();
+    return view('admin.bien.edit', compact('bien','proprietaires'));
 }
 public function editAgence($id)
 {
@@ -251,7 +261,9 @@ public function update(Request $request, $id)
 
     // Validation des données
     $validatedData = $request->validate([
+        'proprietaire_id' => 'nullable|exists:proprietaires,code_id',
         'type' => 'required|string',
+        'utilisation' => 'required|string',
         'description' => 'required|string',
         'superficie' => 'required|string',
         'nombre_de_chambres' => 'nullable|string',
@@ -273,13 +285,17 @@ public function update(Request $request, $id)
     ]);
 
     try {
-        // Mise à jour des informations de base
+        // Mise à jour des propriétés obligatoires
+        $bien->proprietaire_id = $validatedData['proprietaire_id'];
         $bien->type = $validatedData['type'];
+        $bien->utilisation = $validatedData['utilisation'];
         $bien->description = $validatedData['description'];
         $bien->superficie = $validatedData['superficie'];
         $bien->prix = $validatedData['prix'];
         $bien->commune = $validatedData['commune'];
         $bien->date_fixe = $validatedData['disponibilite'];
+
+        // Mise à jour des propriétés optionnelles
         $bien->nombre_de_chambres = $validatedData['nombre_de_chambres'] ?? null;
         $bien->nombre_de_toilettes = $validatedData['nombre_de_toilettes'] ?? null;
         $bien->garage = $validatedData['garage'] ?? null;

@@ -17,7 +17,21 @@
                 <fieldset style="border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
                     <legend style="font-size: 1.5em; font-weight: bold;">Informations du bien</legend>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Sélectionnez le propriétaire</label>
+                                <select class="form-control" name="proprietaire_id" style="border: 1px solid black; border-radius: 5px;">
+                                    <option value="">Choisir un propriétaire</option>
+                                   <option value="">Maelys-Imo</option>
+                                    @foreach($proprietaires as $proprietaire)
+                                        <option value="{{ $proprietaire->code_id }}" {{ old('proprietaire_id', $bien->proprietaire_id) == $proprietaire->code_id ? 'selected' : '' }}>
+                                            {{ $proprietaire->name }} {{ $proprietaire->prenom }} - {{ $proprietaire->contact }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Type de bien <span style="color: red">*</span></label>
                                 <select class="form-control" name="type" style="border: 1px solid black; border-radius: 5px;">
@@ -27,15 +41,14 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Superficie (m²) <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Superficie" name="superficie" 
                                        value="{{ old('superficie', $bien->superficie) }}" style="border: 1px solid black; border-radius: 5px;">
                             </div>
                         </div>
-    
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Commune <span style="color: red">*</span></label>
                                 <input type="text" class="form-control" placeholder="Commune" name="commune" 
@@ -46,7 +59,7 @@
     
                     <!-- Section 2: Détails du bien -->
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Nombre de chambres</label>
                                 <input type="number" class="form-control" placeholder="Nombre de chambres" 
@@ -54,7 +67,7 @@
                                        style="border: 1px solid black; border-radius: 5px;">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Nombre de toilettes</label>
                                 <input type="number" class="form-control" placeholder="Nombre de toilettes" 
@@ -62,14 +75,23 @@
                                        style="border: 1px solid black; border-radius: 5px;">
                             </div>
                         </div>
-    
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Garage</label>
                                 <select class="form-control" name="garage" style="border: 1px solid black; border-radius: 5px;">
                                     <option value="">Veuillez selectionner</option>
                                     <option value="Oui" {{ old('garage', $bien->garage) == 'Oui' ? 'selected' : '' }}>Oui</option>
                                     <option value="Non" {{ old('garage', $bien->garage) == 'Non' ? 'selected' : '' }}>Non</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Type d'utilisation <span style="color: red">*</span></label>
+                                <select class="form-control" name="utilisation" style="border: 1px solid black; border-radius: 5px;">
+                                    <option value="Habitation" {{ old('utilisation', $bien->utilisation) == 'Habitation' ? 'selected' : '' }}>Habitation</option>
+                                    <option value="Bureau" {{ old('utilisation', $bien->utilisation) == 'Bureau' ? 'selected' : '' }}>Bureau</option>
+                                    <option value="Autre" {{ old('utilisation', $bien->utilisation) == 'Autre' ? 'selected' : '' }}>Autre</option>
                                 </select>
                             </div>
                         </div>

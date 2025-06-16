@@ -21,7 +21,10 @@ class VisiteController extends Controller
                         ->where('statut', '!=', 'annulée')
                         ->whereHas('bien', function ($query) {
                              $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id'); 
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
                         })
                         ->paginate(10);
         
@@ -52,7 +55,7 @@ class VisiteController extends Controller
     }
     public function done()
     {
-        $agenceId = Auth::guard('agence')->user()->id;
+        $agenceId = Auth::guard('agence')->user()->code_id;
         
         $visites = Visite::where(function($query) {
                         $query->where('statut', 'effectuée')
@@ -83,11 +86,12 @@ class VisiteController extends Controller
     public function doneAdmin()
     {
         $adminId = Auth::guard('admin')->user()->id;
-        $visites = Visite::where('statut','effectuée')
-                        ->where('statut', 'annulée')
-                       ->whereHas('bien', function ($query) {
+        $visites = Visite::whereHas('bien', function ($query) {
                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                            $query->whereNull('proprietaire_id'); 
+                            $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                            ->orWhereHas('proprietaire', function($q) {
+                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                            });
                         })
                         ->paginate(10);
         return view('admin.visites.done', compact('visites'));
