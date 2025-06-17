@@ -137,7 +137,7 @@
                     {{ $locataire->proprietaire->name.' '.$locataire->proprietaire->prenom ?? 'Maelys-imo' }}, Propriétaire
                 @else
                     Maelys-imo, Agence
-                @endif,
+                @endif/
                 bailleur du bien désigné ci-dessus, déclare avoir reçu de :
             </p>
             <div class="highlight-box">
