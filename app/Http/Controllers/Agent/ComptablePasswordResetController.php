@@ -41,7 +41,7 @@ class ComptablePasswordResetController extends Controller
         
         Mail::to($comptable->email)->send(new ComptablePasswordResetMail($resetLink));
         
-        return back()->with('status', 'Un lien de réinitialisation a été envoyé');
+        return redirect()->route('comptable.login')->with('success', 'Un lien de réinitialisation a été envoyé');
     }
 
     // Afficher le formulaire de réinitialisation (CORRIGÉ)

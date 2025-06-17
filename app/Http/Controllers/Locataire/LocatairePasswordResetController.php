@@ -41,7 +41,7 @@ class LocatairePasswordResetController extends Controller
         
         Mail::to($locataire->email)->send(new LocatairePasswordResetMail($resetLink));
         
-        return back()->with('status', 'Un lien de réinitialisation a été envoyé');
+        return redirect()->route('locataire.login')->with('success', 'Un lien de réinitialisation a été envoyé');
     }
 
     // Afficher le formulaire de réinitialisation (CORRIGÉ)

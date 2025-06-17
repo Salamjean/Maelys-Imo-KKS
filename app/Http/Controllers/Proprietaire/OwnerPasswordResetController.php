@@ -44,7 +44,7 @@ class OwnerPasswordResetController extends Controller
         
         Mail::to($agence->email)->send(new OwnerPasswordResetMail($resetLink));
         
-        return back()->with('status', 'Un lien de réinitialisation a été envoyé');
+        return redirect()->route('owner.login')->with('success', 'Un lien de réinitialisation a été envoyé');
     }
 
     // Afficher le formulaire de réinitialisation (CORRIGÉ)

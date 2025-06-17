@@ -42,7 +42,7 @@ class AgencePasswordResetController extends Controller
         
         Mail::to($agence->email)->send(new PasswordResetMail($resetLink));
         
-        return back()->with('status', 'Un lien de réinitialisation a été envoyé');
+        return redirect()->route('agence.login')->with('success', 'Un lien de réinitialisation a été envoyé');
     }
 
     // Afficher le formulaire de réinitialisation (CORRIGÉ)
