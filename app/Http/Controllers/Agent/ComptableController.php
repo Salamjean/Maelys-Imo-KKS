@@ -189,6 +189,41 @@ for ($i = 11; $i >= 0; $i--) {
             'data'
         ));
     }
+
+    public function destroy($id)
+    {
+        try {
+            $comptable = Comptable::findOrFail($id);
+            
+            // Supprimer le RIB si existant
+            if ($comptable->rib) {
+                Storage::delete('public/' . $comptable->rib);
+            }
+            
+            $comptable->delete();
+            
+            return redirect()->back()->with('success', 'Comptable supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression du comptable.');
+        }
+    }
+    public function destroyAgence($id)
+    {
+        try {
+            $comptable = Comptable::findOrFail($id);
+            
+            // Supprimer le RIB si existant
+            if ($comptable->rib) {
+                Storage::delete('public/' . $comptable->rib);
+            }
+            
+            $comptable->delete();
+            
+            return redirect()->back()->with('success', 'Comptable supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression du comptable.');
+        }
+    }
     public function index(){
         $agenceId = Auth::guard('agence')->user()->code_id;
         $comptables = Comptable::where('agence_id', $agenceId)->paginate(6);

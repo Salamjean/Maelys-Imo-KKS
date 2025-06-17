@@ -222,4 +222,41 @@ class AddBienOwnerController extends Controller
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            $bien = Bien::findOrFail($id);
+            
+            // Vérifier si le bien est loué
+            if ($bien->status === 'Loué') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Impossible de supprimer un bien loué.'
+                ], 400);
+            }
+
+            // Supprimer les images associées
+            $imageFields = ['image', 'image1', 'image2', 'image3', 'image4', 'image5'];
+            foreach ($imageFields as $field) {
+                if ($bien->$field) {
+                    Storage::disk('public')->delete($bien->$field);
+                }
+            }
+
+            $bien->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bien supprimé avec succès.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting bien: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors de la suppression.'
+            ], 500);
+        }
+    }
 }

@@ -212,12 +212,6 @@ class AgenceController extends Controller
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
     }
-    public function destroy($id)
-    {
-        // Logic to delete the agence data
-        return redirect()->route('agence.index')->with('success', 'Agence deleted successfully.');
-    }
-
 
     // Function to define access for the agence
     public function defineAccess($email){
@@ -364,6 +358,24 @@ class AgenceController extends Controller
         } catch (\Exception $e) {
             Log::error('Erreur mise à jour profil agence: '.$e->getMessage());
             return back()->with('error', 'Une erreur est survenue lors de la mise à jour');
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $agence = Agence::findOrFail($id);
+            
+            // Supprimer le RIB si existant
+            if ($agence->rib) {
+                Storage::delete('public/' . $agence->rib);
+            }
+            
+            $agence->delete();
+            
+            return redirect()->back()->with('success', 'Agence supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression du agence.');
         }
     }
 }

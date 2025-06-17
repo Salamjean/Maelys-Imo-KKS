@@ -76,7 +76,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::post('/agences/store',[AgenceController::class, 'store'])->name('agence.store');
     Route::get('/agences/{agence}/edit', [AgenceController::class, 'edit'])->name('agence.edit');
     Route::put('/agences/{agence}', [AgenceController::class, 'update'])->name('agence.update');
-    Route::delete('/agences/{id}/destroy',[AgenceController::class, 'destroy'])->name('agence.destroy');
+    Route::delete('/admin/agences/{id}', [AgenceController::class, 'destroy'])->name('agence.destroy');
 
      //routes de gestion des locataires par l'administrateur
      Route::get('/locataires',[LocataireController::class, 'indexAdmin'])->name('locataire.admin.index');
@@ -107,6 +107,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::post('/create',[ComptableController::class,'storeAdmin'])->name('accounting.store.admin');
         Route::get('/edit/{comptable}',[ComptableController::class,'editAdmin'])->name('accounting.edit.admin');
         Route::put('/{id}', [ComptableController::class, 'updateAdmin'])->name('accounting.update.admin');
+        Route::delete('/admin/accounting/{id}', [ComptableController::class, 'destroy'])->name('accounting.destroy');
     });
 
     //routes de gestion des propriétaires par l'administrateur
@@ -115,6 +116,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::get('/ownercreate',[ProprietaireController::class,'createAdmin'])->name('owner.create.admin');
         Route::post('/create',[ProprietaireController::class,'storeAdmin'])->name('owner.store.admin');
         Route::get('/edit/{proprietaire}/owner',[ProprietaireController::class,'editAdmin'])->name('owner.edit.admin');
+        Route::delete('/admin/owner/{id}', [ProprietaireController::class, 'destroyAdmin'])->name('owner.destroy.admin');
         Route::put('/{id}', [ProprietaireController::class, 'updateAdmin'])->name('owner.update.admin');
         Route::get('/reversement',[ReversementController::class, 'reversementAdmin'])->name('reversement.index.admin');
         Route::get('/reversement/completed',[ReversementController::class, 'reversementEffectue'])->name('reversement.completed.admin');
@@ -167,6 +169,7 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
         Route::post('/create',[ComptableController::class,'store'])->name('accounting.store');
         Route::get('/edit/{comptable}',[ComptableController::class,'edit'])->name('accounting.edit');
         Route::put('/{id}', [ComptableController::class, 'update'])->name('accounting.update');
+        Route::delete('/agence/accounting/{id}', [ComptableController::class, 'destroyAgence'])->name('accounting.destroy.agence');
     });
 
     Route::prefix('owner')->group(function(){
@@ -175,6 +178,7 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
         Route::post('/create',[ProprietaireController::class,'store'])->name('owner.store');
         Route::get('/edit/{proprietaire}',[ProprietaireController::class,'edit'])->name('owner.edit');
         Route::put('/{id}/edit', [ProprietaireController::class, 'update'])->name('owner.update.owner');
+        Route::delete('/admin/owner/{id}', [ProprietaireController::class, 'destroy'])->name('owner.destroy');
     });
 
     //Les routes pour la gestion des ribs du proprietaire 

@@ -223,6 +223,41 @@ class ProprietaireController extends Controller
         }
     }
 
+    public function destroyAdmin($id)
+    {
+        try {
+            $proprietaire = Proprietaire::findOrFail($id);
+            
+            // Supprimer le RIB si existant
+            if ($proprietaire->rib) {
+                Storage::delete('public/' . $proprietaire->rib);
+            }
+            
+            $proprietaire->delete();
+            
+            return redirect()->back()->with('success', 'Propriétaire supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression du propriétaire.');
+        }
+    }
+    public function destroy($id)
+    {
+        try {
+            $proprietaire = Proprietaire::findOrFail($id);
+            
+            // Supprimer le RIB si existant
+            if ($proprietaire->rib) {
+                Storage::delete('public/' . $proprietaire->rib);
+            }
+            
+            $proprietaire->delete();
+            
+            return redirect()->back()->with('success', 'Propriétaire supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression du propriétaire.');
+        }
+    }
+
     public function defineAccess($email){
         //Vérification si le sous-admin existe déjà
         $checkSousadminExiste = Proprietaire::where('email', $email)->first();

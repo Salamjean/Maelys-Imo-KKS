@@ -129,7 +129,7 @@
                                 <a href="{{ route('agence.edit',$agence->id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                     <i class="mdi mdi-pencil"></i>
                                 </a>
-                                <form action="#" method="POST" class="d-inline">
+                                <form action="{{ route('agence.destroy', $agence->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="button" class="btn btn-sm btn-danger delete-btn" title="Supprimer">
