@@ -19,8 +19,7 @@ class Bien extends Model
         'prix',
         'commune',
         'date_fixe',
-        'image',
-        'image2',
+        'image', 'image1', 'image2', 'image3', 'image4', 'image5',
         'agence_id',
         'montant_majore',
     ];

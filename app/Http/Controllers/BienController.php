@@ -107,28 +107,34 @@ public function store(Request $request)
     $bien->montant_total = $validatedData['montant_total'] ?? null;
 
     // Gestion de l'image principale
+    $mainImagePath = null;
     if ($request->hasFile('main_image')) {
         $mainImagePath = $request->file('main_image')->store('biens_images', 'public');
         $bien->image = $mainImagePath;
     }
 
-    // Gestion des images supplémentaires
+    // Gestion des images supplémentaires selon votre format demandé
+    $bien->image1 = null;
     if ($request->hasFile('additional_images1')) {
         $bien->image1 = $request->file('additional_images1')->store('biens_images', 'public');
     }
     
+    $bien->image2 = null;
     if ($request->hasFile('additional_images2')) {
         $bien->image2 = $request->file('additional_images2')->store('biens_images', 'public');
     }
     
+    $bien->image3 = null;
     if ($request->hasFile('additional_images3')) {
         $bien->image3 = $request->file('additional_images3')->store('biens_images', 'public');
     }
     
+    $bien->image4 = null;
     if ($request->hasFile('additional_images4')) {
         $bien->image4 = $request->file('additional_images4')->store('biens_images', 'public');
     }
     
+    $bien->image5 = null;
     if ($request->hasFile('additional_images5')) {
         $bien->image5 = $request->file('additional_images5')->store('biens_images', 'public');
     }

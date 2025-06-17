@@ -1,4 +1,4 @@
-@extends('agence.layouts.template')
+@extends('proprietaire.layouts.template')
 @section('content')
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -9,7 +9,7 @@
             <h4 class="card-title text-center">Modification du locataire</h4>
             <p class="card-description text-center">Modifiez les informations du locataire ci-dessous</p>
             
-            <form class="forms-sample" action="{{ route('locataire.update', $locataire->id) }}" method="POST" enctype="multipart/form-data">
+            <form class="forms-sample" action="{{ route('locataire.update.owner', $locataire->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 
@@ -325,7 +325,7 @@
                 <div class="row mt-4">
                     <div class="col-md-12 text-center">
                         <button type="submit" style="background-color: #02245b" class="btn btn-primary mr-2 w-full">Mettre à jour</button>
-                        <a href="{{ route('locataire.index') }}" class="btn btn-light">Annuler</a>
+                        <a href="{{ route('locataire.index.owner') }}" class="btn btn-light">Annuler</a>
                     </div>
                 </div>
             </form>

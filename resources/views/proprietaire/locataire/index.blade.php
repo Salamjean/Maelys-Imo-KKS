@@ -211,7 +211,7 @@
                                 </td>
                                 <td class="text-center ">
                                     <div class="btn-group gap-2" role="group">
-                                        <a href="{{ route('locataire.edit', $locataire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
+                                        <a href="{{ route('locataire.edit.owner', $locataire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                             <i class="mdi mdi-pencil"></i>
                                         </a>
                                         <button class="btn btn-sm btn-danger change-status-btn"

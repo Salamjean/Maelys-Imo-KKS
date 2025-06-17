@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 
 class LocataireOwnerController extends Controller
 {
@@ -215,6 +216,136 @@ class LocataireOwnerController extends Controller
 
         return $code;
     }
+
+     public function edit($id)
+    {
+        $locataire = Locataire::findOrFail($id);
+        // Récupérer les biens disponibles du proprietaire
+        $ownerId = Auth::guard('owner')->user()->id;
+        $biens = Bien::where('status', '!=', 'Loué')
+                ->where('proprietaire_id', $ownerId)
+                ->orWhere('id', $locataire->bien_id)
+                ->get();
+        
+        return view('proprietaire.locataire.edit', compact('locataire', 'biens'));
+    }
+
+        public function update(Request $request, $id)
+{
+    $locataire = Locataire::findOrFail($id);
+
+    // Vérification des doublons potentiels (en excluant le locataire actuel)
+    $existingLocataires = Locataire::where('id', '!=', $id)
+        ->where(function($query) use ($request) {
+            $query->where('name', 'like', $request->name)
+                  ->orWhere('prenom', 'like', $request->prenom)
+                  ->orWhere('email', $request->email)
+                  ->orWhere('contact', $request->contact);
+        })->get();
+
+    $isDuplicate = false;
+    foreach ($existingLocataires as $existing) {
+        $matchCount = 0;
+        if (strtolower($existing->name) === strtolower($request->name)) $matchCount++;
+        if (strtolower($existing->prenom) === strtolower($request->prenom)) $matchCount++;
+        if ($existing->email === $request->email) $matchCount++;
+        if ($existing->contact === $request->contact) $matchCount++;
+        
+        if ($matchCount >= 2) {
+            $isDuplicate = true;
+            break;
+        }
+    }
+
+    if ($isDuplicate) {
+        return back()->withErrors([
+            'duplicate' => 'Un locataire avec des informations similaires existe déjà. Veuillez vérifier dans la liste des locataires.'
+        ])->withInput();
+    }
+
+    // Validation des données
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'prenom' => 'required|string|max:255',
+        'email' => 'required|email|unique:locataires,email,'.$locataire->id,
+        'contact' => 'required|string|min:10|unique:locataires,contact,'.$locataire->id,
+        'piece' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'adresse' => 'required|string|max:255',
+        'profession' => 'required|string|max:255',
+        'attestation' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'image3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'image4' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'contrat' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
+        'status' => 'sometimes|in:Actif,Inactif,Pas sérieux',
+        'motif' => 'required_if:status,Inactif,Pas sérieux|nullable|string|max:255',
+        'bien_id' => 'required|exists:biens,id',
+    ]);
+
+    try {
+        // Mise à jour des informations de base
+        $locataire->name = $request->name;
+        $locataire->prenom = $request->prenom;
+        $locataire->email = $request->email;
+        $locataire->contact = $request->contact;
+        $locataire->adresse = $request->adresse;
+        $locataire->profession = $request->profession;
+        $locataire->status = $request->input('status', 'Actif');
+
+        if (in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
+            $locataire->motif = $request->motif;
+        } else {
+            $locataire->motif = null;
+        }
+
+        // Gestion des fichiers
+        $fileFields = [
+            'piece' => 'pieces_identite',
+            'attestation' => 'attestations',
+            'image1' => 'locataires_images',
+            'image2' => 'locataires_images',
+            'image3' => 'locataires_images',
+            'image4' => 'locataires_images',
+            'contrat' => 'contrats'
+        ];
+
+        foreach ($fileFields as $field => $folder) {
+            if ($request->hasFile($field)) {
+                // Supprimer l'ancien fichier si existe
+                if ($locataire->$field) {
+                    Storage::disk('public')->delete($locataire->$field);
+                }
+                $filePath = $request->file($field)->store($folder, 'public');
+                $locataire->$field = $filePath;
+            }
+        }
+
+        // Mise à jour du bien si changé
+        if ($locataire->bien_id != $request->bien_id) {
+            // Libérer l'ancien bien
+            $ancienBien = Bien::find($locataire->bien_id);
+            if ($ancienBien) {
+                $ancienBien->status = 'Disponible';
+                $ancienBien->save();
+            }
+
+            // Attribuer le nouveau bien
+            $locataire->bien_id = $request->bien_id;
+            $nouveauBien = Bien::find($request->bien_id);
+            $nouveauBien->status = 'Loué';
+            $nouveauBien->save();
+        }
+
+        $locataire->save();
+
+        return redirect()->route('locataire.index.owner')->with('success', 'Locataire mis à jour avec succès!');
+
+    } catch (\Exception $e) {
+        Log::error('Error updating locataire: ' . $e->getMessage());
+        return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
+    }
+}
 
     public function indexSerieux(){
         // Récupération de tous les locataires
