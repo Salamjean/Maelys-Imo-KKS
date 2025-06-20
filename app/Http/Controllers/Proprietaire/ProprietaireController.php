@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\Proprietaire;
 use App\Http\Controllers\Controller;
-
-
+use App\Models\Abonnement;
 use App\Models\Bien;
 use App\Models\Paiement;
 use App\Models\Proprietaire;
@@ -35,11 +34,19 @@ class ProprietaireController extends Controller
             
             return $totalPaiements - $totalReversements;
         }
-    public function dashboard()
+   public function dashboard()
     {
         // Vérifier si l'utilisateur est connecté en tant que propriétaire
-        $proprietaireId = Auth::guard('owner')->user()->code_id;
+        $proprietaire = Auth::guard('owner')->user();
+        $proprietaireId = $proprietaire->code_id;
         
+        // Vérification de l'abonnement
+        $abonnementActif = Abonnement::where('proprietaire_id', $proprietaireId)
+                            ->where('statut', 'actif')
+                            ->where('date_fin', '>=', now())
+                            ->exists();
+        
+        // Statistiques du dashboard
         $totalBiens = Bien::where('proprietaire_id', $proprietaireId)->count();
         $cumulLoyers = Bien::where('proprietaire_id', $proprietaireId)->sum('prix');
         
@@ -70,7 +77,9 @@ class ProprietaireController extends Controller
             'pourcentageDisponibles',
             'pourcentageOccupes',
             'derniersBiens',
-            'soldeDisponible'
+            'soldeDisponible',
+            'abonnementActif',
+            'proprietaire'
         ));
     }
     public function index(){
@@ -226,18 +235,31 @@ class ProprietaireController extends Controller
     public function destroyAdmin($id)
     {
         try {
+            DB::beginTransaction(); // Début de la transaction
+
             $proprietaire = Proprietaire::findOrFail($id);
             
-            // Supprimer le RIB si existant
+            // 1. Supprimer tous les abonnements associés
+            Abonnement::where('proprietaire_id', $proprietaire->code_id)->delete();
+            
+            // 2. Supprimer le RIB si existant
             if ($proprietaire->rib) {
                 Storage::delete('public/' . $proprietaire->rib);
             }
             
+            // 3. Supprimer le propriétaire
             $proprietaire->delete();
             
-            return redirect()->back()->with('success', 'Propriétaire supprimé avec succès.');
+            DB::commit(); // Validation de la transaction
+
+            return redirect()->back()
+                ->with('success', 'Propriétaire et ses abonnements supprimés avec succès.');
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur lors de la suppression du propriétaire.');
+            DB::rollBack(); // Annulation en cas d'erreur
+            Log::error('Erreur suppression propriétaire: '.$e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la suppression : '.$e->getMessage());
         }
     }
     public function destroy($id)
@@ -314,31 +336,71 @@ class ProprietaireController extends Controller
         return view('proprietaire.auth.login');
      }
 
-      public function authenticate(Request $request)
-     {
-         // Validation des champs du formulaire
-         $request->validate([
-             'email' => 'required|exists:proprietaires,email',
-             'password' => 'required|min:8',
-         ], [
-             'email.required' => 'Le mail est obligatoire.',
-             'email.exists' => 'Cette adresse mail n\'existe pas.',
-             'password.required' => 'Le mot de passe est obligatoire.',
-             'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
-         ]);
-     
-         try {
-            if(auth('owner')->attempt($request->only('email', 'password')))
-            {
-                return redirect()->route('owner.dashboard')->with('Bienvenu sur votre page ');
-            }else{
-                return redirect()->back()->with('error', 'Mot de passe incorrect.');
-            }
-        } catch (Exception $e) {
-            dd($e);
-        }
-     }
+   public function authenticate(Request $request)
+    {
+            $request->validate([
+                'email' => 'required|exists:proprietaires,email',
+                'password' => 'required|min:8',
+            ], [
+                'email.required' => 'Le mail est obligatoire.',
+                'email.exists' => 'Cette adresse mail n\'existe pas.',
+                'password.required' => 'Le mot de passe est obligatoire.',
+                'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
+            ]);
 
+            try {
+            // 1. Authentification
+            if (!auth('owner')->attempt($request->only('email', 'password'))) {
+                return redirect()->back()
+                            ->with('error', 'Email ou mot de passe incorrect.')
+                            ->withInput($request->only('email'));
+            }
+
+            // 2. Récupérer l'utilisateur connecté
+            $proprietaire = auth('owner')->user();
+
+            // 3. Vérifier l'abonnement
+            $abonnement = Abonnement::where('proprietaire_id', $proprietaire->code_id)
+                                ->latest('date_fin')
+                                ->first();
+
+            // 4. Conditions pour accéder au dashboard :
+            // - Abonnement existe
+            // - Statut = "actif" 
+            // - Date de fin non dépassée
+            if ($abonnement && $abonnement->statut === 'actif' && $abonnement->date_fin >= now()) {
+                return redirect()->route('owner.dashboard')
+                            ->with('success', 'Bienvenue sur votre tableau de bord');
+            }
+
+            // 5. Tous les autres cas -> page abonnement
+            return redirect()->route('page.abonnement')
+                        ->with('error', $this->getAbonnementMessage($abonnement));
+
+        } catch (Exception $e) {
+            Log::error('Connexion échouée : '.$e->getMessage());
+            auth('owner')->logout();
+            
+            return back()->with('error', 'Erreur technique - Veuillez réessayer')
+                        ->withInput($request->only('email'));
+        }
+    }
+
+private function getAbonnementMessage($abonnement): string
+{
+    if (!$abonnement) {
+        return 'Aucun abonnement actif trouvé';
+    }
+
+    return match ($abonnement->statut) {
+        'en_attente' => 'Votre paiement est en cours de validation',
+        'suspendu'   => 'Votre compte est suspendu',
+        'actif'     => $abonnement->date_fin < now() 
+                        ? 'Votre abonnement a expiré' 
+                        : 'Abonnement requis',
+        default      => 'Statut d\'abonnement non reconnu',
+    };
+}
       public function logout(){
         auth('owner')->logout();
         return redirect()->route('owner.login')->with('success', 'Déconnexion réussie.');
@@ -359,147 +421,171 @@ class ProprietaireController extends Controller
         return view('admin.proprietaire.create');
     }
 
-    public function storeAdmin(Request $request)
-    {
-        // Validation des données avec messages personnalisés
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:proprietaires,email',
-            'contact' => 'required|string|min:10',
-            'commune' => 'required|string|max:255',
-            'rib' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'gestion' => 'nullable|boolean',
-        ], [
-            'name.required' => 'Le nom du proprietaire est obligatoire.',
-            'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
-            'email.required' => 'L\'adresse e-mail est obligatoire.',
-            'email.email' => 'L\'adresse e-mail n\'est pas valide.',
-            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-            'contact.required' => 'Le contact est obligatoire.',
-            'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
-            'commune.required' => 'Lieu de residence est obligatoire.',
-            'rib.max' => 'Le fichier RIB ne doit pas dépasser 2Mo.',
-            'rib.mimes' => 'Le RIB doit être au format PDF, JPG ou PNG.',
-            'profile_image.image' => 'Le fichier doit être une image.',
-            'profile_image.mimes' => 'L\'image doit être au format JPEG, PNG ou JPG.',
-            'profile_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
+   public function storeAdmin(Request $request)
+{
+    // Validation des données avec messages personnalisés
+    $validatedData = $request->validate([
+        'name' => 'required|string|max:255',
+        'prenom' => 'required|string|max:255',
+        'email' => 'required|email|unique:proprietaires,email',
+        'contact' => 'required|string|min:10',
+        'commune' => 'required|string|max:255',
+        'rib' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
+        'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        'gestion' => 'nullable|boolean',
+    ], [
+        'name.required' => 'Le nom du proprietaire est obligatoire.',
+        'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
+        'email.required' => 'L\'adresse e-mail est obligatoire.',
+        'email.email' => 'L\'adresse e-mail n\'est pas valide.',
+        'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+        'contact.required' => 'Le contact est obligatoire.',
+        'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
+        'commune.required' => 'Lieu de residence est obligatoire.',
+        'rib.max' => 'Le fichier RIB ne doit pas dépasser 2Mo.',
+        'rib.mimes' => 'Le RIB doit être au format PDF, JPG ou PNG.',
+        'profile_image.image' => 'Le fichier doit être une image.',
+        'profile_image.mimes' => 'L\'image doit être au format JPEG, PNG ou JPG.',
+        'profile_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+        Log::info('Début de la création du propriétaire', ['email' => $request->email]);
+
+        $adminId = Auth::guard('admin')->user()->id;
+
+        // Génération du code PRO unique
+        do {
+            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            $codeId = 'PRO' . $randomNumber;
+            Log::debug('Génération code PRO', ['code' => $codeId]);
+        } while (Proprietaire::where('code_id', $codeId)->exists());
+
+        // Traitement de l'image de profil
+        $profileImagePath = null;
+        if ($request->hasFile('profile_image')) {
+            try {
+                $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+                Log::info('Image profil enregistrée', ['path' => $profileImagePath]);
+            } catch (\Exception $e) {
+                Log::error('Erreur enregistrement image profil', [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                throw new \Exception("Erreur lors de l'enregistrement de l'image de profil");
+            }
+        }
+
+        // Traitement du fichier RIB
+        $ribPath = null;
+        if ($request->hasFile('rib')) {
+            try {
+                $ribPath = $request->file('rib')->store('ribs', 'public');
+                Log::info('RIB enregistré', ['path' => $ribPath]);
+            } catch (\Exception $e) {
+                Log::error('Erreur enregistrement RIB', [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                throw new \Exception("Erreur lors de l'enregistrement du RIB");
+            }
+        }
+
+        // Création du Proprietaire
+        $ownerData = [
+            'code_id' => $codeId,
+            'name' => $validatedData['name'],
+            'prenom' => $validatedData['prenom'],
+            'email' => $validatedData['email'],
+            'contact' => $validatedData['contact'],
+            'commune' => $validatedData['commune'],
+            'rib' => $ribPath,
+            'choix_paiement' => 'RIB',
+            'password' => Hash::make('password'),
+            'profil_image' => $profileImagePath,
+            'gestion' => $request->has('gestion') && $request->gestion ? 'agence' : 'proprietaire',
+            
+        ];
+
+        Log::debug('Données du propriétaire', $ownerData);
+
+        $owner = Proprietaire::create($ownerData);
+        Log::info('Propriétaire créé', ['id' => $owner->id]);
+
+        /************************************************
+         * CRÉATION AUTOMATIQUE DE L'ABONNEMENT
+         ************************************************/
+        $today = now();
+        $dateDebut = $today->format('Y-m-d');
+        $dateFin = $today->copy()->addMonth()->format('Y-m-d'); // Abonnement d'1 mois
+        
+        $abonnementData = [
+            'proprietaire_id' => $owner->code_id,
+            'date_abonnement' => $today,
+            'date_debut' => $dateDebut,
+            'date_fin' => $dateFin,
+            'mois_abonne' => $today->format('m-Y'),
+            'montant' => 10000, // À ajuster selon votre logique métier
+            'statut' => 'actif',
+            'mode_paiement' => 'offert', // Ou autre valeur par défaut
+            'reference_paiement' => 'CREA-' . $owner->code_id,
+            'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
+        ];
+
+        Abonnement::create($abonnementData);
+        Log::info('Abonnement créé', ['proprietaire_id' => $owner->code_id]);
+
+        // Envoi de l'e-mail de vérification si gestion par propriétaire
+        if ($owner->gestion === 'proprietaire') {
+            try {
+                ResetCodePasswordProprietaire::where('email', $owner->email)->delete();
+                
+                $code = rand(1000, 4000);
+                ResetCodePasswordProprietaire::create([
+                    'code' => $code,
+                    'email' => $owner->email,
+                ]);
+
+                Notification::route('mail', $owner->email)
+                    ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email));
+                
+                Log::info('Email de vérification envoyé', ['email' => $owner->email]);
+            } catch (\Exception $e) {
+                Log::error('Erreur envoi email', [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                // On continue malgré l'erreur d'email
+            }
+        }
+
+        DB::commit();
+
+        return redirect()->route('owner.index.admin')
+            ->with('success', 'Propriétaire enregistré avec succès avec son abonnement initial.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        
+        Log::error('Erreur création propriétaire', [
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(),
+            'request' => $request->all()
         ]);
 
-        DB::beginTransaction();
-
-        try {
-            Log::info('Début de la création du propriétaire', ['email' => $request->email]);
-
-            $adminId = Auth::guard('admin')->user()->id;
-
-            // Génération du code PRO unique
-            do {
-                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-                $codeId = 'PRO' . $randomNumber;
-                Log::debug('Génération code PRO', ['code' => $codeId]);
-            } while (Proprietaire::where('code_id', $codeId)->exists());
-
-            // Traitement de l'image de profil
-            $profileImagePath = null;
-            if ($request->hasFile('profile_image')) {
-                try {
-                    $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
-                    Log::info('Image profil enregistrée', ['path' => $profileImagePath]);
-                } catch (\Exception $e) {
-                    Log::error('Erreur enregistrement image profil', [
-                        'error' => $e->getMessage(),
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine()
-                    ]);
-                    throw new \Exception("Erreur lors de l'enregistrement de l'image de profil");
-                }
-            }
-
-            // Traitement du fichier RIB
-            $ribPath = null;
-            if ($request->hasFile('rib')) {
-                try {
-                    $ribPath = $request->file('rib')->store('ribs', 'public');
-                    Log::info('RIB enregistré', ['path' => $ribPath]);
-                } catch (\Exception $e) {
-                    Log::error('Erreur enregistrement RIB', [
-                        'error' => $e->getMessage(),
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine()
-                    ]);
-                    throw new \Exception("Erreur lors de l'enregistrement du RIB");
-                }
-            }
-
-            // Création du Proprietaire
-            $ownerData = [
-                'code_id' => $codeId,
-                'name' => $validatedData['name'],
-                'prenom' => $validatedData['prenom'],
-                'email' => $validatedData['email'],
-                'contact' => $validatedData['contact'],
-                'commune' => $validatedData['commune'],
-                'rib' => $ribPath,
-                'choix_paiement' => 'RIB',
-                'password' => Hash::make('password'),
-                'profil_image' => $profileImagePath,
-                'gestion' => $request->has('gestion') && $request->gestion ? 'agence' : 'proprietaire',
-            ];
-
-            Log::debug('Données du propriétaire', $ownerData);
-
-            $owner = Proprietaire::create($ownerData);
-            Log::info('Propriétaire créé', ['id' => $owner->id]);
-
-            // Envoi de l'e-mail de vérification si gestion par propriétaire
-            if ($owner->gestion === 'proprietaire') {
-                try {
-                    ResetCodePasswordProprietaire::where('email', $owner->email)->delete();
-                    
-                    $code = rand(1000, 4000);
-                    ResetCodePasswordProprietaire::create([
-                        'code' => $code,
-                        'email' => $owner->email,
-                    ]);
-
-                    Notification::route('mail', $owner->email)
-                        ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email));
-                    
-                    Log::info('Email de vérification envoyé', ['email' => $owner->email]);
-                } catch (\Exception $e) {
-                    Log::error('Erreur envoi email', [
-                        'error' => $e->getMessage(),
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine()
-                    ]);
-                    // On continue malgré l'erreur d'email
-                }
-            }
-
-            DB::commit();
-
-            return redirect()->route('owner.index.admin')
-                ->with('success', 'Propriétaire enregistré avec succès.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            Log::error('Erreur création propriétaire', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-                'request' => $request->all()
-            ]);
-
-            return back()
-                ->withErrors(['error' => 'Une erreur est survenue lors de la création. Veuillez réessayer.'])
-                ->withInput()
-                ->with('error_message', $e->getMessage());
-        }
+        return back()
+            ->withErrors(['error' => 'Une erreur est survenue lors de la création. Veuillez réessayer.'])
+            ->withInput()
+            ->with('error_message', $e->getMessage());
     }
+}
 
     public function editAdmin($id)
     {

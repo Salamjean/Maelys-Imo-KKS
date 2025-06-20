@@ -36,5 +36,10 @@ class Agence extends Authenticatable
     {
         return $this->hasMany(Proprietaire::class);
     }
+
+    public function abonnements()
+    {
+        return $this->hasMany(Abonnement::class, 'agence_id', 'code_id');
+    }
     
 }

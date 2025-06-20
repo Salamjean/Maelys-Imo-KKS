@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use App\Models\Bien;
+use App\Models\Proprietaire;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -131,5 +132,12 @@ class AdminController extends Controller
         return back()->withErrors([
             'email' => 'Les informations d\'identification fournies ne correspondent pas à nos enregistrements.',
         ]);
+    }
+
+
+    public function abonnement()
+    {
+        $owners = Proprietaire::paginate(10);
+        return view('admin.abonnement.abonnement',compact('owners'));
     }
 }

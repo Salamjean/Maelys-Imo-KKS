@@ -135,5 +135,19 @@
           </ul>
         </div>
       </li>
+
+       <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#abon" aria-expanded="false" aria-controls="abon">
+          <i class="mdi mdi-clipboard-account menu-icon"></i>
+          <span class="menu-title">Abonnement</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="abon">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('admin.abonnement.actif') }}">Abonnés actifs</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('admin.abonnement.inactif') }}">Abonnés inactifs</a></li>
+          </ul>
+        </div>
+      </li>
     </ul>
   </nav>

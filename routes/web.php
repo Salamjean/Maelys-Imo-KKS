@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AbonnementController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Agence\AgencePasswordResetController;
@@ -122,6 +123,12 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::get('/reversement/completed',[ReversementController::class, 'reversementEffectue'])->name('reversement.completed.admin');
         Route::post('/reversements/{id}/upload-recu', [ReversementController::class, 'uploadRecu'])->name('reversement.upload-recu');
     });
+
+    //routes de gestion des abonnements par l'administrateur
+    Route::get('/abonnement/actif',[AbonnementController::class, 'abonneActif'])->name('admin.abonnement.actif');
+    Route::get('/abonnement/inactif', [AbonnementController::class, 'abonneInactif'])->name('admin.abonnement.inactif');
+    Route::post('/abonnements/activate', [AbonnementController::class, 'activate'])->name('abonnements.activate');
+    Route::post('/abonnements/deactivate', [AbonnementController::class, 'deactivate'])->name('abonnements.deactivate');
 });
    
 //routes de gestion des agences
@@ -387,6 +394,20 @@ Route::prefix('accounting')->group(function(){ //agent password reset routes
     Route::post('/mot-de-passe/email', [ComptablePasswordResetController::class, 'sendResetLinkEmail'])->name('comptable.email');
     Route::get('/mot-de-passe/reinitialiser/{email}/{token}', [ComptablePasswordResetController::class, 'showResetForm'])->name('comptable.reset');
     Route::post('/mot-de-passe/reinitialiser', [ComptablePasswordResetController::class, 'reset'])->name('comptable.password.update');
+});
+
+// Routes pour la gestion des abonnements du proprietaire
+Route::prefix('owner')->group(function () {
+   Route::get('/abonnement', [AbonnementController::class, 'abonnement'])->name('page.abonnement');
+   Route::post('/owner/activate', [AbonnementController::class, 'activateAccount'])->name('owner.activate');
+   Route::post('/notify', [AbonnementController::class, 'handleCinetPayNotification'])->name('cinetpay.notify');
+});
+
+// Routes pour la gestion des abonnements de l'agence
+Route::prefix('agence')->group(function () {
+   Route::get('/abonnement', [AbonnementController::class, 'abonnementAgence'])->name('page.abonnement.agence');
+   Route::post('/agence/activate', [AbonnementController::class, 'activateAccountAgence'])->name('agence.activate');
+   Route::post('/notify', [AbonnementController::class, 'handleCinetPayNotificationAgence'])->name('cinetpay.notify.agence');
 });
 
 

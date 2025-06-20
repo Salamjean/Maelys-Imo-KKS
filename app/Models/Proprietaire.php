@@ -45,6 +45,11 @@ class Proprietaire extends Authenticatable
     {
         return $this->hasMany(Reversement::class, 'proprietaire_id', 'code_id');
     }
+
+    public function abonnements()
+    {
+        return $this->hasMany(Abonnement::class, 'proprietaire_id', 'code_id');
+    }
   public function needsMonthlyRefresh()
     {
         $lastUpdate = $this->last_balance_update 

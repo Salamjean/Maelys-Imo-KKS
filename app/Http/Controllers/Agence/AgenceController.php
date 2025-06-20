@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Agence;
 use App\Http\Controllers\Controller;
-
+use App\Models\Abonnement;
 use App\Models\Agence;
 use App\Models\Bien;
 use App\Models\ResetCodePasswordAgence;
@@ -10,6 +10,7 @@ use App\Notifications\SendEmailToAgenceAfterRegistrationNotification;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -132,6 +133,29 @@ class AgenceController extends Controller
             $agence->password = Hash::make('password');
             $agence->profile_image = $profileImagePath;
             $agence->save();
+
+        /************************************************
+         * CRÉATION AUTOMATIQUE DE L'ABONNEMENT
+         ************************************************/
+        $today = now();
+        $dateDebut = $today->format('Y-m-d');
+        $dateFin = $today->copy()->addMonth()->format('Y-m-d'); // Abonnement d'1 mois
+        
+        $abonnementData = [
+            'agence_id' => $agence->code_id,
+            'date_abonnement' => $today,
+            'date_debut' => $dateDebut,
+            'date_fin' => $dateFin,
+            'mois_abonne' => $today->format('m-Y'),
+            'montant' => 10000, // À ajuster selon votre logique métier
+            'statut' => 'actif',
+            'mode_paiement' => 'offert', // Ou autre valeur par défaut
+            'reference_paiement' => 'CREA-' . $agence->code_id,
+            'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
+        ];
+
+        Abonnement::create($abonnementData);
+        Log::info('Abonnement créé', ['agence_id' => $agence->code_id]);
     
             // Envoi de l'e-mail de vérification
             ResetCodePasswordAgence::where('email', $agence->email)->delete();
@@ -283,17 +307,60 @@ class AgenceController extends Controller
              'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
          ]);
      
-         try {
-            if(auth('agence')->attempt($request->only('email', 'password')))
-            {
-                return redirect()->route('agence.dashboard')->with('Bienvenu sur votre page ');
-            }else{
-                return redirect()->back()->with('error', 'Mot de passe incorrect.');
+          try {
+            // 1. Authentification
+            if (!auth('agence')->attempt($request->only('email', 'password'))) {
+                return redirect()->back()
+                            ->with('error', 'Email ou mot de passe incorrect.')
+                            ->withInput($request->only('email'));
             }
+
+            // 2. Récupérer l'utilisateur connecté
+            $agence = auth('agence')->user();
+
+            // 3. Vérifier l'abonnement
+            $abonnement = Abonnement::where('agence_id', $agence->code_id)
+                                ->latest('date_fin')
+                                ->first();
+
+            // 4. Conditions pour accéder au dashboard :
+            // - Abonnement existe
+            // - Statut = "actif" 
+            // - Date de fin non dépassée
+            if ($abonnement && $abonnement->statut === 'actif' && $abonnement->date_fin >= now()) {
+                return redirect()->route('agence.dashboard')
+                            ->with('success', 'Bienvenue sur votre tableau de bord');
+            }
+
+            // 5. Tous les autres cas -> page abonnement
+            return redirect()->route('page.abonnement.agence')
+                        ->with('error', $this->getAbonnementMessage($abonnement));
+
         } catch (Exception $e) {
-            dd($e);
+            Log::error('Connexion échouée : '.$e->getMessage());
+            auth('agence')->logout();
+            
+            return back()->with('error', 'Erreur technique - Veuillez réessayer')
+                        ->withInput($request->only('email'));
         }
      }
+
+     private function getAbonnementMessage($abonnement): string
+    {
+        if (!$abonnement) {
+            return 'Aucun abonnement actif trouvé';
+        }
+
+        return match ($abonnement->statut) {
+            'en_attente' => 'Votre paiement est en cours de validation',
+            'suspendu'   => 'Votre compte est suspendu',
+            'actif'     => $abonnement->date_fin < now() 
+                            ? 'Votre abonnement a expiré' 
+                            : 'Abonnement requis',
+            default      => 'Statut d\'abonnement non reconnu',
+        };
+    }
+
 
     public function logout(){
         auth('agence')->logout();
@@ -361,21 +428,37 @@ class AgenceController extends Controller
         }
     }
 
-    public function destroy($id)
+   public function destroy($id)
     {
         try {
+            DB::beginTransaction(); // Début de la transaction
+
             $agence = Agence::findOrFail($id);
             
-            // Supprimer le RIB si existant
+            // 1. Supprimer tous les abonnements associés
+            Abonnement::where('agence_id', $agence->code_id)->delete();
+            
+            // 2. Supprimer les fichiers associés (RIB + image de profil)
             if ($agence->rib) {
                 Storage::delete('public/' . $agence->rib);
             }
+            if ($agence->profile_image) {
+                Storage::delete('public/' . $agence->profile_image);
+            }
             
+            // 3. Supprimer l'agence
             $agence->delete();
             
-            return redirect()->back()->with('success', 'Agence supprimé avec succès.');
+            DB::commit(); // Validation de la transaction
+
+            return redirect()->back()
+                ->with('success', 'Agence et ses abonnements supprimés avec succès.');
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur lors de la suppression du agence.');
+            DB::rollBack(); // Annulation en cas d'erreur
+            Log::error('Erreur suppression agence: '.$e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erreur lors de la suppression : '.$e->getMessage());
         }
     }
 }
