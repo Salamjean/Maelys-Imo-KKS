@@ -54,7 +54,7 @@
       <div class="card-body">
         <h4 class="card-title text-center">Gestion des biens immobiliers</h4>
         <p class="card-description text-center">
-          Liste des biens classés par type
+          Liste des biens déjà loués par des locataires
         </p>
 
         <!-- Modal pour afficher les images -->
@@ -96,6 +96,7 @@
                     <th>Disponibilité</th>
                     <th>Photo principale</th>
                     <th>Photo supplementaire</th>
+                    <th>Republier</th>
                 </tr>
             </thead>
             <tbody>
@@ -159,13 +160,23 @@
                                 <span class="text-muted">Aucune</span>
                             @endif
                         </td>
+                        <td>
+                            <form action="{{ route('bien.republier.admin', $bien->id) }}" method="POST" style="display: inline;">
+                                    @csrf
+                                    @method('PUT')
+                                    <button type="submit" class="btn btn-sm btn-success" title="Republier ce bien">
+                                        <i class="mdi mdi-replay"></i> Republier
+                                    </button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="15" class="text-center py-4">
+                        <td colspan="16" class="text-center py-4">
                             <div class="alert alert-info">
                                 Aucun bien immobilier enregistré pour le moment.
                             </div>
+                            
                         </td>
                     </tr>
                 @endforelse
@@ -262,6 +273,83 @@
             });
         });
     });
+
+   $('form[action*="republier"]').on('submit', function(e) {
+    e.preventDefault();
+    const form = $(this);
+    
+    Swal.fire({
+        title: 'Confirmer la republication',
+        text: "Êtes-vous sûr de vouloir rendre ce bien disponible à nouveau ?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Oui, republier!',
+        cancelButtonText: 'Annuler',
+        html: `
+            <div class="form-group mt-3">
+                <label for="locataireStatus">Statut du locataire :</label>
+                <select class="form-control" id="locataireStatus" required>
+                    <option value="">Sélectionnez un statut</option>
+                    <option value="Inactif">Déménagement</option>
+                    <option value="Pas sérieux">Pas sérieux</option>
+                </select>
+            </div>
+            <div class="form-group mt-2" id="motifGroup" style="display: none;">
+                <label for="motif">Motif :</label>
+                <input type="text" class="form-control" id="motif" placeholder="Raison du changement de statut">
+            </div>
+        `,
+        preConfirm: () => {
+            const status = document.getElementById('locataireStatus').value;
+            const motif = document.getElementById('motif')?.value;
+            
+            if (!status) {
+                Swal.showValidationMessage('Veuillez sélectionner un statut');
+                return false;
+            }
+            
+            if (( status === 'Pas sérieux') && !motif) {
+                Swal.showValidationMessage('Veuillez indiquer un motif');
+                return false;
+            }
+            
+            return { status, motif: motif || '' };
+        },
+        didOpen: () => {
+            const statusSelect = document.getElementById('locataireStatus');
+            const motifGroup = document.getElementById('motifGroup');
+            
+            statusSelect.addEventListener('change', function() {
+                if (this.value === 'Pas sérieux') {
+                    motifGroup.style.display = 'block';
+                } else {
+                    motifGroup.style.display = 'none';
+                }
+            });
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Ajouter les données au formulaire
+            const hiddenStatus = document.createElement('input');
+            hiddenStatus.type = 'hidden';
+            hiddenStatus.name = 'locataire_status';
+            hiddenStatus.value = result.value.status;
+            form.append(hiddenStatus);
+            
+            if (result.value.motif) {
+                const hiddenMotif = document.createElement('input');
+                hiddenMotif.type = 'hidden';
+                hiddenMotif.name = 'locataire_motif';
+                hiddenMotif.value = result.value.motif;
+                form.append(hiddenMotif);
+            }
+            
+            form.unbind('submit').submit();
+        }
+    });
+});
     </script>
 
 <style>

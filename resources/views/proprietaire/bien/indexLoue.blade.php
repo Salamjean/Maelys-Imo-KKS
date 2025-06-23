@@ -59,6 +59,15 @@
                     </div>
 
                     <p class="card-text text-muted">{{ Str::limit($bien->description, 120) }}</p>
+                    <p>
+                         <form action="{{ route('bien.republier.owner', $bien->id) }}" method="POST" style="display: inline;">
+                                    @csrf
+                                    @method('PUT')
+                                    <button type="submit" class="btn btn-sm btn-success" title="Republier ce bien">
+                                        <i class="mdi mdi-replay"></i> Republier
+                                    </button>
+                            </form>
+                    </p>
                 </div>
             </div>
         </div>
@@ -150,4 +159,129 @@
         border-radius: 8px;
     }
 </style>
+!-- Scripts nécessaires -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    $(document).ready(function() {
+        // Notification SweetAlert2 modifiée pour ressembler à la confirmation
+        @if(session('success'))
+        Swal.fire({
+            title: 'Succès !',
+            text: '{{ session('success') }}',
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK',
+            allowOutsideClick: false
+        });
+        @endif
+    
+        // Gestion des images
+        $('.preview-image').on('click', function() {
+            const imgUrl = $(this).data('image');
+            $('#modalImage').attr('src', imgUrl);
+            $('#imageModal').modal('show');
+        });
+    
+        // Confirmation de suppression (inchangé)
+        $('.delete-btn').on('click', function(e) {
+            e.preventDefault();
+            const form = $(this).closest('form');
+            
+            Swal.fire({
+                title: 'Confirmer la suppression',
+                text: "Êtes-vous sûr de vouloir supprimer ce bien ?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Oui, supprimer!',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+   $('form[action*="republier"]').on('submit', function(e) {
+    e.preventDefault();
+    const form = $(this);
+    
+    Swal.fire({
+        title: 'Confirmer la republication',
+        text: "Êtes-vous sûr de vouloir rendre ce bien disponible à nouveau ?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Oui, republier!',
+        cancelButtonText: 'Annuler',
+        html: `
+            <div class="form-group mt-3">
+                <label for="locataireStatus">Statut du locataire :</label>
+                <select class="form-control" id="locataireStatus" required>
+                    <option value="">Sélectionnez un statut</option>
+                    <option value="Inactif">Déménagement</option>
+                    <option value="Pas sérieux">Pas sérieux</option>
+                </select>
+            </div>
+            <div class="form-group mt-2" id="motifGroup" style="display: none;">
+                <label for="motif">Motif :</label>
+                <input type="text" class="form-control" id="motif" placeholder="Raison du changement de statut">
+            </div>
+        `,
+        preConfirm: () => {
+            const status = document.getElementById('locataireStatus').value;
+            const motif = document.getElementById('motif')?.value;
+            
+            if (!status) {
+                Swal.showValidationMessage('Veuillez sélectionner un statut');
+                return false;
+            }
+            
+            if ((status === 'Pas sérieux') && !motif) {
+                Swal.showValidationMessage('Veuillez indiquer un motif');
+                return false;
+            }
+            
+            return { status, motif: motif || '' };
+        },
+        didOpen: () => {
+            const statusSelect = document.getElementById('locataireStatus');
+            const motifGroup = document.getElementById('motifGroup');
+            
+            statusSelect.addEventListener('change', function() {
+                if (this.value === 'Pas sérieux') {
+                    motifGroup.style.display = 'block';
+                } else {
+                    motifGroup.style.display = 'none';
+                }
+            });
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Ajouter les données au formulaire
+            const hiddenStatus = document.createElement('input');
+            hiddenStatus.type = 'hidden';
+            hiddenStatus.name = 'locataire_status';
+            hiddenStatus.value = result.value.status;
+            form.append(hiddenStatus);
+            
+            if (result.value.motif) {
+                const hiddenMotif = document.createElement('input');
+                hiddenMotif.type = 'hidden';
+                hiddenMotif.name = 'locataire_motif';
+                hiddenMotif.value = result.value.motif;
+                form.append(hiddenMotif);
+            }
+            
+            form.unbind('submit').submit();
+        }
+    });
+});
+    </script>
 @endsection

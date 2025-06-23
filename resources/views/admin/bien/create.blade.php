@@ -123,9 +123,7 @@
                                 <label>Loyer mensuel</label><span style="color: red">*</span>
                                 <div class="input-group">
                                     <input type="number" class="form-control" placeholder="Montant total" value="{{ old('prix') }}" name="prix" style="border: 1px solid black; border-radius: 5px;">
-                                    <div class="input-group-append" style="background-color: #02245b; color:white">
-                                        <span class="input-group-text text-white" style="border: 1px solid black; border-radius: 5px; background-color: #02245b; ">FCFA</span>
-                                    </div>
+                                    
                                 </div>
                                 @error('prix')
                                     <div class="alert alert-danger">{{ $message }}</div>
@@ -183,9 +181,7 @@
                                 <label>Montant total</label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" name="montant_total" value="{{ old('montant_total') }}" style="border: 1px solid black; border-radius: 5px;" readonly>
-                                    <div class="input-group-append" style="background-color: #02245b; color:white">
-                                        <span class="input-group-text  text-white" style="border: 1px solid black; border-radius: 5px;background-color: #02245b;">FCFA</span>
-                                    </div>
+                                    
                                 </div>
                             </div>
                             @error('montant_total')

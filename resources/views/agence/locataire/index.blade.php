@@ -220,6 +220,13 @@
                                                 title="Changer statut">
                                             <i class="mdi mdi-account-convert"></i>
                                         </button>
+                                                                     @if(is_null($locataire->bien_id) && $locataire->status === 'Inactif')
+            <button class="btn btn-sm btn-primary attribuer-bien-btn"
+                    data-locataire-id="{{ $locataire->id }}"
+                    title="Attribuer un bien">
+                <i class="mdi mdi-home-plus"></i>
+            </button>
+        @endif
                                         {{-- <form action="#" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
@@ -231,27 +238,32 @@
                                 </td>
                                 
 
-                                <td>
-                                    @if($locataire->show_reminder_button)
-                                        <button class="btn btn-sm btn-primary send-reminder-btn"
-                                                data-locataire-id="{{ $locataire->id }}"
-                                                data-locataire-email="{{ $locataire->email }}"
-                                                title="Envoyer un rappel de paiement">
-                                            <i class="mdi mdi-email-open"></i> Rappel paiement
-                                        </button>
-                                    @endif
+                                    <td>
+    @if($locataire->status === 'Actif') <!-- Vérifiez le statut du locataire -->
+        @if($locataire->show_reminder_button)
+            <button class="btn btn-sm btn-primary send-reminder-btn"
+                    data-locataire-id="{{ $locataire->id }}"
+                    data-locataire-email="{{ $locataire->email }}"
+                    title="Envoyer un rappel de paiement">
+                <i class="mdi mdi-email-open"></i> Rappel paiement
+            </button>
+        @endif
 
-                                    <button class="btn btn-sm btn-success generate-cash-code"
-                                        data-locataire-id="{{ $locataire->id }}"
-                                        title="Générer un code pour paiement en espèces">
-                                    <i class="mdi mdi-cash"></i> Code Espèces
-                                    </button>
-                                    <button class="btn btn-sm btn-warning verify-cash-code"
-                                        data-locataire-id="{{ $locataire->id }}"
-                                        title="Saisir le code de vérification">
-                                        <i class="mdi mdi-key"></i>
-                                    </button>
-                                </td>
+        <button class="btn btn-sm btn-success generate-cash-code"
+                data-locataire-id="{{ $locataire->id }}"
+                title="Générer un code pour paiement en espèces">
+            <i class="mdi mdi-cash"></i> Code Espèces
+        </button>
+        
+        <button class="btn btn-sm btn-warning verify-cash-code"
+                data-locataire-id="{{ $locataire->id }}"
+                title="Saisir le code de vérification">
+            <i class="mdi mdi-key"></i>
+        </button>
+    @else
+        <span class="text-danger">Locataire inactif - aucune action disponible.</span>
+    @endif
+</td>
                             </tr>
                         @empty
                             <tr>
@@ -653,5 +665,116 @@ function submitCashPayment(locataireId, code) {
     form.submit();
 }
 </script>
+<script>
+// Gestion de l'attribution de bien
+$(document).on('click', '.attribuer-bien-btn', function() {
+    const locataireId = $(this).data('locataire-id');
+    const button = $(this);
+    
+    button.prop('disabled', true);
+    button.html('<i class="mdi mdi-loading mdi-spin"></i>');
 
+    // Charger la liste des biens disponibles
+    $.get("{{ route('biens.disponibles.agence') }}", function(biens) {
+        button.prop('disabled', false);
+        button.html('<i class="mdi mdi-home-plus"></i>');
+        
+        if (biens.length === 0) {
+            Swal.fire({
+                title: 'Aucun bien disponible',
+                text: 'Il n\'y a actuellement aucun bien disponible à attribuer.',
+                icon: 'warning',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Préparer les options pour le select
+        let options = '';
+        biens.forEach(bien => {
+            options += `<option value="${bien.id}">${bien.type} - ${bien.commune} (${bien.prix} FCFA/mois)</option>`;
+        });
+
+        // Afficher le popup de sélection
+        Swal.fire({
+            title: 'Attribuer un nouveau bien',
+            html: `
+                <form id="attributionForm">
+                    <div class="form-group">
+                        <label for="bienSelect" class="form-label">Sélectionnez un bien :</label>
+                        <select class="form-select" id="bienSelect" required>
+                            <option value="">-- Choisir un bien --</option>
+                            ${options}
+                        </select>
+                    </div>
+                </form>
+            `,
+            showCancelButton: true,
+            confirmButtonColor: '#02245b',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Attribuer',
+            cancelButtonText: 'Annuler',
+            preConfirm: () => {
+                const bienId = $('#bienSelect').val();
+                if (!bienId) {
+                    Swal.showValidationMessage('Veuillez sélectionner un bien');
+                    return false;
+                }
+                return { bienId };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Envoyer la requête d'attribution
+                button.prop('disabled', true);
+                button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+                
+                $.ajax({
+                    url: "{{ route('locataire.attribuer-bien.agence', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId),
+                    method: 'POST',
+                    data: {
+                        bien_id: result.value.bienId,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            title: 'Succès !',
+                            text: response.success,
+                            icon: 'success',
+                            confirmButtonColor: '#3085d6',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            title: 'Erreur !',
+                            text: xhr.responseJSON.error || 'Une erreur est survenue',
+                            icon: 'error',
+                            confirmButtonColor: '#3085d6',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    complete: function() {
+                        button.prop('disabled', false);
+                        button.html('<i class="mdi mdi-home-plus"></i>');
+                    }
+                });
+            }
+        });
+    }).fail(function() {
+        button.prop('disabled', false);
+        button.html('<i class="mdi mdi-home-plus"></i>');
+        
+        Swal.fire({
+            title: 'Erreur !',
+            text: 'Impossible de charger la liste des biens',
+            icon: 'error',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK'
+        });
+    });
+});
+</script>
 @endsection

@@ -23,7 +23,9 @@ use App\Http\Controllers\Proprietaire\ReversementController;
 use App\Http\Controllers\RibController;
 use App\Http\Controllers\VersementController;
 use App\Http\Controllers\VisiteController;
+use App\Models\Agence;
 use App\Models\Bien;
+use App\Models\Proprietaire;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function (Request $request) {
@@ -53,8 +55,30 @@ Route::get('/', function (Request $request) {
                   ->where('type', 'Maison')->count();
     $terrains = Bien::where('status', 'Disponible')
                    ->where('type', 'Bureau')->count();
-    
-    return view('home.accueil', compact('biens', 'appartements', 'maisons', 'terrains'));
+
+     // Récupération des 10 derniers partenaires (propriétaires + agences)
+    $derniersPartenaires = collect()
+        ->merge(
+            Proprietaire::orderBy('created_at', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'Propriétaire';
+                    return $item;
+                })
+        )
+        ->merge(
+            Agence::orderBy('created_at', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($item) {
+                    $item->type = 'Agence';
+                    return $item;
+                })
+        )
+        ->sortByDesc('created_at')
+        ->take(10);
+    return view('home.accueil', compact('biens', 'appartements', 'maisons', 'terrains','derniersPartenaires'));
 });
 
 Route::middleware('auth:admin')->prefix('admin')->group(function () {
@@ -69,6 +93,9 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/biens/{bien}/edit', [BienController::class, 'edit'])->name('bien.edit');
     Route::put('/biens/{bien}', [BienController::class, 'update'])->name('bien.update');
     Route::delete('/biens/{bien}', [BienController::class, 'destroy'])->name('bien.destroy');
+    Route::put('/biens/{bien}/republier', [BienController::class, 'republier'])->name('bien.republier.admin');
+    Route::get('/biens-disponibles', [BienController::class, 'getBiensDisponibles'])->name('biens.disponibles');
+    Route::post('/admin/locataires/{locataire}/attribuer-bien', [BienController::class, 'attribuerBien'])->name('locataire.attribuer-bien');
 
 
     //routes de gestion des agences partenaires par l'administrateur
@@ -148,6 +175,8 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
     Route::put('/biens/{bien}', [BienController::class, 'updateAgence'])->name('bien.update.agence');
     Route::delete('/biens/{bien}', [BienController::class, 'destroyAgence'])->name('bien.destroy.agence');
     Route::put('/biens/{bien}/republier', [BienController::class, 'republierAgence'])->name('bien.republier.agence');
+     Route::get('/biens-disponibles', [BienController::class, 'getBiensDisponiblesAgence'])->name('biens.disponibles.agence');
+    Route::post('/admin/locataires/{locataire}/attribuer-bien', [BienController::class, 'attribuerBienAgence'])->name('locataire.attribuer-bien.agence');
 
     //routes de gestion des visites par l'agence
     Route::prefix('visites')->group(function() {
@@ -257,6 +286,9 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
         Route::get('/biens/{bien}/edit', [AddBienOwnerController::class, 'edit'])->name('bien.edit.owner');
         Route::put('/biens/{bien}', [AddBienOwnerController::class, 'update'])->name('bien.update.owner');
         Route::delete('/biens/{bien}', [AddBienOwnerController::class, 'destroy'])->name('bien.destroy.owner');
+        Route::put('/biens/{bien}/republier', [AddBienOwnerController::class, 'republier'])->name('bien.republier.owner');
+        Route::get('/biens-disponibles', [AddBienOwnerController::class, 'getBiensDisponibles'])->name('biens.disponibles.owner');
+        Route::post('/locataires/{locataire}/attribuer-bien', [AddBienOwnerController::class, 'attribuerBien'])->name('locataire.attribuer-bien.owner');
     });
 
     Route::prefix('manager')->group(function(){

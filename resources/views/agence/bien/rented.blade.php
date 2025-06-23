@@ -54,7 +54,7 @@
       <div class="card-body">
         <h4 class="card-title text-center">Gestion des biens immobiliers</h4>
         <p class="card-description text-center">
-          Liste des biens classés par type
+          Liste des biens déjà loués par des locataires
         </p>
 
         <!-- Modal pour afficher les images -->
@@ -292,7 +292,7 @@
                 <label for="locataireStatus">Statut du locataire :</label>
                 <select class="form-control" id="locataireStatus" required>
                     <option value="">Sélectionnez un statut</option>
-                    <option value="Inactif">Inactif</option>
+                    <option value="Inactif">Déménagement</option>
                     <option value="Pas sérieux">Pas sérieux</option>
                 </select>
             </div>
@@ -310,7 +310,7 @@
                 return false;
             }
             
-            if ((status === 'Inactif' || status === 'Pas sérieux') && !motif) {
+            if ((status === 'Pas sérieux') && !motif) {
                 Swal.showValidationMessage('Veuillez indiquer un motif');
                 return false;
             }
@@ -322,7 +322,7 @@
             const motifGroup = document.getElementById('motifGroup');
             
             statusSelect.addEventListener('change', function() {
-                if (this.value === 'Inactif' || this.value === 'Pas sérieux') {
+                if (this.value === 'Pas sérieux') {
                     motifGroup.style.display = 'block';
                 } else {
                     motifGroup.style.display = 'none';

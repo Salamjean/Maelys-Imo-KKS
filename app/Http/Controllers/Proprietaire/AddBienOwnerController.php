@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Proprietaire;
 use App\Http\Controllers\Controller;
 use App\Models\Bien;
+use App\Models\Locataire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -259,4 +260,57 @@ class AddBienOwnerController extends Controller
             ], 500);
         }
     }
+
+    public function republier(Bien $bien)
+{
+    // Mettre à jour le statut du bien
+    $bien->status = 'Disponible';
+    $bien->save();
+    
+    // Mettre à jour le statut du locataire si le bien avait un locataire
+    if ($bien->locataire) {
+        $locataire = $bien->locataire;
+        $locataire->status = request('locataire_status');
+        $locataire->motif = request('locataire_motif', null);
+        $locataire->bien_id = null; // Détacher le bien du locataire
+        $locataire->save();
+    }
+    
+    return redirect()->route('owner.bienList')->with('success', 'Le bien a été republié avec succès et le statut du locataire a été mis à jour.');
+}
+
+public function getBiensDisponibles()
+{
+    $ownerId = Auth::guard('owner')->user()->code_id;
+    $biens = Bien::where('proprietaire_id', $ownerId)
+                ->where('status', 'Disponible')
+                ->select('id', 'type', 'commune', 'prix')
+                ->get();
+    
+    return response()->json($biens);
+}
+public function attribuerBien(Request $request, Locataire $locataire)
+{
+    $request->validate([
+        'bien_id' => 'required|exists:biens,id',
+    ]);
+
+    // Vérifier que le bien est disponible
+    $bien = Bien::find($request->bien_id);
+    if ($bien->status !== 'Disponible') {
+        return response()->json(['error' => 'Le bien sélectionné n\'est pas disponible'], 400);
+    }
+
+    // Mettre à jour le locataire
+    $locataire->bien_id = $request->bien_id;
+    $locataire->status = 'Actif';
+    $locataire->motif = null;
+    $locataire->save();
+
+    // Mettre à jour le statut du bien
+    $bien->status = 'Loué';
+    $bien->save();
+
+    return response()->json(['success' => 'Bien attribué avec succès au locataire']);
+}
 }

@@ -150,6 +150,36 @@
     .cta-button:hover {
         background: #2980b9;
     }
+    .platform-section {
+        background: #02245b;
+        color: white;
+        padding: 40px;
+        border-radius: 8px;
+        margin-bottom: 40px;
+    }
+    .platform-title {
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 30px;
+    }
+    .platform-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    .platform-feature {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    .platform-icon {
+        margin-right: 10px;
+        color: #27ae60;
+        font-weight: bold;
+    }
+    .platform-text {
+        flex: 1;
+    }
 
     /* Responsive adjustments */
     @media (max-width: 900px) {
@@ -167,6 +197,9 @@
         }
         .process-step {
             width: 100%;
+        }
+        .platform-features {
+            grid-template-columns: 1fr;
         }
     }
 </style>
@@ -256,6 +289,76 @@
         </div>
     </div>
 
+    <div class="platform-section">
+        <h2 class="platform-title" style="color:white">Maelys - <span style="color: orangered">Imo</span> propose</h2>
+        <div class="platform-features">
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Enregistrement des biens immobiliers (appartements, maisons, bureaux, etc.)</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Création et gestion des profils locataires</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Attribution des biens à un locataire unique</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Encaissement des loyers via Mobile Money ou en espèces</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Gestion des recouvrements par une personne désignée</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Reversement automatique ou manuel des loyers perçus</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Délivrance électronique de quittances de loyer</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Messagerie intégrée pour le suivi des réparations</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Page d'accueil dynamique avec biens disponibles</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Demande de virement bancaire avec preuve</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Alertes automatiques pour loyers impayés</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Base de données des locataires à risques</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Système de commissions intégré pour les agences</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">États de gestion détaillés pour chaque bien</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Application mobile et espace web dédiés</span>
+            </div>
+            <div class="platform-feature">
+                <span class="platform-icon">•</span>
+                <span class="platform-text">Plateforme modulable pour indépendants et agences</span>
+            </div>
+        </div>
+    </div>
+
     <div class="process-section">
         <h2 class="process-title">Comment louer avec nous</h2>
         <div class="process-steps">
@@ -267,12 +370,12 @@
             <div class="process-step">
                 <div class="step-number">2</div>
                 <h3 class="step-title">Visite</h3>
-                <p class="step-description">Planifiez une visite avec notre équipe</p>
+                <p class="step-description">Planifiez une visite avec l'agence/propriéraire</p>
             </div>
             <div class="process-step">
                 <div class="step-number">3</div>
                 <h3 class="step-title">Dossier</h3>
-                <p class="step-description">Complétez votre dossier locatif</p>
+                <p class="step-description">rassemblez vos documents neccessaire</p>
             </div>
             <div class="process-step">
                 <div class="step-number">4</div>
@@ -280,12 +383,6 @@
                 <p class="step-description">Signez votre contrat et emménagez</p>
             </div>
         </div>
-    </div>
-
-    <div class="cta-section">
-        <h3 class="cta-title">Vous ne trouvez pas ce que vous cherchez ?</h3>
-        <p class="cta-text">Notre équipe se fera un plaisir de vous aider à trouver le bien parfait.</p>
-        <a href="#" class="cta-button">Contactez-nous</a>
     </div>
 </div>
 @endsection

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bien;
+use App\Models\Locataire;
 use App\Models\Proprietaire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -504,7 +505,7 @@ public function rentedAdmin(){
     // Vérification si l'utilisateur est connecté en tant qu'agence
         $adminId = Auth::guard('admin')->user()->id;
     // Récupération des biens loués
-    $biens = Bien::where('agence_id', $adminId)
+    $biens = Bien::whereNull('agence_id')
                 ->where('status', 'Loué') ->paginate();
     return view('admin.bien.rented', compact('biens'));
 }
@@ -582,6 +583,95 @@ public function destroyAgence($id)
     }
 }
 
+public function republier(Bien $bien)
+{
+    // Mettre à jour le statut du bien
+    $bien->status = 'Disponible';
+    $bien->save();
+    
+    // Mettre à jour le statut du locataire si le bien avait un locataire
+    if ($bien->locataire) {
+        $locataire = $bien->locataire;
+        $locataire->status = request('locataire_status');
+        $locataire->motif = request('locataire_motif', null);
+        $locataire->bien_id = null; // Détacher le bien du locataire
+        $locataire->save();
+    }
+    
+    return redirect()->route('bien.index')->with('success', 'Le bien a été republié avec succès et le statut du locataire a été mis à jour.');
+}
+
+public function getBiensDisponibles()
+{
+    $biens =  Bien::whereNull('agence_id')
+                ->where('status', 'Disponible')
+                ->select('id', 'type', 'commune', 'prix')
+                ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                            ->orWhereHas('proprietaire', function($q) {
+                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                            })
+                            ->get();
+    
+    return response()->json($biens);
+}
+public function attribuerBien(Request $request, Locataire $locataire)
+{
+    $request->validate([
+        'bien_id' => 'required|exists:biens,id',
+    ]);
+
+    // Vérifier que le bien est disponible
+    $bien = Bien::find($request->bien_id);
+    if ($bien->status !== 'Disponible') {
+        return response()->json(['error' => 'Le bien sélectionné n\'est pas disponible'], 400);
+    }
+
+    // Mettre à jour le locataire
+    $locataire->bien_id = $request->bien_id;
+    $locataire->status = 'Actif';
+    $locataire->motif = null;
+    $locataire->save();
+
+    // Mettre à jour le statut du bien
+    $bien->status = 'Loué';
+    $bien->save();
+
+    return response()->json(['success' => 'Bien attribué avec succès au locataire']);
+}
+public function getBiensDisponiblesAgence()
+{
+    $agenceId = Auth::guard('agence')->user()->code_id;
+    $biens =  Bien::where('agence_id', $agenceId)
+                ->where('status', 'Disponible')
+                ->select('id', 'type', 'commune', 'prix')
+                ->get();
+    
+    return response()->json($biens);
+}
+public function attribuerBienAgence(Request $request, Locataire $locataire)
+{
+    $request->validate([
+        'bien_id' => 'required|exists:biens,id',
+    ]);
+
+    // Vérifier que le bien est disponible
+    $bien = Bien::find($request->bien_id);
+    if ($bien->status !== 'Disponible') {
+        return response()->json(['error' => 'Le bien sélectionné n\'est pas disponible'], 400);
+    }
+
+    // Mettre à jour le locataire
+    $locataire->bien_id = $request->bien_id;
+    $locataire->status = 'Actif';
+    $locataire->motif = null;
+    $locataire->save();
+
+    // Mettre à jour le statut du bien
+    $bien->status = 'Loué';
+    $bien->save();
+
+    return response()->json(['success' => 'Bien attribué avec succès au locataire']);
+}
 public function republierAgence(Bien $bien)
 {
     // Mettre à jour le statut du bien

@@ -506,6 +506,7 @@ private function getAbonnementMessage($abonnement): string
             'choix_paiement' => 'RIB',
             'password' => Hash::make('password'),
             'profil_image' => $profileImagePath,
+            // 'gestion' => $request->has('gestion') && $request->gestion ? 'agence' : 'proprietaire',
             'gestion' => 'proprietaire',
             
         ];

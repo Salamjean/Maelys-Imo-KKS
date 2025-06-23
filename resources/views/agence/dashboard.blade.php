@@ -2,7 +2,7 @@
 @section('title', 'Dashboard')
 @section('content')
 <div class="main-panel">
-  <div class="content-wrapper">
+  <div >
     <!-- row end -->
     <h2 class="text-center mb-4">Total de bien publié sur la plateforme</h2>
     <div class="row">

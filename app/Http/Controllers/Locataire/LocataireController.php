@@ -88,11 +88,11 @@ class LocataireController extends Controller
     public function createAdmin()
     {
         $biens = Bien::whereNull('agence_id')
+                ->where('status', 'Disponible')
                 ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                             ->orWhereHas('proprietaire', function($q) {
                                 $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                            })
-                ->where('status', 'Disponible')->get();
+                            })->get();
         
         return view('admin.locataire.create', compact('biens'));
     }
@@ -827,7 +827,7 @@ public function submitDefineAccess(Request $request)
             if ($locataire && in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
                 return back()->withInput()->with('account_error', [
                     'title' => 'Compte désactivé',
-                    'message' => 'Votre compte est désactivé. Veuillez contacter votre agence',
+                    'message' => 'Votre compte est désactivé. Veuillez contacter votre propriétaire/agence pour plus d\'informations.',
                     'status' => $locataire->status
                 ]);
             }

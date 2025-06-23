@@ -29,8 +29,8 @@
       @include('agence.layouts.navbar')
       <!-- partial -->
       
-      <div class="main-panel">
-        <div class="content-wrapper">
+      <div class="main-panel" >
+        <div class="content-wrapper" style="background-image: url('{{ asset('assets/images/agenceArr.jpg') }}'); background-size:cover; background-position: center; background-repeat: no-repeat ">
           @yield('content')
         </div>
         <!-- content-wrapper ends -->
