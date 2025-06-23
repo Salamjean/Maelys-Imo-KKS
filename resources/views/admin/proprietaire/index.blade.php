@@ -82,7 +82,7 @@
             <thead style="background-color: #02245b; color: white;">
                 <tr class="text-center">
                     <th>ID Propriétaire</th>
-                    <th>Gestion des biens</th>
+                    {{-- <th>Gestion des biens</th> --}}
                     <th>Nom du propriétaire</th>
                     <th>Email</th>
                     <th>Lieu de résidence</th>
@@ -95,7 +95,7 @@
                 @forelse($proprietaires as $proprietaire)
                     <tr class="text-center pt-3" style="height: 30px">
                         <td><strong>{{ $proprietaire->code_id }}</strong></td>
-                        <td>{{ $proprietaire->gestion }}</td>
+                        {{-- <td>{{ $proprietaire->gestion }}</td> --}}
                         <td ><strong>{{ $proprietaire->name. ' '. $proprietaire->prenom }}</strong></td>
                         <td>{{ $proprietaire->email }}</td>
                         <td>{{ $proprietaire->commune }}</td>
@@ -141,7 +141,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center py-4">
+                        <td colspan="7" class="text-center py-4">
                             <div class="alert alert-info">
                                 Aucune agence partenaire disponible pour le moment.
                             </div>

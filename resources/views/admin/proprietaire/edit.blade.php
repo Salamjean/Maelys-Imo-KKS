@@ -80,7 +80,7 @@
                     </div>
 
                     <!-- Section 3: Gestion des biens -->
-                    <div class="row mt-3">
+                    {{-- <div class="row mt-3">
                         <div class="col-md-12">
                             <div class="form-group">
                                 <div class="form-check">
@@ -94,7 +94,7 @@
                                 @enderror
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
                 </fieldset>
                 
                 <!-- Boutons de soumission -->

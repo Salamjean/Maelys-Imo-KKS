@@ -4,8 +4,8 @@
         <span class="mdi mdi-menu"></span>
       </button>
       <div class="navbar-brand-wrapper">
-        <a class="navbar-brand brand-logo" href="{{ route('admin.dashboard') }}"><img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 65px" alt="logo"/></a>
-        <a class="navbar-brand brand-logo-mini" href="{{ route('admin.dashboard') }}"><img src="{{ asset('assets/images/kkstevhno.jpeg') }}" style="width: 30px" alt="logo"/></a>
+        <a class="navbar-brand brand-logo" href="{{ route('admin.dashboard') }}"><img src="{{ asset('assets/images/mae-imo.png') }}" style="width: 65px; background-color:white" alt="logo"/></a>
+        <a class="navbar-brand brand-logo-mini" href="{{ route('admin.dashboard') }}"><img src="{{ asset('assets/images/mae-imo.png') }}" style="width: 30px ; background-color:white" alt="logo"/></a>
       </div>
       <h4 class="font-weight-bold mb-0 d-none d-md-block mt-1">Bienvenu chez {{ Auth::guard('admin')->user()->name }}</h4>
       <ul class="navbar-nav navbar-nav-right">
@@ -23,7 +23,7 @@
       <ul class="navbar-nav navbar-nav-right">
         <li class="nav-item nav-profile dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
-            <img src="{{ asset('assets/images/kkstevhno.jpeg') }}" alt="profile"/>
+            <img src="{{ asset('assets/images/mae-imo.png') }}" style="background-color:white" alt="profile"/>
             <span class="nav-profile-name">{{ Auth::guard('admin')->user()->name }}</span>
           </a>
           <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">

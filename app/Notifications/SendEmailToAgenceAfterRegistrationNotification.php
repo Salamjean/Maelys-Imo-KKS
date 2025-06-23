@@ -22,7 +22,7 @@ class SendEmailToAgenceAfterRegistrationNotification extends Notification
     {
         $this->code = $codeToSend;
         $this->email = $sendToemail;
-        $this->logoUrl = asset('assets/images/kkstevhno.jpeg'); // URL du logo
+        $this->logoUrl = asset('assets/images/mae-imo.png'); // URL du logo
     }
 
     /**

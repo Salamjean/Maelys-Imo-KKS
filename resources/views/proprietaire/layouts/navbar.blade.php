@@ -3,7 +3,7 @@
         $user = Auth::guard('owner')->user();
         $profileImage = $user->profil_image 
             ? asset('storage/' . $user->profil_image) 
-            : asset('assets/images/kkstevhno.jpeg');
+            : asset('assets/images/mae-imo.png');
     @endphp
 
     <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
@@ -13,14 +13,14 @@
         <div class="navbar-brand-wrapper">
             <a class="navbar-brand brand-logo" href="{{ route('owner.dashboard') }}">
                 <img src="{{ $profileImage }}" 
-                     style="width: 65px; height: 65px; border-radius: 50%; object-fit: cover;" 
-                     onerror="this.onerror=null; this.src='{{ asset('assets/images/kkstevhno.jpeg') }}';" 
+                     style="width: 65px; height: 65px; border-radius: 10%; object-fit: cover;" 
+                     onerror="this.onerror=null; this.src='{{ asset('assets/images/mae-imo.png') }}';" 
                      alt="logo" />
             </a>
             <a class="navbar-brand brand-logo-mini" href="{{ route('owner.dashboard') }}">
                 <img src="{{ $profileImage }}" 
                      style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" 
-                     onerror="this.onerror=null; this.src='{{ asset('assets/images/kkstevhno.jpeg') }}';" 
+                     onerror="this.onerror=null; this.src='{{ asset('assets/images/mae-imo.png') }}';" 
                      alt="logo mini" />
             </a>
         </div>
@@ -42,7 +42,7 @@
                 <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
                     <img src="{{ $profileImage }}" 
                          style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" 
-                         onerror="this.onerror=null; this.src='{{ asset('assets/images/kkstevhno.jpeg') }}';" 
+                         onerror="this.onerror=null; this.src='{{ asset('assets/images/mae-imo.png') }}';" 
                          alt="Photo de profil" />
                     <span class="nav-profile-name">{{ $user->prenom }}</span>
                 </a>

@@ -432,7 +432,6 @@ private function getAbonnementMessage($abonnement): string
         'commune' => 'required|string|max:255',
         'rib' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
         'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        'gestion' => 'nullable|boolean',
     ], [
         'name.required' => 'Le nom du proprietaire est obligatoire.',
         'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -507,7 +506,7 @@ private function getAbonnementMessage($abonnement): string
             'choix_paiement' => 'RIB',
             'password' => Hash::make('password'),
             'profil_image' => $profileImagePath,
-            'gestion' => $request->has('gestion') && $request->gestion ? 'agence' : 'proprietaire',
+            'gestion' => 'proprietaire',
             
         ];
 

@@ -76,7 +76,7 @@
                                 <div class="form-group">
                                     <label for="email">Email du locataire <span class="text-danger">*</span></label>
                                     <input type="email" class="form-control form-control-lg" id="email" name="email" 
-                                           value="{{ old('email', $locataire->email) }}" style="border: 1px solid black; border-radius: 5px;">
+                                           value="{{ old('email', $locataire->email) }}" style="border: 1px solid black; border-radius: 5px;" readonly>
                                     @error('email')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
@@ -143,11 +143,6 @@
                    </fieldset>
 
                 <div class="d-flex justify-content-end mt-4">
-                    <a href="{{ route('locataire.dashboard') }}">
-                        <button type="reset" class="btn btn-outline-secondary mr-3">
-                        <i class="fas fa-undo mr-1"></i> Annuler
-                        </button>
-                    </a>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save mr-1"></i> Enregistrer les modifications
                     </button>

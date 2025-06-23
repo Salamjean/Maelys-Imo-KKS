@@ -168,9 +168,6 @@
                 </div>
 
                 <div class="d-flex justify-content-end mt-4">
-                    <button type="reset" class="btn btn-outline-secondary mr-3">
-                        <i class="fas fa-undo mr-1"></i> Annuler
-                    </button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save mr-1"></i> Enregistrer les modifications
                     </button>

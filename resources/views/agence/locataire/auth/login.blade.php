@@ -16,8 +16,34 @@
     <!-- SweetAlert2 CSS (chargé en dernier pour priorité) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
+{{-- <style>
+    body {
+    display: flex;
+    align-items: center;
+    /* Remplacez le dégradé par l'image */
+    background-image: url("{{ asset('assets/images/propreLogin.png') }}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    
+    /* Overlay sombre pour améliorer la lisibilité */
+    position: relative;
+}
 
-<body class="bg-dark">
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Ajustez l'opacité (0.5 = 50%) */
+    z-index: -1;
+}
+</style> --}}
+
+<body >
     <div class="container">
         <div class="row justify-content-center align-items-center min-vh-100">
             <div class="col-md-12 col-lg-5">
@@ -25,11 +51,7 @@
                     <!-- Logo et Titre -->
                     <div class="text-center mb-4">
                         <a href="{{ url('/') }}">
-                            <img src="{{ asset('login/assets/img/logo-fb.png') }}" 
-                                 alt="Logo Agence" 
-                                 width="100" 
-                                 height="100"
-                                 class="mb-3">
+                            <img src="{{ asset('assets/images/mae-imo.png') }}" alt="" style="border-radius: 30px" width="100" height="100">
                         </a>
                         <h1 class="text-white h3 mb-0">Connexion - Locataire</h1>
                     </div>

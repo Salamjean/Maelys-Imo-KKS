@@ -19,7 +19,7 @@
 </head>
 
 <body>
-  <div class="container-scroller d-flex">
+  <div class="container-scroller d-flex" >
     <!-- partial:./partials/_sidebar.html -->
     @include('admin.layouts.sidebar')
     <!-- partial -->

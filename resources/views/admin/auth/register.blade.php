@@ -13,10 +13,36 @@
     <!-- SweetAlert2 CSS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
+  <style>
+    body {
+    display: flex;
+    align-items: center;
+    /* Remplacez le dégradé par l'image */
+    background-image: url("{{ asset('assets/images/propreLogin.png') }}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    
+    /* Overlay sombre pour améliorer la lisibilité */
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Ajustez l'opacité (0.5 = 50%) */
+    z-index: -1;
+}
+</style>
   <body>
     <div class="uf-form-signin">
       <div class="text-center">
-        <a href="#"><img src="{{ asset('login/assets/img/logo-fb.png') }}" alt="" width="100" height="100"></a>
+        <a href="#"><img src="{{ asset('assets/images/mae-imo.png') }}" alt="" style="border-radius: 30px" width="100" height="100"></a>
       <h1 class="text-white h3">Inscrire - Admin</h1>
       </div>
       <form class="mt-4" action="{{ route('admin.store') }}" method="POST" id="registerForm">

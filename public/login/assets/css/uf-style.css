@@ -47,6 +47,7 @@ a:hover{
     border: unset;
     border-left: 1px solid #ffffff05;
     font-size: 16px;
+    color: black;
     background: #ffffff70;
 }
 

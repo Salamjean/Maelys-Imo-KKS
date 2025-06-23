@@ -1,6 +1,6 @@
 @extends('admin.layouts.template')
 @section('content')
-<div class="col-12 grid-margin stretch-card mb-4">
+<div class="col-12 grid-margin stretch-card mb-4" >
     <div class="card">
         <div class="card-body">
             <h4 class="card-title text-center">Ajout d'un propriétaire de bien</h4>
@@ -79,7 +79,7 @@
                     </div>
                 </div>
 
-                <!-- Section 3: Gestion des biens -->
+                {{-- <!-- Section 3: Gestion des biens -->
                 <div class="row mt-3">
                     <div class="col-md-12">
                         <div class="form-group">
@@ -94,7 +94,7 @@
                             @enderror
                         </div>
                     </div>
-                </div>
+                </div> --}}
 
                 <!-- Boutons de soumission -->
                 <div class="row mt-4">
