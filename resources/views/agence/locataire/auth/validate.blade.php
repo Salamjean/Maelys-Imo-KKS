@@ -13,12 +13,12 @@
     <!-- SweetAlert2 CSS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
-  {{-- <style>
+  <style>
     body {
     display: flex;
     align-items: center;
     /* Remplacez le dégradé par l'image */
-    background-image: url("{{ asset('assets/images/propreLogin.png') }}");
+    background-image: url("{{ asset('assets/images/proo.png') }}");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -38,7 +38,7 @@ body::before {
     background: rgba(0, 0, 0, 0.5); /* Ajustez l'opacité (0.5 = 50%) */
     z-index: -1;
 }
-</style> --}}
+</style>
   <body>
     <div class="uf-form-signin">
       <div class="text-center">

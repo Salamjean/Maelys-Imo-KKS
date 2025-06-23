@@ -16,7 +16,32 @@
     <!-- SweetAlert2 CSS (chargé en dernier pour priorité) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
+<style>
+    body {
+    display: flex;
+    align-items: center;
+    /* Remplacez le dégradé par l'image */
+    background-image: url("{{ asset('assets/images/proo.png') }}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    
+    /* Overlay sombre pour améliorer la lisibilité */
+    position: relative;
+}
 
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Ajustez l'opacité (0.5 = 50%) */
+    z-index: -1;
+}
+</style>
 <body class="bg-dark">
 <div class="container">
     <div class="row justify-content-center">

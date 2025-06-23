@@ -33,6 +33,7 @@ a:hover{
     max-width: 350px;
     padding: 15px;
     margin: auto;
+    background-color: rgba(000, 000, 000, 0.3); /* Exemple : blanc transparent */
 }
 .uf-input-group .input-group-text {
     background: #ffffff70;
@@ -41,6 +42,7 @@ a:hover{
     font-size: 18px;
     padding: 15px;
     width: 50px;
+
 }
 
 .uf-input-group .form-control {
@@ -48,12 +50,12 @@ a:hover{
     border-left: 1px solid #ffffff05;
     font-size: 16px;
     color: black;
-    background: #ffffff70;
+    background: white;
 }
 
 .uf-input-group .form-control:focus {
     box-shadow: unset;
-    background: #ffffff;
+    background: white;
 }
 .uf-btn-primary {
     background: #842029;
