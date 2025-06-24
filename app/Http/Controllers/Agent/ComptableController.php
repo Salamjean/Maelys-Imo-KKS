@@ -24,6 +24,12 @@ class ComptableController extends Controller
     {
         Carbon::setLocale('fr');
         $comptable = Auth::guard('comptable')->user();
+        $agenceId = $comptable->agence_id;
+
+        // Mois en cours
+        $currentMonth = now()->format('Y-m');
+
+
         // 1. Statistiques de base
         if($comptable->agence_id){
             $totalLocataires = Locataire::where('agence_id', $comptable->agence_id)->count();
@@ -175,6 +181,71 @@ for ($i = 11; $i >= 0; $i--) {
     $labels[] = $label;
     $data[] = $loyersParMois->has($moisKey) ? (int)$loyersParMois[$moisKey]->total : 0;
 }
+
+
+// les locataires en retard
+    if($comptable->agence_id){
+            $latePayersCount = Locataire::where('agence_id', $agenceId)
+            ->where('status', 'Actif')
+            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
+                $query->where('mois_couvert', $currentMonth)
+                    ->where('statut', 'payé');
+            })
+            ->count();
+        }else{
+            $latePayersCount = Locataire::whereNull('agence_id')
+            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+            ->where('status', 'Actif')
+            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
+                $query->where('mois_couvert', $currentMonth)
+                    ->where('statut', 'payé');
+            })
+            ->count();
+        }
+
+ // Locataires en retard avec détails
+         if($comptable->agence_id){
+           $latePayers = Locataire::with(['bien', 'paiements' => function($query) {
+                $query->orderBy('created_at', 'desc')->limit(1);
+            }])
+            ->where('agence_id', $agenceId)
+            ->where('status', 'Actif')
+            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
+                $query->where('mois_couvert', $currentMonth)
+                    ->where('statut', 'payé');
+            })
+            ->select('*')
+            ->selectRaw('DATEDIFF(NOW(), CASE WHEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) IS NOT NULL 
+                        THEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) 
+                        ELSE DATE_SUB(NOW(), INTERVAL 2 MONTH) END) as days_late')
+            ->selectRaw('(SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) as last_payment_date')
+            ->orderBy('days_late', 'desc')
+            ->limit(5)
+            ->get();
+        
+        }else{
+           $latePayers = Locataire::with(['bien', 'paiements' => function($query) {
+                $query->orderBy('created_at', 'desc')->limit(1);
+            }])
+            ->whereNull('agence_id')
+            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+            ->where('status', 'Actif')
+            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
+                $query->where('mois_couvert', $currentMonth)
+                    ->where('statut', 'payé');
+            })
+            ->select('*')
+            ->selectRaw('DATEDIFF(NOW(), CASE WHEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) IS NOT NULL 
+                        THEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) 
+                        ELSE DATE_SUB(NOW(), INTERVAL 2 MONTH) END) as days_late')
+            ->selectRaw('(SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) as last_payment_date')
+            ->orderBy('days_late', 'desc')
+            ->limit(5)
+            ->get();
+        
+        }
+
+
         
         return view('comptable.dashboard', compact(
             'totalLocataires',
@@ -186,6 +257,8 @@ for ($i = 11; $i >= 0; $i--) {
             'paiementsEnAttente',
             'recentPayments',
             'labels',
+            'latePayersCount',
+            'latePayers',
             'data'
         ));
     }

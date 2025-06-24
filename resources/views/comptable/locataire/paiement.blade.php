@@ -1,7 +1,6 @@
 @extends('comptable.layouts.template')
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
     .send-reminder-btn {
         color: white;
@@ -139,7 +138,6 @@
                             <th>Profession</th>
                             <th>Adresse complète</th>
                             <th>Pièce d'identité</th>
-                            <th>Attestation de travail</th>
                             <th>Statut</th>
                             <th>Contrat</th>
                             <th>Paiement</th>
@@ -164,18 +162,6 @@
                                         <span class="text-muted">Non fournie</span>
                                     @endif
                                 </td>
-                                <td>
-                                    @if($locataire->attestation)
-                                        <button class="btn btn-sm btn-info preview-image"
-                                                data-image="{{ asset('storage/'.$locataire->attestation) }}"
-                                                data-title="Attestation de travail de {{ $locataire->name }}">
-                                            Voir
-                                        </button>
-                                    @else
-                                        <span class="text-muted">Non fournie</span>
-                                    @endif
-                                </td>
-                                
                                 <td>
                                     @if($locataire->status == 'Actif')
                                         <span class="badge bg-success text-white">Actif</span>
@@ -230,25 +216,30 @@
                                 
 
                                 <td>
-                                    @if($locataire->show_reminder_button)
-                                        <button class="btn btn-sm btn-primary send-reminder-btn"
-                                                data-locataire-id="{{ $locataire->id }}"
-                                                data-locataire-email="{{ $locataire->email }}"
-                                                title="Envoyer un rappel de paiement">
-                                                <i class="mdi mdi-email-open"></i> Rappel paiement
-                                        </button>
-                                    @endif
+                                    @if($locataire->status === 'Actif') <!-- Vérifiez le statut du locataire -->
+                                        @if($locataire->show_reminder_button)
+                                            <button class="btn btn-sm btn-primary send-reminder-btn"
+                                                    data-locataire-id="{{ $locataire->id }}"
+                                                    data-locataire-email="{{ $locataire->email }}"
+                                                    title="Envoyer un rappel de paiement">
+                                                <i class="mdi mdi-email-open"></i> Rappel 
+                                            </button>
+                                        @endif
 
                                         <button class="btn btn-sm btn-success generate-cash-code"
-                                            data-locataire-id="{{ $locataire->id }}"
-                                            title="Générer un code pour paiement en espèces">
-                                            <i class="mdi mdi-cash"></i> Code Espèces
+                                                data-locataire-id="{{ $locataire->id }}"
+                                                title="Générer un code pour paiement en espèces">
+                                            <i class="mdi mdi-cash"></i>Espèces
                                         </button>
+                                        
                                         <button class="btn btn-sm btn-warning verify-cash-code"
-                                            data-locataire-id="{{ $locataire->id }}"
-                                            title="Saisir le code de vérification">
+                                                data-locataire-id="{{ $locataire->id }}"
+                                                title="Saisir le code de vérification">
                                             <i class="mdi mdi-key"></i>
                                         </button>
+                                    @else
+                                        <span class="text-danger">Locataire inactif - aucune action disponible.</span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

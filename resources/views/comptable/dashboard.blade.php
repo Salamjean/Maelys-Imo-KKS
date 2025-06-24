@@ -230,8 +230,8 @@
             <div class="card dashboard-card card-primary text-white">
                 <div class="card-body">
                     <i class="fas fa-clock card-icon"></i>
-                    <h5 class="card-title" style="color:white; font-weight:bold">Paiements en attente</h5>
-                    <h2 class="card-value">{{ $paiementsEnAttente }}</h2>
+                    <h5 class="card-title" style="color:white; font-weight:bold">Locataires en retard</h5>
+                    <h2 class="card-value">{{ $latePayersCount }}</h2>
                     <p class="card-text">En validation</p>
                 </div>
             </div>
@@ -239,44 +239,103 @@
     </div>
 
     <!-- Section Activité récente -->
-    <div class="row">
-        <div class="col-lg-12 mb-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0"><i class="fas fa-history mr-2"></i>Derniers paiements</h5>
+   <div class="row">
+        <!-- Derniers paiements -->
+        <div class="col-lg-8 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header" style="background-color: #02245b">
+                    <h5 class="card-title text-white"><i class="fas fa-history me-2"></i>Derniers Paiements Enregistrés</h5>
                 </div>
-                <div class="card-body recent-payments">
-                    @if($recentPayments->count() > 0)
-                        @foreach($recentPayments as $payment)
-                            <div class="payment-item payment-paid mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <strong>
-                                        @if($payment->locataire)
-                                            {{ $payment->locataire->prenom }} {{ $payment->locataire->name }}
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table recent-payments-table">
+                            <thead>
+                                <tr >
+                                    <th class="text-center">Locataire</th>
+                                    <th class="text-center">Montant</th>
+                                    <th class="text-center">Méthode</th>
+                                    <th class="text-center">Date</th>
+                                    <th class="text-center">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($recentPayments as $payment)
+                                <tr class="text-center">
+                                    <td>
+                                        <div class="d-flex align-items-center text-center" style="justify-content: center;">
+                                            <div class=" text-center">
+                                                <h6 class="mb-0 text-center" >{{ $payment->locataire->name }} {{ $payment->locataire->prenom }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ number_format($payment->montant, 0, ',', ' ') }} FCFA</td>
+                                    <td>
+                                        @if($payment->methode_paiement === 'Mobile Money')
+                                            <span class="badge bg-info text-white">{{ $payment->methode_paiement }}</span>
+                                        @elseif($payment->methode_paiement === 'Espèces')
+                                            <span class="badge bg-secondary">{{ $payment->methode_paiement }}</span>
                                         @else
-                                            Locataire inconnu
+                                            <span class="badge bg-primary">{{ $payment->methode_paiement }}</span>
                                         @endif
-                                    </strong>
-                                    <span class="text-success">{{ number_format($payment->montant, 0, ',', ' ') }} FCFA</span>
+                                    </td>
+                                    <td>{{ \Carbon\Carbon::parse($payment->created_at)->translatedFormat('d M Y') }}</td>
+                                    <td>
+                                        @if($payment->statut === 'payé')
+                                            <span class="badge badge-paid"><i class="fas fa-check-circle me-1"></i> Payé</span>
+                                        @else
+                                            <span class="badge badge-pending"><i class="fas fa-clock me-1"></i> En attente</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="alert alert-info">
+                                            Aucun paiement récent trouvé
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Locataires en retard -->
+        <div class="col-lg-4 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header" style="background-color: #02245b">
+                    <h5 class="card-title text-white"><i class="fas fa-exclamation-circle me-2"></i>Locataires en Retard</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        @forelse($latePayers as $locataire)
+                        <div class="list-group-item border-0 mb-2 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ $locataire->name }} {{ $locataire->prenom }}</h6>
+                                    <small class="text-muted">{{ $locataire->contact }}</small>
                                 </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>{{ \Carbon\Carbon::createFromFormat('Y-m', $payment->mois_couvert)->format('M Y') }}</span>
-                                    <small class="payment-method">
-                                        <i class="fas fa-{{ $payment->methode_paiement == 'Espèces' ? 'money-bill' : 'credit-card' }}"></i> 
-                                        {{ $payment->methode_paiement ?? 'Non spécifié' }}
-                                    </small>
-                                </div>
-                                <small class="text-muted">
-                                    {{ \Carbon\Carbon::parse($payment->date_paiement)->format('d/m/Y H:i') }}
+                                <span class="badge bg-danger">+{{ $locataire->days_late }} jours</span>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Dernier paiement: 
+                                    @if($locataire->last_payment_date)
+                                        {{ \Carbon\Carbon::parse($locataire->last_payment_date)->translatedFormat('d M Y') }}
+                                    @else
+                                        Jamais payé
+                                    @endif
                                 </small>
                             </div>
-                        @endforeach
-                    @else
-                        <div class="text-center py-4">
-                            <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Aucun paiement récent</p>
                         </div>
-                    @endif
+                        @empty
+                        <div class="alert alert-success">
+                            Tous les locataires sont à jour dans leurs paiements!
+                        </div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>

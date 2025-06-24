@@ -49,16 +49,26 @@ class AgentRecouvrementController extends Controller
             ->where('statut', '!=', 'payé')
             ->sum('montant');
         
-        // Locataires en retard (n'ont pas payé le mois en cours)
-        $latePayersCount = Locataire::where('agence_id', $agenceId)
+        // les locataires en retard
+    if($comptable->agence_id){
+            $latePayersCount = Locataire::where('agence_id', $agenceId)
             ->where('status', 'Actif')
             ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
                 $query->where('mois_couvert', $currentMonth)
                     ->where('statut', 'payé');
             })
             ->count();
+        }else{
+            $latePayersCount = Locataire::whereNull('agence_id')
+            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+            ->where('status', 'Actif')
+            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
+                $query->where('mois_couvert', $currentMonth)
+                    ->where('statut', 'payé');
+            })
+            ->count();
+        }
             
-        $latePayersPercentage = $totalLocataires > 0 ? round(($latePayersCount / $totalLocataires) * 100) : 0;
         
         // Derniers paiements enregistrés
         $recentPayments = Paiement::with(['locataire', 'locataire.bien'])
@@ -67,8 +77,9 @@ class AgentRecouvrementController extends Controller
             ->limit(3)
             ->get();
         
-        // Locataires en retard avec détails
-        $latePayers = Locataire::with(['bien', 'paiements' => function($query) {
+       // Locataires en retard avec détails
+         if($comptable->agence_id){
+           $latePayers = Locataire::with(['bien', 'paiements' => function($query) {
                 $query->orderBy('created_at', 'desc')->limit(1);
             }])
             ->where('agence_id', $agenceId)
@@ -85,6 +96,28 @@ class AgentRecouvrementController extends Controller
             ->orderBy('days_late', 'desc')
             ->limit(5)
             ->get();
+        
+        }else{
+           $latePayers = Locataire::with(['bien', 'paiements' => function($query) {
+                $query->orderBy('created_at', 'desc')->limit(1);
+            }])
+            ->whereNull('agence_id')
+            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+            ->where('status', 'Actif')
+            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
+                $query->where('mois_couvert', $currentMonth)
+                    ->where('statut', 'payé');
+            })
+            ->select('*')
+            ->selectRaw('DATEDIFF(NOW(), CASE WHEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) IS NOT NULL 
+                        THEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) 
+                        ELSE DATE_SUB(NOW(), INTERVAL 2 MONTH) END) as days_late')
+            ->selectRaw('(SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) as last_payment_date')
+            ->orderBy('days_late', 'desc')
+            ->limit(5)
+            ->get();
+        
+        }
 
         return view('agent.agent_dashboard', compact(
             'paidThisMonthCount',
@@ -95,7 +128,6 @@ class AgentRecouvrementController extends Controller
             'pendingPaymentsCount',
             'pendingAmount',
             'latePayersCount',
-            'latePayersPercentage',
             'recentPayments',
             'latePayers'
         ));

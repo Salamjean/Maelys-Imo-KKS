@@ -78,7 +78,7 @@
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-md-12">
-            <h3 class="fw-bold text-center mt-4">Tableau de Bord Comptable</h3>
+            <h3 class="fw-bold text-center mt-4">Tableau de Bord Agent de recouvrement</h3>
             <p class="text-muted text-center" >Aperçu des activités de paiement</p>
         </div>
     </div>
@@ -158,7 +158,7 @@
                     </div>
                     <div class="mt-3">
                         <p class="mb-0 text-danger">
-                            {{ $latePayersPercentage }}% des locataires
+                           Le nombres totals des locataires en retard
                         </p>
                     </div>
                 </div>
