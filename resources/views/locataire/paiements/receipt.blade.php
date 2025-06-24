@@ -97,6 +97,23 @@
             background-color: #eee;
             margin: 12px 0;
         }
+
+         .signature {
+            font-family: 'Courier New', Courier, monospace; /* Exemple de police */
+            font-size: 16px; /* Taille de la police */
+            margin-top: 20px; /* Espacement au-dessus de la signature */
+        }
+
+        .signature-text {
+            font-weight: bold; /* Texte en gras */
+        }
+
+        .signature-line {
+            border-top: 1px solid #000; /* Ligne de signature */
+            text-align: center; /* Centrer le texte */
+            margin-top: 10px; /* Espacement au-dessus de la ligne */
+            padding-top: 5px; /* Espacement à l'intérieur de la ligne */
+        }
     </style>
 </head>
 <body>
@@ -165,10 +182,19 @@
 
         <div class="divider"></div>
 
-        <div class="section">
+       <div class="section">
             <p>Fait à {{ $bien->commune }}, le {{ \Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y') }}.</p>
             
             <div class="signature">
+                <p class="signature-text">
+                    @if($locataire->agence_id)
+                        {{ $locataire->agence->name ?? 'Maelys-Imo' }}, Agence
+                    @elseif($locataire->proprietaire_id)
+                        {{ $locataire->proprietaire->name.' '.$locataire->proprietaire->prenom ?? 'Maelys-imo' }}, Propriétaire
+                    @else
+                        Maelys-imo, Agence
+                    @endif
+                </p>
                 <div class="signature-line">Signature</div>
             </div>
         </div>

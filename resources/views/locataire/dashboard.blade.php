@@ -26,7 +26,7 @@
           <i class="mdi mdi-cards text-white icon-lg"></i>
           <div class="ml-3 ml-md-0 ml-xl-3">
             <h5 class="text-white font-weight-bold">Montant du bien loué</h5>
-            <h3 class="text-white font-weight-bold">{{ $locataire->bien->prix }} FCFA</h3>
+            <h3 class="text-white font-weight-bold">{{ number_format($locataire->bien->prix ?? 0, 0, ',', ' ') }} FCFA</h3>
             <p class="mt-2 text-white card-text">Pour l'agence : {{ $locataire->agence->name ?? 'Maelys-Imo' }}</p>
           </div>
         </div>

@@ -7,9 +7,9 @@
             <h2>Historique des Paiements</h2>
             
             <div class="card" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 100%;">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background-color:#02245b; color: white; border-radius: 10px 10px 0 0;">
                     <span>Mes paiements de loyer</span>
-                    <a href="{{ route('locataire.paiements.create', $locataire->id) }}" class="btn" style="background-color: #ff5e14; color: white;">
+                    <a href="{{ route('locataire.paiements.create', $locataire->id) }}" class="btn" style="background-color: white; color:  #02245b;">
                         <i class="fas fa-plus"></i> Nouveau Paiement
                     </a>
                 </div>
