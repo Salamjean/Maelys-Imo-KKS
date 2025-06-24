@@ -63,6 +63,11 @@ class Locataire extends Authenticatable
     {
         return $this->belongsTo(Proprietaire::class, 'proprietaire_id', 'code_id');
     }
+
+    public function etatlieu()
+    {
+        return $this->hasMany(EtatLieu::class, 'locataire_id', 'code_id');
+    }
     
 
 }

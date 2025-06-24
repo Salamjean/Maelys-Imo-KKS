@@ -41,5 +41,9 @@ class Agence extends Authenticatable
     {
         return $this->hasMany(Abonnement::class, 'agence_id', 'code_id');
     }
+    public function etatlieu()
+    {
+        return $this->hasMany(EtatLieu::class, 'agence_id', 'code_id');
+    }
     
 }

@@ -506,6 +506,7 @@ public function rentedAdmin(){
         $adminId = Auth::guard('admin')->user()->id;
     // Récupération des biens loués
     $biens = Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('status', 'Loué') ->paginate();
     return view('admin.bien.rented', compact('biens'));
 }

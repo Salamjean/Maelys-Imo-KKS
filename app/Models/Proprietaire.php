@@ -50,6 +50,10 @@ class Proprietaire extends Authenticatable
     {
         return $this->hasMany(Abonnement::class, 'proprietaire_id', 'code_id');
     }
+    public function etatlieu()
+    {
+        return $this->hasMany(EtatLieu::class, 'proprietaire_id', 'code_id');
+    }
   public function needsMonthlyRefresh()
     {
         $lastUpdate = $this->last_balance_update 

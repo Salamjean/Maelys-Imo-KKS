@@ -90,7 +90,7 @@
             <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header text-white" style="background-color: #02245b;">
                             <h5 class="modal-title" id="imageModalLabel">Visualisation de l'image</h5>
                             <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
@@ -104,11 +104,31 @@
                 </div>
             </div>
 
+
+           <!-- Modal pour afficher l'état des lieux -->
+            <div class="modal fade" id="etatLieuModal" tabindex="-1" aria-labelledby="etatLieuModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header text-white" style="background-color: #02245b;">
+                            <h5 class="modal-title" id="etatLieuModalLabel">Détails de l'état des lieux</h5>
+                            <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="etatLieuContent">
+                            <!-- Le contenu sera généré dynamiquement par JavaScript -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             <!-- Modal pour changer le statut -->
             <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header  text-white" style="background-color: #02245b;">
                             <h5 class="modal-title" id="statusModalLabel">Changer le statut du locataire</h5>
                             <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
@@ -131,7 +151,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                                <button type="submit" class="btn text-white " style="background-color: #02245b;">Enregistrer</button>
                             </div>
                         </form>
                     </div>
@@ -148,11 +168,11 @@
                             <th>Contact</th>
                             <th>Profession</th>
                             <th>Adresse complète</th>
-                            <th>Pièce d'identité</th>
-                            <th>Attestation de travail</th>
+                            <th>Pièce d'identité</th>  
                             <th>Statut</th>
                             <th>Contrat</th>
                             <th>Actions</th>
+                            <th>Faire l'état des lieux</th>
                             <th>Paiement</th>
                         </tr>
                     </thead>
@@ -176,18 +196,6 @@
                                         <span class="text-muted">Non fournie</span>
                                     @endif
                                 </td>
-                                <td>
-                                    @if($locataire->attestation)
-                                        <button class="btn btn-sm btn-info preview-image"
-                                                data-image="{{ asset('storage/'.$locataire->attestation) }}"
-                                                data-title="Attestation de travail de {{ $locataire->name }}">
-                                            Voir l'attestation
-                                        </button>
-                                    @else
-                                        <span class="text-muted">Non fournie</span>
-                                    @endif
-                                </td>
-                                
                                 <td>
                                     @if($locataire->status == 'Actif')
                                         <span class="badge bg-success text-white">Actif</span>
@@ -231,12 +239,12 @@
                                             <i class="mdi mdi-account-convert"></i>
                                         </button>
                                          @if(is_null($locataire->bien_id) && $locataire->status === 'Inactif')
-            <button class="btn btn-sm btn-primary attribuer-bien-btn"
-                    data-locataire-id="{{ $locataire->id }}"
-                    title="Attribuer un bien">
-                <i class="mdi mdi-home-plus"></i>
-            </button>
-        @endif
+                                            <button class="btn btn-sm btn-primary attribuer-bien-btn"
+                                                    data-locataire-id="{{ $locataire->id }}"
+                                                    title="Attribuer un bien">
+                                                <i class="mdi mdi-home-plus"></i>
+                                            </button>
+                                        @endif
                                         {{-- <form action="#" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
@@ -246,34 +254,54 @@
                                         </form> --}}
                                     </div>
                                 </td>
-                                
+                                <td>
+                                    @php
+                                        $etatExiste = App\Models\EtatLieu::where('locataire_id', $locataire->code_id)->first();
+                                    @endphp
+                                                            
+                                    @if($etatExiste)
+                                        <button class="btn btn-sm btn-info view-etat-btn" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#etatLieuModal"
+                                                data-etat-lieu="{{ json_encode($etatExiste) }}"
+                                                title="Voir l'état des lieux">
+                                            <i class="mdi mdi-eye"></i> Voir
+                                        </button>
+                                    @else
+                                        <a href="{{ route('locataire.admin.etat', $locataire->id) }}" 
+                                        class="btn btn-sm btn-warning" 
+                                        title="Créer l'état des lieux">
+                                            <i class="mdi mdi-file-document-edit"></i> Créer
+                                        </a>
+                                    @endif
+                                </td>
 
                                <td>
-    @if($locataire->status === 'Actif') <!-- Vérifiez le statut du locataire -->
-        @if($locataire->show_reminder_button)
-            <button class="btn btn-sm btn-primary send-reminder-btn"
-                    data-locataire-id="{{ $locataire->id }}"
-                    data-locataire-email="{{ $locataire->email }}"
-                    title="Envoyer un rappel de paiement">
-                <i class="mdi mdi-email-open"></i> Rappel paiement
-            </button>
-        @endif
+                                    @if($locataire->status === 'Actif') <!-- Vérifiez le statut du locataire -->
+                                        @if($locataire->show_reminder_button)
+                                            <button class="btn btn-sm btn-primary send-reminder-btn"
+                                                    data-locataire-id="{{ $locataire->id }}"
+                                                    data-locataire-email="{{ $locataire->email }}"
+                                                    title="Envoyer un rappel de paiement">
+                                                <i class="mdi mdi-email-open"></i> Rappel 
+                                            </button>
+                                        @endif
 
-        <button class="btn btn-sm btn-success generate-cash-code"
-                data-locataire-id="{{ $locataire->id }}"
-                title="Générer un code pour paiement en espèces">
-            <i class="mdi mdi-cash"></i> Code Espèces
-        </button>
-        
-        <button class="btn btn-sm btn-warning verify-cash-code"
-                data-locataire-id="{{ $locataire->id }}"
-                title="Saisir le code de vérification">
-            <i class="mdi mdi-key"></i>
-        </button>
-    @else
-        <span class="text-danger">Locataire inactif - aucune action disponible.</span>
-    @endif
-</td>
+                                        <button class="btn btn-sm btn-success generate-cash-code"
+                                                data-locataire-id="{{ $locataire->id }}"
+                                                title="Générer un code pour paiement en espèces">
+                                            <i class="mdi mdi-cash"></i>Espèces
+                                        </button>
+                                        
+                                        <button class="btn btn-sm btn-warning verify-cash-code"
+                                                data-locataire-id="{{ $locataire->id }}"
+                                                title="Saisir le code de vérification">
+                                            <i class="mdi mdi-key"></i>
+                                        </button>
+                                    @else
+                                        <span class="text-danger">Locataire inactif - aucune action disponible.</span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -520,6 +548,96 @@ $(document).ready(function() {
     });
 });
 
+
+
+$(document).ready(function() {
+    // Gestion de l'affichage des états des lieux
+    $(document).on('click', '.view-etat-btn', function() {
+        const etatLieuData = $(this).data('etat-lieu');
+        const modal = $('#etatLieuModal');
+        
+        // Remplir le contenu de la modal
+        $('#etatLieuContent').html(`
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Informations générales</h5>
+                    <hr>
+                    <p><strong>Adresse du bien:</strong> ${etatLieuData.adresse_bien || 'Non renseigné'}</p>
+                    <p><strong>Type de bien:</strong> ${etatLieuData.type_bien || 'Non renseigné'}</p>
+                    <p><strong>Date de l'état:</strong> ${etatLieuData.date_etat || 'Non renseigné'}</p>
+                    <p><strong>Nature de l'état:</strong> ${etatLieuData.nature_etat || 'Non renseigné'}</p>
+                    <p><strong>Nom du locataire:</strong> ${etatLieuData.nom_locataire || 'Non renseigné'}</p>
+                    <p><strong>Nom du propriétaire/agence:</strong> ${etatLieuData.nom_proprietaire || 'Non renseigné'}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h5>Relevés des compteurs</h5>
+                    <hr>
+                    <p><strong>Type compteur:</strong> ${etatLieuData.type_compteur || 'Non renseigné'}</p>
+                    <p><strong>Numéro compteur:</strong> ${etatLieuData.numero_compteur || 'Non renseigné'}</p>
+                    <p><strong>Relevé entrée:</strong> ${etatLieuData.releve_entre || 'Non renseigné'}</p>
+                    <p><strong>Relevé sortie:</strong> ${etatLieuData.releve_sorti || 'Non renseigné'}</p>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>État des lieux par pièce</h5>
+                    <hr>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Élément</th>
+                                    <th>État</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Sol</td>
+                                    <td>${etatLieuData.sol || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Murs</td>
+                                    <td>${etatLieuData.murs || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Plafond</td>
+                                    <td>${etatLieuData.plafond || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Porte</td>
+                                    <td>${etatLieuData.porte_entre || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Interrupteurs</td>
+                                    <td>${etatLieuData.interrupteur || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Éclairage</td>
+                                    <td>${etatLieuData.eclairage || 'Non renseigné'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            ${etatLieuData.remarque ? `
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h5>Remarques</h5>
+                    <hr>
+                    <p>${etatLieuData.remarque}</p>
+                </div>
+            </div>
+            ` : ''}
+        `);
+        
+        // Afficher la modal
+        modal.modal('show');
+    });
+});
 // Gestion de la génération du code pour paiement en espèces
 $('body').on('click', '.generate-cash-code', function() {
     const locataireId = $(this).data('locataire-id');

@@ -14,43 +14,56 @@ class AdminController extends Controller
     {
         $adminId = auth()->guard('admin')->id();
         // Totaux généraux
-        $totalAppartements = Bien::where('agence_id', $adminId)
+        $totalAppartements = Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Appartement')->count();
-        $totalMaisons = Bien::where('agence_id', $adminId)
+        $totalMaisons = Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')  
                 ->where('type', 'Maison')->count();
-        $totalMagasins = Bien::where('agence_id', $adminId)
+        $totalMagasins = Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Magasin')->count();
         
         // Statistiques par période
         $stats = [
             'day' => [
-                'appartements' => Bien::where('agence_id', $adminId)
+                'appartements' => Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Appartement')->whereDate('created_at', today())->count(),
-                'maisons' => Bien::where('agence_id', $adminId)
+                'maisons' => Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Maison')->whereDate('created_at', today())->count(),
-                'magasins' => Bien::where('agence_id', $adminId)
+                'magasins' => Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Magasin')->whereDate('created_at', today())->count()
             ],
             'week' => [
-                'appartements' => Bien::where('agence_id', $adminId)
+                'appartements' => Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Appartement')->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-                'maisons' => Bien::where('agence_id', $adminId)
+                'maisons' => Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Maison')->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-                'magasins' => Bien::where('agence_id', $adminId)
+                'magasins' => Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Magasin')->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count()
             ],
             'month' => [
-                'appartements' => Bien::where('agence_id', $adminId)
+                'appartements' => Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Appartement')->whereMonth('created_at', now()->month)->count(),
-                'maisons' => Bien::where('agence_id', $adminId)
+                'maisons' => Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Maison')->whereMonth('created_at', now()->month)->count(),
-                'magasins' => Bien::where('agence_id', $adminId)
+                'magasins' => Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                 ->where('type', 'Magasin')->whereMonth('created_at', now()->month)->count()
             ]
         ];
     
         // Biens récents
-        $recentBiens = Bien::where('agence_id', $adminId)
+        $recentBiens = Bien::whereNull('agence_id')
+                ->whereNull('proprietaire_id')
                           ->with('agence')
                           ->orderBy('created_at', 'desc')
                           ->take(5)

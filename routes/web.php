@@ -11,6 +11,7 @@ use App\Http\Controllers\BienController;
 use App\Http\Controllers\Agent\ComptableController;
 use App\Http\Controllers\Agent\ComptablePasswordResetController;
 use App\Http\Controllers\ContratController;
+use App\Http\Controllers\EtatLieuController;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\Locataire\LocataireController;
 use App\Http\Controllers\Locataire\LocatairePasswordResetController;
@@ -114,6 +115,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
      Route::put('/locataires/{locataire}/status', [LocataireController::class, 'updateStatusAdmin'])->name('locataire.admin.updateStatus');
      Route::get('/locataires/{locataire}/edit', [LocataireController::class, 'editAdmin'])->name('locataire.admin.edit');
     Route::put('/locataires/{locataire}', [LocataireController::class, 'updateAdmin'])->name('locataire.admin.update');
+
+    // Routes pour la gestion des états des lieux par l'administrateur
+    Route::get('/locataires/{locataire}/etat', [EtatLieuController::class, 'etatAdmin'])->name('locataire.admin.etat');
+    Route::post('/locataires/{locataire}/etat', [EtatLieuController::class, 'storeAdmin'])->name('locataire.admin.etatstore');
     
 
     // Routes pour la gestion des visites par l'administrateur
@@ -197,6 +202,10 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
     Route::put('/locataires/{locataire}/status', [LocataireController::class, 'updateStatus'])->name('locataires.updateStatus');
     Route::get('/locataires/{locataire}/edit', [LocataireController::class, 'edit'])->name('locataire.edit');
     Route::put('/locataires/{locataire}', [LocataireController::class, 'update'])->name('locataire.update');
+
+    // Routes pour la gestion des états des lieux par l'agence 
+    Route::get('/locataires/{locataire}/etat', [EtatLieuController::class, 'etat'])->name('locataire.etat');
+    Route::post('/locataires/{locataire}/etat', [EtatLieuController::class, 'store'])->name('locataire.etatstore');
 
 
     Route::prefix('accounting')->group(function(){
@@ -301,6 +310,10 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
         Route::get('/locataires/{locataire}/edit', [LocataireOwnerController::class, 'edit'])->name('locataire.edit.owner');
         Route::put('/locataires/{locataire}', [LocataireOwnerController::class, 'update'])->name('locataire.update.owner');
     });
+
+     // Routes pour la gestion des états des lieux par l'agence 
+    Route::get('/locataires/{locataire}/etat', [EtatLieuController::class, 'etatOwner'])->name('locataire.etat.owner');
+    Route::post('/locataires/{locataire}/etat', [EtatLieuController::class, 'storeOwner'])->name('locataire.etatstore.owner');
 
     Route::prefix('visit')->group(function(){
             Route::get('/visites',[VisiteController::class, 'ownerIndex'])->name('visite.index.owner');

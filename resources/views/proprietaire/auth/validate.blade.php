@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     /* Remplacez le dégradé par l'image */
-    background-image: url("{{ asset('assets/images/proo.png') }}");
+    background-image: url("{{ asset('assets/images/proprio.png') }}");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
