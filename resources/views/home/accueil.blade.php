@@ -152,7 +152,7 @@
                     <div class="d-flex pt-3">
                         <a class="btn btn-square btn-primary rounded-circle me-2" href=""><i
                                 class="fab fa-twitter"></i></a>
-                        <a class="btn btn-square btn-primary rounded-circle me-2" href=""><i
+                        <a class="btn btn-square btn-primary rounded-circle me-2" target="_blank" href="https://www.facebook.com/profile.php?id=61577304887475"><i
                                 class="fab fa-facebook-f"></i></a>
                         <a class="btn btn-square btn-primary rounded-circle me-2" href=""><i
                                 class="fab fa-youtube"></i></a>
