@@ -82,9 +82,7 @@
                                        
                                         <input type="text" class="form-control" id="nom_proprietaire" name="nom_proprietaire" 
                                             value="{{ old('nom_proprietaire', 
-                                                $locataire->proprietaire_id && $locataire->proprietaire->gestion != 'agence' 
-                                                    ? $locataire->proprietaire->name.' '.$locataire->proprietaire->prenom 
-                                                : 'Maelys-imo') }}" readonly>
+                                                auth()->user()->name) }}" readonly>
                                     </div>
                                 </div>
                             </div>
