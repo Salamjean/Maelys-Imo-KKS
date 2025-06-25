@@ -22,9 +22,9 @@ return new class extends Migration
             $table->enum('statut', ['En attente', 'payé', 'échoué'])->default('En attente');
             
             // Clés étrangères
-            $table->foreignId('locataire_id')->constrained()->onDelete('cascade');
+             $table->string('locataire_id')->nullable();$table->foreign('locataire_id')->references('code_id')->on('locataires')->onDelete('cascade');
             $table->foreignId('bien_id')->constrained()->onDelete('cascade');
-            $table->foreignId('comptable_id')->nullable()->constrained('comptables')->onDelete('cascade');
+            $table->string('comptable_id')->nullable();$table->foreign('comptable_id')->references('code_id')->on('comptables')->onDelete('cascade');
             
             $table->timestamps();
         });

@@ -14,7 +14,7 @@ class Paiement extends Model
 
     public function locataire()
     {
-        return $this->belongsTo(Locataire::class);
+        return $this->belongsTo(Locataire::class, 'locataire_id', 'code_id');
     }
 
     public function bien()
@@ -28,6 +28,6 @@ class Paiement extends Model
     }
     public function comptable()
     {
-        return $this->belongsTo(Comptable::class);
+        return $this->belongsTo(Comptable::class, 'comptable_id', 'code_id');
     }
 }

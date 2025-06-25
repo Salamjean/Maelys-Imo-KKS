@@ -6,16 +6,13 @@
         <div class="card-header text-white" style="background: linear-gradient(135deg, #02245b 0%, #0066cc 100%);">
             <div class="d-flex justify-content-between align-items-center">
                 <h4 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i> Paiement du loyer - {{ $mois_couvert_display }}</h4>
-                <span class="badge bg-light text-dark fs-10 " style="font-size: 20px">Montant du loyer : <span style="font-weight: bold">{{ number_format($montant) }} FCFA</span> </span>
+                <span class="badge bg-light text-dark fs-10" style="font-size: 20px">Montant : <span style="font-weight: bold">{{ number_format($montant) }} FCFA</span></span>
             </div>
         </div>
         
         <div class="card-body">
             <div class="alert alert-info border-start border-5 border-info p-4">
                 <div class="d-flex flex-column flex-md-row align-items-center text-center text-md-start">
-                    <div class="mb-3 mb-md-0 me-md-4">
-                        
-                    </div>
                     <div class="w-100">
                         <h5 class="alert-heading fw-bold mb-3"><i class="fas fa-info-circle fa-1x text-info me-2"></i>Informations de paiement</h5>
                         
@@ -44,115 +41,100 @@
                 </div>
             </div>
 
-            <form id="paiementForm" method="POST" action="{{ route('locataire.paiements.store', $locataire) }}" class="needs-validation" novalidate>
+            <button id="payButton" class="btn btn-lg w-100 mt-3" 
+                    style="background: linear-gradient(135deg, #ff5e14 0%, #ff8c00 100%); color: white; font-weight: 600; letter-spacing: 0.5px;">
+                <i class="fas fa-check-circle me-2"></i> Payer avec Mobile Money
+            </button>
+
+            <!-- Formulaire caché pour soumettre après paiement réussi -->
+            <form id="paymentForm" method="POST" action="{{ route('locataire.paiements.store', $locataire) }}" style="display: none;">
                 @csrf
                 <input type="hidden" name="mois_couvert" value="{{ $mois_couvert }}">
-                
-                <div class="mb-4 " style="text-align: center;">
-                    <label class="form-label fw-bold"><i class="fas fa-credit-card me-2"></i>  Méthode de paiement</label><br>
-                    <select class="form-select form-select-lg py-3 w-full" name="methode_paiement" id="methodeSelect" required>
-                        <option value="Mobile Money" {{ old('methode_paiement') == 'Mobile Money' ? 'selected' : '' }}>
-                            <i class="fas fa-mobile-alt me-2"></i> Mobile Money
-                        </option>
-                    </select>
-                    <div class="invalid-feedback">Veuillez sélectionner une méthode de paiement</div>
-                </div>
-
-                <div class="mb-4 p-3 border rounded bg-light" id="codeVerifField" style="display:none;">
-                    <label class="form-label fw-bold"><i class="fas fa-shield-alt me-2"></i>Code de vérification</label>
-                    <input type="text" class="form-control form-control-lg py-3" name="verif_espece" 
-                           placeholder="Saisissez le code fourni par l'agent" value="{{ old('verif_espece') }}">
-                    <small class="text-muted d-block mt-2"><i class="fas fa-info-circle me-1"></i> Ce code vous sera remis par l'agent lors du paiement en espèces</small>
-                </div>
-
-                <button type="submit" class="btn btn-lg w-100 mt-3" 
-                        style="background: linear-gradient(135deg, #ff5e14 0%, #ff8c00 100%); color: white; font-weight: 600; letter-spacing: 0.5px;">
-                    <i class="fas fa-check-circle me-2"></i> Valider le paiement
-                </button>
+                <input type="hidden" name="transaction_id" id="transaction_id">
             </form>
         </div>
     </div>
 </div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<!-- Inclure les scripts nécessaires -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.cinetpay.com/seamless/main.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Gestion de l'affichage dynamique
-    const methodeSelect = document.getElementById('methodeSelect');
-    const codeField = document.getElementById('codeVerifField');
+    const payButton = document.getElementById('payButton');
     
-    methodeSelect.addEventListener('change', function() {
-        if (this.value === 'Espèces') {
-            codeField.style.display = 'block';
-            codeField.querySelector('input').focus();
-        } else {
-            codeField.style.display = 'none';
-        }
-    });
-    
-    // Initialiser l'affichage si retour avec erreur
-    if (methodeSelect.value === 'Espèces') {
-        codeField.style.display = 'block';
-    }
-
-    // Validation Bootstrap
-    (function () {
-        'use strict'
-        var forms = document.querySelectorAll('.needs-validation')
-        Array.prototype.slice.call(forms)
-            .forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault()
-                        event.stopPropagation()
-                    }
-                    form.classList.add('was-validated')
-                }, false)
-            })
-    })()
-
-    // Gestion des notifications
-    @if($errors->any())
+    payButton.addEventListener('click', function() {
+        // Afficher un loader pendant l'initialisation
         Swal.fire({
-            title: '<span style="color:#02245b">Erreur</span>',
-            html: `{!! implode('<br>', $errors->all()) !!}`,
-            icon: 'error',
-            confirmButtonColor: '#02245b',
-            background: '#fff',
-            backdrop: `
-                rgba(2,36,91,0.4)
-                url("/images/nyan-cat.gif")
-                left top
-                no-repeat
-            `
-        });
-    @endif
-
-    @if(session('error'))
-        Swal.fire({
-            title: '<span style="color:#02245b">Erreur</span>',
-            text: '{{ session('error') }}',
-            icon: 'error',
-            confirmButtonColor: '#02245b',
-            timer: 5000,
-            timerProgressBar: true
-        });
-    @endif
-
-    @if(session('success'))
-        Swal.fire({
-            title: '<span style="color:#02245b">Succès</span>',
-            html: '{{ session('success') }}',
-            icon: 'success',
-            confirmButtonColor: '#ff5e14',
-            showConfirmButton: false,
-            timer: 3000,
-            willClose: () => {
-                window.location.href = "{{ route('locataire.paiements.index') }}";
+            title: 'Initialisation du paiement',
+            html: 'Veuillez patienter...',
+            allowOutsideClick: true,
+            showConfirmButton: true,
+            didOpen: () => {
+                Swal.showLoading();
             }
         });
-    @endif
+
+        // Configuration de CinetPay
+        CinetPay.setConfig({
+            apikey: '{{ config("services.cinetpay.api_key") }}',
+            site_id: '{{ config("services.cinetpay.site_id") }}',
+            notify_url: '{{ route("cinetpay.notify") }}',
+            mode: 'PRODUCTION'
+        });
+
+        // Générer un ID de transaction unique
+        const transactionId = 'PAY_' + Date.now();
+        document.getElementById('transaction_id').value = transactionId;
+
+        // Ouvrir le popup CinetPay
+        CinetPay.getCheckout({
+            transaction_id: transactionId,
+            amount: {{ $montant }},
+            currency: 'XOF',
+            description: 'Paiement loyer ' + '{{ $mois_couvert_display }}',
+            // Autres options personnalisables
+            customer_name: '{{ $locataire->nom }}',
+            customer_surname: '{{ $locataire->prenom }}',
+            customer_phone_number: '{{ $locataire->telephone }}'
+        });
+
+        // Gérer la réponse du paiement
+        CinetPay.waitResponse(function(data) {
+            Swal.close();
+            
+            if (data.status === "ACCEPTED") {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Paiement réussi!',
+                    text: 'Votre paiement a été accepté.',
+                    showConfirmButton: false,
+                    timer: 2000
+                }).then(() => {
+                    // Soumettre le formulaire pour enregistrer en base
+                    document.getElementById('paymentForm').submit();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Paiement échoué',
+                    text: 'Le paiement n\'a pas pu être effectué. Veuillez réessayer.',
+                    confirmButtonColor: '#02245b'
+                });
+            }
+        });
+
+        // Gérer les erreurs
+        CinetPay.onError(function(error) {
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Une erreur est survenue lors du paiement: ' + error.message,
+                confirmButtonColor: '#02245b'
+            });
+        });
+    });
 });
 </script>
 
@@ -165,15 +147,6 @@ document.addEventListener('DOMContentLoaded', function() {
     .card-header {
         border-radius: 15px 15px 0 0 !important;
         padding: 1.5rem;
-    }
-    .form-select, .form-control {
-        border-radius: 10px;
-        padding: 12px 15px;
-        border: 2px solid #e0e0e0;
-    }
-    .form-select:focus, .form-control:focus {
-        border-color: #02245b;
-        box-shadow: 0 0 0 0.25rem rgba(2, 36, 91, 0.25);
     }
     .btn:hover {
         transform: translateY(-2px);

@@ -90,17 +90,17 @@ class PaymentController extends Controller
 
  public function store(Request $request, Locataire $locataire)
 {
-    $rules = [
-        'methode_paiement' => 'required|in:Espèces,Mobile Money',
+    $request->validate([
         'mois_couvert' => 'required|date_format:Y-m',
-    ];
+        'transaction_id' => 'required'
+    ]);
 
-    // Ajout conditionnel des règles pour verif_espece
-    if ($request->methode_paiement === 'Espèces') {
-        $rules['verif_espece'] = 'required|string|size:6';
+    // Vérifier si le paiement a déjà été enregistré (éviter les doublons)
+    $existingPayment = Paiement::where('transaction_id', $request->transaction_id)->first();
+    if ($existingPayment) {
+        return redirect()->route('locataire.paiements.index', $locataire)
+            ->with('success', 'Paiement déjà enregistré pour ' . Carbon::parse($request->mois_couvert)->translatedFormat('F Y'));
     }
-
-    $request->validate($rules);
 
     // Déterminer automatiquement le mois à payer
     $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
@@ -122,161 +122,115 @@ class PaymentController extends Controller
         return back()->with('error', 'Le loyer pour '.$moisAPayer->translatedFormat('F Y').' a déjà été payé.');
     }
 
-    // Traitement spécifique pour les paiements en espèces
-    if ($request->methode_paiement === 'Espèces') {
-        // Vérifier le code de vérification
-        $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
-            ->where('code', $request->verif_espece)
-            ->where('expires_at', '>', now())
-            ->exists();
-
-        if (!$codeValide) {
-            return back()
-                ->withErrors(['verif_espece' => 'Code de vérification invalide ou expiré'])
-                ->withInput();
-        }
-    }
-
-    // Création du paiement
-    $paiementData = [
+    // Enregistrer le paiement
+    $paiement = Paiement::create([
         'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
         'date_paiement' => now(),
         'mois_couvert' => $moisAPayer->format('Y-m'),
-        'methode_paiement' => $request->methode_paiement,
-        'statut' => $request->methode_paiement === 'Espèces' ? 'payé' : 'En attente',
+        'methode_paiement' => 'Mobile Money',
+        'statut' => 'payé',
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
-        'comptable_id' => Auth::guard('comptable')->user()->id ?? 0, // Assurez-vous que l'agent comptable est authentifié
-    ];
+        'comptable_id' => Auth::guard('comptable')->user()->code_id ?? 0,
+        'transaction_id' => $request->transaction_id
+    ]);
 
-    // Ajout conditionnel du code de vérification
-    if ($request->methode_paiement === 'Espèces') {
-        $paiementData['verif_espece'] = $request->verif_espece;
-    }
-
-    $paiement = Paiement::create($paiementData);
-
-    // Si paiement en espèces, supprimer le code utilisé
-    if ($request->methode_paiement === 'Espèces') {
-        CashVerificationCode::where('locataire_id', $locataire->id)
-            ->where('code', $request->verif_espece)
-            ->delete();
-    }
-
-    // Réinitialiser le montant majoré après paiement
-    if ($paiement->statut === 'payé') {
-        $locataire->bien->update([
-            'montant_majore' => null
-        ]);
-    }
-
-    // Redirection selon la méthode de paiement
-    if ($request->methode_paiement === 'Mobile Money') {
-        return $this->initierPaiementCinetPay($paiement);
+    // Réinitialiser le montant majoré si nécessaire
+    if ($locataire->bien->montant_majore) {
+        $locataire->bien->update(['montant_majore' => null]);
     }
 
     return redirect()->route('locataire.paiements.index', $locataire)
-        ->with('success', 'Paiement en espèces enregistré avec succès pour le mois de '.$moisAPayer->translatedFormat('F Y'));
+        ->with('success', 'Paiement enregistré avec succès pour le mois de '.$moisAPayer->translatedFormat('F Y'));
 }
 
-    private function initierPaiementCinetPay(Paiement $paiement)
-    {
-        $transactionId = 'PAY_' . $paiement->id . '_' . now()->timestamp;
-        
-        $paiement->update([
-            'transaction_id' => $transactionId
-        ]);
-        
-        return view('locataire.paiements.cinetpay', [
-            'paiement' => $paiement,
-            'transactionId' => $transactionId,
-            'apiKey' => config('services.cinetpay.api_key'),
-            'siteId' => config('services.cinetpay.site_id'),
-            'notify_url' => route('cinetpay.notify'),
-            'return_url' => route('locataire.paiements.index', $paiement->locataire_id),
-            'cancel_url' => route('locataire.paiements.create', $paiement->locataire_id)
-        ]);
-    }
+   public function handleCinetPayNotification(Request $request, Locataire $locataire)
+{
+    Log::info('Notification CinetPay reçue:', $request->all());
 
-    public function handleCinetPayNotification(Request $request)
-    {
-        Log::info('Notification CinetPay reçue:', $request->all());
-    
-        try {
-            $data = $request->validate([
-                'cpm_trans_id' => 'required',
-                'cpm_amount' => 'required|numeric',
-                'cpm_currency' => 'required',
-                'signature' => 'required',
-                'cpm_result' => 'required|string',
-                'cpm_payment_date' => 'required'
+    try {
+        $data = $request->validate([
+            'cpm_trans_id' => 'required',
+            'cpm_amount' => 'required|numeric',
+            'cpm_currency' => 'required',
+            'signature' => 'required',
+            'cpm_result' => 'required|string',
+            'cpm_payment_date' => 'required'
+        ]);
+
+        // 1. Vérification signature
+        $signature = hash_hmac('sha256', 
+            $data['cpm_trans_id'].$data['cpm_amount'].$data['cpm_currency'], 
+            config('services.cinetpay.api_key')
+        );
+
+        if (!hash_equals($signature, $data['signature'])) {
+            Log::error('Signature invalide', [
+                'received' => $data['signature'],
+                'calculated' => $signature,
+                'data' => $data
             ]);
-    
-            // 1. Vérification signature
-            $signature = hash_hmac('sha256', 
-                $data['cpm_trans_id'].$data['cpm_amount'].$data['cpm_currency'], 
-                config('services.cinetpay.api_key')
-            );
-    
-            if (!hash_equals($signature, $data['signature'])) {
-                Log::error('Signature invalide', [
-                    'received' => $data['signature'],
-                    'calculated' => $signature,
-                    'data' => $data
-                ]);
-                return response()->json(['status' => 'error', 'message' => 'Signature invalide'], 400);
-            }
-    
-            // 2. Trouver le paiement avec logging détaillé
-            $paiement = Paiement::where('transaction_id', $data['cpm_trans_id'])->first();
-    
-            if (!$paiement) {
-                Log::error('Paiement non trouvé', ['transaction_id' => $data['cpm_trans_id']]);
-                return response()->json(['status' => 'error', 'message' => 'Transaction introuvable'], 404);
-            }
-    
-            Log::info('Paiement trouvé:', ['paiement_id' => $paiement->id, 'current_status' => $paiement->statut]);
-    
-            // 3. Convertir la date de CinetPay en format MySQL
-            try {
-                $paymentDate = Carbon::createFromFormat('Y-m-d H:i:s', $data['cpm_payment_date']);
-            } catch (\Exception $e) {
-                $paymentDate = now();
-                Log::warning('Format de date invalide, utilisation de la date actuelle', [
-                    'received_date' => $data['cpm_payment_date'],
-                    'error' => $e->getMessage()
-                ]);
-            }
-    
-            // 4. Mise à jour selon le résultat
-            $newStatus = ($data['cpm_result'] === '00') ? 'payé' : 'échoué';
-            
-            $updated = $paiement->update([
-                'statut' => $newStatus,
-                'date_paiement' => $paymentDate
-            ]);
-    
-            if (!$updated) {
-                Log::error('Échec de la mise à jour du paiement', ['paiement_id' => $paiement->id]);
-                return response()->json(['status' => 'error', 'message' => 'Échec de la mise à jour'], 500);
-            }
-    
-            Log::info('Paiement mis à jour avec succès', [
-                'paiement_id' => $paiement->id,
-                'new_status' => $newStatus,
-                'payment_date' => $paymentDate
-            ]);
-    
-            return response()->json(['status' => 'success', 'message' => 'Statut mis à jour']);
-    
-        } catch (\Exception $e) {
-            Log::error('Erreur dans handleCinetPayNotification: ' . $e->getMessage(), [
-                'exception' => $e,
-                'request_data' => $request->all()
-            ]);
-            return response()->json(['status' => 'error', 'message' => 'Erreur interne'], 500);
+            return response()->json(['status' => 'error', 'message' => 'Signature invalide'], 400);
         }
+
+        // 2. Vérifier si le paiement a réussi
+        if ($data['cpm_result'] !== '00') {
+            Log::info('Paiement échoué', ['transaction_id' => $data['cpm_trans_id']]);
+            return response()->json(['status' => 'error', 'message' => 'Paiement échoué'], 400);
+        }
+
+        // 3. Récupérer les données temporaires depuis la session
+        $paiementData = session()->get('pending_payment');
+
+        if (!$paiementData || $paiementData['transaction_id'] !== $data['cpm_trans_id']) {
+            Log::error('Données de paiement introuvables ou incohérentes');
+            return response()->json(['status' => 'error', 'message' => 'Données de paiement introuvables'], 404);
+        }
+
+        // 4. Convertir la date de CinetPay
+        try {
+            $paymentDate = Carbon::createFromFormat('Y-m-d H:i:s', $data['cpm_payment_date']);
+        } catch (\Exception $e) {
+            $paymentDate = now();
+            Log::warning('Format de date invalide, utilisation de la date actuelle', [
+                'received_date' => $data['cpm_payment_date'],
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // 5. Enregistrer définitivement le paiement
+        $paiement = Paiement::create([
+            'montant' => $paiementData['montant'],
+            'date_paiement' => $paymentDate,
+            'mois_couvert' => $paiementData['mois_couvert'],
+            'methode_paiement' => 'Mobile Money',
+            'statut' => 'payé',
+            'locataire_id' => $paiementData['locataire_id'],
+            'bien_id' => $paiementData['bien_id'],
+            'comptable_id' => $paiementData['comptable_id'],
+            'transaction_id' => $data['cpm_trans_id']
+        ]);
+
+        // 6. Supprimer les données temporaires
+        session()->forget('pending_payment');
+
+        // 7. Réinitialiser le montant majoré si nécessaire
+        if ($locataire->bien->montant_majore) {
+            $locataire->bien->update(['montant_majore' => null]);
+        }
+
+        Log::info('Paiement enregistré avec succès', ['paiement_id' => $paiement->id]);
+
+        return response()->json(['status' => 'success', 'message' => 'Paiement enregistré']);
+
+    } catch (\Exception $e) {
+        Log::error('Erreur dans handleCinetPayNotification: ' . $e->getMessage(), [
+            'exception' => $e,
+            'request_data' => $request->all()
+        ]);
+        return response()->json(['status' => 'error', 'message' => 'Erreur interne'], 500);
     }
+}
 
     public function checkPaymentStatus(Request $request)
     {

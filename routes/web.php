@@ -247,7 +247,17 @@ Route::prefix('locataire/{locataire}/paiements')->group(function() {
     Route::get('/', [PaymentController::class, 'index'])->name('locataire.paiements.index');
     Route::get('create', [PaymentController::class, 'create'])->name('locataire.paiements.create');
     Route::post('/', [PaymentController::class, 'store'])->name('locataire.paiements.store');
+    
+    
 });
+
+Route::post('paiements/check-status', [PaymentController::class, 'checkPaymentStatus'])
+        ->name('locataire.paiements.check-status');
+Route::post('/cinetpay/notify', [PaymentController::class, 'handleCinetPayNotification'])
+     ->name('cinetpay.notify');
+
+Route::post('/cinetpay/return', [PaymentController::class, 'handleCinetPayReturn'])
+     ->name('cinetpay.return');
 
 Route::post('/paiements/verify-cash-code', [PaymentController::class, 'verifyCashCode'])->name('paiements.verifyCashCode');
 Route::post('/paiements/verify-cash-code/comptable', [PaymentController::class, 'verifyCashCodeComptable'])->name('paiements.verifyCashCodeComptable');
@@ -375,7 +385,6 @@ Route::prefix('owner')->group(function () {
 //routes de paiement
 Route::post('/paiements/generate-cash-code', [PaymentController::class, 'generateCashCode'])->name('paiements.generateCashCode');
 Route::post('/paiements/verify-cash-code', [PaymentController::class, 'verifyCashCode'])->name('paiements.verifyCashCode');
-Route::post('/cinetpay/notify', [PaymentController::class, 'handleCinetPayNotification'])->name('cinetpay.notify');
 Route::post('/payment/check-status', [PaymentController::class, 'checkPaymentStatus'])->name('payment.check-status');
 Route::get('/paiements/{paiement}/receipt', [PaymentController::class, 'generateReceipt'])->name('locataire.paiements.receipt');
 Route::get('/locataires/get-montant-loyer', [PaymentController::class, 'getMontantLoyer'])->name('locataires.getMontantLoyer');

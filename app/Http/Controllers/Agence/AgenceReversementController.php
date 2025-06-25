@@ -52,7 +52,7 @@ class AgenceReversementController extends Controller
     {
         $totalPaiements = Paiement::where('methode_paiement', 'Mobile Money')
             ->whereHas('bien', function($query) use ($proprietaireId) {
-                $query->where('proprietaire_id', $proprietaireId);
+                $query->where('agence_id', $proprietaireId);
             })
             ->where('statut', 'payé')
             ->sum('montant');
