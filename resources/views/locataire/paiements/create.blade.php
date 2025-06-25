@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
             transaction_id: transactionId,
             amount: {{ $montant }},
             currency: 'XOF',
+            channels: 'ALL',
             description: 'Paiement loyer ' + '{{ $mois_couvert_display }}',
             // Autres options personnalisables
             customer_name: '{{ $locataire->nom }}',

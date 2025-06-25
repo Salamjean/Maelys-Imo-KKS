@@ -258,8 +258,8 @@
         function initiatePayment() {
             // Configuration de CinetPay
             CinetPay.setConfig({
-                apikey: '521006956621e4e7a6a3d16.70681548',
-                site_id: '859043',
+                apikey: '{{ config("services.cinetpay.api_key") }}',
+                site_id: '{{ config("services.cinetpay.site_id") }}',
                 notify_url: '{{ route("cinetpay.notify") }}',
                 mode: 'PRODUCTION'
             });
