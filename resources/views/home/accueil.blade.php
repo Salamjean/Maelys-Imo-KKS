@@ -148,7 +148,7 @@
                     <h5 class="text-white mb-4">Localisation</h5>
                     <p class="mb-2"><i class="fa fa-map-marker-alt me-3"></i>Cocody - Angré, Abidjan</p>
                     <p class="mb-2"><i class="fa fa-phone-alt me-3"></i>+225 27 22 36 50 27</p>
-                    <p class="mb-2"><i class="fa fa-envelope me-3"></i>info@example.com</p>
+                    <p class="mb-2"><i class="fa fa-envelope me-3"></i>contact@maelysimo.com</p>
                     <div class="d-flex pt-3">
                         <a class="btn btn-square btn-primary rounded-circle me-2" href=""><i
                                 class="fab fa-twitter"></i></a>

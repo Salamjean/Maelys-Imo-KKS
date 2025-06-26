@@ -263,9 +263,9 @@
                             </button>
                             <button class="btn btn-outline-secondary" id="contact-agency-btn"
                                 data-agence-name="{{ $locataire->agence->name ?? 'Maelys-Imo' }}"
-                                data-agence-email="{{ $locataire->agence->email ?? 'salamjeanlouis8@gmail.com' }}"
-                                data-agence-phone="{{ $locataire->agence->contact ?? '+225 07 07 07 07 07' }}"
-                                data-agence-address="{{ $locataire->agence->adresse ?? 'Abidjan, Cocody Riviera' }}">
+                                data-agence-email="{{ $locataire->agence->email ?? 'contact@maelysimo.com' }}"
+                                data-agence-phone="{{ $locataire->agence->contact ?? '+225 27 22 36 50 27' }}"
+                                data-agence-address="{{ $locataire->agence->adresse ?? 'Cocody - Angré, Abidjan' }}">
                             <i class="mdi mdi-message-text-outline mr-1"></i> Contacter l'agence
                         </button>
                         </div>
