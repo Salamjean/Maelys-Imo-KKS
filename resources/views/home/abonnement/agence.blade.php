@@ -319,8 +319,8 @@
             <div class="subscription-options">
                 @foreach($abonnements as $abonnement)
                 <div class="subscription-card" onclick="selectSubscription({{ $abonnement['duree'] }}, {{ $abonnement['prix'] }})">
-                    @if($abonnement['duree'] == 12)
-                    <div class="highlight">Économisez</div>
+                    @if($abonnement['duree'] == 12 || $abonnement['duree'] == 6 || $abonnement['duree'] == 3)
+                    <div class="highlight" style="font-size: 10px">Économisez 20%</div>
                     @endif
                     <h2>{{ $abonnement['label'] }}</h2>
                     <div class="price">

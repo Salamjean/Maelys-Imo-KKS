@@ -227,7 +227,7 @@ class AbonnementController extends Controller
                 'features' => [
                     'Accès complet pour 1 mois',
                     'Support technique de standard',
-                    'Tableau de bord de statistiques',
+                    
                 ]
             ],
             [
@@ -237,8 +237,7 @@ class AbonnementController extends Controller
                 'features' => [
                     'Accès complet pour 3 mois',
                     'Support technique standard',
-                    'Tableau de bord de statistiques',
-                    'Réduction de 20%',
+                    
                 ]
             ],
             [
@@ -248,8 +247,7 @@ class AbonnementController extends Controller
                 'features' => [
                     'Accès complet pour 6 mois',
                     'Support technique prioritaire',
-                    'Tableau de bord de statistiques',
-                    'Réduction de 20%',
+                    
                 ]
             ],
             [
@@ -259,8 +257,7 @@ class AbonnementController extends Controller
                 'features' => [
                     'Accès complet pour 12 mois',
                     'Support technique 24/7',
-                   'Tableau de bord de statistiques',
-                   'Réduction de 25%',
+                   
                 ]
             ]
         ];

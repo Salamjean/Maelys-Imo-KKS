@@ -336,7 +336,6 @@
                     <ul class="features">
                         <li>Accès complet pour 1 mois</li>
                         <li>Support technique</li>
-                        <li>Gestion jusqu'à 5 propriétés</li>
                     </ul>
                 </div>
 
@@ -350,7 +349,6 @@
                     <ul class="features">
                         <li>Accès complet pour 3 mois</li>
                         <li>Support technique standard</li>
-                        <li>Gestion jusqu'à 10 propriétés</li>
                     </ul>
                 </div>
 
@@ -364,7 +362,6 @@
                     <ul class="features">
                         <li>Accès complet pour 6 mois</li>
                         <li>Support technique prioritaire</li>
-                        <li>Gestion illimitée de propriétés</li>
                     </ul>
                 </div>
 
@@ -378,8 +375,6 @@
                     <ul class="features">
                         <li>Accès complet pour 1 an</li>
                         <li>Support technique 24/7</li>
-                        <li>Gestion illimitée de propriétés</li>
-                        <li>Statistiques avancées</li>
                     </ul>
                 </div>
             </div>
