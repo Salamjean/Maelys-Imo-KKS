@@ -161,6 +161,8 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/abonnement/inactif', [AbonnementController::class, 'abonneInactif'])->name('admin.abonnement.inactif');
     Route::post('/abonnements/activate', [AbonnementController::class, 'activate'])->name('abonnements.activate');
     Route::post('/abonnements/deactivate', [AbonnementController::class, 'deactivate'])->name('abonnements.deactivate');
+    Route::post('/abonnements/extend', [AbonnementController::class, 'extend'])->name('abonnements.extend');
+    Route::post('/abonnements/reduce', [AbonnementController::class, 'reduce'])->name('abonnements.reduce');
 });
    
 //routes de gestion des agences

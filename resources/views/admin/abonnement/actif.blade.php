@@ -186,6 +186,22 @@
     background-color: #e0a800;
     border-color: #d39e00;
 }
+.extend-btn {
+    transition: all 0.3s ease;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.extend-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    background-color: #0069d9;
+    border-color: #0062cc;
+}
 </style>
 
 <div class="col-lg-12 stretch-card mt-4">
@@ -279,15 +295,22 @@
                                     @endif
                                 </td>
                                <td>
-                                    @if($abonnement->statut == 'actif') <!-- Utilisez == au lieu de === pour plus de sécurité -->
-                                    <button class="btn btn-sm btn-warning deactivate-btn" 
-                                            data-abonnement-id="{{ $abonnement->id }}"
-                                            title="Désactiver cet abonnement">
-                                        <i class="fas fa-ban"></i> Désactiver
-                                    </button>
-                                    @else
-                                    <span class="text-muted">Non actif</span>
-                                    @endif
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        @if($abonnement->statut == 'actif')
+                                        <button class="btn btn-sm btn-warning deactivate-btn" 
+                                                data-abonnement-id="{{ $abonnement->id }}"
+                                                title="Désactiver cet abonnement">
+                                            <i class="fas fa-ban"></i> Désactiver
+                                        </button>
+                                        <button class="btn btn-sm btn-primary extend-btn" 
+                                                data-abonnement-id="{{ $abonnement->id }}"
+                                                title="Prolonger cet abonnement">
+                                            <i class="fas fa-calendar-plus"></i> Prolonger
+                                        </button>
+                                        @else
+                                        <span class="text-muted">Non actif</span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -352,55 +375,184 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-$(document).ready(function() {
-    $('.deactivate-btn').click(function() {
-        const abonnementId = $(this).data('abonnement-id');
-        const button = $(this);
-        
-        Swal.fire({
-            title: 'Confirmer la désactivation',
-            text: "Voulez-vous vraiment désactiver cet abonnement?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ffc107',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Oui, désactiver',
-            cancelButtonText: 'Annuler'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '{{ route("abonnements.deactivate") }}',
-                    type: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        id: abonnementId
-                    },
-                    beforeSend: function() {
-                        button.html('<i class="fas fa-spinner fa-spin"></i>');
-                        button.prop('disabled', true);
-                    },
-                    success: function(response) {
-                        Swal.fire(
-                            'Désactivé!',
-                            'L\'abonnement a été désactivé avec succès.',
-                            'success'
-                        ).then(() => {
-                            location.reload();
-                        });
-                    },
-                    error: function(xhr) {
-                        Swal.fire(
-                            'Erreur!',
-                            xhr.responseJSON.message || 'Une erreur est survenue',
-                            'error'
-                        );
-                        button.html('<i class="fas fa-ban"></i> Désactiver');
-                        button.prop('disabled', false);
+    $(document).ready(function() {
+        $('.deactivate-btn').click(function() {
+            const abonnementId = $(this).data('abonnement-id');
+            const button = $(this);
+            
+            Swal.fire({
+                title: 'Confirmer la désactivation',
+                text: "Voulez-vous vraiment désactiver cet abonnement?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ffc107',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, désactiver',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '{{ route("abonnements.deactivate") }}',
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            id: abonnementId
+                        },
+                        beforeSend: function() {
+                            button.html('<i class="fas fa-spinner fa-spin"></i>');
+                            button.prop('disabled', true);
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                'Désactivé!',
+                                'L\'abonnement a été désactivé avec succès.',
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            Swal.fire(
+                                'Erreur!',
+                                xhr.responseJSON.message || 'Une erreur est survenue',
+                                'error'
+                            );
+                            button.html('<i class="fas fa-ban"></i> Désactiver');
+                            button.prop('disabled', false);
+                        }
+                    });
+                }
+            });
+        }); // Fin du gestionnaire pour deactivate-btn
+
+        // Gestionnaire séparé pour extend-btn
+      $('.extend-btn').click(function() {
+            const abonnementId = $(this).data('abonnement-id');
+            const button = $(this);
+            
+            Swal.fire({
+                title: 'Modifier la durée',
+                html: `
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de mois :</label>
+                        <input type="number" id="monthsInput" class="form-control" 
+                            min="1" max="12" value="1" required>
+                    </div>
+                `,
+                focusConfirm: false,
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-plus"></i> Prolonger',
+                denyButtonText: '<i class="fas fa-minus"></i> Réduire',
+                cancelButtonText: 'Annuler',
+                preConfirm: () => {
+                    const input = document.getElementById('monthsInput');
+                    const months = parseInt(input.value);
+                    
+                    if (isNaN(months) || months < 1 || months > 12) {
+                        Swal.showValidationMessage('Veuillez entrer un nombre entre 1 et 12');
+                        return false;
                     }
-                });
+                    return months;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Pour prolonger, on utilise la valeur retournée par preConfirm
+                    modifyAbonnement(abonnementId, result.value, 'extend');
+                } else if (result.isDenied) {
+                    // Pour réduire, on doit récupérer la valeur depuis l'input
+                    const months = parseInt(document.getElementById('monthsInput').value);
+                    modifyAbonnement(abonnementId, months, 'reduce');
+                }
+            });
+        });
+
+    function modifyAbonnement(abonnementId, months, action) {
+    const button = $(`.extend-btn[data-abonnement-id="${abonnementId}"]`);
+    const actionText = action === 'extend' ? 'prolonger' : 'réduire';
+    
+    // Trouver la ligne correspondante dans le tableau
+    const row = button.closest('tr');
+    
+    // Déterminer le type d'abonné (Propriétaire ou Agence)
+    const userType = row.find('td:nth-child(2)').text().trim() === 'Propriétaire' ? 'Propriétaire' : 'Agence';
+    
+    // Définir le prix mensuel en fonction du type d'utilisateur
+    const prixMensuel = userType === 'Propriétaire' ? 5000 : 10000;
+    const montant = months * prixMensuel;
+    
+    const operation = action === 'extend' ? 'ajouter' : 'retirer';
+
+    // Message différent selon l'action
+    const confirmationMessage = action === 'extend' 
+        ? `Vous êtes sur le point de ${actionText} cet abonnement de ${months} mois.<br>
+           <strong>Montant à ${operation} : ${montant.toLocaleString()} FCFA</strong>
+           <br><small>(Tarif ${userType}: ${prixMensuel.toLocaleString()} FCFA/mois)</small>`
+        : `Vous êtes sur le point de ${actionText} cet abonnement de ${months} mois.<br>
+           <strong>Montant à ${operation} : ${montant.toLocaleString()} FCFA</strong>
+           <br><small>(Tarif ${userType}: ${prixMensuel.toLocaleString()} FCFA/mois)</small>`;
+
+    Swal.fire({
+        title: 'Confirmation',
+        html: confirmationMessage,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Confirmer',
+        cancelButtonText: 'Annuler',
+        reverseButtons: true
+    }).then((result) => {
+        if (!result.isConfirmed) {
+            button.html('<i class="fas fa-calendar-plus"></i> Prolonger');
+            button.prop('disabled', false);
+            return;
+        }
+
+        $.ajax({
+            url: action === 'extend' ? '{{ route("abonnements.extend") }}' : '{{ route("abonnements.reduce") }}',
+            type: 'POST',
+            data: JSON.stringify({
+                _token: '{{ csrf_token() }}',
+                id: abonnementId,
+                months: months,
+                user_type: userType // Envoyer le type d'utilisateur au serveur
+            }),
+            contentType: 'application/json',
+            beforeSend: function() {
+                button.html('<i class="fas fa-spinner fa-spin"></i>');
+                button.prop('disabled', true);
+            },
+            success: function(response) {
+                if (response.success) {
+                    const successMessage = action === 'extend'
+                        ? `L'abonnement a été prolongé de ${months} mois.<br>
+                           <strong>Nouveau montant : ${response.nouveau_montant.toLocaleString()} FCFA</strong><br>
+                           Nouvelle date de fin: ${response.nouvelle_date_fin}`
+                        : `L'abonnement a été réduit de ${months} mois.<br>
+                           <strong>Nouveau montant : ${response.nouveau_montant.toLocaleString()} FCFA</strong><br>
+                           Nouvelle date de fin: ${response.nouvelle_date_fin}`;
+
+                    Swal.fire({
+                        title: 'Succès!',
+                        html: successMessage,
+                        icon: 'success'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Erreur!', response.message || 'Action non effectuée', 'error');
+                    button.html('<i class="fas fa-calendar-plus"></i> Prolonger');
+                    button.prop('disabled', false);
+                }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'Une erreur est survenue';
+                Swal.fire('Erreur!', errorMsg, 'error');
+                button.html('<i class="fas fa-calendar-plus"></i> Prolonger');
+                button.prop('disabled', false);
             }
         });
     });
-});
+}
+    }); // Fin du gestionnaire pour extend-btn
 </script>
 @endsection

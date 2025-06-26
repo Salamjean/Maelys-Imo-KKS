@@ -521,7 +521,7 @@ private function getAbonnementMessage($abonnement): string
          ************************************************/
         $today = now();
         $dateDebut = $today->format('Y-m-d');
-        $dateFin = $today->copy()->addMonth()->format('Y-m-d'); // Abonnement d'1 mois
+        $dateFin = $today->copy()->addMonth(3)->format('Y-m-d'); // Abonnement d'3 mois offert lors de l'inscription
         
         $abonnementData = [
             'proprietaire_id' => $owner->code_id,

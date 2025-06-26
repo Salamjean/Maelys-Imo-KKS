@@ -135,11 +135,11 @@ class AgenceController extends Controller
             $agence->save();
 
         /************************************************
-         * CRÉATION AUTOMATIQUE DE L'ABONNEMENT
+           CRÉATION AUTOMATIQUE DE L'ABONNEMENT
          ************************************************/
         $today = now();
         $dateDebut = $today->format('Y-m-d');
-        $dateFin = $today->copy()->addMonth()->format('Y-m-d'); // Abonnement d'1 mois
+        $dateFin = $today->copy()->addMonth(3)->format('Y-m-d'); // Abonnement d'3 mois offert lors de l'inscription
         
         $abonnementData = [
             'agence_id' => $agence->code_id,

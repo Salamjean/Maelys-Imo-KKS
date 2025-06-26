@@ -175,6 +175,36 @@
     background-color: #218838;
     border-color: #1e7e34;
 }
+    .activate-btn1 {
+    transition: all 0.3s ease;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    background-color: #02245b;
+    border-color: #02245b;
+    color: white;
+}
+
+.activate-btn1:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    background-color: #02388e;
+    border-color: #02388e;
+    color: white;
+}
+
+.swal2-popup .form-control {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.swal2-popup .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
 </style>
 
 <div class="col-lg-12 stretch-card mt-4">
@@ -271,13 +301,14 @@
                                 </td>
                                 <td>
                                     @if($abonnement->statut == 'inactif')
-                                    <button class="btn btn-sm btn-success activate-btn" 
-                                            data-abonnement-id="{{ $abonnement->id }}"
-                                            title="Activer cet abonnement">
-                                        <i class="fas fa-check-circle"></i> Activer
-                                    </button>
+                                        <!-- Bouton Activer (sans durée) -->
+                                        <button class="btn btn-sm btn-success activate-btn me-1" 
+                                                data-abonnement-id="{{ $abonnement->id }}"
+                                                title="Activer sans modifier la durée">
+                                            <i class="fas fa-power-off"></i> Activer
+                                        </button>
                                     @else
-                                    <span class="text-muted">Déjà actif</span>
+                                        <span class="text-muted">Déjà actif</span>
                                     @endif
                                 </td>
                             </tr>
@@ -346,60 +377,105 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Activation des abonnements
+    // 1. Bouton "Activer" (sans durée)
     document.querySelectorAll('.activate-btn').forEach(button => {
         button.addEventListener('click', function() {
             const abonnementId = this.getAttribute('data-abonnement-id');
             
             Swal.fire({
                 title: 'Confirmer l\'activation',
-                text: "Voulez-vous vraiment activer cet abonnement?",
+                text: 'Voulez-vous activer cet abonnement sans modifier sa durée ?',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#28a745',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Oui, activer',
-                cancelButtonText: 'Annuler'
+                confirmButtonText: 'Activer',
+                cancelButtonText: 'Annuler',
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Afficher le loader
-                    const originalHTML = button.innerHTML;
-                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    button.disabled = true;
-                    
-                    // Envoyer la requête
-                    fetch('{{ route("abonnements.activate") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ id: abonnementId })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        Swal.fire(
-                            'Activé!',
-                            'L\'abonnement a été activé avec succès.',
-                            'success'
-                        ).then(() => {
-                            location.reload();
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        button.innerHTML = originalHTML;
-                        button.disabled = false;
-                        Swal.fire(
-                            'Erreur!',
-                            'Une erreur est survenue lors de l\'activation',
-                            'error'
-                        );
-                    });
+                    sendActivationRequest(abonnementId);
                 }
             });
         });
     });
+
+    // 2. Bouton "Prolonger" (avec durée)
+    document.querySelectorAll('.extend-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const abonnementId = this.getAttribute('data-abonnement-id');
+            
+            Swal.fire({
+                title: 'Prolonger l\'abonnement',
+                html: `
+                    <div class="mb-3">
+                        <label for="monthsInput" class="form-label">Nombre de mois :</label>
+                        <input type="number" id="monthsInput" class="form-control" 
+                               min="1" max="12" value="1" required>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Prolonger',
+                cancelButtonText: 'Annuler',
+                preConfirm: () => {
+                    const months = Swal.getPopup().querySelector('#monthsInput').value;
+                    if (!months || months < 1 || months > 12) {
+                        Swal.showValidationMessage('Veuillez entrer un nombre entre 1 et 12');
+                        return false;
+                    }
+                    return { months: parseInt(months) };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const months = result.value.months;
+                    sendActivationRequest(abonnementId, months);
+                }
+            });
+        });
+    });
+
+    // Fonction commune d'envoi de requête
+    function sendActivationRequest(abonnementId, months = null) {
+        const button = document.querySelector(`[data-abonnement-id="${abonnementId}"]`);
+        const originalHTML = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        const requestData = { id: abonnementId };
+        if (months) requestData.months = months;
+        
+        fetch('{{ route("abonnements.activate") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            Swal.fire(
+                'Succès!',
+                months ? `L'abonnement a été prolongé de ${months} mois.` : 'L\'abonnement a été activé.',
+                'success'
+            ).then(() => {
+                location.reload();
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            button.innerHTML = originalHTML;
+            button.disabled = false;
+            Swal.fire(
+                'Erreur!',
+                'Une erreur est survenue',
+                'error'
+            );
+        });
+    }
 });
 </script>
 @endsection

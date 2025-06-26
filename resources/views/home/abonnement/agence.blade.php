@@ -3,22 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activation du compte agence</title>
+    <title>Abonnement Agence</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.cinetpay.com/seamless/main.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #02245b;
-            --primary-dark: #02245b;
-            --secondary: #02245b;
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --accent: #f72585;
             --light: #f8f9ff;
             --dark: #212529;
             --success: #4cc9f0;
             --warning: #f8961e;
             --danger: #ef233c;
-            --border-radius: 12px;
-            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --border-radius: 10px;
+            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
         * {
@@ -28,11 +30,11 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            font-family: 'Poppins', sans-serif;
+            background-color: #f9fafc;
             color: var(--dark);
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -41,106 +43,147 @@
         
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             background: white;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             overflow: hidden;
-            animation: fadeIn 0.6s ease-out;
+            animation: fadeIn 0.5s ease-out;
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
         .header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
-            padding: 40px;
+            padding: 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::after {
+            content: "";
+            position: absolute;
+            bottom: -50px;
+            left: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        .header::before {
+            content: "";
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
         }
         
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
         }
         
         .header p {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             opacity: 0.9;
+            position: relative;
+            z-index: 1;
         }
         
         .content {
-            padding: 40px;
+            padding: 30px;
         }
         
         .alert {
             background-color: rgba(248, 150, 30, 0.1);
             border-left: 4px solid var(--warning);
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
+            font-size: 0.9rem;
         }
         
-        .alert-icon {
-            font-size: 1.5rem;
-            margin-right: 15px;
-            color: var(--warning);
+        .alert strong {
+            margin-right: 5px;
+        }
+        
+        .subscription-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
         }
         
         .subscription-card {
-            border: 1px solid rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeef5;
             border-radius: var(--border-radius);
-            padding: 40px;
-            margin: 40px 0;
-            transition: all 0.3s ease;
+            padding: 25px;
+            transition: var(--transition);
             position: relative;
             overflow: hidden;
+            background: white;
+            cursor: pointer;
         }
         
         .subscription-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(67, 97, 238, 0.15);
+            border-color: var(--primary-light);
+        }
+        
+        .subscription-card.selected {
+            border: 2px solid var(--primary);
+            background-color: rgba(67, 97, 238, 0.03);
         }
         
         .subscription-card h2 {
-            font-size: 1.8rem;
+            font-size: 1.3rem;
             color: var(--primary);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             text-align: center;
+            font-weight: 600;
         }
         
         .price {
-            font-size: 3rem;
+            font-size: 1.8rem;
             font-weight: 700;
-            color: var(--primary);
-            margin: 25px 0;
+            color: var(--dark);
+            margin: 15px 0;
             text-align: center;
-            position: relative;
-            display: inline-block;
-            width: 100%;
         }
         
         .price span {
-            font-size: 1.2rem;
+            display: block;
+            font-size: 0.85rem;
             font-weight: 400;
-            color: #6c757d;
+            color: #64748b;
+            margin-top: 5px;
         }
         
         .features {
-            margin: 30px 0;
+            margin: 20px 0;
         }
         
         .features li {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             list-style-type: none;
             position: relative;
-            padding-left: 35px;
-            font-size: 1.1rem;
+            padding-left: 25px;
+            font-size: 0.85rem;
         }
         
         .features li:before {
@@ -149,105 +192,171 @@
             position: absolute;
             left: 0;
             font-weight: bold;
-            font-size: 1.2rem;
         }
         
         .btn-subscribe {
             display: block;
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
-            padding: 18px;
+            padding: 14px;
             text-decoration: none;
             border-radius: var(--border-radius);
-            font-weight: 600;
-            margin-top: 30px;
+            font-weight: 500;
+            margin-top: 20px;
             border: none;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             width: 100%;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             letter-spacing: 0.5px;
-            text-transform: uppercase;
         }
         
         .btn-subscribe:hover {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, #3730a3 100%);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
         }
         
-        .highlight {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: var(--primary);
-            color: white;
-            padding: 8px 20px;
-            font-size: 0.9rem;
-            border-bottom-left-radius: 20px;
-            font-weight: 600;
+        .btn-subscribe:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
-        /* Formulaire caché */
-        .payment-form {
-            display: none;
+        .btn-home {
+            display: inline-block;
+            background: white;
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            margin-top: 15px;
+            border: 1px solid var(--primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            text-align: center;
+            width: auto;
+        }
+        
+        .btn-home:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .highlight {
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background: var(--accent);
+            color: white;
+            padding: 3px 30px;
+            font-size: 0.75rem;
+            transform: rotate(45deg);
+            font-weight: 600;
+            width: 120px;
+            text-align: center;
+        }
+        
+        .payment-summary {
+            background: #f8fafc;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+        
+        .summary-header {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary);
+            font-size: 0.95rem;
+        }
+        
+        .summary-details div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .summary-details span:first-child {
+            font-weight: 500;
+            color: #64748b;
         }
         
         @media (max-width: 768px) {
             .header {
-                padding: 30px 20px;
+                padding: 25px 20px;
             }
             
             .header h1 {
-                font-size: 2rem;
+                font-size: 1.5rem;
             }
             
             .content {
-                padding: 30px 20px;
+                padding: 25px 20px;
             }
             
-            .subscription-card {
-                padding: 30px 20px;
-            }
-            
-            .price {
-                font-size: 2.5rem;
+            .subscription-options {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- En-tête -->
         <div class="header">
-            <h1>Activation de votre compte agence</h1>
-            <p>Accédez à toutes les fonctionnalités premium</p>
+            <h1>Abonnement Agence</h1>
+            <p>Choisissez votre formule préférée</p>
         </div>
 
-        <!-- Contenu principal -->
         <div class="content">
             <div class="alert">
-                <strong>Action requise :</strong> Votre compte nécessite un abonnement pour être activé.
+                <strong>Action requise :</strong> Activez votre compte avec un abonnement
             </div>
 
-            <!-- Carte d'abonnement -->
-            <div class="subscription-card">
-                <h2>Abonnement Premium</h2>
-                <div class="price">100 Fcfa / mois</div>
-                <ul class="features">
-                    <li>Gestion illimitée de propriétés</li>
-                    <li>Support technique prioritaire</li>
-                    <li>Statistiques détaillées</li>
-                </ul>
-                <button class="btn-subscribe" onclick="initiatePayment()">Souscrire</button>
+            <div class="subscription-options">
+                @foreach($abonnements as $abonnement)
+                <div class="subscription-card" onclick="selectSubscription({{ $abonnement['duree'] }}, {{ $abonnement['prix'] }})">
+                    @if($abonnement['duree'] == 12)
+                    <div class="highlight">Économisez</div>
+                    @endif
+                    <h2>{{ $abonnement['label'] }}</h2>
+                    <div class="price">
+                        {{ $abonnement['prix'] }} Fcfa
+                        <span>{{ $abonnement['prix']/$abonnement['duree'] }} Fcfa/mois</span>
+                    </div>
+                    <ul class="features">
+                        @foreach($abonnement['features'] as $feature)
+                        <li>{{ $feature }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endforeach
             </div>
-            <a href="/"><button style="padding: 10px; background-color:#02245b; color:white; cursor: pointer;">Retour a la page d'accueil</button></a>
+
+            <div class="payment-summary" id="paymentSummary" style="display: none;">
+                <div class="summary-header">Récapitulatif</div>
+                <div class="summary-details">
+                    <div><span>Durée :</span> <span id="summaryDuration"></span></div>
+                    <div><span>Total :</span> <span id="summaryAmount"></span> Fcfa</div>
+                    <div><span>Expiration :</span> <span id="summaryExpiry"></span></div>
+                </div>
+            </div>
+
+            <button id="btnSubscribe" class="btn-subscribe" disabled onclick="initiatePayment()">
+                Choisir cet abonnement
+            </button>
+
+            <a href="/" class="btn-home">Retour à l'accueil</a>
 
             @auth('agence')
                 <form id="paymentForm" method="POST" action="{{ route('agence.activate') }}" style="display: none;">
                     @csrf
                     <input type="hidden" name="transaction_id" id="transaction_id">
-                    <input type="hidden" name="amount" value="100">
+                    <input type="hidden" name="amount" id="amount">
+                    <input type="hidden" name="duration" id="duration">
                 </form>
             @else
                 <script>window.location.href = "{{ route('agence.login') }}";</script>
@@ -256,7 +365,71 @@
     </div>
 
     <script>
-        function initiatePayment() {
+        let selectedSubscription = null;
+
+        function selectSubscription(duration, amount) {
+            // Désélectionner toutes les cartes
+            document.querySelectorAll('.subscription-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Sélectionner la carte cliquée
+            event.currentTarget.classList.add('selected');
+            
+            // Calcul de la date d'expiration
+            const expiryDate = new Date();
+            expiryDate.setMonth(expiryDate.getMonth() + duration);
+            
+            // Mettre à jour le récapitulatif
+            const summary = document.getElementById('paymentSummary');
+            summary.style.display = 'block';
+            summary.style.animation = 'fadeIn 0.3s ease-out';
+            
+            document.getElementById('summaryDuration').textContent = duration + ' mois';
+            document.getElementById('summaryAmount').textContent = amount.toLocaleString();
+            document.getElementById('summaryExpiry').textContent = expiryDate.toLocaleDateString('fr-FR');
+            
+            // Mettre à jour le bouton de souscription
+            const btnSubscribe = document.getElementById('btnSubscribe');
+            btnSubscribe.disabled = false;
+            btnSubscribe.innerHTML = `Souscrire - ${amount.toLocaleString()} Fcfa`;
+            
+            // Stocker la sélection
+            selectedSubscription = { duration, amount };
+            
+            // Mettre à jour les champs cachés
+            document.getElementById('amount').value = amount;
+            document.getElementById('duration').value = duration;
+        }
+
+        async function initiatePayment() {
+            if (!selectedSubscription) {
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'Sélection requise',
+                    text: 'Veuillez choisir un abonnement avant de continuer.',
+                    confirmButtonColor: 'var(--primary)'
+                });
+                return;
+            }
+
+            // Afficher une confirmation
+            const { isConfirmed } = await Swal.fire({
+                title: 'Confirmer le paiement',
+                html: `<div style="text-align: left; margin: 10px 0;">
+                    <div><strong>Formule :</strong> ${selectedSubscription.duration} mois</div>
+                    <div><strong>Montant :</strong> ${selectedSubscription.amount.toLocaleString()} Fcfa</div>
+                </div>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Payer maintenant',
+                cancelButtonText: 'Annuler',
+                confirmButtonColor: 'var(--primary)',
+                cancelButtonColor: '#94a3b8'
+            });
+
+            if (!isConfirmed) return;
+
             // Configuration de CinetPay
             CinetPay.setConfig({
                 apikey: '{{ config("services.cinetpay.api_key") }}',
@@ -266,25 +439,40 @@
             });
 
             // Génération d'un ID de transaction
-            const transactionId = 'SUB-' + Date.now();
+            const transactionId = 'AG-' + Date.now();
             document.getElementById('transaction_id').value = transactionId;
 
+            // Afficher un loader
+            Swal.fire({
+                title: 'Redirection en cours',
+                html: 'Préparation du paiement...',
+                allowOutsideClick: true,
+                showConfirmButton: true,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Initialiser le paiement
             CinetPay.getCheckout({
                 transaction_id: transactionId,
-                amount: 100,
+                amount: selectedSubscription.amount,
                 currency: 'XOF',
                 channels: 'ALL',
-                description: 'Abonnement Premium agence',
+                description: `Abonnement Agence (${selectedSubscription.duration} mois)`,
             });
 
             // Gestion de la réponse
             CinetPay.waitResponse(function(data) {
+                Swal.close();
                 if (data.status === "ACCEPTED") {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Paiement réussi',
-                        text: 'Votre abonnement est en cours d\'activation...',
-                        showConfirmButton: false
+                        title: 'Paiement accepté',
+                        text: 'Activation en cours...',
+                        confirmButtonColor: 'var(--primary)',
+                        timer: 2000,
+                        timerProgressBar: true
                     }).then(() => {
                         document.getElementById('paymentForm').submit();
                     });
@@ -292,18 +480,21 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Paiement échoué',
-                        text: 'Le paiement n\'a pas pu être accepté.',
+                        text: data.message || 'Le paiement n\'a pas pu être traité.',
+                        confirmButtonColor: 'var(--primary)'
                     });
                 }
             });
 
             // Gestion des erreurs
             CinetPay.onError(function(error) {
+                Swal.close();
                 console.error('Erreur CinetPay:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Erreur',
-                    text: 'Une erreur est survenue lors du paiement.',
+                    html: `Une erreur est survenue<br><small>${error.message || 'Veuillez réessayer'}</small>`,
+                    confirmButtonColor: 'var(--primary)'
                 });
             });
         }
