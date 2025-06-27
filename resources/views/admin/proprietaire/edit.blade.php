@@ -16,7 +16,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Nom du propriétaire</label>
-                                <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" value="{{ $proprietaire->name }}" placeholder="Nom du propriétaire" name="name">
+                                <input type="text" style="border: 1px solid black; border-radius: 5px;" readonly class="form-control" value="{{ $proprietaire->name }}" placeholder="Nom du propriétaire" name="name">
                                 @error('name')
                                     <div class="alert alert-danger mt-2">{{ $message }}</div>
                                 @enderror
@@ -25,7 +25,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Prénom du propriétaire</label>
-                                <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" value="{{ $proprietaire->prenom }}" placeholder="Prénom du propriétaire" name="prenom">
+                                <input type="text" style="border: 1px solid black; border-radius: 5px;" readonly class="form-control" value="{{ $proprietaire->prenom }}" placeholder="Prénom du propriétaire" name="prenom">
                                 @error('prenom')
                                     <div class="alert alert-danger mt-2">{{ $message }}</div>
                                 @enderror
@@ -80,21 +80,21 @@
                     </div>
 
                     <!-- Section 3: Gestion des biens -->
-                    {{-- <div class="row mt-3">
+                    <div class="row mt-3">
                         <div class="col-md-12">
                             <div class="form-group">
                                 <div class="form-check">
                                     <label class="form-check-label">
-                                        <input type="checkbox" class="form-check-input" name="gestion" value="1" {{ $proprietaire->gestion === 'agence' ? 'checked' : '' }}>
-                                        Gestion des biens par l'agence (si coché, l'agence gèrera les biens. Si non coché, le propriétaire gèrera lui-même ses biens)
+                                        <input type="checkbox" class="form-check-input" name="diaspora" value="1" {{ $proprietaire->diaspora === 'Oui' ? 'checked' : '' }}>
+                                       Le propriétaire à t-il des agents de gestions ? (si oui coché la case)
                                     </label>
                                 </div>
-                                @error('gestion')
+                                @error('diaspora')
                                     <div class="alert alert-danger mt-2">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
-                    </div> --}}
+                    </div>
                 </fieldset>
                 
                 <!-- Boutons de soumission -->

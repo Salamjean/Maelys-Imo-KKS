@@ -232,7 +232,48 @@
     });
     </script>
     <script>
-       $(document).ready(function() {
+$(document).ready(function() {
+    // Notification SweetAlert2
+    @if(session('success'))
+    Swal.fire({
+        title: 'Succès !',
+        text: '{{ session('success') }}',
+        icon: 'success',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'OK',
+        allowOutsideClick: false
+    });
+    @endif
+
+    // Gestion des images
+    $('.preview-image').on('click', function() {
+        const imgUrl = $(this).data('image');
+        $('#modalImage').attr('src', imgUrl);
+        $('#imageModal').modal('show');
+    });
+
+    // Confirmation de suppression
+    $('.delete-btn').on('click', function(e) {
+        e.preventDefault();
+        const form = $(this).closest('form');
+        
+        Swal.fire({
+            title: 'Confirmer la suppression',
+            text: "Êtes-vous sûr de vouloir supprimer ce bien ?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, supprimer!',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    });
+
+    // Gestion des visites
     const confirmUrlTemplate = "{{ route('visites.confirm.owner', ['visite' => ':id']) }}";
     const doneUrlTemplate = "{{ route('visites.done.owner', ['visite' => ':id']) }}";
     const cancelUrlTemplate = "{{ route('visites.cancel.owner', ['visite' => ':id']) }}";
@@ -243,12 +284,12 @@
         return template.replace(':id', id);
     }
 
-    // Gestion de la confirmation de visite avec choix de date
-    $('.confirm-visite-btn').on('click', function() {
+    // Confirmation de visite
+    $(document).on('click', '.confirm-visite-btn', function() {
         const visiteId = $(this).data('visite-id');
         const row = $(this).closest('tr');
-        const currentDate = row.find('td:nth-child(6)').text(); // Date actuelle
-        const currentTime = row.find('td:nth-child(7)').text(); // Heure actuelle
+        const currentDate = row.find('td:nth-child(6)').text();
+        const currentTime = row.find('td:nth-child(7)').text();
         
         Swal.fire({
             title: 'Confirmer la visite',
@@ -264,7 +305,6 @@
             cancelButtonColor: '#d33'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Confirmer avec la date actuelle
                 $.ajax({
                     url: generateUrl(confirmUrlTemplate, visiteId),
                     method: 'POST',
@@ -274,77 +314,79 @@
                     success: function(response) {
                         Swal.fire(
                             'Confirmée!',
-                            'La visite a été confirmée pour la date prévue.',
+                            'La visite a été confirmée.',
                             'success'
                         ).then(() => {
                             location.reload();
                         });
                     },
-                    error: function() {
+                    error: function(xhr) {
                         Swal.fire(
                             'Erreur!',
-                            'Une erreur est survenue.',
+                            xhr.responseJSON.message || 'Une erreur est survenue',
                             'error'
                         );
                     }
                 });
             } else if (result.isDenied) {
-                // Proposer de changer la date et l'heure
                 Swal.fire({
                     title: 'Modifier date et heure',
                     html: `
-                        <form id="dateForm">
-                            <div class="form-group">
-                                <label for="newDate">Nouvelle date</label>
-                                <input type="date" id="newDate" class="form-control" required>
-                            </div>
-                            <div class="form-group mt-3">
-                                <label for="newTime">Nouvelle heure</label>
-                                <input type="time" id="newTime" class="form-control" required>
-                            </div>
-                        </form>
+                        <div class="form-group">
+                            <label for="newDate">Nouvelle date</label>
+                            <input type="date" id="newDate" class="form-control" required>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="newTime">Nouvelle heure</label>
+                            <input type="time" id="newTime" class="form-control" required>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="motif">Motif du changement</label>
+                            <textarea id="motif" class="form-control" rows="3" required></textarea>
+                        </div>
                     `,
                     showCancelButton: true,
                     confirmButtonText: 'Confirmer',
                     cancelButtonText: 'Annuler',
                     focusConfirm: false,
                     preConfirm: () => {
-                        const newDate = Swal.getPopup().querySelector('#newDate').value;
-                        const newTime = Swal.getPopup().querySelector('#newTime').value;
-                        
-                        if (!newDate || !newTime) {
-                            Swal.showValidationMessage('Veuillez remplir tous les champs');
-                            return false;
-                        }
-                        
-                        return { newDate, newTime };
+                        return {
+                            newDate: $('#newDate').val(),
+                            newTime: $('#newTime').val(),
+                            motif: $('#motif').val()
+                        };
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        const { newDate, newTime } = result.value;
+                        const { newDate, newTime, motif } = result.value;
                         
-                        // Envoyer la nouvelle date et heure au serveur
+                        if (!newDate || !newTime || !motif) {
+                            Swal.showValidationMessage('Tous les champs sont obligatoires');
+                            return;
+                        }
+
                         $.ajax({
                             url: generateUrl(updateDateUrlTemplate, visiteId),
                             method: 'POST',
                             data: {
                                 _token: '{{ csrf_token() }}',
                                 date_visite: newDate,
-                                heure_visite: newTime
+                                heure_visite: newTime,
+                                motif: motif
                             },
                             success: function(response) {
                                 Swal.fire(
-                                    'Modifié et confirmé!',
-                                    'La visite a été replanifiée et confirmée.',
+                                    'Modifié!',
+                                    'La visite a été replanifiée.',
                                     'success'
                                 ).then(() => {
                                     location.reload();
                                 });
                             },
-                            error: function() {
+                            error: function(xhr) {
                                 Swal.fire(
                                     'Erreur!',
-                                    'Une erreur est survenue lors de la modification.',
+                                    xhr.responseJSON.message || 'Erreur lors de la modification',
                                     'error'
                                 );
                             }
@@ -354,133 +396,149 @@
             }
         });
     });
-    
-            // Gestion de la visite effectuée
-            $('.done-visite-btn').on('click', function() {
-                const visiteId = $(this).data('visite-id');
-    
-                Swal.fire({
-                    title: 'Visite effectuée',
-                    text: "Voulez-vous marquer cette visite comme effectuée ?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Oui, marquer',
-                    cancelButtonText: 'Annuler'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: generateUrl(doneUrlTemplate, visiteId),
-                            method: 'POST',
-                            data: {
-                                _token: '{{ csrf_token() }}'
-                            },
-                            success: function(response) {
-                                Swal.fire(
-                                    'Effectuée!',
-                                    'La visite a été marquée comme effectuée.',
-                                    'success'
-                                ).then(() => {
-                                    location.reload();
-                                });
-                            },
-                            error: function() {
-                                Swal.fire(
-                                    'Erreur!',
-                                    'Une erreur est survenue.',
-                                    'error'
-                                );
-                            }
-                        });
-                    }
-                });
-            });
-    
-            // Gestion de l'annulation de visite
-            $('.cancel-visite-btn').on('click', function() {
-                const visiteId = $(this).data('visite-id');
-    
-                Swal.fire({
-                    title: 'Annuler la visite',
-                    text: "Voulez-vous vraiment annuler cette visite ?",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Oui, annuler',
-                    cancelButtonText: 'Annuler'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: generateUrl(cancelUrlTemplate, visiteId),
-                            method: 'POST',
-                            data: {
-                                _token: '{{ csrf_token() }}'
-                            },
-                            success: function(response) {
-                                Swal.fire(
-                                    'Annulée!',
-                                    'La visite a été annulée.',
-                                    'success'
-                                ).then(() => {
-                                    location.reload();
-                                });
-                            },
-                            error: function() {
-                                Swal.fire(
-                                    'Erreur!',
-                                    'Une erreur est survenue.',
-                                    'error'
-                                );
-                            }
-                        });
-                    }
-                });
-            });
-    
-            // Gestion de la visualisation des détails
-            $('.view-visite-btn').on('click', function() {
-                const visiteId = $(this).data('visite-id');
-    
+
+    // Marquer comme effectuée
+    $(document).on('click', '.done-visite-btn', function() {
+        const visiteId = $(this).data('visite-id');
+        
+        Swal.fire({
+            title: 'Confirmer',
+            text: "Marquer cette visite comme effectuée ?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Oui',
+            cancelButtonText: 'Non'
+        }).then((result) => {
+            if (result.isConfirmed) {
                 $.ajax({
-                    url: generateUrl(viewUrlTemplate, visiteId),
-                    method: 'GET',
+                    url: generateUrl(doneUrlTemplate, visiteId),
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
                     success: function(response) {
-                        Swal.fire({
-                            title: 'Détails de la visite',
-                            html: `
-                                <div class="text-start">
-                                    <p><strong>Client:</strong> ${response.nom}</p>
-                                    <p><strong>Email:</strong> ${response.email}</p>
-                                    <p><strong>Téléphone:</strong> ${response.telephone}</p>
-                                    <hr>
-                                    <p><strong>Bien:</strong> ${response.bien.type} à ${response.bien.commune}</p>
-                                    <p><strong>Prix:</strong> ${new Intl.NumberFormat('fr-FR').format(response.bien.prix)} FCFA</p>
-                                    <hr>
-                                    <p><strong>Date:</strong> ${new Date(response.date_visite).toLocaleDateString('fr-FR')}</p>
-                                    <p><strong>Heure:</strong> ${response.heure_visite}</p>
-                                    <p><strong>Statut:</strong> <span class="badge ${response.statut === 'confirmée' ? 'badge-success' : response.statut === 'annulée' ? 'badge-danger' : 'badge-warning'}">${response.statut}</span></p>
-                                    <hr>
-                                    <p><strong>Message:</strong> ${response.message || 'Aucun message'}</p>
-                                </div>
-                            `,
-                            confirmButtonText: 'Fermer',
-                            confirmButtonColor: '#3085d6',
-                            width: '600px'
+                        Swal.fire(
+                            'Succès!',
+                            'Visite marquée comme effectuée.',
+                            'success'
+                        ).then(() => {
+                            location.reload();
                         });
                     },
-                    error: function() {
+                    error: function(xhr) {
                         Swal.fire(
                             'Erreur!',
-                            'Impossible de charger les détails de la visite.',
+                            xhr.responseJSON.message || 'Erreur',
                             'error'
                         );
                     }
                 });
-            });
+            }
         });
-    </script>
+    });
+
+    // Annulation de visite
+    $(document).on('click', '.cancel-visite-btn', function() {
+        const visiteId = $(this).data('visite-id');
+        
+        Swal.fire({
+            title: 'Annuler la visite',
+            html: `
+                <div class="form-group">
+                    <label for="cancelMotif">Motif d'annulation</label>
+                    <textarea id="cancelMotif" class="form-control" rows="3" required></textarea>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Confirmer',
+            cancelButtonText: 'Annuler',
+            preConfirm: () => {
+                const motif = $('#cancelMotif').val();
+                if (!motif) {
+                    Swal.showValidationMessage('Le motif est obligatoire');
+                    return false;
+                }
+                return { motif };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const { motif } = result.value;
+                
+                $.ajax({
+                    url: generateUrl(cancelUrlTemplate, visiteId),
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        motif: motif
+                    },
+                    success: function(response) {
+                        Swal.fire(
+                            'Annulée!',
+                            'La visite a été annulée.',
+                            'success'
+                        ).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire(
+                            'Erreur!',
+                            xhr.responseJSON.message || 'Erreur lors de l\'annulation',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    });
+
+    // Voir les détails
+    $(document).on('click', '.view-visite-btn', function() {
+        const visiteId = $(this).data('visite-id');
+        
+        $.ajax({
+            url: generateUrl(viewUrlTemplate, visiteId),
+            method: 'GET',
+            success: function(response) {
+                Swal.fire({
+                    title: 'Détails de la visite',
+                    html: `
+                        <div class="text-start">
+                            <p><strong>Client:</strong> ${response.nom}</p>
+                            <p><strong>Email:</strong> ${response.email}</p>
+                            <p><strong>Téléphone:</strong> ${response.telephone}</p>
+                            <hr>
+                            <p><strong>Bien:</strong> ${response.bien.type} à ${response.bien.commune}</p>
+                            <p><strong>Prix:</strong> ${new Intl.NumberFormat('fr-FR').format(response.bien.prix)} FCFA</p>
+                            <hr>
+                            <p><strong>Date:</strong> ${new Date(response.date_visite).toLocaleDateString('fr-FR')}</p>
+                            <p><strong>Heure:</strong> ${response.heure_visite}</p>
+                            <p><strong>Statut:</strong> <span class="badge ${response.statut === 'confirmée' ? 'badge-primary' : response.statut === 'annulée' ? 'badge-danger' : 'badge-warning'}">${response.statut}</span></p>
+                            <hr>
+                            <p><strong>Message:</strong> ${response.message || 'Aucun message'}</p>
+                            ${response.motif ? `<p><strong>Motif:</strong> ${response.motif}</p>` : ''}
+                        </div>
+                    `,
+                    confirmButtonText: 'Fermer',
+                    width: '600px'
+                });
+            },
+            error: function() {
+                Swal.fire(
+                    'Erreur!',
+                    'Impossible de charger les détails',
+                    'error'
+                );
+            }
+        });
+    });
+});
+</script>
     
 
 <style>

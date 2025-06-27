@@ -17,6 +17,19 @@
             background-color: #f9f9f9;
             font-size: 13px;
         }
+        .receipt-container::before {
+            content: "";
+            position: absolute;
+            top: 25%;
+            left: 10%;
+            width: 80%;
+            height: 50%;
+            background-image: url(assets/images/mae-imo.png);
+            background-size: cover;
+            background-position: center;
+            opacity: 0.1;
+            z-index: -1;
+        }
         .receipt-container {
             background-color: white;
             border: 1px solid #e1e1e1;
@@ -41,14 +54,13 @@
             color: #666;
         }
         .section {
-            margin-bottom: 18px;
+            margin-bottom: 10px;
         }
         .section-title {
             font-weight: bold;
             color: #02245b;
             margin-bottom: 6px;
             font-size: 13px;
-            border-bottom: 1px dashed #eee;
             padding-bottom: 2px;
         }
         .info-item {
@@ -60,7 +72,6 @@
             min-width: 120px;
         }
         .highlight-box {
-            background-color: #f5f9ff;
             border-left: 2px solid #02245b;
             padding: 10px;
             margin: 12px 0;
@@ -85,18 +96,13 @@
             font-size: 12px;
         }
         .footer {
-            margin-top: 25px;
+            margin-top: 15px;
             font-size: 10px;
             text-align: center;
             color: #777;
-            border-top: 1px dashed #eee;
             padding-top: 8px;
         }
-        .divider {
-            height: 1px;
-            background-color: #eee;
-            margin: 12px 0;
-        }
+    
 
          .signature {
             font-family: 'Courier New', Courier, monospace; /* Exemple de police */
@@ -122,9 +128,9 @@
             <div class="title">QUITTANCE DE LOYER</div>
             <div class="subtitle">Reçu officiel de paiement</div>
         </div>
-
         <div class="section">
             <div class="section-title">INFORMATIONS SUR LE PAIEMENT</div>
+            
             <div class="highlight-box">
                 Période couverte : <strong>{{ \Carbon\Carbon::parse($paiement->mois_couvert)->translatedFormat('F Y') }}</strong>
             </div>
@@ -142,8 +148,6 @@
             </div>
         </div>
 
-        <div class="divider"></div>
-
         <div class="section">
             <div class="section-title">DÉCLARATION</div>
             <p>
@@ -155,7 +159,7 @@
                 @else
                     Maelys-imo, Agence
                 @endif/
-                bailleur du bien désigné ci-dessus, déclare avoir reçu de :
+                bailleur du bien ci-dessus désigné, déclare avoir reçu de :
             </p>
             <div class="highlight-box">
                 <strong>Monsieur/Madame :</strong> {{ $locataire->name.' '.$locataire->prenom ?? 'Maelys-imo' }}<br>
@@ -171,6 +175,10 @@
                 <span>{{ number_format($paiement->montant, 0, ',', ' ') }} FCFA</span>
             </div>
             <div class="info-item">
+                <span class="info-label">Mode de paiement :</span>
+                <span>{{ $paiement->methode_paiement }}</span>
+            </div>
+            <div class="info-item">
                 <span class="info-label">Date de paiement :</span>
                 <span>{{ \Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y') }}</span>
             </div>
@@ -179,8 +187,6 @@
                 <span>{{ $paiement->created_at->format('H:i') }}</span>
             </div>
         </div>
-
-        <div class="divider"></div>
 
        <div class="section">
             <p>Fait à {{ $bien->commune }}, le {{ \Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y') }}.</p>
@@ -198,8 +204,21 @@
                 <div class="signature-line">Signature</div>
             </div>
         </div>
+        <div style="text-align: center; margin-top: 5px;">
+        <div style="font-size: 11px; color: #555; margin-bottom: 5px;">
+                Scannez ce code pour vérifier
+            </div>
+            <img src="{{ $qrCode }}" alt="QR Code du reçu" style="width: 80px; height: 80px; border: 1px solid #eee; padding: 5px;">
+            <div style="font-size: 10px; color: #777; margin-top: 5px;">
+                Réf: {{ $reference }}
+            </div>
+        </div>
 
         <div class="footer">
+            <p>Article 285 du Code pénal. Cet article stipule qu'une personne est coupable d'infractions en rapport avec la falsification,
+                la reproduction ou l'usage de faux documents dans des contextes où ces actes sont destinés à induire en erreur
+                l'autorité publique ou des tiers.
+                Est puni de deux (02) à dix (10) ans et une amende de 200 000 à 2 000 000 de franc CFA.</p>
             <p>Ce document constitue un reçu officiel de paiement de loyer.</p>
             <p>Merci pour votre confiance.</p>
         </div>

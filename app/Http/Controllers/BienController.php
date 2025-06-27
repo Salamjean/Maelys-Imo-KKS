@@ -65,7 +65,7 @@ public function store(Request $request)
         'proprietaire_id' => 'nullable|exists:proprietaires,code_id',
         'type' => 'required|string',
         'utilisation' => 'required|string',
-        'description' => 'required|string',
+        'description' => 'required|string|max:255',
         'superficie' => 'required|string',
         'nombre_de_chambres' => 'nullable|string',
         'nombre_de_toilettes' => 'nullable|string',
@@ -83,12 +83,53 @@ public function store(Request $request)
         'additional_images3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         'additional_images4' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         'additional_images5' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+    ],[
+        'type.required' => 'Le champ type est obligatoire',
+        'utilisation.required' => 'Le champ utilisation est obligatoire',
+        'description.required' => 'Le champ description est obligatoire',
+        'description.max' => 'Le nombre maximum de lettre est de 255 lettres', 
+        'superficie.required' => 'Le champ superficie est obligatoire',
+        'prix.required' => 'Le champ prix est obligatoire',
+        'commune.required' => 'Le champ commune est obligatoire',
+        'disponibilite.required' => 'Le champ disponibilité est obligatoire',
+        'main_image.required' => 'L\'image principale est obligatoire',
+        'main_image.image' => 'L\'image principale doit être une image valide',
+        'main_image.mimes' => 'L\'image principale doit être au format jpeg, png, jpg ou gif',
+        'main_image.max' => 'L\'image principale ne doit pas dépasser 2 Mo',
+        'additional_images1.required' => 'La première image supplémentaire est obligatoire',
+        'additional_images1.image' => 'La première image supplémentaire doit être une image valide',
+        'additional_images1.mimes' => 'La première image supplémentaire doit être au format jpeg, png, jpg ou gif',
+        'additional_images1.max' => 'La première image supplémentaire ne doit pas dépasser 2 Mo',
+        'additional_images2.image' => 'La deuxième image supplémentaire doit être une image valide',
+        'proprietaire_id.exists' => 'Le propriétaire sélectionné est invalide'
     ]);
+
+      // Génération du code unique en fonction du type
+    $typePrefix = '';
+    switch($validatedData['type']) {
+        case 'Appartement':
+            $typePrefix = 'AP';
+            break;
+        case 'Maison':
+            $typePrefix = 'MA';
+            break;
+        case 'Bureau':
+            $typePrefix = 'BU';
+            break;
+        default:
+            $typePrefix = 'AG'; // Par défaut si aucun cas ne correspond
+    }
+
+    do {
+        $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $numeroId = $typePrefix . $randomNumber;
+    } while (Bien::where('numero_bien', $numeroId)->exists());
 
     // Création d'une nouvelle instance de Bien
     $bien = new Bien();
 
     // Assignation des propriétés obligatoires
+    $bien->numero_bien = $numeroId;
     $bien->proprietaire_id = $validatedData['proprietaire_id'];
     $bien->type = $validatedData['type'];
     $bien->utilisation = $validatedData['utilisation'];
@@ -193,10 +234,32 @@ public function storeAgence(Request $request)
         'proprietaire_id.exists' => 'Le propriétaire sélectionné est invalide'
     ]);
 
+      // Génération du code unique en fonction du type
+    $typePrefix = '';
+    switch($validatedData['type']) {
+        case 'Appartement':
+            $typePrefix = 'AP';
+            break;
+        case 'Maison':
+            $typePrefix = 'MA';
+            break;
+        case 'Bureau':
+            $typePrefix = 'BU';
+            break;
+        default:
+            $typePrefix = 'AG'; // Par défaut si aucun cas ne correspond
+    }
+
+    do {
+        $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $numeroId = $typePrefix . $randomNumber;
+    } while (Bien::where('numero_bien', $numeroId)->exists());
+    
     // Création d'une nouvelle instance de Bien
     $bien = new Bien();
 
     // Assignation des propriétés obligatoires
+    $bien->numero_bien = $numeroId;
     $bien->proprietaire_id = $validatedData['proprietaire_id'];
     $bien->type = $validatedData['type'];
     $bien->utilisation = $validatedData['utilisation'];

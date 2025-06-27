@@ -89,9 +89,9 @@
                     <p><span class="info-label">Date :</span> {{ $details['old_date'] }}</p>
                     <p><span class="info-label">Heure :</span> {{ $details['old_time'] }}</p>
                 </div>
-                
+                <p>Nous avons dû modifier la date et l'heure de votre visite pour la raison de : <br> <span><strong>{{ $details['motif'] }}</strong></span>.</p>
                 <div class="new-rdv">
-                    <p><strong>Nouveau rendez-vous :</strong></p>
+                    <p><strong>Les détails du nouveau rendez-vous :</strong></p>
                     <p><span class="info-label">Date :</span> {{ $details['new_date'] }}</p>
                     <p><span class="info-label">Heure :</span> {{ $details['new_time'] }}</p>
                 </div>
@@ -103,17 +103,9 @@
             <p>Nous vous remercions pour votre compréhension et restons à votre disposition pour toute information complémentaire.</p>
             
             <p>Cordialement,<br>
-            <strong>L'équipe de votre agence immobilière</strong></p>
         </div>
         
-        <div class="footer">
-            <p>© {{ date('Y') }} Votre Agence Immobilière. Tous droits réservés.</p>
-            <p>
-                <a href="tel:+221338699999" style="color:#e67e22;text-decoration:none;">+221 33 86 99 999</a> | 
-                <a href="mailto:contact@agence.sn" style="color:#e67e22;text-decoration:none;">contact@agence.sn</a> |
-                <a href="https://www.agence.sn" style="color:#e67e22;text-decoration:none;">www.agence.sn</a>
-            </p>
-        </div>
+
     </div>
 </body>
 </html>

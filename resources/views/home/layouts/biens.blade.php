@@ -75,14 +75,14 @@
                         <h5 class="text-primary mb-3">{{ $bien->commune }}</h5>
                         <p class="d-block h5 mb-2">{{ $bien->type }}</p>
                         <p><i class="fa fa-map-marker-alt text-primary me-2"></i>{{ $bien->commune }}</p>
-                       <p>
+                      <p>
                         @if($bien->agence_id)
                             <i class="fa fa-home text-primary me-2"></i> Agence : {{ $bien->agence->name ?? 'Maelys-Imo' }}
-                        @elseif($bien->proprietaire_id)
-                            @if($bien->proprietaire->gestion == 'agence')
+                        @elseif($bien->proprietaire_id && $bien->proprietaire)
+                            @if(optional($bien->proprietaire)->gestion == 'agence')
                                 <i class="fa fa-home text-primary me-2"></i>Agence : Maelys-imo 
                             @else
-                                <i class="fa fa-user text-primary me-2"></i>Propriétaire : {{ $bien->proprietaire->name.' '.$bien->proprietaire->prenom ?? 'Maelys-imo' }}
+                                <i class="fa fa-user text-primary me-2"></i>Propriétaire : {{ optional($bien->proprietaire)->name.' '.optional($bien->proprietaire)->prenom ?? 'Maelys-imo' }}
                             @endif
                         @else
                             <i class="fa fa-home text-primary me-2"></i>Agence : Maelys-imo

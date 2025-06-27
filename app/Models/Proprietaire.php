@@ -17,6 +17,7 @@ class Proprietaire extends Authenticatable
         'prenom',
         'email',
         'password',
+        'diaspora',
         'contact',
         'commune',
         'choix_paiement',

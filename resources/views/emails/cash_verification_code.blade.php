@@ -17,5 +17,4 @@ Accéder à mon espace
 @endcomponent
 
 Cordialement,  
-L'équipe {{ config('app.name') }}
 @endcomponent

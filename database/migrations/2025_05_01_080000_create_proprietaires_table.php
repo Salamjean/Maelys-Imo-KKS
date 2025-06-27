@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('profil_image')->nullable();
             $table->string('contrat')->nullable();
             $table->string('gestion')->nullable();
+            $table->string('diaspora')->nullable();
             $table->dateTime('last_balance_update')->nullable();
             $table->string('agence_id')->nullable(); // ou $table->foreignId('agence_id') si code_id est un entier
             $table->foreign('agence_id')->references('code_id')->on('agences')->onDelete('cascade');

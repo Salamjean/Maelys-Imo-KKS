@@ -6,7 +6,7 @@
         <div class="card-header text-white" style="background: linear-gradient(135deg, #02245b 0%, #0066cc 100%);">
             <div class="d-flex justify-content-between align-items-center">
                 <h4 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i> Paiement du loyer - {{ $mois_couvert_display }}</h4>
-                <span class="badge bg-light text-dark fs-10" style="font-size: 20px">Montant : <span style="font-weight: bold">{{ number_format($montant) }} FCFA</span></span>
+                <span class="badge bg-light text-dark fs-10" style="font-size: 20px">Montant : <span style="font-weight: bold">{{ number_format($montant, 0, ',', ' ') }} FCFA</span></span>
             </div>
         </div>
         
@@ -32,7 +32,7 @@
                                     <i class="fas fa-wallet me-2 text-info"></i>
                                     <div>
                                         <strong class="d-block">Montant</strong>
-                                        <span class="text-black">{{ number_format($montant) }} FCFA</span>
+                                        <span class="text-black">{{ number_format($montant, 0, ',', ' ') }} FCFA</span>
                                     </div>
                                 </div>
                             </div>
@@ -124,15 +124,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
-
-        // Gérer les erreurs
+        
+       // Gérer les erreurs
         CinetPay.onError(function(error) {
             Swal.close();
             Swal.fire({
                 icon: 'error',
                 title: 'Erreur',
-                text: 'Une erreur est survenue lors du paiement: ' + error.message,
-                confirmButtonColor: '#02245b'
+                text: 'Une erreur est survenue lors du paiement. La page va se recharger...',
+                showConfirmButton: false,
+                timer: 3000
+            }).then(() => {
+                // Rechargement automatique de la page
+                window.location.reload();
             });
         });
     });

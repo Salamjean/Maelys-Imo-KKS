@@ -180,6 +180,51 @@
     .platform-text {
         flex: 1;
     }
+    
+    /* Nouveaux styles pour les sections propriétaires/agences */
+    .target-section {
+        margin-bottom: 50px;
+    }
+    .target-header {
+        background: linear-gradient(135deg, #02245b 0%, #ff5e14 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 0;
+    }
+    .target-content {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 0 0 8px 8px;
+    }
+    .benefit-list {
+        margin-top: 20px;
+    }
+    .benefit-item {
+        display: flex;
+        margin-bottom: 15px;
+        align-items: flex-start;
+    }
+    .benefit-number {
+        background: #02245b;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    .benefit-text {
+        flex: 1;
+    }
+    .benefit-title {
+        font-weight: bold;
+        color: #02245b;
+        margin-bottom: 5px;
+    }
 
     /* Responsive adjustments */
     @media (max-width: 900px) {
@@ -208,8 +253,7 @@
     <h1 class="page-title">Nos Services Immobiliers</h1>
     
     <p class="intro-text">
-        Découvrez notre sélection exclusive de biens immobiliers à louer. Que vous cherchiez un appartement confortable, 
-        une maison spacieuse ou un bureau professionnel, nous avons la solution adaptée à vos besoins.
+       Chez <span style="color:#ff5e14 ">MAELYS-</span><span style="color: #02245b">IMO</span>, nous transformons la gestion immobilière en offrant une solution digitale tout-en-un qui allie technologie de pointe, flexibilité et efficacité. Que vous soyez propriétaire d'un bien immobilier ou gestionnaire d'une agence, notre plateforme innovante vous permet de gérer vos propriétés de manière totalement dématérialisée, sécurisée et optimisée.
     </p>
 
     <div class="services-grid">
@@ -285,6 +329,122 @@
                 <a href="{{ route('bien.terrain') }}" class="service-button">
                     Voir les offres
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section pour les propriétaires -->
+    <div class="target-section">
+        <h2 class="target-header">Pour les Propriétaires : Un Contrôle Total de Votre Patrimoine Immobilier</h2>
+        <div class="target-content">
+            <p>En tant que propriétaire, vous avez des objectifs clairs : maximiser vos revenus locatifs, réduire les périodes de vacance, et gérer efficacement votre patrimoine. <strong>MAELYS-IMO</strong> vous offre une solution qui vous permet de tout gérer à partir d'une interface simple et intuitive, à tout moment et de n'importe où.</p>
+            
+            <div class="benefit-list">
+                <div class="benefit-item">
+                    <div class="benefit-number">1</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Gestion Simplifiée des Biens</div>
+                        <p>La gestion de vos biens immobiliers n'a jamais été aussi simple. Vous pouvez mettre vos biens en location en quelques clics : créez des annonces attractives, fixez les loyers, et gérez les visites grâce à notre plateforme. Vous avez un accès immédiat à toutes les informations liées à vos biens, ce qui vous permet de suivre leur état et leur rentabilité en temps réel.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">2</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Recouvrement des Loyers Automatisé</div>
+                        <p>Fini le stress des retards de paiement ! Grâce à <strong>MAELYS-IMO</strong>, les loyers sont collectés via notre application mobile, que ce soit par Mobile Money ou en espèces auprès de vous ou de votre agent de recouvrement mandaté. En cas d'impayés, nous activons automatiquement un processus de recouvrement pour récupérer rapidement les sommes dues. Vous êtes informé à chaque étape du processus, vous offrant ainsi une tranquillité d'esprit totale.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">3</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Gestion des Contrats et Documents Juridiques</div>
+                        <p>La plateforme prend en charge la rédaction, la signature et la gestion de vos contrats de location, de manière entièrement numérique et sécurisée. Vous êtes assuré de respecter toutes les obligations légales locales grâce à des modèles de contrats personnalisés, adaptés à chaque bien et à chaque locataire.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">4</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Optimisation de Rentabilité</div>
+                        <p>Nous vous aidons à maximiser la rentabilité de vos investissements en vous fournissant des outils analytiques avancés. Grâce à notre plateforme, vous pouvez ajuster les loyers en fonction du marché local, optimiser les coûts de maintenance et réduire les périodes de vacance locative. Vous bénéficiez également de rapports détaillés sur la rentabilité de vos biens, afin de prendre des décisions éclairées pour votre portefeuille.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">5</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Suivi des Demandes d'Entretien</div>
+                        <p>Les demandes d'entretien sont traitées rapidement grâce à notre système intégré de gestion des incidents. Vous pouvez suivre l'avancement des réparations en temps réel, gérer les prestataires de services et vous assurer que vos biens sont toujours en excellent état pour vos locataires.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">6</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Sécurisation des Transactions</div>
+                        <p>Toutes les transactions sont protégées par des protocoles de sécurité de haut niveau. Vous pouvez être sûr que vos paiements, ainsi que les informations personnelles et bancaires de vos locataires, sont traités en toute sécurité.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section pour les agences immobilières -->
+    <div class="target-section">
+        <h2 class="target-header">Pour les Agences Immobilières : Gérez Votre Portefeuille avec une Solution Complète et Performante</h2>
+        <div class="target-content">
+            <p>En tant qu'agence immobilière, vous êtes confronté à la gestion de multiples biens et locataires, ce qui peut vite devenir un défi sans les bons outils. <strong>MAELYS-IMO</strong> révolutionne la gestion immobilière en vous offrant une plateforme centralisée qui vous permet de gérer efficacement tous vos biens, locataires et transactions, à partir d'un seul endroit.</p>
+            
+            <div class="benefit-list">
+                <div class="benefit-item">
+                    <div class="benefit-number">1</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Gestion Multi-Biens Centralisée</div>
+                        <p>Notre plateforme vous permet de gérer un grand nombre de biens immobiliers de manière centralisée. Publiez des annonces, gérez les contrats, suivez les paiements et gérez les demandes des locataires, le tout à partir d'un tableau de bord unique, accessible en temps réel.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">2</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Recouvrement des Loyers Automatisé et Suivi des Paiements</div>
+                        <p>Pour les agences, le recouvrement des loyers est simplifié grâce à notre système intégré. Les locataires peuvent payer leurs loyers directement via notre application, que ce soit par Mobile Money ou en espèces. En cas de non-paiement, la plateforme active automatiquement un processus de recouvrement pour garantir la réception des fonds.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">3</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Suivi des Contrats et Documents Juridiques</div>
+                        <p>Gérez tous les contrats de location de manière numérique. Notre plateforme vous permet de suivre chaque contrat, d'effectuer des renouvellements, et de gérer les documents légaux associés (avis d'expulsion, caution, etc.). De plus, nous mettons à votre disposition des outils pour rédiger des contrats conformes aux normes locales.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">4</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Rapports Détailés et Analyses</div>
+                        <p>Les agences immobilières bénéficient de rapports détaillés qui vous permettent de suivre l'état de votre portefeuille immobilier. Vous avez accès à des statistiques sur la performance de vos biens, le taux d'occupation, les loyers collectés, ainsi que les dépenses liées à l'entretien.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">5</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Optimisation des Transactions et des Relations Locataires</div>
+                        <p>Grâce à notre interface de communication intégrée, vous pouvez interagir facilement avec vos locataires. De plus, les outils de gestion de maintenance et d'entretien vous permettent de répondre rapidement aux besoins des locataires, renforçant ainsi leur satisfaction et la fidélité à votre agence.</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-number">6</div>
+                    <div class="benefit-text">
+                        <div class="benefit-title">Sécurisation et Conformité Légale</div>
+                        <p>Nous garantissons que toutes les transactions effectuées sur la plateforme sont sécurisées et conformes aux réglementations locales. Vous pouvez être sûr que vos informations et celles de vos clients sont protégées grâce à des technologies de sécurité avancées.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

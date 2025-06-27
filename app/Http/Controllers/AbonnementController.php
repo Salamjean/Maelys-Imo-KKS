@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Abonnement;
+use Barryvdh\DomPDF\Facade\PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -476,67 +477,104 @@ class AbonnementController extends Controller
         }
     }
 
- public function extend(Request $request)
-{
-    $validated = $request->validate([
-        'id' => 'required|exists:abonnements,id',
-        'months' => 'required|integer|min:1',
-        'user_type' => 'required|in:Propriétaire,Agence'
-    ]);
+    public function extend(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|exists:abonnements,id',
+            'months' => 'required|integer|min:1',
+            'user_type' => 'required|in:Propriétaire,Agence'
+        ]);
 
-    $abonnement = Abonnement::find($validated['id']);
-    
-    // Calcul du montant à ajouter en fonction du type d'utilisateur
-    $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 5000 : 10000;
-    $montantAjoute = $validated['months'] * $prixMensuel;
+        $abonnement = Abonnement::find($validated['id']);
+        
+        // Calcul du montant à ajouter en fonction du type d'utilisateur
+        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 5000 : 10000;
+        $montantAjoute = $validated['months'] * $prixMensuel;
 
-    // Mise à jour de l'abonnement
-    $abonnement->date_fin = Carbon::parse($abonnement->date_fin)
-        ->addMonths($validated['months']);
-    
-    $abonnement->montant += $montantAjoute;
-    $abonnement->save();
+        // Mise à jour de l'abonnement
+        $abonnement->date_fin = Carbon::parse($abonnement->date_fin)
+            ->addMonths($validated['months']);
+        
+        $abonnement->montant += $montantAjoute;
+        $abonnement->save();
 
-    return response()->json([
-        'success' => true,
-        'nouveau_montant' => $abonnement->montant,
-        'nouvelle_date_fin' => $abonnement->date_fin->format('d/m/Y')
-    ]);
-}
-
-public function reduce(Request $request)
-{
-    $validated = $request->validate([
-        'id' => 'required|exists:abonnements,id',
-        'months' => 'required|integer|min:1',
-        'user_type' => 'required|in:Propriétaire,Agence'
-    ]);
-
-    $abonnement = Abonnement::find($validated['id']);
-    
-    // Calcul du montant à retirer en fonction du type d'utilisateur
-    $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 5000 : 10000;
-    $montantRetire = $validated['months'] * $prixMensuel;
-
-    // Vérifier qu'on ne retire pas plus que le montant existant
-    if ($montantRetire >= $abonnement->montant) {
         return response()->json([
-            'success' => false,
-            'message' => 'Le montant à retirer est supérieur au montant actuel'
-        ], 400);
+            'success' => true,
+            'nouveau_montant' => $abonnement->montant,
+            'nouvelle_date_fin' => $abonnement->date_fin->format('d/m/Y')
+        ]);
     }
 
-    // Mise à jour de l'abonnement
-    $abonnement->date_fin = Carbon::parse($abonnement->date_fin)
-        ->subMonths($validated['months']);
-    
-    $abonnement->montant -= $montantRetire;
-    $abonnement->save();
+    public function reduce(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|exists:abonnements,id',
+            'months' => 'required|integer|min:1',
+            'user_type' => 'required|in:Propriétaire,Agence'
+        ]);
 
-    return response()->json([
-        'success' => true,
-        'nouveau_montant' => $abonnement->montant,
-        'nouvelle_date_fin' => $abonnement->date_fin->format('d/m/Y')
-    ]);
-}
+        $abonnement = Abonnement::find($validated['id']);
+        
+        // Calcul du montant à retirer en fonction du type d'utilisateur
+        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 5000 : 10000;
+        $montantRetire = $validated['months'] * $prixMensuel;
+
+        // Vérifier qu'on ne retire pas plus que le montant existant
+        if ($montantRetire >= $abonnement->montant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le montant à retirer est supérieur au montant actuel'
+            ], 400);
+        }
+
+        // Mise à jour de l'abonnement
+        $abonnement->date_fin = Carbon::parse($abonnement->date_fin)
+            ->subMonths($validated['months']);
+        
+        $abonnement->montant -= $montantRetire;
+        $abonnement->save();
+
+        return response()->json([
+            'success' => true,
+            'nouveau_montant' => $abonnement->montant,
+            'nouvelle_date_fin' => $abonnement->date_fin->format('d/m/Y')
+        ]);
+    }
+
+    public function generatePDF($id)
+    {
+        Carbon::setLocale('fr');
+        $abonnement = Abonnement::with(['proprietaire', 'agence'])->findOrFail($id);
+        
+        // Déterminer le nom de l'abonné
+        $abonneName = 'N/A';
+        if ($abonnement->proprietaire) {
+            $abonneName = $abonnement->proprietaire->name.' '.$abonnement->proprietaire->prenom ?? 'Propriétaire';
+        } elseif ($abonnement->agence) {
+            $abonneName = $abonnement->agence->name ?? 'Agence';
+        }
+        
+        // Calcul des jours restants
+        $joursRestants = now()->diffInDays($abonnement->date_fin, false);
+        $joursRestants = $joursRestants > 0 ? $joursRestants : 0;
+
+        $pdf = PDF::loadView('admin.abonnement.pdf', [
+            'abonnement' => $abonnement,
+            'abonneName' => $abonneName,
+            'joursRestants' => $joursRestants
+        ]);
+
+        return $pdf->download('abonnement-'.$abonnement->id.'.pdf');
+    }
+
+    public function abonneShow(){
+        $proprietaireId = Auth::guard('owner')->user()->code_id;
+        $abonnements = Abonnement::where('proprietaire_id', $proprietaireId)->paginate(1);
+        return view('proprietaire.abonnement.show-proprietaire',compact('abonnements'));
+    }
+    public function abonneShowAgence(){
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        $abonnements = Abonnement::where('agence_id', $agenceId)->paginate(1);
+        return view('agence.abonnement.show-agence',compact('abonnements'));
+    }
 }

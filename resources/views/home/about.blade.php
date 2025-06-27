@@ -183,12 +183,61 @@
         margin-bottom: 15px;
     }
     
+    /* Styles pour la section vidéo */
+    .videos-section {
+        margin-bottom: 60px;
+    }
+    
+    .videos-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        justify-content: center;
+    }
+    
+    .video-frame {
+        flex: 1;
+        min-width: 300px;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    
+    .video-title {
+        font-size: 22px;
+        color: #02245b;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    
+    .video-wrapper {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+        height: 0;
+        overflow: hidden;
+        border-radius: 5px;
+    }
+    
+    .video-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    
     @media (max-width: 768px) {
         .about-section {
             flex-direction: column;
         }
         
         .mission-box, .vision-box {
+            min-width: 100%;
+        }
+        
+        .video-frame {
             min-width: 100%;
         }
     }
@@ -203,8 +252,28 @@
         </div>
         <div class="about-content" style="text-align: center">
             <h2 class="section-title"><span style="font-weight: bold; color:#02245b">Maelys</span>-<span style="font-weight: bold; color:#ff5e14">Imo</span></h2>
-            <p>MAELYS-IMO est une plateforme numérique complète de gestion immobilière, conçue par <a href="https://kks-technologies.com">KKS-TECHNOLOGIES</a>. Elle permet aux propriétaires comme aux agences immobilières de gérer efficacement et en toute transparence l’ensemble de leur parc immobilier, de l’enregistrement des biens à la gestion des loyers, en passant par le suivi des locataires et la comptabilité locative.
-            Conçue pour répondre aux réalités du terrain et aux enjeux de digitalisation du secteur immobilier, MAELYS-IMO centralise toutes les opérations courantes de gestion locative sur une interface simple, intuitive et sécurisée, accessible sur ordinateur et via une application mobile dédiée aux locataires.</p>
+            <p>MAELYS-IMO est une plateforme numérique complète de gestion immobilière, conçue par <a href="https://kks-technologies.com">KKS-TECHNOLOGIES</a>. Elle permet aux propriétaires comme aux agences immobilières de gérer efficacement et en toute transparence l'ensemble de leur parc immobilier, de l'enregistrement des biens à la gestion des loyers, en passant par le suivi des locataires et la comptabilité locative.
+            Conçue pour répondre aux réalités du terrain et aux enjeux de digitalisation du secteur immobilier, MAELYS-IMO centralise toutes les opérations courantes de gestion locative sur une interface simple, intuitive et sécurisée, accessible sur ordinateur et via une application mobile dédiée aux locataires.</p>
+        </div>
+    </div>
+    
+    <!-- Nouvelle section pour les vidéos -->
+    <div class="videos-section">
+        <h2 class="section-title" style="text-align: center;">Découvrez Maelys-Imo en Vidéo</h2>
+        <div class="videos-container">
+            <div class="video-frame">
+               
+                <div class="video-wrapper">
+                    <!-- Remplacez l'URL par votre vidéo -->
+                    <iframe src="{{ asset('assets/images/preMael.mp4') }}" allowfullscreen></iframe>
+                </div>
+            </div>
+            <div class="video-frame">
+                <div class="video-wrapper">
+                    <!-- Remplacez l'URL par votre vidéo -->
+                    <iframe src="{{ asset('assets/images/suitMael.mp4') }}" allowfullscreen></iframe>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -215,7 +284,7 @@
         </div>
         <div class="vision-box">
             <h3 class="box-title"><i>👁️</i> Notre Vision</h3>
-            <p>Nous croyons en une gestion immobilière plus fluide, transparente et accessible à tous. MAELYS-IMO a été pensée pour devenir le référentiel de confiance du marché locatif, en s’adaptant aux besoins spécifiques des gestionnaires, en intégrant les technologies de paiement modernes, et en assurant un haut niveau de traçabilité et de sécurité pour toutes les parties prenantes.</p>
+            <p>Nous croyons en une gestion immobilière plus fluide, transparente et accessible à tous. MAELYS-IMO a été pensée pour devenir le référentiel de confiance du marché locatif, en s'adaptant aux besoins spécifiques des gestionnaires, en intégrant les technologies de paiement modernes, et en assurant un haut niveau de traçabilité et de sécurité pour toutes les parties prenantes.</p>
         </div>
     </div>
     
@@ -244,22 +313,22 @@
         <h2 class="section-title" style="text-align: center;">Notre Équipe</h2>
         <div class="team-grid">
             <div class="team-member">
-                <img src="{{ asset('assets/images/appartement.jpg') }}" alt="Directeur" class="member-photo">
+                <img src="{{ asset('assets/images/AvatarHom.jpg') }}" alt="Directeur" class="member-photo">
                 <div class="member-name">Jean Dupont</div>
                 <div class="member-position">Directeur</div>
             </div>
             <div class="team-member">
-                <img src="{{ asset('assets/images/maison.jpg') }}" alt="Responsable location" class="member-photo">
+                <img src="{{ asset('assets/images/AvatarHom.jpg') }}" alt="Responsable location" class="member-photo">
                 <div class="member-name">Marie Martin</div>
                 <div class="member-position">Responsable Location</div>
             </div>
             <div class="team-member">
-                <img src="{{ asset('assets/images/terrain.jpg') }}" alt="Conseiller clientèle" class="member-photo">
+                <img src="{{ asset('assets/images/AvatarHom.jpg') }}" alt="Conseiller clientèle" class="member-photo">
                 <div class="member-name">Pierre Lambert</div>
                 <div class="member-position">Conseiller Clientèle</div>
             </div>
             <div class="team-member">
-                <img src="{{ asset('assets/images/magasin.jpeg') }}" alt="Gestionnaire de biens" class="member-photo">
+                <img src="{{ asset('assets/images/AvatarHom.jpg') }}" alt="Gestionnaire de biens" class="member-photo">
                 <div class="member-name">Sophie Leroy</div>
                 <div class="member-position">Gestionnaire de Biens</div>
             </div>

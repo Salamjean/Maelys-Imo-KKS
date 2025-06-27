@@ -16,7 +16,7 @@
   <!-- inject:css -->
   <link rel="stylesheet" href="{{asset('assets/css/style.css')}}">
   <!-- endinject -->
-  <link rel="shortcut icon" href="images/favicon.png" />
+ <link rel="icon" type="image/png" href="{{ asset('assets/images/mae-imo.png') }}">
 </head>
 <body>
    <div class="container-scroller d-flex">

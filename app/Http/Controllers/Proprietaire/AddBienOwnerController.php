@@ -61,11 +61,32 @@ class AddBienOwnerController extends Controller
             'additional_images2.max' => 'La deuxième image supplémentaire ne doit pas dépasser 2 Mo',
             'additional_images3.image' => 'La troisième image supplémentaire doit être une image valide',
         ]);
+          // Génération du code unique en fonction du type
+        $typePrefix = '';
+        switch($validatedData['type']) {
+            case 'Appartement':
+                $typePrefix = 'AP';
+                break;
+            case 'Maison':
+                $typePrefix = 'MA';
+                break;
+            case 'Bureau':
+                $typePrefix = 'BU';
+                break;
+            default:
+                $typePrefix = 'AG'; // Par défaut si aucun cas ne correspond
+        }
+
+        do {
+            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            $numeroId = $typePrefix . $randomNumber;
+        } while (Bien::where('numero_bien', $numeroId)->exists());
 
         // Création d'une nouvelle instance de Bien
         $bien = new Bien();
 
         // Assignation des propriétés obligatoires
+       $bien->numero_bien = $numeroId;
         $bien->type = $validatedData['type'];
         $bien->utilisation = $validatedData['utilisation'];
         $bien->description = $validatedData['description'];

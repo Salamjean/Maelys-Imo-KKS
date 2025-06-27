@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('date_visite');
             $table->time('heure_visite');
             $table->text('message')->nullable();
+            $table->text('motif')->nullable();
             $table->string('statut')->default('en attente'); // 'en attente', 'confirmée', 'effectuée', 'annulée'
             $table->timestamps();
         });

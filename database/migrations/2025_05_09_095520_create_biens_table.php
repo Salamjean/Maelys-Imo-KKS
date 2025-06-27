@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('biens', function (Blueprint $table) {
             $table->id();
             $table->string('type');
+            $table->string('numero_bien')->unique();
             $table->string('utilisation');
             $table->string('description');
             $table->string('superficie');

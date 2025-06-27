@@ -86,5 +86,11 @@
           </ul>
         </div>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{{ route('owner.abonnement.show') }}">
+           <i class="mdi mdi-account-multiple-minus menu-icon"></i>
+          <span class="menu-title">Mon abonnement</span>
+        </a>
+      </li>
     </ul>
   </nav>

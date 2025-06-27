@@ -6,7 +6,7 @@
     <title>Connexion - Locataire</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('login/assets/img/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('assets/images/mae-imo.png') }}">
     
     <!-- CSS -->
     <link rel="stylesheet" href="{{ asset('login/assets/css/bootstrap.min.css') }}">

@@ -431,6 +431,7 @@ private function getAbonnementMessage($abonnement): string
         'contact' => 'required|string|min:10',
         'commune' => 'required|string|max:255',
         'rib' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
+        'diaspora' => 'nullable|string',
         'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
     ], [
         'name.required' => 'Le nom du proprietaire est obligatoire.',
@@ -506,9 +507,8 @@ private function getAbonnementMessage($abonnement): string
             'choix_paiement' => 'RIB',
             'password' => Hash::make('password'),
             'profil_image' => $profileImagePath,
-            // 'gestion' => $request->has('gestion') && $request->gestion ? 'agence' : 'proprietaire',
+            'diaspora' => $request->input('diaspora', '0') === '1' ? 'Oui' : 'Non',
             'gestion' => 'proprietaire',
-            
         ];
 
         Log::debug('Données du propriétaire', $ownerData);
@@ -607,6 +607,7 @@ private function getAbonnementMessage($abonnement): string
             'rib' => 'nullable|max:255',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'gestion' => 'nullable|boolean',
+            'diaspora' => 'nullable|boolean',
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
             'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -643,6 +644,10 @@ private function getAbonnementMessage($abonnement): string
             $gestionParAgence = $request->has('gestion') && $request->gestion;
             $gestionValue = $gestionParAgence ? 'agence' : 'proprietaire';
 
+            // Gestion du type de gestion (par agence ou par propriétaire)
+            $gestionDiaspora = $request->has('diaspora') && $request->diaspora;
+            $gestionDisporaValue = $gestionDiaspora ? 'Oui' : 'Non';
+
             // Mise à jour des informations
             $proprietaire->update([
                 'name' => $validatedData['name'],
@@ -651,6 +656,7 @@ private function getAbonnementMessage($abonnement): string
                 'contact' => $validatedData['contact'],
                 'commune' => $validatedData['commune'],
                 'gestion' => $gestionValue,
+                'diaspora' => $gestionDisporaValue,
                 'profile_image' => $validatedData['profile_image'] ?? $proprietaire->profile_image
             ]);
 

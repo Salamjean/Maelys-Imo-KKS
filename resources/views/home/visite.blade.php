@@ -85,35 +85,59 @@
                                         <input type="text" class="form-control" id="nom" name="nom" placeholder="Votre nom" required>
                                         <label for="nom">Nom complet</label>
                                     </div>
+                                    @error('nom')
+                                    <div class="alert alert-danger mt-2">
+                                        {{ $message }}
+                                    @enderror
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="email" class="form-control" id="email" name="email" placeholder="Votre email" required>
                                         <label for="email">Email</label>
                                     </div>
+                                    @error('email')
+                                    <div class="alert alert-danger mt-2">
+                                        {{ $message }}
+                                    @enderror
                                 </div>
                                 <div class="col-md-12">
                                     <div class="form-floating">
                                         <input type="tel" class="form-control" id="telephone" name="telephone" placeholder="Votre téléphone" required>
                                         <label for="telephone">Téléphone</label>
                                     </div>
+                                    @error('telephone')
+                                    <div class="alert alert-danger mt-2">
+                                        {{ $message }}  
+                                    @enderror
                                 </div>
                                 <div class="col-12">
                                     <div class="form-floating">
                                         <textarea class="form-control" placeholder="Message supplémentaire" id="message" name="message" style="height: 100px"></textarea>
                                         <label for="message">Message (optionnel)</label>
                                     </div>
+                                    @error('message')
+                                    <div class="alert alert-danger mt-2">
+                                        {{ $message }}
+                                    @enderror
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="date" class="form-control" id="date_visite" name="date_visite" min="{{ date('Y-m-d') }}" required>
                                         <label for="date_visite">Date souhaitée</label>
                                     </div>
+                                    @error('date_visite')
+                                    <div class="alert alert-danger mt-2">
+                                        {{ $message }}
+                                    @enderror
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="time" class="form-control" id="heure_visite" name="heure_visite" min="08:00" max="18:00" required>
                                         <label for="heure_visite">Heure souhaitée</label>
+                                        @error('heure_visite')
+                                        <div class="alert alert-danger mt-2">
+                                            {{ $message }}
+                                        @enderror
                                     </div>
                                 </div>
                                 <div class="col-12">

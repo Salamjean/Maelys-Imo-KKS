@@ -127,6 +127,7 @@
                         data-bien-prix="{{ $bien->prix }}"
                         data-bien-avance="{{ $bien->avance }}"
                         data-bien-caution="{{ $bien->caution }}"
+                        data-bien-frais="{{ $bien->frais }}"
                         data-bien-agence="{{ $bien->agence->name ?? 'Maelys-imo'}}"
                         data-bien-contact="{{ $bien->agence->contact ?? '+225 0798278981'}}"
                         data-bien-date="{{ $bien->date_fixe}}"
@@ -182,6 +183,7 @@
                 prix: $(this).data('bien-prix'),
                 avance: $(this).data('bien-avance'),
                 caution: $(this).data('bien-caution'),
+                frais: $(this).data('bien-frais'),
                 agence: $(this).data('bien-agence'),
                 contact: $(this).data('bien-contact'),
                 date: $(this).data('bien-date'),
@@ -211,12 +213,12 @@
                     <div class="row">
                         <div class="col-md-6">
                             <p><i class="fa fa-ruler-combined text-primary me-2"></i> Superficie: <strong>${bien.superficie} m²</strong></p>
-                            <p><i class="fa fa-bed text-primary me-2"></i> Chambres: <strong>${bien.chambres}</strong></p>
-                            <p><i class="fa fa-bath text-primary me-2"></i> Toilettes: <strong>${bien.toilettes}</strong></p>
+                            <p><i class="fa fa-bed text-primary me-2"></i> Chambre: <strong>${bien.chambres}</strong></p>
+                            <p><i class="fa fa-bath text-primary me-2"></i> Toilette: <strong>${bien.toilettes}</strong></p>
                         </div>
                         <div class="col-md-6">
-                            <p><i class="fa fa-car text-primary me-2"></i> Garage: <strong>${bien.garage}</strong></p>
-                            <p><i class="fa fa-calendar-alt text-primary me-2"></i> Date fixe de loyer: <strong>${bien.date} des mois</strong> </p>
+                            <p><i class="fa fa-car text-primary me-2"></i> Garage: <strong>${bien.garage ?? 'Non'}</strong></p>
+                            <p><i class="fa fa-calendar-alt text-primary me-2"></i> Date fixe de loyer: <strong>${bien.date} de chaque mois</strong> </p>
                             <p><i class="fa fa-money-bill-wave text-primary me-2"></i> Loyer mensuel: <strong>${formatPrix(bien.prix)}</strong></p>
                             <p><i class="fa fa-home text-primary me-2"></i> Agence: <strong>${bien.agence}</strong></p>
                             <p><i class="fa fa-phone text-primary me-2"></i> Contact: <strong>${bien.contact}</strong></p>
@@ -224,11 +226,12 @@
                     </div>
                     
                     <div class="row">
-                        ${bien.avance || bien.caution ? `
+                        ${bien.avance || bien.caution || bien.frais ? `
                         <div class="alert alert-light mt-3 col-6">
                             <h6 class="text-primary">Conditions:</h6>
                             ${bien.avance ? `<p><i class="fa fa-hand-holding-usd text-primary me-2"></i> Avance: <strong>${(bien.avance)} Mois</strong></p>` : ''}
                             ${bien.caution ? `<p><i class="fa fa-lock text-primary me-2"></i> Caution: <strong>${(bien.caution)} Mois</strong></p>` : ''}
+                            ${bien.frais ? `<p><i class="fa fa-lock text-primary me-2"></i> frais d'agence: <strong>${(bien.frais)} Mois</strong></p>` : ''}
                         </div>
                         <div class="alert alert-light mt-3 col-6">
                             <h6 class="text-primary">Description:</h6>
@@ -241,7 +244,7 @@
             
             // Affichage de la popup
             Swal.fire({
-                title: 'Détails du bien',
+                title: 'Descriptions du bien',
                 html: htmlContent,
                 width: '800px',
                 showCloseButton: true,

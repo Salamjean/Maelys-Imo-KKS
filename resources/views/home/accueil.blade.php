@@ -10,7 +10,7 @@
     <meta content="" name="description">
 
     <!-- Favicon -->
-    <link href="img/favicon.ico" rel="icon">
+    <link rel="icon" type="image/png" href="{{ asset('assets/images/mae-imo.png') }}">
 
     <!-- Google Web Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -239,6 +239,24 @@
         });
     });
 </script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+     @if(session('success'))
+        Swal.fire({
+            title: 'Succès !',
+            text: '{{ session('success') }}',
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK',
+            allowOutsideClick: false
+        });
+        @endif
+</script>
+   
+    
     <!-- Template Javascript -->
     <script src="{{ asset('home/js/main.js') }}"></script>
 </body>

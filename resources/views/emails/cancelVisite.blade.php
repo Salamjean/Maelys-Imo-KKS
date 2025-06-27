@@ -71,6 +71,7 @@
                 <h3 style="margin-top: 0; color: #d9534f;">{{ $bien->type }} à {{ $bien->commune }}</h3>
                 @if($bien->prix)
                     <p><strong>Prix :</strong> {{ number_format($bien->prix, 0, ',', ' ') }} Fcfa</p>
+                    <p><strong>Motif : {{ $visite->motif }}</strong></p>
                 @endif
             </div>
             
@@ -87,12 +88,49 @@
         </div>
         
         <div class="footer">
-            <p>© {{ date('Y') }} Votre Agence Immobilière. Tous droits réservés.</p>
-            <p>
-                <a href="tel:+33123456789" style="color: #02245b;">01 23 45 67 89</a> | 
-                <a href="mailto:contact@votreagence.com" style="color: #02245b;">contact@votreagence.com</a>
+            <p>© {{ date('Y') }} 
+                @if($bien->agence_id)
+                    {{ $bien->agence->name ?? 'Votre Agence Immobilière' }}
+                @elseif($bien->proprietaire_id)
+                    @if($bien->proprietaire->gestion == 'agence')
+                        Maelys-imo
+                    @else
+                        {{ $bien->proprietaire->name.' '.$bien->proprietaire->prenom ?? 'Maelys-imo' }}
+                    @endif
+                @else
+                    Maelys-imo
+                @endif
+                . Tous droits réservés.
             </p>
-            <p>{{ config('app.name') }} - {{ config('app.address') }}</p>
+            <p>
+                <a href="tel:+33123456789" style="color:#5cb85c;text-decoration:none;">
+                    @if($bien->agence_id)
+                        {{ $bien->agence->contact ?? 'Votre Agence Immobilière' }}
+                            @elseif($bien->proprietaire_id)
+                                @if($bien->proprietaire->gestion == 'agence')
+                                    +225 27 22 36 50 27
+                                @else
+                                    {{ $bien->proprietaire->contact ?? '+225 27 22 36 50 27' }}
+                                @endif
+                            @else
+                                +225 27 22 36 50 27
+                    @endif
+                </a> | 
+                <a href="#" style="color:#5cb85c;text-decoration:none;">
+                    @if($bien->agence_id)
+                        {{ $bien->agence->email ?? 'contact@maelysimo.com' }}
+                            @elseif($bien->proprietaire_id)
+                                @if($bien->proprietaire->gestion == 'agence')
+                                    contact@maelysimo.com
+                                @else
+                                    {{ $bien->proprietaire->email ?? 'contact@maelysimo.com' }}
+                                @endif
+                            @else
+                                contact@maelysimo.com
+                    @endif
+                </a>
+            </p>
+            <p>Pour toute question, n'hésitez pas à nous contacter.</p>
         </div>
     </div>
 </body>

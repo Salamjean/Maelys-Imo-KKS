@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use Illuminate\Support\Facades\Storage;
 
 class PaymentController extends Controller
 {
@@ -508,21 +511,60 @@ public function verifyCashCodeAgent(Request $request)
     ]);
 }
 
-    public function generateReceipt(Locataire $locataire, Paiement $paiement)
+public function generateReceipt( Paiement $paiement)
 {
-    // Vérifier que l'utilisateur a le droit d'accéder à ce reçu
-   \Carbon\Carbon::setLocale('fr');
+    \Carbon\Carbon::setLocale('fr');
+
+    $locataire = Auth::guard('locataire')->user() ?? $paiement->locataire;
+    // 1. Contenu du QR Code formaté de manière lisible
+    $qrContent = "QUITTANCE DE LOYER\n";
+    $qrContent .= "---------------\n";
+    $qrContent .= "Locataire: {$locataire->name} {$locataire->prenom}\n";
+    $qrContent .= "Loyer : ".number_format($paiement->montant, 0, ',', ' ')." FCFA\n";
+    $qrContent .= "Mois couvert: ".\Carbon\Carbon::parse($paiement->mois_couvert)->format('m/Y')."\n";
+    $qrContent .= "Date de paiement : ".\Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y')."\n";
+    $qrContent .= "Méthode de paiement: {$paiement->methode_paiement}\n";
+    if ($paiement->bien->agence_id) {
+    $qrContent .= "Agence: ".($paiement->bien->agence->name ?? 'Maelys-imo')."\n";
+    } elseif ($paiement->bien->proprietaire_id) {
+        if ($paiement->bien->proprietaire->gestion == 'agence') {
+            $qrContent .= "Agence: Maelys-imo\n";
+        } else {
+            $qrContent .= "Propriétaire: ".($paiement->bien->proprietaire->name.' '.$paiement->bien->proprietaire->prenom ?? 'Maelys-imo')."\n";
+        }
+    } else {
+        $qrContent .= "Agence: Maelys-imo\n";
+    }
+    $qrContent .= "Date d'emission : ".\Carbon\Carbon::parse($paiement->create_at)->format('d/m/Y');
+
+    // 2. Configuration du QR Code
+    $options = new QROptions([
+        'version'    => 10,
+        'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+        'eccLevel'   => QRCode::ECC_L,
+        'scale'      => 5,
+    ]);
+
+    // ... le reste de votre méthode reste identique ...
+    $qrCode = (new QRCode($options))->render($qrContent);
+
+    // Sauvegarde et génération du PDF
+    $qrCodeFileName = 'qrcode_paiement_' . $paiement->id . '.png';
+    $qrCodePath = 'public/paiements/qrcodes/' . $qrCodeFileName;
+    Storage::put($qrCodePath, $qrCode);
+
     $data = [
-        'paiement' => $paiement,
-        'locataire' => $paiement->locataire,
-        'bien' => $paiement->bien,
-        'date_emission' => Carbon::now()->format('d/m/Y'),
-        'reference' => 'REC-' . strtoupper(Str::random(8)) . '-' . $paiement->id
+        'paiement'      => $paiement,
+        'locataire'     => $locataire,
+        'bien'          => $paiement->bien,
+        'date_emission' => now()->format('d/m/Y'),
+        'reference'     => 'REC-' . strtoupper(Str::random(8)) . '-' . $paiement->id,
+        'qrCode'        => $qrCode,
+        'qrCodePath'    => Storage::url($qrCodePath),
     ];
 
-    $pdf = Pdf::loadView('locataire.paiements.receipt', $data);
-    
-    return $pdf->stream('recu-paiement-' . $paiement->id . '.pdf');
+    return Pdf::loadView('locataire.paiements.receipt', $data)
+              ->stream('recu-paiement-' . $paiement->id . '.pdf');
 }
 
 public function getMontantLoyer(Request $request)

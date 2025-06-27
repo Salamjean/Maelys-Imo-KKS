@@ -105,8 +105,18 @@ class VisiteController extends Controller
             'telephone' => 'required|string|max:20',
             'date_visite' => 'required|date|after_or_equal:today',
             'heure_visite' => 'required',
-            'message' => 'nullable|string',
+            'message' => 'nullable|string|max:50',
             'statut' => 'in:en attente,confirmée,effectuée,annulée'
+        ],[
+            'bien_id.required' => 'Le bien est obligatoire.',
+            'bien_id.exists' => 'Le bien sélectionné n\'existe pas.',
+            'nom.required' => 'Le nom est obligatoire.',
+            'email.required' => 'L\'email est obligatoire.',
+            'telephone.required' => 'Le téléphone est obligatoire.',
+            'date_visite.required' => 'La date de visite est obligatoire.',
+            'date_visite.after_or_equal' => 'La date de visite doit être aujourd\'hui ou une date future.',
+            'heure_visite.required' => 'L\'heure de visite est obligatoire.',
+            'message.max' => 'Le message ne peut pas dépasser 50 caractères.'
         ]);
 
         // Créer la visite
@@ -118,7 +128,7 @@ class VisiteController extends Controller
         // Envoyer un email de confirmation (optionnel)
         Mail::to($validated['email'])->send(new VisiteConfirmation($visite, $bien));
 
-        return redirect()->back()->with('success', 'Votre demande de visite a été enregistrée avec succès. Nous vous contacterons pour confirmation.');
+        return redirect()->route('home')->with('success', 'Votre demande de visite a été enregistrée avec succès. Nous vous contacterons pour confirmation.');
     }
 
     public function confirm(Visite $visite)
@@ -144,9 +154,10 @@ class VisiteController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function cancel(Visite $visite)
+    public function cancel(Visite $visite, Request $request)
     {
         $visite->statut = 'annulée';
+        $visite->motif = $request->motif; // Sauvegarder le motif
         $visite->save();
 
         // Envoyer un email d'annulation 
@@ -178,20 +189,23 @@ class VisiteController extends Controller
     $validated = $request->validate([
         'date_visite' => 'required|date',
         'heure_visite' => 'required',
+        'motif' => 'required',
     ]);
 
     // Sauvegarder l'ancienne date/heure pour l'email
     $oldDate = $visite->date_visite;
     $oldTime = $visite->heure_visite;
+    $motif = $visite->motif;
 
     // Mettre à jour la date et l'heure et confirmer la visite
     $visite->date_visite = $validated['date_visite'];
     $visite->heure_visite = $validated['heure_visite'];
+    $visite->motif = $validated['motif'];
     $visite->statut = 'confirmée';
     $visite->save();
 
     // Envoyer un email au client
-    $this->sendVisitUpdateEmail($visite, $oldDate, $oldTime);
+    $this->sendVisitUpdateEmail($visite, $oldDate, $oldTime, $motif);
 
     return response()->json(['success' => true]);
 }
@@ -200,20 +214,23 @@ class VisiteController extends Controller
     $validated = $request->validate([
         'date_visite' => 'required|date',
         'heure_visite' => 'required',
+        'motif' => 'required',
     ]);
 
     // Sauvegarder l'ancienne date/heure pour l'email
     $oldDate = $visite->date_visite;
     $oldTime = $visite->heure_visite;
+    $motif = $visite->motif;
 
     // Mettre à jour la date et l'heure et confirmer la visite
     $visite->date_visite = $validated['date_visite'];
     $visite->heure_visite = $validated['heure_visite'];
+    $visite->motif = $validated['motif'];
     $visite->statut = 'confirmée';
     $visite->save();
 
     // Envoyer un email au client
-    $this->sendVisitUpdateEmail($visite, $oldDate, $oldTime);
+    $this->sendVisitUpdateEmail($visite, $oldDate, $oldTime, $motif);
 
     return response()->json(['success' => true]);
 }
@@ -223,20 +240,23 @@ class VisiteController extends Controller
     $validated = $request->validate([
         'date_visite' => 'required|date',
         'heure_visite' => 'required',
+        'motif' => 'required',
     ]);
 
     // Sauvegarder l'ancienne date/heure pour l'email
     $oldDate = $visite->date_visite;
     $oldTime = $visite->heure_visite;
+    $motif = $visite->motif;
 
     // Mettre à jour la date et l'heure et confirmer la visite
     $visite->date_visite = $validated['date_visite'];
     $visite->heure_visite = $validated['heure_visite'];
+    $visite->motif = $validated['motif'];
     $visite->statut = 'confirmée';
     $visite->save();
 
     // Envoyer un email au client
-    $this->sendVisitUpdateEmail($visite, $oldDate, $oldTime);
+    $this->sendVisitUpdateEmail($visite, $oldDate, $oldTime, $motif);
 
     return response()->json(['success' => true]);
 }
@@ -247,6 +267,7 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
         'subject' => 'Modification de votre visite',
         'to' => $visite->email,
         'nom' => $visite->nom,
+        'motif' => $visite->motif ?? 'Aucun motif fourni',
         'old_date' => \Carbon\Carbon::parse($oldDate)->format('d/m/Y'),
         'old_time' => $oldTime,
         'new_date' => \Carbon\Carbon::parse($visite->date_visite)->format('d/m/Y'),
@@ -264,16 +285,22 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
     return view('admin.visites.allList', compact('visites'));
  }
 
-  public function adminConfirm(Visite $visite)
-    {
-        $visite->statut = 'confirmée';
-        $visite->save();
-
-        // Envoyer un email de confirmation
-        Mail::to($visite->email)->send(new ConfirmVisite($visite, $visite->bien));
-
-        return response()->json(['success' => true]);
+ public function adminConfirm(Visite $visite, Request $request)
+{
+    $visite->statut = 'confirmée';
+    
+    // Si un motif est fourni (lors d'un changement de date)
+    if ($request->has('motif')) {
+        $visite->motif = $request->motif;
     }
+    
+    $visite->save();
+
+    // Envoyer un email de confirmation
+    Mail::to($visite->email)->send(new ConfirmVisite($visite, $visite->bien));
+
+    return response()->json(['success' => true]);
+}
 
 
     public function adminMarkAsDone(Visite $visite)
@@ -287,16 +314,17 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
         return response()->json(['success' => true]);
     }
 
-    public function adminCancel(Visite $visite)
-    {
-        $visite->statut = 'annulée';
-        $visite->save();
+   public function adminCancel(Visite $visite, Request $request)
+{
+    $visite->statut = 'annulée';
+    $visite->motif = $request->motif; // Sauvegarder le motif
+    $visite->save();
 
-        // Envoyer un email d'annulation 
-        Mail::to($visite->email)->send(new CancelVisite($visite, $visite->bien));
+    // Envoyer un email d'annulation 
+    Mail::to($visite->email)->send(new CancelVisite($visite, $visite->bien));
 
-        return response()->json(['success' => true]);
-    }
+    return response()->json(['success' => true]);
+}
 
     public function adminShow(Visite $visite)
     {
@@ -338,9 +366,10 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
         return response()->json(['success' => true]);
     }
 
-    public function ownerCancel(Visite $visite)
+    public function ownerCancel(Visite $visite, Request $request)
     {
         $visite->statut = 'annulée';
+        $visite->motif = $request->motif; // Sauvegarder le motif
         $visite->save();
 
         // Envoyer un email d'annulation 

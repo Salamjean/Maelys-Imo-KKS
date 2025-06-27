@@ -80,7 +80,7 @@ Route::get('/', function (Request $request) {
         ->sortByDesc('created_at')
         ->take(10);
     return view('home.accueil', compact('biens', 'appartements', 'maisons', 'terrains','derniersPartenaires'));
-});
+})->name('home');
 
 Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/dashboard',[AdminController::class, 'dashboard'])->name('admin.dashboard');
@@ -163,8 +163,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::post('/abonnements/deactivate', [AbonnementController::class, 'deactivate'])->name('abonnements.deactivate');
     Route::post('/abonnements/extend', [AbonnementController::class, 'extend'])->name('abonnements.extend');
     Route::post('/abonnements/reduce', [AbonnementController::class, 'reduce'])->name('abonnements.reduce');
+    
 });
-   
+
+Route::get('/abonnements/pdf/{id}', [AbonnementController::class, 'generatePDF'])->name('abonnements.pdf');
 //routes de gestion des agences
 Route::middleware('auth:agence')->prefix('agence')->group(function () {
     Route::get('/dashboard',[AgenceController::class, 'dashboard'])->name('agence.dashboard');
@@ -228,6 +230,9 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
         Route::delete('/admin/owner/{id}', [ProprietaireController::class, 'destroy'])->name('owner.destroy');
     });
 
+    //routes de gestion des abonnements par l'agence
+    Route::get('/abonnement/show',[AbonnementController::class, 'abonneShowAgence'])->name('agence.abonnement.show');
+
     //Les routes pour la gestion des ribs du proprietaire 
     Route::prefix('rib')->group(function(){
         Route::get('/createrib',[RibController::class, 'createAgence'])->name('rib.create.agence');
@@ -249,8 +254,6 @@ Route::prefix('locataire/{locataire}/paiements')->group(function() {
     Route::get('/', [PaymentController::class, 'index'])->name('locataire.paiements.index');
     Route::get('create', [PaymentController::class, 'create'])->name('locataire.paiements.create');
     Route::post('/', [PaymentController::class, 'store'])->name('locataire.paiements.store');
-    
-    
 });
 
 Route::post('paiements/check-status', [PaymentController::class, 'checkPaymentStatus'])
@@ -323,6 +326,8 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
         Route::put('/locataires/{locataire}', [LocataireOwnerController::class, 'update'])->name('locataire.update.owner');
     });
 
+    // routes de gestiond des abonnements par le propriétaire
+    Route::get('/abonnement/show',[AbonnementController::class, 'abonneShow'])->name('owner.abonnement.show');
      // Routes pour la gestion des états des lieux par l'agence 
     Route::get('/locataires/{locataire}/etat', [EtatLieuController::class, 'etatOwner'])->name('locataire.etat.owner');
     Route::post('/locataires/{locataire}/etat', [EtatLieuController::class, 'storeOwner'])->name('locataire.etatstore.owner');

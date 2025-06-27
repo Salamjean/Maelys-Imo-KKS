@@ -82,6 +82,7 @@
             <thead style="background-color: #02245b; color: white;">
                 <tr class="text-center">
                     <th>Appartient à</th>
+                    <th>Numéro du bien</th>
                     <th>Type</th>
                     <th>Superficie (m²)</th>
                     <th>Localisation</th>
@@ -114,6 +115,7 @@
                     @endphp
                     
                     <tr class="{{ $rowClass }} text-center pt-3" style="height: 30px">
+                      
                        <td>
                             <strong>
                                 @if($bien->proprietaire)
@@ -123,6 +125,7 @@
                                 @endif
                             </strong>
                         </td>
+                         <td ><strong>{{ $bien->numero_bien }}</strong></td>
                         <td ><strong>{{ $bien->type }}</strong></td>
                         <td>{{ $bien->superficie }}</td>
                         <td>{{ $bien->commune }}</td>
@@ -177,7 +180,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="17" class="text-center py-4">
+                        <td colspan="18" class="text-center py-4">
                             <div class="alert alert-info">
                                 Aucun bien immobilier enregistré pour le moment.
                             </div>

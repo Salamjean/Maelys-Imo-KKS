@@ -100,7 +100,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>type d'utilisation <span style="color: red">*</span></label>
+                                <label>Type d'utilisation <span style="color: red">*</span></label>
                                 <select class="form-control" name="utilisation" style="border: 1px solid black; border-radius: 5px;">
                                     <option value="Habitation">Habitation</option>
                                     <option value="Bureau">Bureau</option>
@@ -192,7 +192,15 @@
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label>Date de paiement <span style="color: red">*</span></label>
-                                <input type="text" class="form-control" name="disponibilite" value="{{ old('disponibilite') }}" style="border: 1px solid black; border-radius: 5px;">
+                                <input type="number" 
+                                    class="form-control" 
+                                    name="disponibilite" 
+                                    min="1" 
+                                    max="31" 
+                                    placeholder="Jour (1-31)" 
+                                    value="{{ old('disponibilite') }}" 
+                                    style="border: 1px solid black; border-radius: 5px;"
+                                    required>
                                 @error('disponibilite')
                                     <div class="alert alert-danger">{{ $message }}</div>
                                 @enderror

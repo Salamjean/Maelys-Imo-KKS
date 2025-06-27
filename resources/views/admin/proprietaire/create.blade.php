@@ -79,22 +79,22 @@
                     </div>
                 </div>
 
-                {{-- <!-- Section 3: Gestion des biens -->
+                <!-- Section 3: Diaspora des biens -->
                 <div class="row mt-3">
                     <div class="col-md-12">
                         <div class="form-group">
                             <div class="form-check">
                                 <label class="form-check-label">
-                                    <input type="checkbox" class="form-check-input" name="gestion" value="1" {{ old('gestion') ? 'checked' : '' }}>
-                                    Gestion des biens par l'agence (si coché, l'agence gèrera les biens. Si non coché, le propriétaire gèrera lui-même ses biens)
+                                    Le propriétaire à t-il des agents de gestions ? (si oui coché la case)
+                                    <input type="checkbox" class="form-check-input" name="diaspora" value="1" {{ old('diaspora') == '1' ? 'checked' : '' }}>
                                 </label>
                             </div>
-                            @error('gestion')
+                            @error('diaspora')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
-                </div> --}}
+                </div>
 
                 <!-- Boutons de soumission -->
                 <div class="row mt-4">
