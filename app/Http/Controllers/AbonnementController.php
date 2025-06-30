@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Abonnement;
 use App\Models\Visite;
-use Barryvdh\DomPDF\Facade\PDF;
+use PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
