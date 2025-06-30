@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bien;
 use App\Models\Locataire;
 use App\Models\Proprietaire;
+use App\Models\Visite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +15,16 @@ class BienController extends Controller
 {
     public function index()
     {
+          // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         $adminId = Auth::guard('admin')->user()->id;
 
         // Récupérer les biens qui répondent à l'une ou l'autre condition
@@ -28,34 +39,58 @@ class BienController extends Controller
                     ->where('status', '!=', 'Loué')
                     ->paginate(4);
 
-        return view('admin.bien.index', compact('biens'));
+        return view('admin.bien.index', compact('biens', 'pendingVisits'));
     }
     public function indexAgence()
     {
         $agence_id = Auth::guard('agence')->user()->code_id;
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         // Récupération des biens publier par l'agence
         $biens = Bien::with('proprietaire')
                     ->where('status','!=', 'Loué')
                     ->where('agence_id', $agence_id)
                     ->paginate(4);
-        return view('agence.bien.index', compact('biens'));
+        return view('agence.bien.index', compact('biens', 'pendingVisits'));
     }
 
     public function create()
     {
+          // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         // Récupération de l'agence connectée
         $adminId = Auth::guard('admin')->user()->id;
         $proprietaires = Proprietaire::whereNull('agence_id')
                                     ->where('gestion', 'agence')
                                 ->get();
-        return view('admin.bien.create', compact('proprietaires'));
+        return view('admin.bien.create', compact('proprietaires', 'pendingVisits'));
     }
     public function createAgence()
     {
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $agence_id = Auth::guard('agence')->user()->code_id;
         $proprietaires = Proprietaire::where('agence_id', $agence_id)
                                 ->get();
-        return view('agence.bien.create', compact('proprietaires'));
+        return view('agence.bien.create', compact('proprietaires', 'pendingVisits'));
     }
 
 public function store(Request $request)
@@ -313,16 +348,33 @@ public function storeAgence(Request $request)
 
 public function edit($id)
 {
+      // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
     $bien = Bien::findOrFail($id);
      $proprietaires = Proprietaire::whereNull('agence_id')
                                     ->where('gestion', 'agence')
                                 ->get();
-    return view('admin.bien.edit', compact('bien','proprietaires'));
+    return view('admin.bien.edit', compact('bien','proprietaires', 'pendingVisits'));
 }
 public function editAgence($id)
 {
+    $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
     $bien = Bien::findOrFail($id);
-    return view('agence.bien.edit', compact('bien'));
+    return view('agence.bien.edit', compact('bien', 'pendingVisits'));
 }
 
 public function update(Request $request, $id)
@@ -556,22 +608,39 @@ public function updateAgence(Request $request, $id)
 public function rented(){
     // Récupération de l'agence connectée
     $agence_id = Auth::guard('agence')->user()->code_id;
+    $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
     // Récupération des biens loués
     $biens = Bien::with('proprietaire')
             ->where('status', 'Loué')
             ->where('agence_id', $agence_id)
             ->paginate();
-    return view('agence.bien.rented', compact('biens'));
+    return view('agence.bien.rented', compact('biens', 'pendingVisits'));
 }
 
 public function rentedAdmin(){
+      // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
     // Vérification si l'utilisateur est connecté en tant qu'agence
         $adminId = Auth::guard('admin')->user()->id;
     // Récupération des biens loués
     $biens = Bien::whereNull('agence_id')
                 ->whereNull('proprietaire_id')
                 ->where('status', 'Loué') ->paginate();
-    return view('admin.bien.rented', compact('biens'));
+    return view('admin.bien.rented', compact('biens', 'pendingVisits'));
 }
 
 public function destroy($id)

@@ -27,12 +27,29 @@ class VisiteController extends Controller
                                 });
                         })
                         ->paginate(10);
-        
-        return view('admin.visites.index', compact('visites'));
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
+        return view('admin.visites.index', compact('visites', 'pendingVisits'));
     }    
     public function ownerIndex()
     {
-        $ownerId = Auth::guard('owner')->user()->code_id;
+        
+         $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $visites = Visite::where('statut', '!=', 'effectuée')
                         ->where('statut', '!=', 'annulée')
                         ->whereHas('bien', function ($query) use ($ownerId) {
@@ -40,22 +57,34 @@ class VisiteController extends Controller
                         })
                         ->paginate(10);
         
-        return view('proprietaire.visites.index', compact('visites'));
+        return view('proprietaire.visites.index', compact('visites', 'pendingVisits'));
     }    
     public function indexAgence()
     {
         $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $visites = Visite::where('statut', '!=', 'effectuée')
                         ->where('statut', '!=', 'annulée')
                         ->whereHas('bien', function ($query) use ($agenceId) {
                             $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
                         })
                         ->paginate(10);
-        return view('agence.visites.index', compact('visites'));
+        return view('agence.visites.index', compact('visites', 'pendingVisits'));
     }
     public function done()
     {
         $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         
         $visites = Visite::where(function($query) {
                         $query->where('statut', 'effectuée')
@@ -66,11 +95,18 @@ class VisiteController extends Controller
                     })
                     ->paginate(10);
         
-        return view('agence.visites.done', compact('visites'));
+        return view('agence.visites.done', compact('visites', 'pendingVisits'));
     }
     public function ownerDone()
     {
-        $ownerId = Auth::guard('owner')->user()->code_id;
+         $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         
         $visites = Visite::where(function($query) {
                         $query->where('statut', 'effectuée')
@@ -81,10 +117,20 @@ class VisiteController extends Controller
                     })
                     ->paginate(10);
         
-        return view('proprietaire.visites.done', compact('visites'));
+        return view('proprietaire.visites.done', compact('visites', 'pendingVisits'));
     }
     public function doneAdmin()
     {
+          // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         $adminId = Auth::guard('admin')->user()->id;
         $visites = Visite::whereHas('bien', function ($query) {
                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
@@ -94,7 +140,7 @@ class VisiteController extends Controller
                             });
                         })
                         ->paginate(10);
-        return view('admin.visites.done', compact('visites'));
+        return view('admin.visites.done', compact('visites', 'pendingVisits'));
     }
     public function store(Request $request)
     {
@@ -281,8 +327,18 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
 
 //fonction des visites gerer par l'administrateur 
  public function allVisit(){
+       // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
     $visites = Visite::paginate(10);
-    return view('admin.visites.allList', compact('visites'));
+    return view('admin.visites.allList', compact('visites', 'pendingVisits'));
  }
 
  public function adminConfirm(Visite $visite, Request $request)

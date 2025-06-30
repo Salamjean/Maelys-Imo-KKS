@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rib;
+use App\Models\Visite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,8 +15,16 @@ class RibController extends Controller
     }
     public function create()
     {
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $ribs = Rib::where('proprietaire_id', Auth::guard('owner')->user()->code_id)->get();
-        return view('proprietaire.rib.create', compact('ribs'));
+        return view('proprietaire.rib.create', compact('ribs', 'pendingVisits'));
     }
 
     public function store(Request $request)
@@ -52,8 +61,15 @@ class RibController extends Controller
     //les routes pour les RIBs par l'agence
     public function createAgence()
     {
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $ribs = Rib::where('proprietaire_id', Auth::guard('agence')->user()->code_id)->get();
-        return view('agence.rib.create', compact('ribs'));
+        return view('agence.rib.create', compact('ribs', 'pendingVisits'));
     }
 
     public function storeAgence(Request $request)

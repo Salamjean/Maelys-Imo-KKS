@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Admin;
 use App\Models\Bien;
 use App\Models\Proprietaire;
+use App\Models\Visite;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -23,7 +24,16 @@ class AdminController extends Controller
         $totalMagasins = Bien::whereNull('agence_id')
                 ->whereNull('proprietaire_id')
                 ->where('type', 'Magasin')->count();
-        
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         // Statistiques par période
         $stats = [
             'day' => [
@@ -74,7 +84,8 @@ class AdminController extends Controller
             'totalMaisons' => $totalMaisons,
             'totalMagasins' => $totalMagasins,
             'stats' => $stats,
-            'recentBiens' => $recentBiens
+            'recentBiens' => $recentBiens,
+            'pendingVisits' => $pendingVisits
         ]);
     }
 

@@ -6,6 +6,7 @@ use App\Models\Abonnement;
 use App\Models\Agence;
 use App\Models\Bien;
 use App\Models\ResetCodePasswordAgence;
+use App\Models\Visite;
 use App\Notifications\SendEmailToAgenceAfterRegistrationNotification;
 use Exception;
 use Illuminate\Http\Request;
@@ -20,6 +21,13 @@ class AgenceController extends Controller
 {
     public function dashboard()
     {
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         // Récupération de l'agence connectée
         $agence = auth('agence')->user();
         // Totaux généraux
@@ -64,19 +72,40 @@ class AgenceController extends Controller
             'totalMaisons' => $totalMaisons,
             'totalMagasins' => $totalMagasins,
             'stats' => $stats,
-            'recentBiens' => $recentBiens
+            'recentBiens' => $recentBiens,
+            'pendingVisits' => $pendingVisits,
         ]);
     }
     public function index()
     {
+          // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         // Récupération de toutes les agences
         $agences = Agence::paginate(6);
-        return view('admin.agence.index', compact('agences'));
+        return view('admin.agence.index', compact('agences', 'pendingVisits'));
     }
 
     public function create()
     {
-        return view('admin.agence.create');
+          // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
+        return view('admin.agence.create', compact('pendingVisits'));
     }
 
     public function store(Request $request)
@@ -179,8 +208,18 @@ class AgenceController extends Controller
 
     public function edit($id)
     {
+          // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         $agence = Agence::findOrFail($id);
-        return view('admin.agence.edit', compact('agence'));
+        return view('admin.agence.edit', compact('agence', 'pendingVisits'));
     }
 
     public function update(Request $request, $id)

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Paiement;
 use App\Models\Reversement;
 use App\Models\Rib;
+use App\Models\Visite;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,12 +18,18 @@ class AgenceReversementController extends Controller
 {
     public function index(){
         $proprietaireId = Auth::user()->code_id;
-        
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $reversements = Reversement::where('proprietaire_id', $proprietaireId)
             ->orderBy('created_at', 'desc')
             ->paginate(6);
         $soldeDisponible = $this->calculerSoldeDisponible($proprietaireId);
-        return view('agence.reversement.index', compact('reversements', 'soldeDisponible'));
+        return view('agence.reversement.index', compact('reversements', 'soldeDisponible', 'pendingVisits'));
     }
     public function uploadRecu(Request $request, $id)
     {
@@ -65,6 +72,13 @@ class AgenceReversementController extends Controller
 
     public function create()
     {
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $proprietaireId = Auth::user()->code_id;
         
         $ribs = Rib::where('proprietaire_id', $proprietaireId)
@@ -80,7 +94,7 @@ class AgenceReversementController extends Controller
             ->take(2)
             ->get();
 
-        return view('agence.reversement.create', compact('ribs', 'soldeDisponible', 'lastReversements'));
+        return view('agence.reversement.create', compact('ribs', 'soldeDisponible', 'lastReversements', 'pendingVisits'));
     }
 
     private function genererReference()

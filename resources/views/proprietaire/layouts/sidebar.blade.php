@@ -1,5 +1,8 @@
 <nav class="sidebar sidebar-offcanvas" id="sidebar" style="background-color: #02245b">
     <ul class="nav">
+      <p> @php
+            $user = Auth::guard('owner')->user();
+        @endphp
       <li class="nav-item sidebar-category">
         <p>Propriétaire : {{ Auth::guard('owner')->user()->name }} {{ Auth::guard('owner')->user()->prenom }}</p>
         <span></span>
@@ -68,6 +71,25 @@
           <span class="menu-title">Locataire pas sérieux</span>
         </a>
       </li>
+      @if(auth()->user()->diaspora == 'Oui')
+      <li class="nav-item sidebar-category">
+        <p>Agent</p>
+        <span></span>
+      </li>
+        <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#compt" aria-expanded="false" aria-controls="compt">
+          <i class="mdi mdi-account menu-icon"></i>
+          <span class="menu-title">Agent</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="compt">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.create.owner') }}"> Ajouter un agent </a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('accounting.index.owner') }}"> Listes des agents  </a></li>
+          </ul>
+        </div>
+      </li>
+        @endif
        <li class="nav-item sidebar-category">
         <p>Paiement</p>
         <span></span>

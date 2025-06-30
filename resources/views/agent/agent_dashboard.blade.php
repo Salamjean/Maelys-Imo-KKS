@@ -191,7 +191,7 @@
                                     <td>
                                         <div class="d-flex align-items-center text-center" style="justify-content: center;">
                                             <div class=" text-center">
-                                                <h6 class="mb-0 text-center" >{{ $payment->locataire->name }} {{ $payment->locataire->prenom }}</h6>
+                                                <h6 class="mb-0 text-center" >{{ $payment->bien->locataire->name }} {{ $payment->bien->locataire->prenom }}</h6>
                                             </div>
                                         </div>
                                     </td>

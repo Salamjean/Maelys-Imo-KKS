@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Proprietaire;
 use App\Http\Controllers\Controller;
 use App\Models\Bien;
 use App\Models\Locataire;
+use App\Models\Visite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +15,15 @@ class AddBienOwnerController extends Controller
 {
     public function create()
     {
-        return view('proprietaire.bien.create');
+        $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
+        return view('proprietaire.bien.create', compact('pendingVisits'));
     }
 
     public function store(Request $request)
@@ -138,6 +147,14 @@ class AddBienOwnerController extends Controller
 
      public function bienList()
     {
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         // Vérifier si l'utilisateur est connecté en tant que propriétaire
         $proprietaireId = Auth::guard('owner')->user()->code_id;
         
@@ -146,11 +163,19 @@ class AddBienOwnerController extends Controller
                         ->where('status', 'Disponible')
                         ->paginate(6);
         
-        return view('proprietaire.bien.index', compact('biens'));
+        return view('proprietaire.bien.index', compact('biens', 'pendingVisits'));
     }
 
     public function bienListLoue()
     {
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         // Vérifier si l'utilisateur est connecté en tant que propriétaire
         $proprietaireId = Auth::guard('owner')->user()->code_id;
         
@@ -159,13 +184,21 @@ class AddBienOwnerController extends Controller
                        ->where('status', 'Loué')
                         ->paginate(6);
         
-        return view('proprietaire.bien.indexLoue', compact('biens'));
+        return view('proprietaire.bien.indexLoue', compact('biens', 'pendingVisits'));
     }
 
     public function edit($id)
     {
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $bien = Bien::findOrFail($id);
-        return view('proprietaire.bien.edit', compact('bien'));
+        return view('proprietaire.bien.edit', compact('bien', 'pendingVisits'));
     }
 
     public function update(Request $request, $id)

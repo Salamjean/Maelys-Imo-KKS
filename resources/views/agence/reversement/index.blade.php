@@ -9,7 +9,7 @@
                 <div class="card-header text-white" style="background-color: #02245b;">
                     <div class="d-flex justify-content-between align-items-center">
                         <h4 class="mb-0">Historique des Reversements</h4>
-                        <a href="{{ route('reversement.create') }}" class="btn btn-light btn-sm">
+                        <a href="{{ route('reversement.create.agence') }}" class="btn btn-light btn-sm">
                             <i class="fas fa-plus mr-2"></i>Nouveau reversement
                         </a>
                     </div>

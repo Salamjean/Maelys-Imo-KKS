@@ -18,6 +18,7 @@ use App\Http\Controllers\Locataire\LocatairePasswordResetController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Proprietaire\AddBienOwnerController;
 use App\Http\Controllers\Proprietaire\LocataireOwnerController;
+use App\Http\Controllers\Proprietaire\OwnerComptableController;
 use App\Http\Controllers\Proprietaire\OwnerPasswordResetController;
 use App\Http\Controllers\Proprietaire\ProprietaireController;
 use App\Http\Controllers\Proprietaire\ReversementController;
@@ -342,6 +343,16 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
             Route::post('/visites/{visite}/update-date', [VisiteController::class, 'updateDateOwner'])->name('visites.updateDate.owner');
     });
 
+    // Routes pour la gestion des agents par le propriétaire
+     Route::prefix('accounting')->group(function(){
+        Route::get('/',[OwnerComptableController::class,'index'])->name('accounting.index.owner');
+        Route::get('/accountingcreate',[OwnerComptableController::class,'create'])->name('accounting.create.owner');
+        Route::post('/create',[OwnerComptableController::class,'store'])->name('accounting.store.owner');
+        Route::get('/edit/{comptable}',[OwnerComptableController::class,'edit'])->name('accounting.edit.owner');
+        Route::put('/{id}', [OwnerComptableController::class, 'update'])->name('accounting.update.owner');
+        Route::delete('/agence/accounting/{id}', [OwnerComptableController::class, 'destroy'])->name('accounting.destroy.agence.owner');
+    });
+
     //Les routes pour la gestion des ribs du proprietaire 
     Route::prefix('rib')->group(function(){
         Route::get('/createrib',[RibController::class, 'create'])->name('rib.create');
@@ -360,6 +371,18 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
 
 
 // toutes les routes d'authentification pour les différents rôles
+//Les routes d'inscription des agences et propriétaires par eux mêmes
+Route::prefix('agence/home/register')->group(function () {
+    Route::get('/', [HomePageController::class, 'RegisterAgence'])->name('agence.home.register');
+    Route::post('/', [HomePageController::class, 'storeAgence'])->name('agence.store.home.register');
+});
+Route::prefix('owner/home/register')->group(function () {
+    Route::get('/', [HomePageController::class, 'RegisterOwner'])->name('owner.home.register');
+    Route::post('/', [HomePageController::class, 'storeOwner'])->name('owner.store.home.register');
+});
+
+
+
 // Routes pour l'authentification de l'administrateur
 Route::prefix('admin')->group(function () {
     Route::get('/register',[AdminController::class, 'register'])->name('admin.register');

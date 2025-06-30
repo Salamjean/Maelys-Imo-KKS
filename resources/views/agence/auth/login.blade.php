@@ -131,7 +131,6 @@ body::before {
                 title: 'Connexion réussie',
                 text: '{{ session('success') }}',
                 showConfirmButton: false,
-                timer: 2000,
                 showConfirmButton: true,
                 confirmButtonColor: '#3085d6'
 
@@ -148,7 +147,6 @@ body::before {
                 title: 'Erreur',
                 text: '{{ session('error') }}',
                 showConfirmButton: false,
-                timer: 2000,
                 showConfirmButton: true,
                 confirmButtonColor: '#3085d6'
 

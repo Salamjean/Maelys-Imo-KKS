@@ -31,6 +31,39 @@
                     <span id="live-clock"></span>
                 </h4>
             </li>
+            <!-- Notification Dropdown -->
+            <li class="nav-item dropdown mx-2">
+                <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown">
+                    <i class="mdi mdi-bell-outline"></i>
+                    @if($pendingVisits > 0)
+                    <span class="count bg-danger">{{ $pendingVisits }}</span>
+                    @endif
+                </a>
+                <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="notificationDropdown">
+                    <p class="mb-0 font-weight-normal float-left dropdown-header">Notifications</p>
+                    @if($pendingVisits > 0)
+                    <a class="dropdown-item preview-item" href="{{ route('visite.index.owner') }}">
+                        <div class="preview-thumbnail">
+                            <div class="preview-icon bg-warning">
+                                <i class="mdi mdi-calendar-clock"></i>
+                            </div>
+                        </div>
+                        <div class="preview-item-content">
+                            <h6 class="preview-subject font-weight-normal">{{ $pendingVisits }} demande(s) de visite</h6>
+                            <p class="font-weight-light small-text mb-0 text-muted">
+                                En attente de traitement
+                            </p>
+                        </div>
+                    </a>
+                    @else
+                    <a class="dropdown-item preview-item">
+                        <div class="preview-item-content">
+                            <h6 class="preview-subject font-weight-normal">Aucune notification</h6>
+                        </div>
+                    </a>
+                    @endif
+                </div>
+            </li>
         </ul>
         <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
             <span class="mdi mdi-menu"></span>

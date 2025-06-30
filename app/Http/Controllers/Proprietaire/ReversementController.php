@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Paiement;
 use App\Models\Reversement;
 use App\Models\Rib;
+use App\Models\Visite;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,22 +18,50 @@ class ReversementController extends Controller
 {
     public function index(){
         $proprietaireId = Auth::user()->code_id;
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         
         $reversements = Reversement::where('proprietaire_id', $proprietaireId)
             ->orderBy('created_at', 'desc')
             ->paginate(6);
         $soldeDisponible = $this->calculerSoldeDisponible($proprietaireId);
-        return view('proprietaire.reversement.index', compact('reversements', 'soldeDisponible'));
+        return view('proprietaire.reversement.index', compact('reversements', 'soldeDisponible', 'pendingVisits'));
     }
     public function reversementAdmin(){
+           // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         $reversements = Reversement::where('statut', 'En attente')
                     ->paginate(6);
-        return view('admin.proprietaire.reversement.index', compact('reversements'));
+        return view('admin.proprietaire.reversement.index', compact('reversements', 'pendingVisits'));
     }
     public function reversementEffectue(){
+           // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         $reversements = Reversement::where('statut', 'Effectué')
                     ->paginate(6);
-        return view('admin.proprietaire.reversement.effectue', compact('reversements'));
+        return view('admin.proprietaire.reversement.effectue', compact('reversements', 'pendingVisits'));
     }
     public function uploadRecu(Request $request, $id)
     {
@@ -75,6 +104,14 @@ class ReversementController extends Controller
 
     public function create()
     {
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $proprietaireId = Auth::user()->code_id;
         
         $ribs = Rib::where('proprietaire_id', $proprietaireId)
@@ -90,7 +127,7 @@ class ReversementController extends Controller
             ->take(2)
             ->get();
 
-        return view('proprietaire.reversement.create', compact('ribs', 'soldeDisponible', 'lastReversements'));
+        return view('proprietaire.reversement.create', compact('ribs', 'soldeDisponible', 'lastReversements', 'pendingVisits'));
     }
 
     private function genererReference()

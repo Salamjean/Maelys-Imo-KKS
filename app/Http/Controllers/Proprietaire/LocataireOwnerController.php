@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Bien;
 use App\Models\Locataire;
 use App\Models\ResetCodePasswordLocataire;
+use App\Models\Visite;
 use App\Notifications\SendEmailToLocataireAfterRegistrationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,13 @@ class LocataireOwnerController extends Controller
     public function index()
     {
         $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         // Récupération des locataires avec les relations nécessaires
         $locataires = Locataire::with(['bien', 'paiements' => function($query) {
             $query->whereMonth('created_at', now()->month)
@@ -36,17 +44,24 @@ class LocataireOwnerController extends Controller
             return $locataire;
         });
 
-        return view('proprietaire.locataire.index', compact('locataires'));
+        return view('proprietaire.locataire.index', compact('locataires', 'pendingVisits'));
     }
     public function create()
     {
         // Récupérer les biens disponibles de l'agence
-        $ownerId = Auth::guard('owner')->user()->code_id;
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $biens = Bien::where('proprietaire_id', $ownerId)
                     ->where('status', 'Disponible')
                     ->get();
         
-        return view('proprietaire.locataire.create', compact('biens'));
+        return view('proprietaire.locataire.create', compact('biens', 'pendingVisits'));
     }
     
     public function store(Request $request)
@@ -221,13 +236,20 @@ class LocataireOwnerController extends Controller
     {
         $locataire = Locataire::findOrFail($id);
         // Récupérer les biens disponibles du proprietaire
-        $ownerId = Auth::guard('owner')->user()->id;
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $biens = Bien::where('status', '!=', 'Loué')
                 ->where('proprietaire_id', $ownerId)
                 ->orWhere('id', $locataire->bien_id)
                 ->get();
         
-        return view('proprietaire.locataire.edit', compact('locataire', 'biens'));
+        return view('proprietaire.locataire.edit', compact('locataire', 'biens', 'pendingVisits'));
     }
 
         public function update(Request $request, $id)
@@ -348,9 +370,17 @@ class LocataireOwnerController extends Controller
 }
 
     public function indexSerieux(){
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         // Récupération de tous les locataires
         $locataires = Locataire::where('status', 'Pas sérieux')
                     ->paginate(6);
-        return view('proprietaire.locataire.indexSerieux',compact('locataires'));
+        return view('proprietaire.locataire.indexSerieux',compact('locataires', 'pendingVisits'));
     }
 }

@@ -16,6 +16,7 @@ class AgentRecouvrementController extends Controller
         Carbon::setLocale('fr');
         $comptable = Auth::guard('comptable')->user();
         $agenceId = $comptable->agence_id;
+        $proprietaireId = $comptable->proprietaire_id;
         
         // Mois en cours
         $currentMonth = now()->format('Y-m');
@@ -25,8 +26,15 @@ class AgentRecouvrementController extends Controller
             ->where('mois_couvert', $currentMonth)
             ->where('statut', 'payé')
             ->count();
-            
-        $totalLocataires = Locataire::where('agence_id', $agenceId)
+    
+        $totalLocataires = Locataire::where(function($query) use ($comptable) {
+                if ($comptable->agence_id) {
+                    $query->orWhere('agence_id', $comptable->agenceId);
+                }
+                if ($comptable->proprietaire_id) {
+                    $query->orWhere('proprietaire_id', $comptable->proprietaireId);
+                }
+            })
             ->where('status', 'Actif')
             ->count();
             
@@ -50,8 +58,15 @@ class AgentRecouvrementController extends Controller
             ->sum('montant');
         
         // les locataires en retard
-    if($comptable->agence_id){
-            $latePayersCount = Locataire::where('agence_id', $agenceId)
+    if($comptable->agence_id || $comptable->proprietaire_id){
+            $latePayersCount = Locataire::where(function($query) use ($comptable) {
+                if ($comptable->agence_id) {
+                    $query->orWhere('agence_id', $comptable->agence_id);
+                }
+                if ($comptable->proprietaire_id) {
+                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                }
+            })
             ->where('status', 'Actif')
             ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
                 $query->where('mois_couvert', $currentMonth)
@@ -78,11 +93,18 @@ class AgentRecouvrementController extends Controller
             ->get();
         
        // Locataires en retard avec détails
-         if($comptable->agence_id){
+         if($comptable->agence_id || $comptable->proprietaire_id){
            $latePayers = Locataire::with(['bien', 'paiements' => function($query) {
                 $query->orderBy('created_at', 'desc')->limit(1);
             }])
-            ->where('agence_id', $agenceId)
+            ->where(function($query) use ($comptable) {
+                if ($comptable->agence_id) {
+                    $query->orWhere('agence_id', $comptable->agence_id);
+                }
+                if ($comptable->proprietaire_id) {
+                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                }
+            })
             ->where('status', 'Actif')
             ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
                 $query->where('mois_couvert', $currentMonth)
@@ -138,10 +160,17 @@ class AgentRecouvrementController extends Controller
         $comptable = Auth::guard('comptable')->user();
         
         // Vérifier si le comptable a une agence associée
-        if ($comptable->agence_id) {
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
             // Récupérer les locataires avec leurs relations
             $locataires = Locataire::with(['bien', 'paiements', 'agence'])
-                ->where('agence_id', $comptable->agence_id)
+                ->where(function($query) use ($comptable) {
+                if ($comptable->agence_id) {
+                    $query->orWhere('agence_id', $comptable->agence_id);
+                }
+                if ($comptable->proprietaire_id) {
+                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                }
+            })
                 ->get();
         } else {
             // Si le comptable n'a pas d'agence, retourner une collection vide
@@ -195,7 +224,7 @@ class AgentRecouvrementController extends Controller
         
         // Mois en cours au format texte en français (ex: "Janvier 2023")
         $moisEnCoursAffichage = now()->translatedFormat('F Y');
-        if (!$comptable || !$comptable->agence) {
+        if (!$comptable || !$comptable->agence && !$comptable->proprietaire_id) {
             return view('agent.locataire.paid', [
                 'locataires' => Locataire::whereNull('agence_id')
                                 ->where('status', '!=', 'Pas sérieux')
@@ -213,7 +242,14 @@ class AgentRecouvrementController extends Controller
         
         
 
-        $locataires = Locataire::where('agence_id', $agence->code_id)
+        $locataires = Locataire::where(function($query) use ($comptable) {
+                if ($comptable->agence_id) {
+                    $query->orWhere('agence_id', $comptable->agence_id);
+                }
+                if ($comptable->proprietaire_id) {
+                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                }
+            })
             ->where('status', '!=', 'Pas sérieux')
             ->where('status', '!=', 'Inactif')
             ->whereDoesntHave('paiements', function ($query) use ($moisEnCoursFormatDB) {

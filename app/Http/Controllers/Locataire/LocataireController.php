@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ContactAgencyMail;
+use App\Models\Visite;
 
 class LocataireController extends Controller
 {
@@ -27,6 +28,13 @@ class LocataireController extends Controller
     }
         public function index()
     {
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         // Récupération des locataires avec les relations nécessaires
         $locataires = Locataire::with(['bien', 'paiements' => function($query) {
             $query->whereMonth('created_at', now()->month)
@@ -44,9 +52,19 @@ class LocataireController extends Controller
             return $locataire;
         });
 
-        return view('agence.locataire.index', compact('locataires'));
+        return view('agence.locataire.index', compact('locataires', 'pendingVisits'));
     }
     public function indexAdmin(){
+           // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         // Récupération de tous les locataires
         $locataires = Locataire::where('status', '!=', 'Pas sérieux')
                     ->whereNull('agence_id')
@@ -61,32 +79,66 @@ class LocataireController extends Controller
             $locataire->show_reminder_button = ($locataire->bien->date_fixe ?? '10' == $today) && !$currentMonthPaid;
             return $locataire;
         });
-        return view('admin.locataire.index',compact('locataires'));
+        return view('admin.locataire.index',compact('locataires', 'pendingVisits'));
     }
     public function indexSerieux(){
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         // Récupération de tous les locataires
         $locataires = Locataire::where('status', 'Pas sérieux')
                     ->paginate(6);
-        return view('agence.locataire.indexSerieux',compact('locataires'));
+        return view('agence.locataire.indexSerieux',compact('locataires', 'pendingVisits'));
     }
     public function indexSerieuxAdmin(){
+           // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         // Récupération de tous les locataires
         $locataires = Locataire::where('status', 'Pas sérieux')
                     ->paginate(6);
-        return view('admin.locataire.indexSerieux',compact('locataires'));
+        return view('admin.locataire.indexSerieux',compact('locataires', 'pendingVisits'));
     }
     public function create()
     {
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         // Récupérer les biens disponibles de l'agence
         $agenceId = Auth::guard('agence')->user()->code_id;
         $biens = Bien::where('agence_id', $agenceId)
                     ->where('status', 'Disponible')
                     ->get();
         
-        return view('agence.locataire.create', compact('biens'));
+        return view('agence.locataire.create', compact('biens', 'pendingVisits'));
     }
     public function createAdmin()
     {
+           // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         $biens = Bien::whereNull('agence_id')
                 ->where('status', 'Disponible')
                 ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
@@ -94,7 +146,7 @@ class LocataireController extends Controller
                                 $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
                             })->get();
         
-        return view('admin.locataire.create', compact('biens'));
+        return view('admin.locataire.create', compact('biens', 'pendingVisits'));
     }
     
     public function store(Request $request)
@@ -266,6 +318,13 @@ class LocataireController extends Controller
 
     public function edit($id)
     {
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $locataire = Locataire::findOrFail($id);
         // Récupérer les biens disponibles de l'agence
         $agenceId = Auth::guard('agence')->user()->id;
@@ -274,18 +333,28 @@ class LocataireController extends Controller
                 ->orWhere('id', $locataire->bien_id)
                 ->get();
         
-        return view('agence.locataire.edit', compact('locataire', 'biens'));
+        return view('agence.locataire.edit', compact('locataire', 'biens', 'pendingVisits'));
     }
 
     public function editAdmin($id)
     {
+           // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         $locataire = Locataire::findOrFail($id);
         $biens = Bien::where('status', '!=', 'Loué')
                 ->whereNull('agence_id')
                 ->orWhere('id', $locataire->bien_id)
                 ->get();
         
-        return view('admin.locataire.edit', compact('locataire', 'biens'));
+        return view('admin.locataire.edit', compact('locataire', 'biens', 'pendingVisits'));
     }
     
     public function update(Request $request, $id)

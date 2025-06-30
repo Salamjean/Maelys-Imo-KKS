@@ -170,7 +170,7 @@
                     <tbody>
                         @forelse($paiements as $paiement)
                             <tr class="text-center">
-                                <td><strong>{{ $paiement->locataire->name.' '.$paiement->locataire->prenom }}</strong></td>
+                                <td><strong>{{ $paiement->bien->locataire->name.' '.$paiement->bien->locataire->prenom }}</strong></td>
                                 <td class="amount-cell">{{ number_format($paiement->montant, 0, ',', ' ') }} FCFA</td>
                                 <td>
                                     @if($paiement->methode_paiement === 'Espèces')

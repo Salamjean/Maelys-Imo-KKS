@@ -51,7 +51,8 @@
              </div>
          </div>
      </div>
-     <div class="d-flex align-items-center">
+    <div style="margin-left: 20px;" class="navbar-nav ms-auto p-4 p-lg-0 gap-2">
+         <div class="d-flex align-items-center">
         <!-- Menu déroulant -->
         <select class="btn btn-primary font-bold px-3 d-none d-lg-block text-white" style="width: auto;" onchange="window.location.href=this.value">
             <option value="" selected disabled style="font-weight: bold">Se connecter</option>
@@ -60,6 +61,15 @@
             <option value="{{ route('locataire.login') }}">Locataire</option>
             <option value="{{ route('comptable.login') }}">Agent</option>
         </select>
+    </div>
+     <div class="d-flex align-items-center">
+        <!-- Menu déroulant -->
+        <select class="btn btn-primary font-bold px-3 d-none d-lg-block text-white" style="width: auto;" onchange="window.location.href=this.value">
+            <option value="" selected disabled style="font-weight: bold">Inscription</option>
+            <option value="{{ route('agence.home.register') }}">Agence</option>
+            <option value="{{ route('owner.home.register') }}">Propriétaire</option>
+        </select>
+    </div>
     </div>
  </div>
 </nav>

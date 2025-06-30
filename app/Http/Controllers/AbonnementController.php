@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Abonnement;
+use App\Models\Visite;
 use Barryvdh\DomPDF\Facade\PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -388,6 +389,16 @@ class AbonnementController extends Controller
     //Les fonction pour les abonnements des agences sont similaires à celles des propriétaires
     public function abonneActif()
     {
+           // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         // Date actuelle
         $today = now()->format('Y-m-d');
 
@@ -398,10 +409,20 @@ class AbonnementController extends Controller
             ->orderBy('date_fin', 'asc') // Tri par date de fin croissante
             ->paginate(10);
 
-        return view('admin.abonnement.actif', compact('abonnementsActifs'));
+        return view('admin.abonnement.actif', compact('abonnementsActifs', 'pendingVisits'));
     }
     public function abonneInactif()
     {
+           // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
         $today = now()->format('Y-m-d');
 
         // Récupérer les abonnements inactifs (soit statut inactif, soit date dépassée)
@@ -413,7 +434,7 @@ class AbonnementController extends Controller
             ->orderBy('date_fin', 'desc') // Tri par date de fin décroissante
             ->paginate(10);
 
-        return view('admin.abonnement.inactif', compact('abonnementsInactifs'));
+        return view('admin.abonnement.inactif', compact('abonnementsInactifs', 'pendingVisits'));
     }
 
     public function activate(Request $request)
@@ -569,12 +590,25 @@ class AbonnementController extends Controller
 
     public function abonneShow(){
         $proprietaireId = Auth::guard('owner')->user()->code_id;
+          $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $abonnements = Abonnement::where('proprietaire_id', $proprietaireId)->paginate(1);
-        return view('proprietaire.abonnement.show-proprietaire',compact('abonnements'));
+        return view('proprietaire.abonnement.show-proprietaire',compact('abonnements', 'pendingVisits'));
     }
-    public function abonneShowAgence(){
-        $agenceId = Auth::guard('agence')->user()->code_id;
+    public function abonneShowAgence(){$agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count(); $agenceId = Auth::guard('agence')->user()->code_id;
         $abonnements = Abonnement::where('agence_id', $agenceId)->paginate(1);
-        return view('agence.abonnement.show-agence',compact('abonnements'));
+        return view('agence.abonnement.show-agence',compact('abonnements', 'pendingVisits'));
     }
 }

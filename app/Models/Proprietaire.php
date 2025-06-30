@@ -41,6 +41,10 @@ class Proprietaire extends Authenticatable
     {
         return $this->belongsTo(Agence::class);
     }
+    public function locataire()
+    {
+        return $this->hasMany(Locataire::class , 'proprietaire_id', 'code_id');
+    }
 
     public function reversements()
     {
