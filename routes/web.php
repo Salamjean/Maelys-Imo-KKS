@@ -404,8 +404,6 @@ Route::prefix('owner/home/register')->group(function () {
 
 // Routes pour l'authentification de l'administrateur
 Route::prefix('admin')->group(function () {
-    Route::get('/register',[AdminController::class, 'register'])->name('admin.register');
-    Route::post('/register',[AdminController::class, 'store'])->name('admin.store');
     Route::get('/login',[AdminController::class, 'login'])->name('admin.login');
     Route::post('/login',[AdminController::class, 'authenticate'])->name('admin.authenticate');
 });
