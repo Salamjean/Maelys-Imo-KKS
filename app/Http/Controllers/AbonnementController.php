@@ -601,13 +601,16 @@ class AbonnementController extends Controller
         $abonnements = Abonnement::where('proprietaire_id', $proprietaireId)->paginate(1);
         return view('proprietaire.abonnement.show-proprietaire',compact('abonnements', 'pendingVisits'));
     }
-    public function abonneShowAgence(){$agenceId = Auth::guard('agence')->user()->code_id;
+    public function abonneShowAgence()
+    {
+        $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
        $pendingVisits = Visite::where('statut', 'en attente')
                         ->whereHas('bien', function ($query) use ($agenceId) {
                             $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
                         })
-                        ->count(); $agenceId = Auth::guard('agence')->user()->code_id;
+                        ->count();
+            $agenceId = Auth::guard('agence')->user()->code_id;
         $abonnements = Abonnement::where('agence_id', $agenceId)->paginate(1);
         return view('agence.abonnement.show-agence',compact('abonnements', 'pendingVisits'));
     }

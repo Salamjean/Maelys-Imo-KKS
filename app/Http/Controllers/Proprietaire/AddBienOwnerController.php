@@ -189,7 +189,7 @@ class AddBienOwnerController extends Controller
 
     public function edit($id)
     {
-          $ownerId = Auth::guard('owner')->user()->code_id;
+        $ownerId = Auth::guard('owner')->user()->code_id;
      // Demandes de visite en attente
        $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
                         ->where('statut', '!=', 'annulée')

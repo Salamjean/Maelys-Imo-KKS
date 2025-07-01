@@ -123,6 +123,12 @@
         <span></span>
       </li>
       <li class="nav-item">
+        <a class="nav-link" href="{{ route('payment.management.admin') }}">
+          <i class="mdi mdi-cash menu-icon"></i>
+          <span class="menu-title">Loyer</span>
+        </a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#paie" aria-expanded="false" aria-controls="paie">
           <i class="mdi mdi-clipboard-account menu-icon"></i>
           <span class="menu-title">Reversement</span>

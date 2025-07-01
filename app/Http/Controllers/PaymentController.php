@@ -91,15 +91,19 @@ class PaymentController extends Controller
         ]);
     }
 
- public function store(Request $request, Locataire $locataire)
+public function store(Request $request, Locataire $locataire)
 {
     $request->validate([
         'mois_couvert' => 'required|date_format:Y-m',
-        'transaction_id' => 'required'
+        'transaction_id' => 'required_if:methode_paiement,mobile_money',
+        'proof_file' => 'required_if:methode_paiement,virement|file|mimes:jpg,jpeg,png,pdf|max:2048',
     ]);
 
-    // Vérifier si le paiement a déjà été enregistré (éviter les doublons)
-    $existingPayment = Paiement::where('transaction_id', $request->transaction_id)->first();
+    // Générer un transaction_id si absent (pour virement)
+    $transaction_id = $request->transaction_id ?? 'VIR_' . Str::random(10);
+
+    // Vérifier si le paiement existe déjà
+    $existingPayment = Paiement::where('transaction_id', $transaction_id)->first();
     if ($existingPayment) {
         return redirect()->route('locataire.paiements.index', $locataire)
             ->with('success', 'Paiement déjà enregistré pour ' . Carbon::parse($request->mois_couvert)->translatedFormat('F Y'));
@@ -125,17 +129,28 @@ class PaymentController extends Controller
         return back()->with('error', 'Le loyer pour '.$moisAPayer->translatedFormat('F Y').' a déjà été payé.');
     }
 
+    // Gestion du fichier de preuve
+    $proofPath = null;
+    if ($request->hasFile('proof_file')) {
+        $proofPath = $request->file('proof_file')->store('preuves_virements', 'public');
+    }
+
+    // Déterminer la méthode et le statut
+    $methode = $request->methode_paiement === 'virement' ? 'Virement Bancaire' : 'Mobile Money';
+    $statut = $request->methode_paiement === 'virement' ? 'En attente' : 'payé';
+
     // Enregistrer le paiement
     $paiement = Paiement::create([
         'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
         'date_paiement' => now(),
         'mois_couvert' => $moisAPayer->format('Y-m'),
-        'methode_paiement' => 'Mobile Money',
-        'statut' => 'payé',
+        'methode_paiement' => $methode,
+        'statut' => $statut,
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
         'comptable_id' => Auth::guard('comptable')->user()->code_id ?? 0,
-        'transaction_id' => $request->transaction_id
+        'transaction_id' => $transaction_id,
+        'proof_path' => $proofPath,
     ]);
 
     // Réinitialiser le montant majoré si nécessaire

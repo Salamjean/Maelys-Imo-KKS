@@ -408,8 +408,15 @@ class AgenceController extends Controller
 
     public function editProfile()
     {
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) use ($agenceId) {
+                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $agence = Auth::guard('agence')->user();
-        return view('agence.auth.profile', compact('agence'));
+        return view('agence.auth.profile', compact('agence', 'pendingVisits'));
     }
 
     public function updateProfile(Request $request)

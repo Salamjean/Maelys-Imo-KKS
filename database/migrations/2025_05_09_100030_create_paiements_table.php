@@ -16,10 +16,11 @@ return new class extends Migration
             $table->decimal('montant', 10, 2);
             $table->date('date_paiement');
             $table->string('mois_couvert'); // Format "2023-11"
-            $table->enum('methode_paiement', ['Espèces', 'Mobile Money']);
+            $table->enum('methode_paiement', ['Espèces', 'Mobile Money' ,'Virement Bancaire']);
             $table->string('verif_espece')->nullable(); // Code pour vérification manuelle
             $table->string('transaction_id')->nullable(); // Pour CinetPay
             $table->enum('statut', ['En attente', 'payé', 'échoué'])->default('En attente');
+            $table->string('proof_path')->nullable();
             
             // Clés étrangères
             $table->foreignId('locataire_id')->constrained()->onDelete('cascade');

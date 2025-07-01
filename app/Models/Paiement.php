@@ -9,7 +9,7 @@ class Paiement extends Model
     protected $fillable = [
         'montant', 'date_paiement', 'mois_couvert',
         'methode_paiement', 'verif_espece', 'transaction_id', 'statut',
-        'locataire_id', 'bien_id','comptable_id', 'contrat_id'
+        'locataire_id', 'bien_id','comptable_id', 'contrat_id', 'proof_path'
     ];
 
     public function locataire()

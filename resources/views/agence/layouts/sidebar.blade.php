@@ -114,6 +114,12 @@
         <span></span>
       </li>
       <li class="nav-item">
+        <a class="nav-link" href="{{ route('payment.management.agence') }}">
+          <i class="mdi mdi-cash menu-icon"></i>
+          <span class="menu-title">Loyer</span>
+        </a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#ui-rev" aria-expanded="false" aria-controls="ui-rev">
           <i class="mdi mdi-animation menu-icon"></i>
           <span class="menu-title">Reversement</span>

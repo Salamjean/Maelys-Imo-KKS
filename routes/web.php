@@ -16,6 +16,7 @@ use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\Locataire\LocataireController;
 use App\Http\Controllers\Locataire\LocatairePasswordResetController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentManagementController;
 use App\Http\Controllers\Proprietaire\AddBienOwnerController;
 use App\Http\Controllers\Proprietaire\LocataireOwnerController;
 use App\Http\Controllers\Proprietaire\OwnerComptableController;
@@ -144,6 +145,12 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::delete('/admin/accounting/{id}', [ComptableController::class, 'destroy'])->name('accounting.destroy');
     });
 
+    //Les routes de gestion de paiments 
+    Route::prefix('payment')->group(function(){
+        Route::get('/management',[PaymentManagementController::class, 'indexAdmin'])->name('payment.management.admin');
+        Route::post('/validate', [PaymentManagementController::class, 'validatePaymentAdmin'])->name('paiements.validate.admin');
+    });
+
     //routes de gestion des propriétaires par l'administrateur
     Route::prefix('owner')->group(function(){
         Route::get('/',[ProprietaireController::class,'indexAdmin'])->name('owner.index.admin');
@@ -241,6 +248,12 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
         Route::delete('/ribs/{id}', [RibController::class, 'destroyAgence'])->name('rib.destroy.agence');
     });
 
+    //Les routes de gestion de paiments 
+    Route::prefix('payment')->group(function(){
+        Route::get('/management',[PaymentManagementController::class, 'indexAgence'])->name('payment.management.agence');
+        Route::post('/validate', [PaymentManagementController::class, 'validatePayment'])->name('paiements.validate');
+    });
+
     // Routes pour la gestion des reversements du propriétaire
     Route::prefix('reversement')->group(function(){
         Route::get('/', [AgenceReversementController::class, 'index'])->name('reversement.index.agence');
@@ -325,6 +338,12 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
         Route::put('/locataires/{locataire}/status', [LocataireOwnerController::class, 'updateStatus'])->name('locataires.updateStatus.owner');
         Route::get('/locataires/{locataire}/edit', [LocataireOwnerController::class, 'edit'])->name('locataire.edit.owner');
         Route::put('/locataires/{locataire}', [LocataireOwnerController::class, 'update'])->name('locataire.update.owner');
+    });
+
+    //Les routes de gestion de paiments 
+    Route::prefix('payment')->group(function(){
+        Route::get('/management',[PaymentManagementController::class, 'indexOwner'])->name('payment.management.owner');
+        Route::post('/validate', [PaymentManagementController::class, 'validatePaymentOwner'])->name('paiements.validate.owner');
     });
 
     // routes de gestiond des abonnements par le propriétaire

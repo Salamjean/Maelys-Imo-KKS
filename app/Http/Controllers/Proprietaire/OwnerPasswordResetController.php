@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Proprietaire;
 use App\Http\Controllers\Controller;
 use App\Mail\OwnerPasswordResetMail;
 use App\Models\Proprietaire;
+use App\Models\Visite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -95,7 +96,15 @@ class OwnerPasswordResetController extends Controller
     //Gestion du profil proprietaire
     public function editProfile(){
         $proprietaire = Auth::guard('owner')->user();
-        return view('proprietaire.auth.profile', compact('proprietaire'));
+         $ownerId = Auth::guard('owner')->user()->code_id;
+     // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
+        return view('proprietaire.auth.profile', compact('proprietaire', 'pendingVisits'));
     }
 
    public function updateProfile(Request $request)
