@@ -7,13 +7,37 @@
         @page {
             margin: 2cm;
             size: A4;
+            background-image: url('assets/images/mae-imo.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            background-opacity: 0.1;
         }
-        body { 
-            font-family: 'Helvetica', 'Arial', sans-serif;
+        body {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            line-height: 1.4;
             color: #333;
-            line-height: 1.6;
-            font-size: 12pt;
-            background-color: #fff;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: transparent;
+            font-size: 13px;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('assets/images/mae-imo.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.1;
+            z-index: -1;
         }
         .header { 
             text-align: center; 
@@ -29,7 +53,6 @@
             color: #02245b; 
             font-size: 20pt;
             font-weight: 700;
-            margin-bottom: 5px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -40,6 +63,7 @@
         }
         .section { 
             margin-bottom: 30px;
+            page-break-inside: avoid;
         }
         .section-title {
             color: #02245b;
@@ -47,7 +71,6 @@
             font-weight: 700;
             margin-bottom: 15px;
             padding-bottom: 5px;
-            border-bottom: 1px solid #e0e6ed;
             text-transform: uppercase;
         }
         .contract-clause {
@@ -66,9 +89,10 @@
             margin-right: 5px;
         }
         .signature-area {
-            margin-top: 60px;
+            margin-top: 1px;
             display: flex;
             justify-content: space-between;
+            page-break-inside: avoid;
         }
         .signature-box {
             width: 45%;
@@ -79,7 +103,7 @@
             margin-top: 40px;
         }
         .footer { 
-            margin-top: 50px; 
+            margin-top: 10px; 
             padding-top: 15px;
             text-align: center; 
             font-size: 10pt;
@@ -90,7 +114,7 @@
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            page-break-inside: avoid;
         }
         th, td {
             padding: 12px 15px;
@@ -125,18 +149,18 @@
             border: 1px solid #d32f2f;
         }
         .company-info {
-            background-color: #f8fafc;
             padding: 15px;
             border-radius: 5px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border-left: 4px solid #02245b;
+            page-break-inside: avoid;
         }
         .client-info {
-            background-color: #f5f9ff;
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
             border-left: 4px solid #3a7bd5;
+            page-break-inside: avoid;
         }
         .preamble {
             font-style: italic;
@@ -144,13 +168,33 @@
             padding: 15px;
             background-color: #f9f9f9;
             border-radius: 5px;
+            page-break-inside: avoid;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+        @media print {
+            body {
+                background-color: transparent;
+            }
+            body::before {
+                position: absolute;
+                opacity: 0.1;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="title">Contrat d'Abonnement pour les Propriétaires de Biens</div>
-        <div class="subtitle">Référence : MAE-ABN-{{ str_pad($abonnement->id, 6, '0', STR_PAD_LEFT) }}</div>
+       <div class="title">Contrat d'Abonnement pour 
+    @if(isset($abonnement->proprietaire->name))
+        le propriétaire : {{ $abonnement->proprietaire->name }}
+    @elseif(isset($abonnement->agence->name))
+        <br>l'agence : {{ $abonnement->agence->name }}
+    @else
+        [Nom non spécifié]
+    @endif
+</div>
     </div>
 
     <div class="section">
@@ -158,9 +202,25 @@
         
         <div class="client-info">
             <p><strong>{{ $abonneName }}</strong>,</p>
-            <p>Adresse : {{ $abonnement->proprietaire->adresse ?? 'N/A' }}</p>
-            <p>Numéro d'identification : {{ $abonnement->proprietaire->code_id ?? 'N/A' }}</p>
-            <p>(ci-après dénommé "Le Propriétaire")</p>
+            <p>Adresse : 
+                @if(isset($abonnement->proprietaire->adresse))
+                    {{ $abonnement->proprietaire->adresse }}
+                @elseif(isset($abonnement->agence->adresse))
+                    {{ $abonnement->agence->adresse }}
+                @else
+                    N/A
+                @endif
+            </p>
+            <p>Numéro d'identification : 
+                @if(isset($abonnement->proprietaire->code_id))
+                    {{ $abonnement->proprietaire->code_id }}
+                @elseif(isset($abonnement->agence->code_id))
+                    {{ $abonnement->agence->code_id }}
+                @else
+                    N/A
+                @endif
+            </p>
+            <p>(ci-après dénommé "Responsable du bien")</p>
         </div>
         
         <p style="text-align: center; font-weight: 600; margin: 20px 0;">ET</p>
