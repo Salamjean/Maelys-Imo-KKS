@@ -97,12 +97,8 @@
                     </div>
                     <div class="mt-3">
                         <p class="mb-0 text-success">
-                            <span class="fw-bold">{{ $paymentPercentage }}%</span> des locataires
+                            <span class="fw-bold">Nombre total de paiement dans le mois</span>
                         </p>
-                        <div class="progress mt-2">
-                            <div class="progress-bar" role="progressbar" style="width: {{ $paymentPercentage }}%" 
-                                 aria-valuenow="{{ $paymentPercentage }}" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -158,7 +154,7 @@
                     </div>
                     <div class="mt-3">
                         <p class="mb-0 text-danger">
-                           Le nombres totals des locataires en retard
+                           Nombres total de locataire en retard
                         </p>
                     </div>
                 </div>

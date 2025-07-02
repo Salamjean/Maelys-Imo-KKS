@@ -1010,12 +1010,14 @@ public function submitDefineAccess(Request $request)
             if (!$user) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
+            $bien = $user->bien;
 
             Mail::to($validated['agency_email'])->send(new ContactAgencyMail(
                 $validated['subject'],
                 $validated['content'],
                 $user->name,
-                $user->email
+                $user->email,
+                $bien
             ));
 
             return response()->json(['success' => true]);

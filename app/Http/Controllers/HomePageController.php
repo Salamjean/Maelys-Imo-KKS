@@ -166,8 +166,6 @@ class HomePageController extends Controller
     try {
         Log::info('Début de la création du propriétaire', ['email' => $request->email]);
 
-        $adminId = Auth::guard('admin')->user()->id;
-
         // Génération du code PRO unique
         do {
             $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
@@ -250,31 +248,6 @@ class HomePageController extends Controller
 
         Abonnement::create($abonnementData);
         Log::info('Abonnement créé', ['proprietaire_id' => $owner->code_id]);
-
-        // // Envoi de l'e-mail de vérification si gestion par propriétaire
-        // if ($owner->gestion === 'proprietaire') {
-        //     try {
-        //         ResetCodePasswordProprietaire::where('email', $owner->email)->delete();
-                
-        //         $code = rand(1000, 4000);
-        //         ResetCodePasswordProprietaire::create([
-        //             'code' => $code,
-        //             'email' => $owner->email,
-        //         ]);
-
-        //         Notification::route('mail', $owner->email)
-        //             ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email));
-                
-        //         Log::info('Email de vérification envoyé', ['email' => $owner->email]);
-        //     } catch (\Exception $e) {
-        //         Log::error('Erreur envoi email', [
-        //             'error' => $e->getMessage(),
-        //             'file' => $e->getFile(),
-        //             'line' => $e->getLine()
-        //         ]);
-        //         // On continue malgré l'erreur d'email
-        //     }
-        // }
 
         DB::commit();
 

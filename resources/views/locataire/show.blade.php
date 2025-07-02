@@ -261,13 +261,45 @@
                             <button class="btn btn-primary mr-2">
                                 <a href="{{ route('locataires.downloadContrat', $locataire->id) }}" target="blank_" class="text-white"><i class="mdi mdi-download mr-1"></i> Télecharger le contrat</a>
                             </button>
-                            <button class="btn btn-outline-secondary" id="contact-agency-btn"
-                                data-agence-name="{{ $locataire->agence->name ?? 'Maelys-Imo' }}"
-                                data-agence-email="{{ $locataire->agence->email ?? 'contact@maelysimo.com' }}"
-                                data-agence-phone="{{ $locataire->agence->contact ?? '+225 27 22 36 50 27' }}"
-                                data-agence-address="{{ $locataire->agence->adresse ?? 'Cocody - Angré, Abidjan' }}">
-                            <i class="mdi mdi-message-text-outline mr-1"></i> Contacter l'agence
-                        </button>
+                           <button class="btn btn-outline-secondary" id="contact-agency-btn"
+                                data-agence-name="@if($locataire->agence_id)
+                                    Agence: {{ $locataire->agence->name ?? 'ecole' }}
+                                @elseif($locataire->proprietaire_id)
+                                    @if($locataire->proprietaire->gestion == 'agence')
+                                        Agence: Maelys-imo
+                                    @else
+                                        Propriétaire: {{ $locataire->proprietaire->name.' '.$locataire->proprietaire->prenom ?? 'Maelys-imo' }}
+                                    @endif
+                                @else
+                                    Agence: Maelys-imo
+                                @endif"
+                                data-agence-email="@if($locataire->agence_id)
+                                    {{ $locataire->agence->email ?? 'contact@maelysimo.com' }}
+                                @elseif($locataire->proprietaire_id)
+                                    @if($locataire->proprietaire->gestion == 'agence')
+                                        contact@maelysimo.com
+                                    @else
+                                        {{ $locataire->proprietaire->email ?? 'contact@maelysimo.com' }}
+                                    @endif
+                                @else
+                                    contact@maelysimo.com
+                                @endif"
+                                data-agence-phone="@if($locataire->agence_id)
+                                    {{ $locataire->agence->contact ?? '+225 27 22 36 50 27' }}
+                                @elseif($locataire->proprietaire_id)
+                                    {{ $locataire->proprietaire->contact ?? '+225 27 22 36 50 27' }}
+                                @else
+                                    +225 27 22 36 50 27
+                                @endif"
+                                data-agence-address="@if($locataire->agence_id)
+                                    {{ $locataire->agence->adresse ?? 'Cocody - Angré, Abidjan' }}
+                                @elseif($locataire->proprietaire_id)
+                                    {{ $locataire->proprietaire->commune ?? 'Cocody - Angré, Abidjan' }}
+                                @else
+                                    Cocody - Angré, Abidjan
+                                @endif">
+                                <i class="mdi mdi-message-text-outline mr-1"></i> Contacter l'agence
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -322,12 +354,15 @@ document.getElementById('contact-agency-btn').addEventListener('click', function
     const agenceEmail = this.getAttribute('data-agence-email');
     const agencePhone = this.getAttribute('data-agence-phone');
     const agenceAddress = this.getAttribute('data-agence-address');
+    // Déterminer l'icône en fonction du type (Agence ou Propriétaire)
+    const isAgency = agenceName.includes('Agence:');
+    const iconClass = isAgency ? 'mdi-office-building' : 'mdi-account';
     
     Swal.fire({
-        title: 'Contacter l\'agence',
+        title: 'Contacter ' + (isAgency ? 'l\'agence' : 'le propriétaire'),
         html: `
             <div style="text-align: left;">
-                <p><strong><i class="mdi mdi-office-building mr-2"></i>Nom de l'agence:</strong> ${agenceName || 'Non spécifié'}</p>
+                <p><strong><i class="mdi ${iconClass} mr-2"></i></strong> ${agenceName || 'Non spécifié'}</p>
                 <p><strong><i class="mdi mdi-email mr-2"></i>Email:</strong> ${agenceEmail || 'Non spécifié'}</p>
                 <p><strong><i class="mdi mdi-phone mr-2"></i>Téléphone:</strong> ${agencePhone || 'Non spécifié'}</p>
                 <p><strong><i class="mdi mdi-map-marker mr-2"></i>Adresse:</strong> ${agenceAddress || 'Non spécifié'}</p>
@@ -352,38 +387,43 @@ document.getElementById('contact-agency-btn').addEventListener('click', function
         customClass: {
             popup: 'agency-popup'
         },
-        preConfirm: () => {
-            const subject = document.getElementById('message-subject').value;
-            const content = document.getElementById('message-content').value;
-            
-            if (!subject || !content) {
-                Swal.showValidationMessage('Veuillez remplir tous les champs');
-                return false;
-            }
-            
-            // Envoyer l'email via une requête AJAX
-            return fetch('{{ route("locataire.sendEmailToAgency") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    subject: subject,
-                    content: content,
-                    agency_email: agenceEmail
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(response.statusText);
-                }
-                return response.json();
-            })
-            .catch(error => {
-                Swal.showValidationMessage(`Erreur lors de l'envoi: ${error}`);
-            });
+       preConfirm: () => {
+    const subject = document.getElementById('message-subject').value;
+    const content = document.getElementById('message-content').value;
+    
+    if (!subject || !content) {
+        Swal.showValidationMessage('Veuillez remplir tous les champs');
+        return false;
+    }
+    
+    // Préparer les données au format JSON
+    const data = {
+        subject: subject,
+        content: content,
+        agency_email: agenceEmail, // Notez le changement de recipient_email à agency_email
+        _token: '{{ csrf_token() }}'
+    };
+    
+    return fetch('{{ route("locataire.sendEmailToAgency") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(async response => {
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erreur serveur');
         }
+        return response.json();
+    })
+    .catch(error => {
+        Swal.showValidationMessage(`Erreur lors de l'envoi: ${error.message}`);
+    });
+}
     }).then((result) => {
         if (result.isConfirmed) {
             Swal.fire(

@@ -369,7 +369,7 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
         Route::post('/create',[OwnerComptableController::class,'store'])->name('accounting.store.owner');
         Route::get('/edit/{comptable}',[OwnerComptableController::class,'edit'])->name('accounting.edit.owner');
         Route::put('/{id}', [OwnerComptableController::class, 'update'])->name('accounting.update.owner');
-        Route::delete('/agence/accounting/{id}', [OwnerComptableController::class, 'destroy'])->name('accounting.destroy.agence.owner');
+        Route::delete('/agence/accounting/{id}', [OwnerComptableController::class, 'destroy'])->name('accounting.destroy.owner');
     });
 
     //Les routes pour la gestion des ribs du proprietaire 

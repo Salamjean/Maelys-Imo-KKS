@@ -104,7 +104,7 @@
                                 <a href="{{ route('accounting.edit.admin', $comptable) }}" class="btn btn-sm btn-warning" title="Modifier">
                                     <i class="mdi mdi-pencil"></i>
                                 </a>
-                                <form action="{{ route('accounting.destroy', $comptable->id) }}" method="POST" class="d-inline">
+                                <form action="{{ route('accounting.destroy.owner', $comptable->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="button" class="btn btn-sm btn-danger delete-btn" title="Supprimer">
@@ -127,43 +127,43 @@
           </table>
           
           @if($comptables->hasPages())
-<div class="mt-4 d-flex justify-content-center">
-    <nav aria-label="Page navigation">
-        <ul class="pagination pagination-rounded">
-            {{-- Previous Page Link --}}
-            @if ($comptables->onFirstPage())
-                <li class="page-item disabled">
-                    <span class="page-link" aria-hidden="true">&laquo;</span>
-                </li>
-            @else
-                <li class="page-item">
-                    <a class="page-link" href="{{ $comptables->previousPageUrl() }}" rel="prev" aria-label="Previous">&laquo;</a>
-                </li>
-            @endif
+            <div class="mt-4 d-flex justify-content-center">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-rounded">
+                        {{-- Previous Page Link --}}
+                        @if ($comptables->onFirstPage())
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&laquo;</span>
+                            </li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $comptables->previousPageUrl() }}" rel="prev" aria-label="Previous">&laquo;</a>
+                            </li>
+                        @endif
 
-            {{-- Pagination Elements --}}
-            @foreach ($comptables->getUrlRange(1, $comptables->lastPage()) as $page => $url)
-                @if ($page == $comptables->currentPage())
-                    <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
-                @else
-                    <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
-                @endif
-            @endforeach
+                        {{-- Pagination Elements --}}
+                        @foreach ($comptables->getUrlRange(1, $comptables->lastPage()) as $page => $url)
+                            @if ($page == $comptables->currentPage())
+                                <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
+                            @else
+                                <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+                            @endif
+                        @endforeach
 
-            {{-- Next Page Link --}}
-            @if ($comptables->hasMorePages())
-                <li class="page-item">
-                    <a class="page-link" href="{{ $comptables->nextPageUrl() }}" rel="next" aria-label="Next">&raquo;</a>
-                </li>
-            @else
-                <li class="page-item disabled">
-                    <span class="page-link" aria-hidden="true">&raquo;</span>
-                </li>
+                        {{-- Next Page Link --}}
+                        @if ($comptables->hasMorePages())
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $comptables->nextPageUrl() }}" rel="next" aria-label="Next">&raquo;</a>
+                            </li>
+                        @else
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&raquo;</span>
+                            </li>
+                        @endif
+                    </ul>
+                </nav>
+            </div>
             @endif
-        </ul>
-    </nav>
-</div>
-@endif
         </div>
       </div>
     </div>
@@ -171,7 +171,6 @@
 
 <!-- Scripts nécessaires -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>

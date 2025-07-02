@@ -14,25 +14,29 @@ class ContactAgencyMail extends Mailable
     public $content;
     public $userName;
     public $userEmail;
+    public $bien;
 
-    public function __construct($subject, $content, $userName, $userEmail)
+    public function __construct($subject, $content, $userName, $userEmail, $bien)
     {
         $this->subject = $subject;
         $this->content = $content;
         $this->userName = $userName;
         $this->userEmail = $userEmail;
+        $this->bien = $bien;
     }
 
-        public function build()
-        {
-            return $this->subject($this->subject)
-                        ->replyTo($this->userEmail)
-                        ->view('emails.contact_agency')
-                        ->with([
-                            'content' => $this->content,
-                            'userName' => $this->userName,
-                            'userEmail' => $this->userEmail,
-                            'subject' => $this->subject
-                        ]);
-        }
+    public function build()
+    {
+        return $this->from('no-reply@maelysimo.com', 'Maelys-Imo') // Email d'envoi fixe
+                    ->subject($this->subject)
+                    ->replyTo($this->userEmail, $this->userName) // Adresse de réponse du locataire
+                    ->view('emails.contact_agency')
+                    ->with([
+                        'content' => $this->content,
+                        'userName' => $this->userName,
+                        'userEmail' => $this->userEmail,
+                        'subject' => $this->subject,
+                        'bien' => $this->bien,
+                    ]);
+    }
 }

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 
 class OwnerComptableController extends Controller
 {
@@ -102,6 +103,24 @@ class OwnerComptableController extends Controller
         } catch (\Exception $e) {
             Log::error('Error creating Agent: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
+        }
+    }
+
+      public function destroy($id)
+    {
+        try {
+            $comptable = Comptable::findOrFail($id);
+            
+            // Supprimer le RIB si existant
+            if ($comptable->rib) {
+                Storage::delete('public/' . $comptable->rib);
+            }
+            
+            $comptable->delete();
+            
+            return redirect()->back()->with('success', 'Agent supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression du comptable.');
         }
     }
 }

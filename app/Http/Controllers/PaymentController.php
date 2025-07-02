@@ -148,7 +148,6 @@ public function store(Request $request, Locataire $locataire)
         'statut' => $statut,
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
-        'comptable_id' => Auth::guard('comptable')->user()->code_id ?? 0,
         'transaction_id' => $transaction_id,
         'proof_path' => $proofPath,
     ]);
