@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Swal.fire({
             title: 'Initialisation du paiement',
             html: 'Veuillez patienter...',
-            allowOutsideClick: false,
+            allowOutsideClick: true,
             didOpen: () => {
                 Swal.showLoading();
             }
