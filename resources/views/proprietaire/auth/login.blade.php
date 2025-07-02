@@ -129,6 +129,7 @@ body::before {
                 icon: 'success',
                 title: 'Connexion réussie',
                 text: '{{ session('success') }}',
+                3dfd d
                 showConfirmButton: false,
                 showConfirmButton: true,
                 confirmButtonColor: '#3085d6'
