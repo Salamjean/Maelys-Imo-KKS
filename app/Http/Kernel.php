@@ -84,7 +84,13 @@ class Kernel implements HttpKernel
      *
      * @var array<string, class-string|string>
      */
-    protected $middlewareAliases = [];
+    protected $middlewareAliases = [
+         'admin' => \App\Http\Middleware\Admin::class,
+        'agence' => \App\Http\Middleware\Agence::class,
+        'comptable' => \App\Http\Middleware\Comptable::class,
+        'owner' => \App\Http\Middleware\Proprietaire::class,
+        'locataire' => \App\Http\Middleware\Locataire::class,
+    ];
 
     /**
      * All of the registered request duration handlers.
