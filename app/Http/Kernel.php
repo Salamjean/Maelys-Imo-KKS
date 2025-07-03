@@ -1,6 +1,7 @@
 <?php
 
-namespace Illuminate\Foundation\Http;
+namespace App\Http;
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 use Carbon\CarbonInterval;
 use DateTimeInterface;
@@ -17,7 +18,7 @@ use Illuminate\Support\InteractsWithTime;
 use InvalidArgumentException;
 use Throwable;
 
-class Kernel implements KernelContract
+class Kernel implements HttpKernel
 {
     use InteractsWithTime;
 

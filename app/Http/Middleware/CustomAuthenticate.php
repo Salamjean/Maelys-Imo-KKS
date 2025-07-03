@@ -1,14 +1,15 @@
 <?php
 
-namespace Illuminate\Auth\Middleware;
+namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Auth\Middleware\Authenticate as Middleware;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\Factory as Auth;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Http\Request;
 
-class Authenticate implements AuthenticatesRequests
+class CustomAuthenticate implements Middleware
 {
     /**
      * The authentication factory instance.
