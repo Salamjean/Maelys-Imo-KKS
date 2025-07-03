@@ -5,7 +5,6 @@
 </div>
 <!-- Spinner End -->
 
-
 <!-- Topbar Start -->
 <div class="container-fluid bg-dark px-0">
  <div class="row g-0 d-none d-lg-flex">
@@ -34,9 +33,9 @@
  <a href="/" class="navbar-brand ps-5 me-0">
      <h1 class="text-white m-0">Maelys-imo</h1>
  </a>
- <button type="button" class="navbar-toggler me-0" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-     <span class="navbar-toggler-icon"></span>
- </button>
+ <button type="button" class="navbar-toggler me-0" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+</button>
  <div class="collapse navbar-collapse" id="navbarCollapse">
      <div class="navbar-nav ms-auto p-4 p-lg-0">
          <a href="/" class="nav-item nav-link active">Accueil</a>
@@ -54,7 +53,7 @@
     <div style="margin-left: 20px;" class="navbar-nav ms-auto p-4 p-lg-0 gap-2">
          <div class="d-flex align-items-center">
         <!-- Menu déroulant -->
-        <select class="btn btn-primary font-bold px-3 d-none d-lg-block text-white" style="width: auto;" onchange="window.location.href=this.value">
+        <select class="btn btn-primary font-bold px-3 text-white" style="width: auto;" onchange="window.location.href=this.value">
             <option value="" selected disabled style="font-weight: bold">Se connecter</option>
             <option value="{{ route('agence.login') }}">Agence</option>
             <option value="{{ route('owner.login') }}">Propriétaire</option>
@@ -64,7 +63,7 @@
     </div>
      <div class="d-flex align-items-center">
         <!-- Menu déroulant -->
-        <select class="btn btn-primary font-bold px-3 d-none d-lg-block text-white" style="width: auto;" onchange="window.location.href=this.value">
+        <select class="btn btn-primary font-bold px-3 text-white" style="width: auto;" onchange="window.location.href=this.value">
             <option value="" selected disabled style="font-weight: bold">Inscription</option>
             <option value="{{ route('agence.home.register') }}">Agence</option>
             <option value="{{ route('owner.home.register') }}">Propriétaire</option>

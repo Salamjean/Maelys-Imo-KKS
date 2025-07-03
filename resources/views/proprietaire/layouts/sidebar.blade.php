@@ -4,7 +4,7 @@
             $user = Auth::guard('owner')->user();
         @endphp
       <li class="nav-item sidebar-category">
-        <p>Propriétaire : {{ Auth::guard('owner')->user()->name }} {{ Auth::guard('owner')->user()->prenom }}</p>
+        <p>Propriétaire : {{ Auth::guard('owner')->user()->name }} </p>
         <span></span>
       </li>
       <li class="nav-item">

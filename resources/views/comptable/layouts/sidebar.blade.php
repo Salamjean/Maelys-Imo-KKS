@@ -6,11 +6,10 @@
         @endphp
 
         @if($user->user_type === 'Comptable')
-          Comptable : {{ Auth::guard('comptable')->user()->name }} {{ Auth::guard('comptable')->user()->prenom }}</p>
+          Comptable : {{ Auth::guard('comptable')->user()->name }}</p>
         @elseif($user->user_type === 'Agent de recouvrement')
           Agent : {{ Auth::guard('comptable')->user()->name }} {{ Auth::guard('comptable')->user()->prenom }}</p>
         @endif
-        <span></span>
       </li>
      
       @php

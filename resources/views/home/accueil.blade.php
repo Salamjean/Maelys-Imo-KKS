@@ -37,7 +37,7 @@
 
 <body>
     <!-- Spinner Start -->
-    @include('home.layouts.navbar')
+    @include('home.pages.layouts.navbar')
     <!-- Navbar End -->
 
 
@@ -207,8 +207,9 @@
 
 
     <!-- JavaScript Libraries -->
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('home/wow/wow.min.js') }}"></script>
     <script src="{{ asset('home/easing/easing.min.js') }}"></script>
     <script src="{{ asset('home/waypoints/waypoints.min.js') }}"></script>
@@ -239,9 +240,7 @@
         });
     });
 </script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 <script>
      @if(session('success'))
