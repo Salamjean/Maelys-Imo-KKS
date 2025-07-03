@@ -121,7 +121,7 @@ body::before {
     </script>
     @endif
 
-     <!-- Pop-up de succès après connexion -->
+    <!-- Pop-up de succès après connexion -->
     @if(session('success'))
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -129,7 +129,6 @@ body::before {
                 icon: 'success',
                 title: 'Connexion réussie',
                 text: '{{ session('success') }}',
-                3dfd d
                 showConfirmButton: false,
                 showConfirmButton: true,
                 confirmButtonColor: '#3085d6'

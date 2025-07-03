@@ -136,7 +136,7 @@
                                     <small class="text-muted">Format PDF uniquement (max 2MB)</small>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="profile_image" class="form-label">Logo de l'agence</label>
+                                    <label for="profile_image" class="form-label">Photo de profile</label>
                                     <div class="input-group">
                                         <input type="file" class="form-control @error('profile_image') is-invalid @enderror" 
                                                id="profile_image" name="profile_image" accept="image/*">

@@ -509,19 +509,22 @@ class AbonnementController extends Controller
         $abonnement = Abonnement::find($validated['id']);
         
         // Calcul du montant à ajouter en fonction du type d'utilisateur
-        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 5000 : 10000;
+        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 10000 : 10000;
         $montantAjoute = $validated['months'] * $prixMensuel;
 
         // Mise à jour de l'abonnement
         $abonnement->date_fin = Carbon::parse($abonnement->date_fin)
             ->addMonths($validated['months']);
         
+        $abonnement->montant_actuel = $montantAjoute;
+        $abonnement->mode_paiement = 'Espèces';
         $abonnement->montant += $montantAjoute;
         $abonnement->save();
 
         return response()->json([
             'success' => true,
             'nouveau_montant' => $abonnement->montant,
+            'montant_actuel' => $abonnement->montant_actuel,
             'nouvelle_date_fin' => $abonnement->date_fin->format('d/m/Y')
         ]);
     }
@@ -537,7 +540,7 @@ class AbonnementController extends Controller
         $abonnement = Abonnement::find($validated['id']);
         
         // Calcul du montant à retirer en fonction du type d'utilisateur
-        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 5000 : 10000;
+        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 10000 : 10000;
         $montantRetire = $validated['months'] * $prixMensuel;
 
         // Vérifier qu'on ne retire pas plus que le montant existant
@@ -552,6 +555,7 @@ class AbonnementController extends Controller
         $abonnement->date_fin = Carbon::parse($abonnement->date_fin)
             ->subMonths($validated['months']);
         
+        $abonnement->montant_actuel -= $montantRetire;
         $abonnement->montant -= $montantRetire;
         $abonnement->save();
 

@@ -82,14 +82,8 @@
                                     <label for="commune" class="form-label">Commune <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="fas fa-city text-muted"></i></span>
-                                        <select class="form-select @error('commune') is-invalid @enderror" 
-                                                id="commune" name="commune" required>
-                                            <option value="" disabled selected>Sélectionnez une commune</option>
-                                            <option value="Abobo">Abobo</option>
-                                            <option value="Cocody">Cocody</option>
-                                            <option value="Yopougon">Yopougon</option>
-                                            <!-- Ajoutez d'autres communes au besoin -->
-                                        </select>
+                                        <input type="text" class="form-control @error('commune') is-invalid @enderror" 
+                                            id="commune" name="commune" value="{{ old('commune') }}" required placeholder="Ex: Cocody">
                                         @error('commune')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror

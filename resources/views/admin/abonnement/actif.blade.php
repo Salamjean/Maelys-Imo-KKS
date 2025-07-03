@@ -23,7 +23,8 @@
                             <th>Date Début</th>
                             <th>Date Fin</th>
                             <th>Jours Restants</th>
-                            <th>Montant</th>
+                            <th>Montant d'abonnement</th>
+                            <th>Montant total d'abonnement</th>
                             <th>Mois Abonné</th>
                             <th>Paiement</th>
                             <th>Statut</th>
@@ -48,7 +49,7 @@
                                 // Déterminer le nom de l'abonné
                                 $abonneName = 'N/A';
                                 if ($abonnement->proprietaire) {
-                                    $abonneName = $abonnement->proprietaire->name ?? 'Propriétaire';
+                                    $abonneName = $abonnement->proprietaire->name.' '.$abonnement->proprietaire->prenom ?? 'Propriétaire';
                                 } elseif ($abonnement->agence) {
                                     $abonneName = $abonnement->agence->name ?? 'Agence';
                                 }
@@ -74,6 +75,7 @@
                                         @endif
                                     </span>
                                 </td>
+                                <td>{{ number_format($abonnement->montant_actuel, 0, ',', ' ') }} FCFA</td>
                                 <td>{{ number_format($abonnement->montant, 0, ',', ' ') }} FCFA</td>
                                 <td>{{ $abonnement->mois_abonne }}</td>
                                 <td>
@@ -284,7 +286,7 @@
     const userType = row.find('td:nth-child(2)').text().trim() === 'Propriétaire' ? 'Propriétaire' : 'Agence';
     
     // Définir le prix mensuel en fonction du type d'utilisateur
-    const prixMensuel = userType === 'Propriétaire' ? 5000 : 10000;
+    const prixMensuel = userType === 'Propriétaire' ? 10000 : 10000;
     const montant = months * prixMensuel;
     
     const operation = action === 'extend' ? 'ajouter' : 'retirer';

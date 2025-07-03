@@ -578,7 +578,8 @@ private function getAbonnementMessage($abonnement): string
             'date_debut' => $dateDebut,
             'date_fin' => $dateFin,
             'mois_abonne' => $today->format('m-Y'),
-            'montant' => 10000, // À ajuster selon votre logique métier
+            'montant' => 0, // À ajuster selon votre logique métier
+            'montant_actuel' => 0, // À ajuster selon votre logique métier
             'statut' => 'actif',
             'mode_paiement' => 'offert', // Ou autre valeur par défaut
             'reference_paiement' => 'CREA-' . $owner->code_id,

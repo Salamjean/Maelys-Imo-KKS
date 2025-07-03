@@ -75,7 +75,7 @@
                                         @endif
                                     </span>
                                 </td>
-                                <td>{{ number_format($abonnement->montant, 0, ',', ' ') }} FCFA</td>
+                                <td>{{ number_format($abonnement->montant_actuel, 0, ',', ' ') }} FCFA</td>
                                 <td>{{ $abonnement->mois_abonne }}</td>
                                 <td>
                                     @if($abonnement->mode_paiement === 'Espèces')

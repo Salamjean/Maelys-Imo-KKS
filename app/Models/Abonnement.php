@@ -14,6 +14,7 @@ class Abonnement extends Model
         'date_fin',
         'mois_abonne',
         'montant',
+        'montant_actuel',
         'statut',
         'mode_paiement',
         'reference_paiement',

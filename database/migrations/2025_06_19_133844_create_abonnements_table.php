@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('date_fin'); // date de fin de l'abonnement
             $table->string('mois_abonne'); // le mois pour lequel l'abonnement est valide (peut être formaté comme "01-2023")
             $table->decimal('montant', 10, 2); // montant de l'abonnement
+            $table->decimal('montant_actuel', 10, 2)->nullable(); // montant de l'abonnement
             $table->string('statut')->default('actif'); // actif, expiré, annulé, etc.
             $table->string('mode_paiement'); // mode de paiement utilisé
             $table->string('reference_paiement')->nullable(); // référence du paiement

@@ -345,7 +345,11 @@
                 </td>
             </tr>
             <tr>
-                <th>Montant</th>
+                <th>Nouveau montant d'abonnement</th>
+                <td class="important">{{ number_format($abonnement->montant_actuel, 0, ',', ' ') }} FCFA</td>
+            </tr>
+            <tr>
+                <th>Montant total de tes abonnements</th>
                 <td class="important">{{ number_format($abonnement->montant, 0, ',', ' ') }} FCFA</td>
             </tr>
             <tr>
