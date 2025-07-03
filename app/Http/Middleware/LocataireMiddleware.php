@@ -14,12 +14,11 @@ class LocataireMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle($request, Closure $next)
     {
-        if(Auth::guard('locataire')->check()){
-            return $next($request);
-        }else{
+        if (!Auth::guard('locataire')->check()) {
             return redirect()->route('locataire.login');
         }
+        return $next($request);
     }
 }

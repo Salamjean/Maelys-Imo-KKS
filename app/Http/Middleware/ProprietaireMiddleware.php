@@ -14,12 +14,11 @@ class ProprietaireMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle($request, Closure $next)
     {
-        if(Auth::guard('owner')->check()){
-            return $next($request);
-        }else{
+        if (!Auth::guard('owner')->check()) {
             return redirect()->route('owner.login');
         }
+        return $next($request);
     }
 }

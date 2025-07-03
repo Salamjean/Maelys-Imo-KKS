@@ -14,12 +14,11 @@ class ComptableMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+   public function handle($request, Closure $next)
     {
-        if(Auth::guard('comptable')->check()){
-            return $next($request);
-        }else{
+        if (!Auth::guard('comptable')->check()) {
             return redirect()->route('comptable.login');
         }
+        return $next($request);
     }
 }

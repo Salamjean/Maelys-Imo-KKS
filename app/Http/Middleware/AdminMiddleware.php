@@ -14,12 +14,11 @@ class AdminMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle($request, Closure $next)
     {
-        if(Auth::guard('admin')->check()){
-            return $next($request);
-        }else{
+        if (!Auth::guard('admin')->check()) {
             return redirect()->route('admin.login');
         }
+        return $next($request);
     }
 }

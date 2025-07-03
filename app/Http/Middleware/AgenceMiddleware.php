@@ -14,12 +14,12 @@ class AgenceMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    // AgenceMiddleware.php
+    public function handle($request, Closure $next)
     {
-        if(Auth::guard('agence')->check()){
-            return $next($request);
-        }else{
+        if (!Auth::guard('agence')->check()) {
             return redirect()->route('agence.login');
         }
+        return $next($request);
     }
 }
