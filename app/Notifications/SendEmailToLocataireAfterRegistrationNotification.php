@@ -44,7 +44,7 @@ class SendEmailToLocataireAfterRegistrationNotification extends Notification
     {
         return (new MailMessage)
             ->subject($this->agenceName . ' : Vous êtes enregistré comme locataire') 
-            ->from('no-reply@example.com', $this->agenceName)
+            ->from('contact@maelysimo.com', $this->agenceName)
             ->view('emails.locataire', [
                 'code' => $this->code,
                 'agenceName' => $this->agenceName,

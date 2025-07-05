@@ -24,7 +24,7 @@ class DoneVisite extends Mailable
     public function build()
     {
         return $this->subject('Votre demande de visite a été effectuée')
-                    ->from('no-reply@example.com', 'Maelys-Imo')
+                    ->from('contact@maelysimo.com', 'Maelys-Imo')
                     ->view('emails.doneVisite');
     }
 }

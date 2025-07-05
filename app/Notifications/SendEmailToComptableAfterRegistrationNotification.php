@@ -42,7 +42,7 @@ class SendEmailToComptableAfterRegistrationNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Agence : Vous êtes enregistré auprès de votre agence') 
-            ->from('no-reply@example.com', 'Agence')
+            ->from('contact@maelysimo.com', 'Agence')
             ->view('emails.comptable', [
                 'code' => $this->code,
                 'email' => $this->email,

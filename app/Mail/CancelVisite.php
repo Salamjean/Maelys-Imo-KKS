@@ -24,7 +24,7 @@ class CancelVisite extends Mailable
     public function build()
     {
         return $this->subject('Votre demande de visite a été annulée')
-                    ->from('no-reply@example.com', 'Maelys-Imo')
+                    ->from('contact@maelysimo.com', 'Maelys-Imo')
                     ->view('emails.cancelVisite');
     }
 }

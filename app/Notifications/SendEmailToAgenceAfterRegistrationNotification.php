@@ -42,7 +42,7 @@ class SendEmailToAgenceAfterRegistrationNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Maelys-Imo : Votre agence est enregistré chez Maelys-Imo') 
-            ->from('no-reply@example.com', 'Maelys-Imo')
+            ->from('contact@maelysimo.com', 'Maelys-Imo')
             ->view('emails.agence', [
                 'code' => $this->code,
                 'email' => $this->email,

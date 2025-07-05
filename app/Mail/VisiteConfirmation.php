@@ -24,7 +24,7 @@ class VisiteConfirmation extends Mailable
     public function build()
     {
         return $this->subject('Confirmation de votre demande de visite')
-                    ->from('no-reply@example.com', 'Maelys-Imo')
+                    ->from('contact@maelysimo.com', 'Maelys-Imo')
                     ->view('emails.visite_confirmation');
     }
 }

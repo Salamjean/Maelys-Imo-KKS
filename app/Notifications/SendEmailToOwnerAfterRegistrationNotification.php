@@ -42,7 +42,7 @@ class SendEmailToOwnerAfterRegistrationNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Maelys-imo : Vous êtes enregistré en tant que propriétaire') 
-            ->from('no-reply@example.com', 'Maelys-imo')
+            ->from('contact@maelysimo.com', 'Maelys-imo')
             ->view('emails.proprietaire', [
                 'code' => $this->code,
                 'email' => $this->email,
