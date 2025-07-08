@@ -23,6 +23,7 @@ class CashVerificationCodeMail extends Mailable
     public function build()
     {
         return $this->subject('Votre code de vérification de paiement')
+                    ->from('contact@maelysimo.com', 'Maelys-Imo')
                     ->markdown('emails.cash_verification_code')
                     ->with([
                         'locataire' => $this->locataire,

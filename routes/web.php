@@ -24,6 +24,7 @@ use App\Http\Controllers\Proprietaire\OwnerPasswordResetController;
 use App\Http\Controllers\Proprietaire\ProprietaireController;
 use App\Http\Controllers\Proprietaire\ReversementController;
 use App\Http\Controllers\RibController;
+use App\Http\Controllers\PaymentPartnerController;
 use App\Http\Controllers\VersementController;
 use App\Http\Controllers\VisiteController;
 use App\Models\Agence;
@@ -233,7 +234,7 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
         Route::get('/',[ProprietaireController::class,'index'])->name('owner.index');
         Route::get('/ownercreate',[ProprietaireController::class,'create'])->name('owner.create');
         Route::post('/create',[ProprietaireController::class,'store'])->name('owner.store');
-        Route::get('/edit/{proprietaire}',[ProprietaireController::class,'edit'])->name('owner.edit');
+        Route::get('/{proprietaire}/editowner',[ProprietaireController::class,'edit'])->name('owner.edit');
         Route::put('/{id}/edit', [ProprietaireController::class, 'update'])->name('owner.update.owner');
         Route::delete('/admin/owner/{id}', [ProprietaireController::class, 'destroy'])->name('owner.destroy');
     });
@@ -241,13 +242,26 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
     //routes de gestion des abonnements par l'agence
     Route::get('/abonnement/show',[AbonnementController::class, 'abonneShowAgence'])->name('agence.abonnement.show');
 
+    //routes de paiements de proprietaires par l'agence 
+    Route::prefix('partner')->group(function () {
+    Route::get('/payment', [PaymentPartnerController::class, 'indexPaymentPartner'])->name('partner.payment.index');
+    Route::get('/payment/createpartner', [PaymentPartnerController::class, 'createPaymentPartner'])->name('partner.payment.create');
+    Route::get('/payment/form/{proprietaire}', [PaymentPartnerController::class, 'showPaymentForm'])->name('partner.payment.form');
+    Route::post('/payment/store', [PaymentPartnerController::class, 'storePayment'])->name('partner.payment.store');
+    
+    // Routes pour la validation
+    Route::get('/payment/validate/{payment}', [PaymentPartnerController::class, 'showValidationForm'])
+        ->name('partner.payment.validate.form');
+    Route::post('/payment/validate/{payment}', [PaymentPartnerController::class, 'validatePaymentCode'])
+        ->name('partner.payment.validate');
+});
     //Les routes pour la gestion des ribs du proprietaire 
     Route::prefix('rib')->group(function(){
         Route::get('/createrib',[RibController::class, 'createAgence'])->name('rib.create.agence');
         Route::post('/storerib',[RibController::class, 'storeAgence'])->name('rib.store.agence');
         Route::delete('/ribs/{id}', [RibController::class, 'destroyAgence'])->name('rib.destroy.agence');
     });
-
+    
     //Les routes de gestion de paiments 
     Route::prefix('payment')->group(function(){
         Route::get('/management',[PaymentManagementController::class, 'indexAgence'])->name('payment.management.agence');
@@ -451,6 +465,7 @@ Route::post('/validate-owner-account/{email}', [ProprietaireController::class, '
  //routes de gestions des onglets du menus 
 Route::get('/maelys/about',[HomePageController::class,'about'])->name('maelys.about');
 Route::get('/maelys/service',[HomePageController::class,'service'])->name('maelys.service');
+Route::get('/maelys/abonnement',[HomePageController::class,'abonnement'])->name('maelys.abonnement');
 Route::get('/biens/appartemnets',[BienController::class, 'appartements'])->name('bien.appartement');
 Route::get('/biens/maisons',[BienController::class, 'maisons'])->name('bien.maison');
 Route::get('/biens/terrains',[BienController::class, 'terrains'])->name('bien.terrain');

@@ -76,7 +76,8 @@ class AbonnementController extends Controller
     $validated = $request->validate([
         'transaction_id' => 'required|string',
         'amount' => 'required|numeric|min:100',
-        'duration' => 'required|integer|in:1,3,6,12' // Ajout du champ duration
+        'duration' => 'required|integer|in:1,3,6,12', // Ajout du champ duration
+        'type' => 'required|string|in:standard,premium'
     ]);
 
     DB::beginTransaction();
@@ -124,6 +125,7 @@ class AbonnementController extends Controller
             'mois_abonne' => $today->format('m-Y'),
             'montant' => $validated['amount'],
             'duree_mois' => $validated['duration'], // Ajout de la durée en mois
+            'type' => $validated['type'],
             'statut' => 'actif',
             'mode_paiement' => 'Mobile Money',
             'reference_paiement' => $validated['transaction_id'],

@@ -25,6 +25,7 @@ class PaymentReminderMail extends Mailable
     public function build()
     {
         return $this->subject('Rappel de paiement de loyer')
+                    ->from('contact@maelysimo.com', 'Maelys-Imo')
                     ->view('emails.payment_reminder')
                     ->with([
                         'locataire' => $this->locataire,

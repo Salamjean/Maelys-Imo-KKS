@@ -6,7 +6,7 @@
     <!-- row end -->
     <h2 class="text-center mb-4">Total de bien publié sur la plateforme</h2>
     <div class="row">
-      <div class="col-md-4 grid-margin stretch-card">
+      <div class="col-md-3 grid-margin stretch-card">
         <div class="card bg-facebook d-flex align-items-center">
           <div class="card-body py-5">
             <div class="d-flex flex-row align-items-center flex-wrap justify-content-md-center justify-content-xl-start py-1">
@@ -20,7 +20,7 @@
           </div>
         </div>
       </div>
-      <div class="col-md-4 grid-margin stretch-card">
+      <div class="col-md-3 grid-margin stretch-card">
         <div class="card bg-google d-flex align-items-center">
           <div class="card-body py-5">
             <div class="d-flex flex-row align-items-center flex-wrap justify-content-md-center justify-content-xl-start py-1">
@@ -34,7 +34,21 @@
           </div>
         </div>
       </div>
-      <div class="col-md-4 grid-margin stretch-card">
+      <div class="col-md-3 grid-margin stretch-card">
+        <div class="card bg-twitter d-flex align-items-center">
+          <div class="card-body py-5">
+            <div class="d-flex flex-row align-items-center flex-wrap justify-content-md-center justify-content-xl-start py-1">
+              <i class="mdi mdi-home text-white icon-lg"></i>
+              <div class="ml-3 ml-md-0 ml-xl-3">
+                <h5 class="text-white font-weight-bold">Total de magasin</h5>
+                <h3 class="text-white font-weight-bold">{{ $totalMagasins }}</h3>
+                <p class="mt-2 text-white card-text">Sur notre plateforme</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 grid-margin stretch-card">
         <div class="card bg-twitter d-flex align-items-center">
           <div class="card-body py-5">
             <div class="d-flex flex-row align-items-center flex-wrap justify-content-md-center justify-content-xl-start py-1">

@@ -43,6 +43,11 @@ class Bien extends Model
         return $this->belongsTo(Proprietaire::class, 'proprietaire_id', 'code_id');
     }
 
+    public function paiements()
+    {
+        return $this->hasMany(Paiement::class);
+    }
+
 public function getImages()
 {
     return array_filter([

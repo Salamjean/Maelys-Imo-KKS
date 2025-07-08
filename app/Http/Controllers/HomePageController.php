@@ -23,6 +23,10 @@ class HomePageController extends Controller
     public function service(){
         return view('home.service');
     }
+    
+    public function abonnement(){
+        return view('home.abonnement');
+    }
 
     public function RegisterAgence(){
         return view('agence.home.register');

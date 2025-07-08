@@ -26,6 +26,7 @@ class CashPaymentCodeMail extends Mailable
     {
         return $this->subject('[URGENT] Votre code de paiement en espèces')
                ->markdown('emails.cash_payment_code')
+               ->from('contact@maelysimo.com', 'Maelys-Imo')
                ->with([
                    'code' => $this->code,
                    'locataire' => $this->locataire,

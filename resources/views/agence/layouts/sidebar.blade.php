@@ -135,6 +135,20 @@
       </li>
 
       <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#ui-par" aria-expanded="false" aria-controls="ui-par">
+          <i class="mdi mdi-account-multiple menu-icon"></i>
+          <span class="menu-title">Partenaire</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-par">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> <a class="nav-link" href=" {{ route('partner.payment.create') }} ">Paiement</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{route('partner.payment.index')}}">Historique paiement</a></li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="nav-item">
         <a class="nav-link" href="{{ route('agence.abonnement.show') }}">
            <i class="mdi mdi-account-multiple-minus menu-icon"></i>
           <span class="menu-title">Mon abonnement</span>

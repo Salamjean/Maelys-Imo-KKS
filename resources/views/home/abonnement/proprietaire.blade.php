@@ -8,6 +8,33 @@
     <script src="https://cdn.cinetpay.com/seamless/main.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('abonnement/styles.css') }}">
+    <style>
+        .subscription-toggle {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .toggle-option {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .toggle-option:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+        .toggle-option:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+        .toggle-option.active {
+            background: var(--primary);
+            color: white;
+        }
+        .highlight-premium {
+            background: #f59e0b;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -21,8 +48,14 @@
                 <strong>Action requise :</strong> Activez votre compte avec un abonnement
             </div>
 
+            <div class="subscription-toggle">
+                <div class="toggle-option active" onclick="switchSubscription('standard')">Standard</div>
+                <div class="toggle-option" onclick="switchSubscription('premium')">Premium</div>
+            </div>
+
             <div class="subscription-options">
-                <div class="subscription-card" onclick="selectSubscription(1, 5000)">
+                <!-- Standard Options (hidden when premium is selected) -->
+                <div class="subscription-card standard-card" onclick="selectSubscription(1, 100, 'standard')">
                     <h2>1 Mois</h2>
                     <div class="price">
                         5.000 Fcfa
@@ -34,7 +67,7 @@
                     </ul>
                 </div>
 
-                <div class="subscription-card" onclick="selectSubscription(3, 12000)">
+                <div class="subscription-card standard-card" onclick="selectSubscription(3, 12000, 'standard')">
                     <div class="highlight">Économisez 20%</div>
                     <h2>3 Mois</h2>
                     <div class="price">
@@ -47,7 +80,7 @@
                     </ul>
                 </div>
 
-                <div class="subscription-card" onclick="selectSubscription(6, 24000)">
+                <div class="subscription-card standard-card" onclick="selectSubscription(6, 24000, 'standard')">
                     <div class="highlight">Économisez 20%</div>
                     <h2>6 Mois</h2>
                     <div class="price">
@@ -60,7 +93,7 @@
                     </ul>
                 </div>
 
-                <div class="subscription-card" onclick="selectSubscription(12, 50000)">
+                <div class="subscription-card standard-card" onclick="selectSubscription(12, 50000, 'standard')">
                     <div class="highlight">Économisez 17%</div>
                     <h2>1 An</h2>
                     <div class="price">
@@ -72,11 +105,75 @@
                         <li>Support technique 24/7</li>
                     </ul>
                 </div>
+
+                <!-- Premium Options (hidden by default) -->
+                <div class="subscription-card premium-card" style="display: none;" onclick="selectSubscription(1, 7000, 'premium')">
+                    <h2>1 Mois Premium</h2>
+                    <div class="price">
+                        7.000 Fcfa
+                        <span>7.000 Fcfa/mois</span>
+                    </div>
+                    <ul class="features">
+                        <li>Accès complet pour 1 mois</li>
+                        <li>Support technique premium</li>
+                        <li>Listage en avant</li>
+                        <li>Statistiques avancées</li>
+                    </ul>
+                </div>
+
+                <div class="subscription-card premium-card" style="display: none;" onclick="selectSubscription(3, 18000, 'premium')">
+                    <div class="highlight highlight-premium">Économisez 15%</div>
+                    <h2>3 Mois Premium</h2>
+                    <div class="price">
+                        18.000 Fcfa
+                        <span>6.000 Fcfa/mois</span>
+                    </div>
+                    <ul class="features">
+                        <li>Accès complet pour 3 mois</li>
+                        <li>Support technique premium</li>
+                        <li>Listage en avant</li>
+                        <li>Statistiques avancées</li>
+                    </ul>
+                </div>
+
+                <div class="subscription-card premium-card" style="display: none;" onclick="selectSubscription(6, 36000, 'premium')">
+                    <div class="highlight highlight-premium">Économisez 15%</div>
+                    <h2>6 Mois Premium</h2>
+                    <div class="price">
+                        36.000 Fcfa
+                        <span>6.000 Fcfa/mois</span>
+                    </div>
+                    <ul class="features">
+                        <li>Accès complet pour 6 mois</li>
+                        <li>Support technique prioritaire</li>
+                        <li>Listage en avant</li>
+                        <li>Statistiques détaillées</li>
+                        <li>Badge Premium</li>
+                    </ul>
+                </div>
+
+                <div class="subscription-card premium-card" style="display: none;" onclick="selectSubscription(12, 72000, 'premium')">
+                    <div class="highlight highlight-premium">Économisez 15%</div>
+                    <h2>1 An Premium</h2>
+                    <div class="price">
+                        72.000 Fcfa
+                        <span>6.000 Fcfa/mois</span>
+                    </div>
+                    <ul class="features">
+                        <li>Accès complet pour 1 an</li>
+                        <li>Support technique 24/7</li>
+                        <li>Listage en tête</li>
+                        <li>Statistiques complètes</li>
+                        <li>Badge Premium</li>
+                        <li>Promotions exclusives</li>
+                    </ul>
+                </div>
             </div>
 
             <div class="payment-summary" id="paymentSummary" style="display: none;">
                 <div class="summary-header">Récapitulatif</div>
                 <div class="summary-details">
+                    <div><span>Type :</span> <span id="summaryType"></span></div>
                     <div><span>Durée :</span> <span id="summaryDuration"></span></div>
                     <div><span>Total :</span> <span id="summaryAmount"></span> Fcfa</div>
                     <div><span>Expiration :</span> <span id="summaryExpiry"></span></div>
@@ -95,6 +192,7 @@
                     <input type="hidden" name="transaction_id" id="transaction_id">
                     <input type="hidden" name="amount" id="amount">
                     <input type="hidden" name="duration" id="duration">
+                    <input type="hidden" name="type" id="type" value="standard">
                 </form>
             @else
                 <script>window.location.href = "{{ route('owner.login') }}";</script>
@@ -105,7 +203,40 @@
     <script>
         let selectedSubscription = null;
 
-        function selectSubscription(duration, amount) {
+        function switchSubscription(type) {
+            // Update toggle UI
+            document.querySelectorAll('.toggle-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Show/hide subscription cards
+            if (type === 'standard') {
+                document.querySelectorAll('.standard-card').forEach(card => {
+                    card.style.display = 'block';
+                });
+                document.querySelectorAll('.premium-card').forEach(card => {
+                    card.style.display = 'none';
+                });
+                document.getElementById('type').value = 'standard';
+            } else {
+                document.querySelectorAll('.standard-card').forEach(card => {
+                    card.style.display = 'none';
+                });
+                document.querySelectorAll('.premium-card').forEach(card => {
+                    card.style.display = 'block';
+                });
+                document.getElementById('type').value = 'premium';
+            }
+
+            // Reset selection
+            selectedSubscription = null;
+            document.getElementById('paymentSummary').style.display = 'none';
+            document.getElementById('btnSubscribe').disabled = true;
+            document.getElementById('btnSubscribe').innerHTML = 'Choisir cet abonnement';
+        }
+
+        function selectSubscription(duration, amount, type) {
             // Désélectionner toutes les cartes
             document.querySelectorAll('.subscription-card').forEach(card => {
                 card.classList.remove('selected');
@@ -123,6 +254,7 @@
             summary.style.display = 'block';
             summary.style.animation = 'fadeIn 0.3s ease-out';
             
+            document.getElementById('summaryType').textContent = type === 'premium' ? 'Premium' : 'Standard';
             document.getElementById('summaryDuration').textContent = duration + ' mois';
             document.getElementById('summaryAmount').textContent = amount.toLocaleString();
             document.getElementById('summaryExpiry').textContent = expiryDate.toLocaleDateString('fr-FR');
@@ -133,11 +265,12 @@
             btnSubscribe.innerHTML = `Souscrire - ${amount.toLocaleString()} Fcfa`;
             
             // Stocker la sélection
-            selectedSubscription = { duration, amount };
+            selectedSubscription = { duration, amount, type };
             
             // Mettre à jour les champs cachés
             document.getElementById('amount').value = amount;
             document.getElementById('duration').value = duration;
+            document.getElementById('type').value = type;
         }
 
         async function initiatePayment() {
@@ -155,6 +288,7 @@
             const { isConfirmed } = await Swal.fire({
                 title: 'Confirmer le paiement',
                 html: `<div style="text-align: left; margin: 10px 0;">
+                    <div><strong>Type :</strong> ${selectedSubscription.type === 'premium' ? 'Premium' : 'Standard'}</div>
                     <div><strong>Formule :</strong> ${selectedSubscription.duration} mois</div>
                     <div><strong>Montant :</strong> ${selectedSubscription.amount.toLocaleString()} Fcfa</div>
                 </div>`,
@@ -197,7 +331,7 @@
                 amount: selectedSubscription.amount,
                 currency: 'XOF',
                 channels: 'ALL',
-                description: `Abonnement Propriétaire (${selectedSubscription.duration} mois)`,
+                description: `Abonnement ${selectedSubscription.type === 'premium' ? 'Premium' : 'Standard'} (${selectedSubscription.duration} mois)`,
             });
 
             // Gestion de la réponse

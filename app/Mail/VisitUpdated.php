@@ -20,6 +20,7 @@ class VisitUpdated extends Mailable
     public function build()
     {
         return $this->subject($this->details['subject'])
+                    ->from('contact@maelysimo.com', 'Maelys-Imo')
                     ->view('emails.visit_updated');
     }
 }

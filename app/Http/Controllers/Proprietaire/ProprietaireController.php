@@ -210,52 +210,57 @@ class ProprietaireController extends Controller
             'email' => 'required|email|unique:proprietaires,email,'.$proprietaire->id,
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
-            'pourcentage' => 'nullable|max:255',
-            'choix_paiement' => 'required|max:255',
-            'rib' => 'nullable|max:255',
+            'pourcentage' => 'required|integer|between:1,15',
+            'choix_paiement' => 'required|in:Virement Bancaire,Chèques',
+            'rib' => $request->choix_paiement == 'Virement Bancaire' ? 'required|string|max:255' : 'nullable',
+            'contrat' => 'nullable|file|mimes:pdf,doc,docx|max:2048',
         ],[
-            'name.required' => 'Le nom du proprietaire est obligatoire.',
-            'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
+            'name.required' => 'Le nom du propriétaire est obligatoire.',
+            'prenom.required' => 'Le prénom du propriétaire est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
             'email.email' => 'L\'adresse e-mail n\'est pas valide.',
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'La commune est obligatoire.',
-            'fonction.max' => 'Le fonction ne doit pas dépasser 255 caractères.',
-            'profil_image.image' => 'Le fichier doit être une image.',
-            'profil_image.mimes' => 'L\'image doit être de type: jpeg, png, jpg ou gif.',
-            'profil_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
+            'pourcentage.required' => 'Le pourcentage est obligatoire.',
+            'pourcentage.between' => 'Le pourcentage doit être entre 1% et 15%.',
+            'choix_paiement.required' => 'Le mode de paiement est obligatoire.',
+            'rib.required' => 'Le RIB est obligatoire pour les virements bancaires.',
+            'contrat.mimes' => 'Le contrat doit être un fichier PDF, DOC ou DOCX.',
+            'contrat.max' => 'Le contrat ne doit pas dépasser 2Mo.',
         ]);
 
         try {
-            // Traitement de l'image de profil
-            if ($request->hasFile('profile_image')) {
-                // Supprimer l'ancienne image si elle existe
-                if ($proprietaire->profile_image) {
-                    Storage::disk('public')->delete($proprietaire->profile_image);
-                }
-                $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
-                $validatedData['profil_image'] = $profileImagePath;
-            }
-
-            // Mise à jour des informations
+            // Mise à jour des informations de base
             $proprietaire->name = $validatedData['name'];
             $proprietaire->prenom = $validatedData['prenom'];
             $proprietaire->email = $validatedData['email'];
             $proprietaire->contact = $validatedData['contact'];
             $proprietaire->commune = $validatedData['commune'];
-            $proprietaire->rib = $validatedData['rib'];
             $proprietaire->pourcentage = $validatedData['pourcentage'];
             $proprietaire->choix_paiement = $validatedData['choix_paiement'];
-            $proprietaire->profil_image = $validatedData['profil_image'] ?? $proprietaire->profil_image;
+            $proprietaire->rib = $validatedData['choix_paiement'] == 'Virement Bancaire' ? $validatedData['rib'] : null;
+
+            // Gestion du fichier de contrat
+            if ($request->hasFile('contrat')) {
+                // Supprimer l'ancien contrat s'il existe
+                if ($proprietaire->contrat && Storage::exists($proprietaire->contrat)) {
+                    Storage::delete($proprietaire->contrat);
+                }
+                
+                // Stocker le nouveau contrat
+                $contratPath = $request->file('contrat')->store('contrats_proprietaires');
+                $proprietaire->contrat = $contratPath;
+            }
+
             $proprietaire->save();
 
             return redirect()->route('owner.index')
-                ->with('success', 'Proprietaire de bien mis à jour avec succès.');
+                ->with('success', 'Propriétaire mis à jour avec succès.');
 
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la mise à jour du proprietaire: ' . $e->getMessage());
+            Log::error('Erreur lors de la mise à jour du propriétaire: ' . $e->getMessage());
             return back()
                 ->with('error', 'Une erreur est survenue lors de la mise à jour. Veuillez réessayer.')
                 ->withInput();

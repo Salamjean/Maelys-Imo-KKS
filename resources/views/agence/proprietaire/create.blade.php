@@ -67,8 +67,8 @@
                             <label>Choix de paiement</label>
                             <select class="form-control" style="border: 1px solid black; border-radius: 5px;" name="choix_paiement" id="choix_paiement">
                                 <option value="">Faites un choix</option>
-                                <option value="RIB">RIB</option>
-                                <option value="Mobile money">Mobile money</option>
+                                <option value="Virement Bancaire">Virement Bancaire</option>
+                                <option value="Chèques">Chèques</option>
                             </select>
                             @error('choix_paiement')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
@@ -89,8 +89,21 @@
                             <label>Pourcentage </label>
                             <select class="form-control" style="border: 1px solid black; border-radius: 5px;" name="pourcentage">
                                 <option value="">Choissisez le pourcentage</option>
+                                <option value="1">1%</option>
+                                <option value="2">2%</option>
+                                <option value="3">3%</option>
+                                <option value="4">4%</option>
                                 <option value="5">5%</option>
+                                <option value="6">6%</option>
+                                <option value="7">7%</option>
+                                <option value="8">8%</option>
+                                <option value="9">9%</option>
                                 <option value="10">10%</option>
+                                <option value="11">11%</option>
+                                <option value="12">12%</option>
+                                <option value="13">13%</option>
+                                <option value="14">14%</option>
+                                <option value="15">15%</option>
                             </select>
                             @error('pourcentage')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
@@ -133,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fonction pour gérer l'état des champs
     function updateFields() {
-        if (choixPaiement.value === 'Mobile money') {
+        if (choixPaiement.value === 'Chèques') {
             ribField.disabled = true;
             ribField.style.backgroundColor = '#e9ecef';
             banqueField.disabled = true;

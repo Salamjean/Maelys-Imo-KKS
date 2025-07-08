@@ -49,6 +49,7 @@
                  <a href="{{ route('bien.terrain') }}" class="dropdown-item">Bureau</a>
              </div>
          </div>
+        <a href="{{ route('maelys.abonnement') }}" class="nav-item nav-link">Abonnement</a>
      </div>
     <div style="margin-left: 20px;" class="navbar-nav ms-auto p-4 p-lg-0 gap-2">
          <div class="d-flex align-items-center">

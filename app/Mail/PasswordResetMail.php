@@ -20,7 +20,12 @@ class PasswordResetMail extends Mailable
     public function build()
     {
         return $this->subject('Réinitialisation de votre mot de passe')
+                    ->from('contact@maelysimo.com', 'Maelys-Imo')
                     ->view('emails.password-reset')
-                    ->with(['resetLink' => $this->resetLink]);
+                    ->with(['resetLink' => $this->resetLink])
+                    ->withSwiftMessage(function ($message) {
+                        $message->getHeaders()
+                            ->addTextHeader('X-Mailer', 'Maelys-Imo Mailer');
+                    });
     }
 }
