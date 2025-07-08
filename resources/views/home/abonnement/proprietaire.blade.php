@@ -67,7 +67,7 @@
                     </ul>
                 </div>
 
-                <div class="subscription-card standard-card" onclick="selectSubscription(3, 12000, 'standard')">
+                <div class="subscription-card standard-card" onclick="selectSubscription(3, 100, 'standard')">
                     <div class="highlight">Économisez 20%</div>
                     <h2>3 Mois</h2>
                     <div class="price">
