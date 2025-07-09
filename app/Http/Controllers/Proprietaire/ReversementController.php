@@ -8,8 +8,10 @@ use App\Models\Reversement;
 use App\Models\Rib;
 use App\Models\Visite;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use function Laravel\Prompts\error;
@@ -199,4 +201,65 @@ class ReversementController extends Controller
         $rib = Rib::findOrFail($id);
         return response()->json(['rib' => $rib->rib]);
     }
+
+    public function subscribe(){
+        return view('proprietaire.abonnement.subscribe');
+    }
+
+public function subscribeAuthenticate(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email|exists:proprietaires,email',
+        'password' => 'required|min:8',
+    ], [
+        'email.required' => 'L\'email est obligatoire.',
+        'email.email' => 'Veuillez entrer une adresse email valide.',
+        'email.exists' => 'Cette adresse email n\'existe pas dans notre système.',
+        'password.required' => 'Le mot de passe est obligatoire.',
+        'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+    ]);
+
+    try {
+        $credentials = $request->only('email', 'password');
+        
+        if (!auth('owner')->attempt($credentials, $request->filled('remember'))) {
+            return redirect()
+                ->back()
+                ->with('error', 'Email ou mot de passe incorrect.')
+                ->withInput($request->only('email', 'remember'));
+        }
+
+        // Vérification que l'utilisateur est bien chargé
+        $proprietaire = auth('owner')->user();
+        
+        if (!$proprietaire) {
+            auth('owner')->logout();
+            return back()
+                ->with('error', 'Votre compte n\'a pas pu être chargé. Veuillez réessayer.')
+                ->withInput($request->only('email', 'remember'));
+        }
+
+        // Vérification optionnelle de date_fin si nécessaire
+        // if ($proprietaire->date_fin && now()->lt($proprietaire->date_fin)) {
+        //     return redirect()->route('dashboard')
+        //         ->with('info', 'Vous avez déjà un abonnement actif.');
+        // }
+
+        return redirect()
+            ->route('page.abonnement')
+            ->with('success', 'Authentification réussie. Vous pouvez maintenant souscrire à notre offre.');
+
+    } catch (\Exception $e) {
+        Log::error('Échec de l\'authentification : '.$e->getMessage(), [
+            'email' => $request->email,
+            'ip' => $request->ip()
+        ]);
+        
+        auth('owner')->logout();
+        
+        return back()
+            ->with('error', 'Une erreur technique est survenue. Veuillez réessayer plus tard.')
+            ->withInput($request->only('email', 'remember'));
+    }
+}
 }

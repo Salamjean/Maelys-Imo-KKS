@@ -1,5 +1,6 @@
 @extends('proprietaire.layouts.template')
 @section('content')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <div class="col-12 grid-margin stretch-card mb-4">
     <div class="card">
         <div class="card-body">
@@ -314,6 +315,7 @@
     </div>
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
         // =============================================
@@ -449,8 +451,34 @@
             '</a>'
         );
     });
-    </script>
 
+    
+    </script>
+    @if(session('success'))
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Succès!',
+            text: '{{ session('success') }}',
+            showConfirmButton: true,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#02245b'
+        });
+    </script>
+    @endif
+
+    @if(session('error'))
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur!',
+            text: '{{ session('error') }}',
+            showConfirmButton: true,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#02245b'
+        });
+    </script>
+    @endif
     
     
 @endsection

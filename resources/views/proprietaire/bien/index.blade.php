@@ -194,7 +194,7 @@
             </tbody>
           </table>
           
-          @if($biens->hasPages())
+@if($biens->hasPages())
 <div class="mt-4 d-flex justify-content-center">
     <nav aria-label="Page navigation">
         <ul class="pagination pagination-rounded">
@@ -210,7 +210,13 @@
             @endif
 
             {{-- Pagination Elements --}}
-            @foreach ($biens->getUrlRange(1, $biens->lastPage()) as $page => $url)
+            @php
+                // Pour les abonnements standard, on limite à 1 page seulement
+                $start = 1;
+                $end = isset($abonnement) && $abonnement->type === 'standard' ? 1 : $biens->lastPage();
+            @endphp
+            
+            @foreach ($biens->getUrlRange($start, $end) as $page => $url)
                 @if ($page == $biens->currentPage())
                     <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
                 @else
@@ -219,7 +225,7 @@
             @endforeach
 
             {{-- Next Page Link --}}
-            @if ($biens->hasMorePages())
+            @if ($biens->hasMorePages() && (!isset($abonnement) || $abonnement->type !== 'standard'))
                 <li class="page-item">
                     <a class="page-link" href="{{ $biens->nextPageUrl() }}" rel="next" aria-label="Next">&raquo;</a>
                 </li>

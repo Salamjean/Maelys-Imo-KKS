@@ -30,12 +30,7 @@ class AbonnementController extends Controller
                                 ->where('statut', 'actif')
                                 ->exists();
     
-    // Rediriger si abonnement déjà actif
-    if ($abonnementActif) {
-        return redirect()->route('owner.dashboard')
-                    ->with('info', 'Vous avez déjà un abonnement actif valide jusqu\'au ' . 
-                        $proprietaire->abonnement->date_fin->format('d/m/Y'));
-    }
+   
 
     // Options d'abonnement
     $abonnements = [
@@ -190,6 +185,46 @@ class AbonnementController extends Controller
             'line' => $e->getLine(),
         ]);
     }
+}
+
+public function renew(Request $request)
+{
+    $validated = $request->validate([
+        'id' => 'required|exists:abonnements,id',
+        'type' => 'required|in:standard,premium', // Note: vérifiez l'orthographe de 'premium'
+        'duree' => 'required|integer|in:1,3,6,12',
+        'montant' => 'required|numeric|min:0',
+        'reduction' => 'required|numeric|min:0|max:100'
+    ]);
+
+    $abonnement = Abonnement::findOrFail($validated['id']);
+
+    // Vérifier si le type d'abonnement change
+    if ($abonnement->type === $validated['type']) {
+        // Même type - on ajoute les mois à la date de fin existante
+        $dateFin = Carbon::parse($abonnement->date_fin)->addMonths($validated['duree']);
+    } else {
+        // Type différent - on part de la date actuelle
+        $dateFin = now()->addMonths($validated['duree']);
+    }
+
+    $abonnement->update([
+        'type' => $validated['type'],
+        'date_debut' => now(), // Toujours mettre à jour la date de début pour le nouveau cycle
+        'date_fin' => $dateFin,
+        'montant' => $validated['montant'],
+        'montant_actuel' => $validated['montant'],
+        'mois_abonne' => now()->format('m-Y'),
+        'statut' => 'actif',
+        'reduction_appliquee' => $validated['reduction']
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Abonnement renouvelé avec succès',
+        'new_end_date' => $dateFin->format('d/m/Y'),
+        'amount_paid' => $validated['montant']
+    ]);
 }
     // Méthode optionnelle pour vérifier le paiement avec l'API CinetPay
     protected function verifyCinetPayPayment($transactionId)

@@ -18,7 +18,8 @@ class Abonnement extends Model
         'statut',
         'mode_paiement',
         'reference_paiement',
-        'notes'
+        'type',
+        'notes',
     ];
 
     protected $dates = [

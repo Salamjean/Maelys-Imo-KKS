@@ -250,7 +250,7 @@
         <div class="about-image">
             <img src="{{ asset('assets/images/mae-imo.png') }}" alt="Image de l'equipe">
         </div>
-        <div class="about-content" style="text-align: center">
+        <div class="about-content" style="text-align: justify">
             <h2 class="section-title"><span style="font-weight: bold; color:#02245b">Maelys</span>-<span style="font-weight: bold; color:#ff5e14">Imo</span></h2>
             <p>MAELYS-IMO est une plateforme numérique complète de gestion immobilière, conçue par <a href="https://kks-technologies.com">KKS-TECHNOLOGIES</a>. Elle permet aux propriétaires comme aux agences immobilières de gérer efficacement et en toute transparence l'ensemble de leur parc immobilier, de l'enregistrement des biens à la gestion des loyers, en passant par le suivi des locataires et la comptabilité locative.
             Conçue pour répondre aux réalités du terrain et aux enjeux de digitalisation du secteur immobilier, MAELYS-IMO centralise toutes les opérations courantes de gestion locative sur une interface simple, intuitive et sécurisée, accessible sur ordinateur et via une application mobile dédiée aux locataires.</p>
@@ -280,11 +280,11 @@
     <div class="mission-vision">
         <div class="mission-box">
             <h3 class="box-title"><i>✓</i> Notre Mission</h3>
-            <p>Notre mission est de digitaliser et simplifier la gestion immobilière en offrant aux professionnels comme aux particuliers une solution clé en main, moderne et fiable. MAELYS-IMO vise à améliorer les relations entre bailleurs, agences et locataires tout en garantissant le suivi rigoureux des flux financiers, des états locatifs et des échanges administratifs.</p>
+            <p style="text-align: justify">Notre mission est de digitaliser et simplifier la gestion immobilière en offrant aux professionnels comme aux particuliers une solution clé en main, moderne et fiable. MAELYS-IMO vise à améliorer les relations entre bailleurs, agences et locataires tout en garantissant le suivi rigoureux des flux financiers, des états locatifs et des échanges administratifs.</p>
         </div>
         <div class="vision-box">
             <h3 class="box-title"><i>👁️</i> Notre Vision</h3>
-            <p>Nous croyons en une gestion immobilière plus fluide, transparente et accessible à tous. MAELYS-IMO a été pensée pour devenir le référentiel de confiance du marché locatif, en s'adaptant aux besoins spécifiques des gestionnaires, en intégrant les technologies de paiement modernes, et en assurant un haut niveau de traçabilité et de sécurité pour toutes les parties prenantes.</p>
+            <p style="text-align: justify">Nous croyons en une gestion immobilière plus fluide, transparente et accessible à tous. MAELYS-IMO a été pensée pour devenir le référentiel de confiance du marché locatif, en s'adaptant aux besoins spécifiques des gestionnaires, en intégrant les technologies de paiement modernes, et en assurant un haut niveau de traçabilité et de sécurité pour toutes les parties prenantes.</p>
         </div>
     </div>
     

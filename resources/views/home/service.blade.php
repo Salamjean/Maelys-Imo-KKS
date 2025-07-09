@@ -262,7 +262,7 @@
             <img src="{{ asset('assets/images/appart.jpg') }}" alt="Appartement" class="service-image">
             <div class="service-content">
                 <h2 class="service-title">Appartements</h2>
-                <p class="service-description">
+                <p class="service-description" style="text-align: justify">
                     Des appartements modernes et fonctionnels, du studio au 5 pièces, dans les meilleurs quartiers de la ville.
                 </p>
                 <div class="service-features">

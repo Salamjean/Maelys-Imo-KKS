@@ -123,7 +123,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10">
+                                <td colspan="11">
                                     <div class="empty-state">
                                         <div class="empty-icon">
                                             <i class="fas fa-calendar-times"></i>

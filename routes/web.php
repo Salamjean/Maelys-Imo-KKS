@@ -362,9 +362,11 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
 
     // routes de gestiond des abonnements par le propriétaire
     Route::get('/abonnement/show',[AbonnementController::class, 'abonneShow'])->name('owner.abonnement.show');
+    Route::post('/abonnements/renew', [AbonnementController::class, 'renew'])->name('abonnements.renew');
      // Routes pour la gestion des états des lieux par l'agence 
     Route::get('/locataires/{locataire}/etat', [EtatLieuController::class, 'etatOwner'])->name('locataire.etat.owner');
     Route::post('/locataires/{locataire}/etat', [EtatLieuController::class, 'storeOwner'])->name('locataire.etatstore.owner');
+    
 
     Route::prefix('visit')->group(function(){
             Route::get('/visites',[VisiteController::class, 'ownerIndex'])->name('visite.index.owner');
@@ -440,6 +442,11 @@ Route::prefix('locataire')->group(function () {
 Route::prefix('owner')->group(function () {
     Route::get('/login',[ProprietaireController::class, 'login'])->name('owner.login');
     Route::post('/login',[ProprietaireController::class, 'authenticate'])->name('owner.authenticate');
+
+    //Souscription abonnement 
+    Route::get('suscribe/login',[ReversementController::class, 'subscribe'])->name('owner.subscribe');
+    Route::post('suscribe/login',[ReversementController::class, 'subscribeAuthenticate'])->name('owner.suscribe.authenticate');
+
 });
 
 

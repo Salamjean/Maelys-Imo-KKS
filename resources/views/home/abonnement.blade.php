@@ -38,7 +38,7 @@
                     </ul>
                 </div>
                 <div class="card-footer bg-white border-0 pb-4">
-                    <button type="button" class="btn btn-lg btn-block" style="background-color: #ff5e14; color: white;">Souscrire</button>
+                    <a href="{{route('owner.subscribe')}}"><button type="button" class="btn btn-lg btn-block" style="background-color: #ff5e14; color: white;">Souscrire</button></a>
                 </div>
             </div>
         </div>
