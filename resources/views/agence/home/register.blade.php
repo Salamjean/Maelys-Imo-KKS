@@ -7,7 +7,7 @@
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
                 <div class="card-header bg-gradient-primary py-4 text-white">
                     <div class="d-flex align-items-center justify-content-between">
-                        <h2 class="h4 mb-0 fw-bold text-white text-center"><i class="fas fa-building me-2 text-white"></i>  d'une nouvelle agence</h2>
+                        <h2 class="h4 mb-0 fw-bold text-white text-center"><i class="fas fa-building me-2 text-white"></i> Inscription d'une nouvelle agence</h2>
                     </div>
                 </div>
 
