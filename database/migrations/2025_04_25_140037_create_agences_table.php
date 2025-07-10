@@ -20,6 +20,10 @@ return new class extends Migration
             $table->string('password');
             $table->string('contact');
             $table->string('adresse');
+            $table->string('rccm');
+            $table->string('rccm_file');
+            $table->string('dfe');
+            $table->string('dfe_file');
             $table->string('rib')->nullable();
             $table->string('profile_image')->nullable();
             $table->timestamps();

@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('mode_paiement'); // mode de paiement utilisé
             $table->string('reference_paiement')->nullable(); // référence du paiement
             $table->text('notes')->nullable(); // notes supplémentaires
+            $table->string('type')->nullable(); // type_abonnement 
             $table->timestamps();
         });
     }
