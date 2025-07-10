@@ -199,7 +199,7 @@
                         <div class="form-group">
                             <label>Description détaillée <span style="color: red">*</span></label>
                             <textarea class="form-control" rows="4" name="description" 
-                                      placeholder="Entrez une description  du bien" 
+                                      placeholder="Entrez une description complete du bien" 
                                       style="border: 1px solid black; border-radius: 5px;">{{ old('description', $bien->description) }}</textarea>
                         </div>
                     </div>
