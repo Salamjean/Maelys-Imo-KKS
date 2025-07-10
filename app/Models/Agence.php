@@ -15,9 +15,13 @@ class Agence extends Authenticatable
         'password',
         'contact',
         'adresse',
+        'rccm',
+        'rccm_file',
+        'dfe',
+        'dfe_file',
         'profile_image',
         'password_reset_token',
-        'password_reset_expires'
+        'password_reset_expires',
     ];
 
     public function biens()

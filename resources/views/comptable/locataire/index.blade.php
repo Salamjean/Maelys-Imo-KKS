@@ -324,12 +324,6 @@
                                 alt="Avatar par défaut">
                             @endif
                             
-                            @if($locataire->agence)
-                                <small class="text-black d-block mb-2">
-                                    <i class="fas fa-building"></i> {{ $locataire->agence->name }}
-                                </small>
-                            @endif
-                            
                             <div class="tenant-info">
                                 <span class="tenant-info-label">Email:</span>
                                 <p>{{ $locataire->email }}</p>

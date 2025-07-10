@@ -118,6 +118,10 @@ class AgenceController extends Controller
             'commune' => 'required|string|max:255',
             'adresse' => 'required|string|max:255',
             'rib' => 'required|file|mimes:pdf|max:2048',
+            'rccm' => 'required|string|max:255',
+            'rccm_file' => 'required|file|mimes:pdf|max:2048',
+            'dfe' => 'required|string|max:255',
+            'dfe_file' => 'required|file|mimes:pdf|max:2048',
         ],[
             'name.required' => 'Le nom de l\'agence est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
@@ -129,7 +133,8 @@ class AgenceController extends Controller
             'adresse.required' => 'L\'adresse est obligatoire.',
             'rib.required' => 'Le RIB est obligatoire.',
             'rib.max' => 'Le RIB ne doit pas dépasser 2048 caractères.',
-            'rib.mines' => 'le fichier doit etre un pdf'
+            'rib.mines' => 'le fichier doit etre un pdf',
+            
         ]);
     
         try {
@@ -149,6 +154,14 @@ class AgenceController extends Controller
             if ($request->hasFile('rib')) {
                 $ribPath = $request->file('rib')->store('ribs', 'public');
             }
+            $rccmPath = null;
+            if ($request->hasFile('rccm_file')) {
+                $rccmPath = $request->file('rccm_file')->store('rccm_files', 'public');
+            }
+            $dfe_filePath = null;
+            if ($request->hasFile('dfe_file')) {
+                $dfe_filePath = $request->file('dfe_file')->store('dfe_files', 'public');
+            }
     
             // Création de l'agence
             $agence = new Agence();
@@ -158,6 +171,10 @@ class AgenceController extends Controller
             $agence->contact = $request->contact;
             $agence->commune = $request->commune;
             $agence->adresse = $request->adresse;
+            $agence->rccm_file = $rccmPath;
+            $agence->dfe_file = $dfe_filePath;
+            $agence->rccm = $request->rccm;
+            $agence->dfe = $request->dfe;
             $agence->rib = $ribPath;
             $agence->password = Hash::make('password');
             $agence->profile_image = $profileImagePath;
@@ -179,6 +196,7 @@ class AgenceController extends Controller
             'montant' => 0, // À ajuster selon votre logique métier
             'montant_actuel' => 0, // À ajuster selon votre logique métier
             'statut' => 'actif',
+            'type' => 'standard',
             'mode_paiement' => 'offert', // Ou autre valeur par défaut
             'reference_paiement' => 'CREA-' . $agence->code_id,
             'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
@@ -234,7 +252,11 @@ class AgenceController extends Controller
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
             'adresse' => 'required|string|max:255',
-            'rib' => 'nullable|string|max:255',
+            'rib' => 'nullable|file|mimes:pdf,jpeg,png,jpg|max:2048',
+            'rccm' => 'required|string|max:255',
+            'rccm_file' => 'nullable|file|mimes:pdf,jpeg,png,jpg|max:2048',
+            'dfe' => 'required|string|max:255',
+            'dfe_file' => 'nullable|file|mimes:pdf,jpeg,png,jpg|max:2048',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ],[
             'name.required' => 'Le nom de l\'agence est obligatoire.',
@@ -245,7 +267,12 @@ class AgenceController extends Controller
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'La commune est obligatoire.',
             'adresse.required' => 'L\'adresse est obligatoire.',
-            'rib.max' => 'Le RIB ne doit pas dépasser 255 caractères.',
+            'rccm.required' => 'Le numéro RCCM est obligatoire.',
+            'dfe.required' => 'Le numéro DFE est obligatoire.',
+            'rib.mimes' => 'Le RIB doit être un fichier PDF, JPEG, JPG ou PNG.',
+            'rccm_file.mimes' => 'Le fichier RCCM doit être un fichier PDF, JPEG, JPG ou PNG.',
+            'dfe_file.mimes' => 'Le fichier DFE doit être un fichier PDF, JPEG, JPG ou PNG.',
+            'profile_image.mimes' => 'L\'image de profil doit être un fichier JPEG, PNG, JPG ou GIF.',
         ]);
 
         try {
@@ -259,13 +286,44 @@ class AgenceController extends Controller
                 $agence->profile_image = $profileImagePath;
             }
 
+            // Traitement du fichier RIB
+            if ($request->hasFile('rib')) {
+                // Supprimer l'ancien fichier si il existe
+                if ($agence->rib) {
+                    Storage::disk('public')->delete($agence->rib);
+                }
+                $ribPath = $request->file('rib')->store('ribs', 'public');
+                $agence->rib = $ribPath;
+            }
+
+            // Traitement du fichier RCCM
+            if ($request->hasFile('rccm_file')) {
+                // Supprimer l'ancien fichier si il existe
+                if ($agence->rccm_file) {
+                    Storage::disk('public')->delete($agence->rccm_file);
+                }
+                $rccmFilePath = $request->file('rccm_file')->store('rccm_files', 'public');
+                $agence->rccm_file = $rccmFilePath;
+            }
+
+            // Traitement du fichier DFE
+            if ($request->hasFile('dfe_file')) {
+                // Supprimer l'ancien fichier si il existe
+                if ($agence->dfe_file) {
+                    Storage::disk('public')->delete($agence->dfe_file);
+                }
+                $dfeFilePath = $request->file('dfe_file')->store('dfe_files', 'public');
+                $agence->dfe_file = $dfeFilePath;
+            }
+
             // Mise à jour des informations
             $agence->name = $request->name;
             $agence->email = $request->email;
             $agence->contact = $request->contact;
             $agence->commune = $request->commune;
             $agence->adresse = $request->adresse;
-            $agence->rib = $request->rib;
+            $agence->rccm = $request->rccm;
+            $agence->dfe = $request->dfe;
             $agence->save();
 
             return redirect()->route('agence.index')

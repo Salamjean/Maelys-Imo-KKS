@@ -4,7 +4,7 @@
     <div class="card">
         <div class="card-body">
             <h4 class="card-title text-center">Ajout d'une agence partenaire</h4>
-            <p class="card-description text-center">Pour l'ajout de l'agence, veuillez renseigner toutes les informations demandées ci-dessous</p>
+            <p class="card-description text-center" style="color:red">Pour l'ajout de l'agence, veuillez renseigner toutes les informations demandées ci-dessous</p>
             
             <form class="forms-sample" action="{{ route('agence.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
@@ -13,7 +13,7 @@
                     <legend style="font-size: 1.5em; font-weight: bold;">Informations de l'agence</legend>
                 <!-- Section 1: Informations de base -->
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label>Nom de l'agence</label>
                             <input type="text" style="border: 1px solid black; border-radius: 5px;" value="{{ old('name') }}" class="form-control" placeholder="Nom de l'agence" name="name">
@@ -22,7 +22,7 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label>Email</label>
                             <input type="email" style="border: 1px solid black; border-radius: 5px;" value="{{ old('email') }}"  class="form-control" placeholder="Email" name="email">
@@ -31,7 +31,7 @@
                             @enderror
                         </div>
                     </div>
-                     <div class="col-md-4">
+                     <div class="col-md-2">
                         <div class="form-group">
                             <label>Commune</label>
                             <input type="text" style="border: 1px solid black; border-radius: 5px;"  value="{{ old('commune') }}"  class="form-control" placeholder="Commune" name="commune">
@@ -40,11 +40,7 @@
                             @enderror
                         </div>
                     </div>
-                </div>
-
-                <!-- Section 2: Détails du bien -->
-                <div class="row">
-                    <div class="col-md-4">
+                     <div class="col-md-2">
                         <div class="form-group">
                             <label>Contact de l'agence</label>
                             <input type="number" style="border: 1px solid black; border-radius: 5px;"  value="{{ old('contact') }}"  class="form-control" placeholder="Contact de l'agence" name="contact">
@@ -53,16 +49,16 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-2">
                         <div class="form-group">
-                            <label>Adresse complete de l'agence</label>
+                            <label>Adresse de l'agence</label>
                             <input type="text" style="border: 1px solid black; border-radius: 5px;"  value="{{ old('adresse') }}"  class="form-control" placeholder="Adresse" name="adresse">
                             @error('adresse')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label>RIB</label>
                             <div class="input-group">
@@ -74,6 +70,58 @@
                             </div>
                         </div>
                         @error('rib')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+
+                <!-- Section 2: Détails du bien -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>N° RCCM</label>
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;"  value="{{ old('rccm') }}"  class="form-control" placeholder="Numéro du registre de commerce" name="rccm">
+                            @error('rccm')
+                                <div class="alert alert-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Fiche RCCM</label>
+                            <div class="input-group">
+                                <input type="file" name="rccm_file" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
+                                <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Télécharger le fichier du registre du commerce" value="{{ old('rccm_file') }}">
+                                <span class="input-group-append">
+                                    <button class="file-upload-browse btn btn-primary" style="background-color: #02235b" type="button">Télécharger</button>
+                                </span>
+                            </div>
+                        </div>
+                        @error('rccm_file')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>N° DFE</label>
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;"  value="{{ old('dfe') }}"  class="form-control" placeholder="Numéro de déclaration fiscale d'existance" name="dfe">
+                            @error('dfe')
+                                <div class="alert alert-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Fiche du DFE</label>
+                            <div class="input-group">
+                                <input type="file" name="dfe_file" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
+                                <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Télécharger le fichier DFE" value="{{ old('dfe_file') }}">
+                                <span class="input-group-append">
+                                    <button class="file-upload-browse btn btn-primary" style="background-color: #02245b" type="button">Télécharger</button>
+                                </span>
+                            </div>
+                        </div>
+                        @error('dfe_file')
                         <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>

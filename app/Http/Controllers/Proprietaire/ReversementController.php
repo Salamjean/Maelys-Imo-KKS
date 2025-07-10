@@ -262,4 +262,64 @@ public function subscribeAuthenticate(Request $request)
             ->withInput($request->only('email', 'remember'));
     }
 }
+    public function subscribeAgence(){
+        return view('agence.abonnement.subscribe');
+    }
+
+public function subscribeAuthenticateAgence(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email|exists:agences,email',
+        'password' => 'required|min:8',
+    ], [
+        'email.required' => 'L\'email est obligatoire.',
+        'email.email' => 'Veuillez entrer une adresse email valide.',
+        'email.exists' => 'Cette adresse email n\'existe pas dans notre système.',
+        'password.required' => 'Le mot de passe est obligatoire.',
+        'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+    ]);
+
+    try {
+        $credentials = $request->only('email', 'password');
+        
+        if (!auth('agence')->attempt($credentials, $request->filled('remember'))) {
+            return redirect()
+                ->back()
+                ->with('error', 'Email ou mot de passe incorrect.')
+                ->withInput($request->only('email', 'remember'));
+        }
+
+        // Vérification que l'utilisateur est bien chargé
+        $proprietaire = auth('agence')->user();
+        
+        if (!$proprietaire) {
+            auth('agence')->logout();
+            return back()
+                ->with('error', 'Votre compte n\'a pas pu être chargé. Veuillez réessayer.')
+                ->withInput($request->only('email', 'remember'));
+        }
+
+        // Vérification optionnelle de date_fin si nécessaire
+        // if ($proprietaire->date_fin && now()->lt($proprietaire->date_fin)) {
+        //     return redirect()->route('dashboard')
+        //         ->with('info', 'Vous avez déjà un abonnement actif.');
+        // }
+
+        return redirect()
+            ->route('page.abonnement.agence')
+            ->with('success', 'Authentification réussie. Vous pouvez maintenant souscrire à notre offre.');
+
+    } catch (\Exception $e) {
+        Log::error('Échec de l\'authentification : '.$e->getMessage(), [
+            'email' => $request->email,
+            'ip' => $request->ip()
+        ]);
+        
+        auth('owner')->logout();
+        
+        return back()
+            ->with('error', 'Une erreur technique est survenue. Veuillez réessayer plus tard.')
+            ->withInput($request->only('email', 'remember'));
+    }
+}
 }

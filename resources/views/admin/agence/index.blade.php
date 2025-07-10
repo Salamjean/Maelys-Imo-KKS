@@ -88,6 +88,10 @@
                     <th>Contact</th>
                     <th>Adresse complète</th>
                     <th>RIB</th>
+                    <th>N° RCCM</th>
+                    <th>Fiche RCCM</th>
+                    <th>DFE</th>
+                    <th>Fiche DFE</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -100,7 +104,7 @@
                         <td>{{ $agence->commune }}</td>
                         <td>{{ $agence->contact }}</td>
                         <td>{{ $agence->adresse }}</td>
-                         <td>
+                        <td>
                             @if($agence->rib)
                                 @php
                                     $ribPath = asset('storage/' . $agence->rib);
@@ -112,6 +116,56 @@
                                         </a>
                                     @else
                                         <img src="{{ $ribPath }}" 
+                                            alt="Pièce du parent" 
+                                            width="50" 
+                                            height=50
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#imageModal" 
+                                            onclick="showImage(this)" 
+                                            onerror="this.onerror=null; this.src='{{ asset('assets/images/profiles/bébé.jpg') }}'">
+                                    @endif
+                                        @else
+                                            <p>Aucun RIB fournir</p>
+                                    @endif
+                            </td>
+                        <td>{{ $agence->rccm }}</td>
+                        <td>
+                            @if($agence->rccm_file)
+                                @php
+                                    $rccmPath = asset('storage/' . $agence->rccm_file);
+                                    $rccmPathPdf = strtolower(pathinfo($rccmPath, PATHINFO_EXTENSION)) === 'pdf';
+                                @endphp
+                                    @if ($rccmPathPdf)
+                                        <a href="{{ $rccmPath }}" target="_blank">
+                                            <img src="{{ asset('assets/images/pdf.jpg') }}" alt="PDF" width="30" height="30">
+                                        </a>
+                                    @else
+                                        <img src="{{ $ribPath }}" 
+                                            alt="Pièce du parent" 
+                                            width="50" 
+                                            height=50
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#imageModal" 
+                                            onclick="showImage(this)" 
+                                            onerror="this.onerror=null; this.src='{{ asset('assets/images/profiles/bébé.jpg') }}'">
+                                    @endif
+                                        @else
+                                            <p>Aucun RIB fournir</p>
+                                    @endif
+                            </td>
+                        <td>{{ $agence->dfe }}</td>
+                        <td>
+                            @if($agence->dfe_file)
+                                @php
+                                    $dfe_filePath = asset('storage/' . $agence->dfe_file);
+                                    $dfe_filePathPdf = strtolower(pathinfo($dfe_filePath, PATHINFO_EXTENSION)) === 'pdf';
+                                @endphp
+                                    @if ($dfe_filePathPdf)
+                                        <a href="{{ $dfe_filePath }}" target="_blank">
+                                            <img src="{{ asset('assets/images/pdf.jpg') }}" alt="PDF" width="30" height="30">
+                                        </a>
+                                    @else
+                                        <img src="{{ $dfe_filePath }}" 
                                             alt="Pièce du parent" 
                                             width="50" 
                                             height=50
@@ -141,7 +195,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center py-4">
+                        <td colspan="12" class="text-center py-4">
                             <div class="alert alert-info">
                                 Aucune agence partenaire disponible pour le moment.
                             </div>

@@ -196,13 +196,21 @@ class EtatLieuController extends Controller
      //les fonctions des états des lieux par l'administrateur
     public function etatOwner($id)
     {
+         $ownerId = Auth::guard('owner')->user()->code_id;
+         // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+                        ->where('statut', '!=', 'annulée')
+                        ->whereHas('bien', function ($query) use ($ownerId) {
+                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+                        })
+                        ->count();
         $locataire = Locataire::findOrFail($id);
         $biens = Bien::where('status', '!=', 'Loué')
                 ->whereNull('agence_id')
                 ->orWhere('id', $locataire->bien_id)
                 ->get();
         
-        return view('proprietaire.locataire.etat', compact('locataire', 'biens'));
+        return view('proprietaire.locataire.etat', compact('locataire', 'biens','pendingVisits'));
     }
 
     public function storeOwner(Request $request, $id)

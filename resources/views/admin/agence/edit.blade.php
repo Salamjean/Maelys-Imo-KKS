@@ -4,7 +4,7 @@
     <div class="card">
         <div class="card-body">
             <h4 class="card-title text-center">Modification de l'agence partenaire</h4>
-            <p class="card-description text-center">Modifiez les informations de l'agence ci-dessous</p>
+            <p class="card-description text-center" style="color:red">Modifiez les informations de l'agence ci-dessous</p>
             
             <form class="forms-sample" action="{{ route('agence.update', $agence->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
@@ -14,7 +14,7 @@
                     
                     <!-- Section 1: Informations de base -->
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Nom de l'agence</label>
                                 <input type="text" style="border: 1px solid black; border-radius: 5px;" 
@@ -25,7 +25,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Email</label>
                                 <input type="email" style="border: 1px solid black; border-radius: 5px;" 
@@ -36,7 +36,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Commune</label>
                                 <input type="text" style="border: 1px solid black; border-radius: 5px;" 
@@ -47,22 +47,18 @@
                                 @enderror
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Section 2: Détails -->
-                    <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Contact de l'agence</label>
                                 <input type="text" style="border: 1px solid black; border-radius: 5px;" 
                                        class="form-control" placeholder="Contact de l'agence" 
-                                       name="contact" value="{{  $agence->contact }}">
+                                       name="contact" value="{{ old('contact', $agence->contact) }}">
                                 @error('contact')
                                     <div class="alert alert-danger mt-2">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Adresse complète</label>
                                 <input type="text" style="border: 1px solid black; border-radius: 5px;" 
@@ -73,18 +69,88 @@
                                 @enderror
                             </div>
                         </div>
-                         <div class="col-md-4">
+                        <div class="col-md-2">
                             <div class="form-group">
-                                <label>RIB de l'agence</label>
-                                <input type="text" style="border: 1px solid black; border-radius: 5px;" 
-                                       class="form-control" placeholder="Commune" 
-                                       name="rib" value="{{ $agence->rib }}" readonly>
+                                <label>RIB</label>
+                                <div class="input-group">
+                                    <input type="file" name="rib" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
+                                    <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Télécharger le RIB">
+                                    <span class="input-group-append">
+                                        <button class="file-upload-browse btn btn-primary" style="background-color: #02245b" type="button">Télécharger</button>
+                                    </span>
+                                </div>
+                                @if($agence->rib)
+                                    <small class="text-muted">Fichier actuel: {{ basename($agence->rib) }}</small>
+                                @endif
                                 @error('rib')
-                                    <div class="alert alert-danger mt-2">{{ $message }}</div>
+                                    <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
                     </div>
+
+                    <!-- Section 2: Documents officiels -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>N° RCCM</label>
+                                <input type="text" style="border: 1px solid black; border-radius: 5px;" 
+                                       class="form-control" placeholder="Numéro du registre de commerce" 
+                                       name="rccm" value="{{ old('rccm', $agence->rccm) }}">
+                                @error('rccm')
+                                    <div class="alert alert-danger mt-2">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Fiche RCCM</label>
+                                <div class="input-group">
+                                    <input type="file" name="rccm_file" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
+                                    <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Télécharger le fichier du registre du commerce">
+                                    <span class="input-group-append">
+                                        <button class="file-upload-browse btn btn-primary" style="background-color: #02235b" type="button">Télécharger</button>
+                                    </span>
+                                </div>
+                                @if($agence->rccm_file)
+                                    <small class="text-muted">Fichier actuel: {{ basename($agence->rccm_file) }}</small>
+                                @endif
+                                @error('rccm_file')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>N° DFE</label>
+                                <input type="text" style="border: 1px solid black; border-radius: 5px;" 
+                                       class="form-control" placeholder="Numéro de déclaration fiscale d'existance" 
+                                       name="dfe" value="{{ old('dfe', $agence->dfe) }}">
+                                @error('dfe')
+                                    <div class="alert alert-danger mt-2">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Fiche du DFE</label>
+                                <div class="input-group">
+                                    <input type="file" name="dfe_file" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden multiple>
+                                    <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Télécharger le fichier DFE">
+                                    <span class="input-group-append">
+                                        <button class="file-upload-browse btn btn-primary" style="background-color: #02245b" type="button">Télécharger</button>
+                                    </span>
+                                </div>
+                                @if($agence->dfe_file)
+                                    <small class="text-muted">Fichier actuel: {{ basename($agence->dfe_file) }}</small>
+                                @endif
+                                @error('dfe_file')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Boutons de soumission -->
                     <div class="row mt-4">
                         <div class="col-md-12 text-center">

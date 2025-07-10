@@ -586,6 +586,7 @@ private function getAbonnementMessage($abonnement): string
             'montant' => 0, // À ajuster selon votre logique métier
             'montant_actuel' => 0, // À ajuster selon votre logique métier
             'statut' => 'actif',
+            'type' => 'standard',
             'mode_paiement' => 'offert', // Ou autre valeur par défaut
             'reference_paiement' => 'CREA-' . $owner->code_id,
             'notes' => 'Abonnement créé automatiquement lors de l\'inscription',

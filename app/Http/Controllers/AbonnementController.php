@@ -215,6 +215,47 @@ public function renew(Request $request)
         'montant' => $validated['montant'],
         'montant_actuel' => $validated['montant'],
         'mois_abonne' => now()->format('m-Y'),
+        'mode_paiement' => 'Mobile Money',
+        'statut' => 'actif',
+        'reduction_appliquee' => $validated['reduction']
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Abonnement renouvelé avec succès',
+        'new_end_date' => $dateFin->format('d/m/Y'),
+        'amount_paid' => $validated['montant']
+    ]);
+}
+public function renewAgence(Request $request)
+{
+    $validated = $request->validate([
+        'id' => 'required|exists:abonnements,id',
+        'type' => 'required|in:standard,premium', // Note: vérifiez l'orthographe de 'premium'
+        'duree' => 'required|integer|in:1,3,6,12',
+        'montant' => 'required|numeric|min:0',
+        'reduction' => 'required|numeric|min:0|max:100'
+    ]);
+
+    $abonnement = Abonnement::findOrFail($validated['id']);
+
+    // Vérifier si le type d'abonnement change
+    if ($abonnement->type === $validated['type']) {
+        // Même type - on ajoute les mois à la date de fin existante
+        $dateFin = Carbon::parse($abonnement->date_fin)->addMonths($validated['duree']);
+    } else {
+        // Type différent - on part de la date actuelle
+        $dateFin = now()->addMonths($validated['duree']);
+    }
+
+    $abonnement->update([
+        'type' => $validated['type'],
+        'date_debut' => now(), // Toujours mettre à jour la date de début pour le nouveau cycle
+        'date_fin' => $dateFin,
+        'montant' => $validated['montant'],
+        'montant_actuel' => $validated['montant'],
+        'mois_abonne' => now()->format('m-Y'),
+        'mode_paiement' => 'Mobile Money',
         'statut' => 'actif',
         'reduction_appliquee' => $validated['reduction']
     ]);
@@ -234,95 +275,117 @@ public function renew(Request $request)
         return true; // Pour la démo, on suppose que le paiement est valide
     }
    public function abonnementAgence()
-    {
-        // Rediriger vers la connexion si non authentifié
-        if (!auth('agence')->check()) {
-            return redirect()->route('agence.login')
-                ->with('info', 'Veuillez vous connecter pour souscrire à un abonnement');
-        }
+{
+    // Vérification de l'authentification
+    if (!auth('agence')->check()) {
+        return redirect()->route('agence.login')
+            ->with('info', 'Veuillez vous connecter pour souscrire à un abonnement');
+    }
 
-        // Récupérer l'utilisateur connecté
-        $agence = Auth::guard('agence')->user();
-        
-        // Vérifier l'abonnement actif
-        $abonnementActif = Abonnement::where('agence_id', $agence->code_id)
-                                    ->where('date_fin', '>=', now())
-                                    ->where('statut', 'actif')
-                                    ->exists();
-        
-        // Rediriger si abonnement déjà actif
-        if ($abonnementActif) {
-            return redirect()->route('agence.dashboard')
-                        ->with('info', 'Vous avez déjà un abonnement actif valide jusqu\'au ' . 
-                            $agence->abonnement->date_fin->format('d/m/Y'));
-        }
+    // Récupération de l'agence
+    $agence = Auth::guard('agence')->user();
+    Log::info('Accès page abonnement agence', ['agence_id' => $agence->code_id]);
 
-        // Options d'abonnement
-        $abonnements = [
+    // Vérification abonnement actif existant
+    $abonnementActif = Abonnement::where('agence_id', $agence->code_id)
+                                ->where('date_fin', '>=', now())
+                                ->where('statut', 'actif')
+                                ->first();
+
+    if ($abonnementActif) {
+        Log::info('Abonnement actif existant', [
+            'agence_id' => $agence->code_id,
+            'date_fin' => $abonnementActif->date_fin
+        ]);
+        
+        return redirect()->route('agence.dashboard')
+                    ->with('warning', 'Vous avez déjà un abonnement actif valable jusqu\'au ' 
+                           . $abonnementActif->date_fin->format('d/m/Y'));
+    }
+
+    // Configuration des plans d'abonnement
+    $abonnements = [
+        'standard' => [
             [
                 'duree' => 1,
                 'prix' => 10000,
-                'label' => '1 mois',
+                'label' => '1 Mois Standard',
                 'features' => [
-                    'Accès complet pour 1 mois',
-                    'Support technique de standard',
-                    
+                    'Gestion jusqu\'à 20 biens',
+                    '5 comptes agents inclus',
+                    'Support technique standard',
+                    'Tableau de bord de base'
                 ]
             ],
             [
                 'duree' => 3,
-                'prix' => 24000,
-                'label' => '3 mois',
+                'prix' => 24000, // 8.000/mois
+                'label' => '3 Mois Standard',
                 'features' => [
-                    'Accès complet pour 3 mois',
-                    'Support technique standard',
-                    
-                ]
-            ],
-            [
-                'duree' => 6,
-                'prix' => 48000,
-                'label' => '6 mois',
-                'features' => [
-                    'Accès complet pour 6 mois',
-                    'Support technique prioritaire',
-                    
-                ]
-            ],
-            [
-                'duree' => 12,
-                'prix' => 96000,
-                'label' => '1 an',
-                'features' => [
-                    'Accès complet pour 12 mois',
-                    'Support technique 24/7',
-                   
+                    'Gestion jusqu\'à 50 biens',
+                    '10 comptes agents inclus',
+                    'Support prioritaire',
+                    'Statistiques avancées'
                 ]
             ]
-        ];
+        ],
+        'premium' => [
+            [
+                'duree' => 1,
+                'prix' => 15000,
+                'label' => '1 Mois Premium',
+                'features' => [
+                    'Biens illimités',
+                    '20 comptes agents inclus',
+                    'Listage en avant',
+                    'Support premium 24/7',
+                    'Analytics complets'
+                ]
+            ],
+            [
+                'duree' => 3,
+                'prix' => 36000, // 12.000/mois
+                'label' => '3 Mois Premium',
+                'features' => [
+                    'Biens et agents illimités',
+                    'Positionnement prioritaire',
+                    'Badge Premium visible',
+                    'Support VIP dédié',
+                    'Rapports personnalisés'
+                ]
+            ]
+        ]
+    ];
 
-        return view('home.abonnement.agence', [
-            'abonnements' => $abonnements,
-            'agence' => $agence
-        ]);
-    }
+    Log::debug('Configuration des abonnements chargée', [
+        'standard_count' => count($abonnements['standard']),
+        'premium_count' => count($abonnements['premium'])
+    ]);
 
-   public function activateAccountAgence(Request $request)
+    return view('home.abonnement.agence', [
+        'abonnements' => $abonnements,
+        'agence' => $agence,
+        'hasActiveSubscription' => false
+    ]);
+}
+
+public function activateAccountAgence(Request $request)
 {
     Log::info('Début activation compte agence - Données reçues:', $request->all());
 
-    // Validation des données
+    // Validation des données (identique à celle des propriétaires)
     $validated = $request->validate([
         'transaction_id' => 'required|string',
         'amount' => 'required|numeric|min:100',
-        'duration' => 'required|integer|in:1,3,6,12' // Assure que c'est un entier
+        'duration' => 'required|integer|in:1,3,6,12',
+        'type' => 'required|string|in:standard,premium'
     ]);
 
     DB::beginTransaction();
-    Log::info('Transaction DB démarrée');
+    Log::info('Transaction DB démarrée pour agence');
 
     try {
-        // Récupération de l'utilisateur authentifié
+        // Récupération de l'agence authentifiée
         $agence = Auth::guard('agence')->user();
         if (!$agence) {
             Log::error('Agence non authentifiée');
@@ -331,52 +394,63 @@ public function renew(Request $request)
 
         Log::info('Agence récupérée:', ['id' => $agence->id, 'code_id' => $agence->code_id]);
 
-        // Calcul de la date de fin - conversion explicite en entier
+        // Calcul de la date de fin (même logique que propriétaire)
         $today = now();
-        $duration = (int)$validated['duration']; // Conversion en entier
-        $dateFin = $today->copy()->addMonths($duration);
+        $dateFin = $today->copy();
+        
+        switch ($validated['duration']) {
+            case 1: $dateFin->addMonth(); break;
+            case 3: $dateFin->addMonths(3); break;
+            case 6: $dateFin->addMonths(6); break;
+            case 12: $dateFin->addYear(); break;
+        }
 
         // Recherche d'un abonnement existant ou création
         $abonnement = Abonnement::firstOrNew([
-            'agence_id' => $agence->code_id
+            'agence_id' => $agence->code_id // Seule différence ici (agence_id au lieu de proprietaire_id)
         ]);
 
-        // Mise à jour des données de l'abonnement
+        // Mise à jour des données (identique à propriétaire)
         $abonnement->fill([
             'date_abonnement' => $today,
             'date_debut' => $today,
             'date_fin' => $dateFin,
             'mois_abonne' => $today->format('m-Y'),
-            'montant' => (float)$validated['amount'], // Conversion en float
-            'duree_mois' => $duration,
+            'montant' => $validated['amount'],
+            'duree_mois' => $validated['duration'],
+            'type' => $validated['type'],
             'statut' => 'actif',
             'mode_paiement' => 'Mobile Money',
             'reference_paiement' => $validated['transaction_id'],
-            'notes' => 'Abonnement agence ' . $duration . ' mois - ' . $today->format('d/m/Y H:i'),
+            'notes' => 'Abonnement agence ' . $validated['type'] . ' ' . $validated['duration'] . ' mois - ' . $today->format('d/m/Y H:i'),
+            // Les champs proprietaire_id resteront null pour les agences
         ]);
 
-        // Sauvegarde de l'abonnement
         if (!$abonnement->save()) {
-            Log::error('Échec de la sauvegarde de l\'abonnement');
+            Log::error('Échec de la sauvegarde de l\'abonnement agence');
             throw new \Exception('Impossible d\'enregistrer l\'abonnement');
         }
 
-        Log::info('Abonnement sauvegardé avec succès', ['id' => $abonnement->id]);
+        Log::info('Abonnement agence sauvegardé avec succès', [
+            'id' => $abonnement->id,
+            'type' => $validated['type']
+        ]);
 
         DB::commit();
 
         return redirect()->route('agence.dashboard')
-            ->with('success', 'Abonnement activé avec succès! Valable jusqu\'au ' . $dateFin->format('d/m/Y'));
+            ->with('success', 'Abonnement ' . $validated['type'] . ' activé! Valable jusqu\'au ' . $dateFin->format('d/m/Y'));
 
     } catch (\Exception $e) {
         DB::rollBack();
-        Log::error('Erreur dans l\'activation de l\'abonnement agence', [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
+        Log::error('Erreur activation abonnement agence', [
+            'error' => $e->getMessage(),
+            'request' => $request->all()
         ]);
 
-        return back()->with('error', 'Erreur technique: ' . $e->getMessage());
+        return back()
+            ->withInput()
+            ->with('error', 'Erreur technique: ' . $e->getMessage());
     }
 }
 
@@ -540,13 +614,13 @@ public function renew(Request $request)
         $validated = $request->validate([
             'id' => 'required|exists:abonnements,id',
             'months' => 'required|integer|min:1',
-            'user_type' => 'required|in:Propriétaire,Agence'
+            'user_type' => 'required|in:Propriétaire,Agence',
         ]);
 
         $abonnement = Abonnement::find($validated['id']);
         
         // Calcul du montant à ajouter en fonction du type d'utilisateur
-        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 10000 : 10000;
+        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 5000 : 10000;
         $montantAjoute = $validated['months'] * $prixMensuel;
 
         // Mise à jour de l'abonnement
@@ -577,7 +651,7 @@ public function renew(Request $request)
         $abonnement = Abonnement::find($validated['id']);
         
         // Calcul du montant à retirer en fonction du type d'utilisateur
-        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 10000 : 10000;
+        $prixMensuel = $validated['user_type'] === 'Propriétaire' ? 5000 : 10000;
         $montantRetire = $validated['months'] * $prixMensuel;
 
         // Vérifier qu'on ne retire pas plus que le montant existant

@@ -209,7 +209,7 @@
                 <div class="row mt-4">
                     <div class="col-md-12 text-center">
                         <button type="submit" class="btn text-white mr-2" style="background-color: #02245b;">Mettre à jour</button>
-                        <a href="{{ route('bien.index.agence') }}" class="btn btn-light">Annuler</a>
+                        <a href="{{ route('owner.bienList') }}" class="btn btn-light">Annuler</a>
                     </div>
                 </div>
             </form>

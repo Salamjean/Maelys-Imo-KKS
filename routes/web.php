@@ -241,6 +241,7 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
 
     //routes de gestion des abonnements par l'agence
     Route::get('/abonnement/show',[AbonnementController::class, 'abonneShowAgence'])->name('agence.abonnement.show');
+    Route::post('/abonnements/renew', [AbonnementController::class, 'renewAgence'])->name('abonnements.renew.agence');
 
     //routes de paiements de proprietaires par l'agence 
     Route::prefix('partner')->group(function () {
@@ -427,6 +428,10 @@ Route::prefix('admin')->group(function () {
 Route::prefix('agence')->group(function () {
     Route::get('/login',[AgenceController::class, 'login'])->name('agence.login');
     Route::post('/login',[AgenceController::class, 'authenticate'])->name('agence.authenticate');
+
+    //Souscription abonnement 
+    Route::get('suscribe/login',[ReversementController::class, 'subscribeAgence'])->name('agence.subscribe');
+    Route::post('suscribe/login',[ReversementController::class, 'subscribeAuthenticateAgence'])->name('agence.suscribe.authenticate');
 });
 // Routes pour l'authentification du comptable
 Route::prefix('accounting')->group(function () {

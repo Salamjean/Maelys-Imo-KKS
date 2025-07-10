@@ -56,14 +56,8 @@
                             @endphp
                             
                             <tr class="text-center">
-                                <td>{{ $abonneName }}</td>
-                                <td>
-                                    @if($abonnement->proprietaire_id)
-                                        <span class="badge text-white" style="background-color: #062a64">Propriétaire</span>
-                                    @elseif($abonnement->agence_id)
-                                        <span class="badge text-white" style="background-color: #ff5e14">Agence</span>
-                                    @endif
-                                </td>
+                                <td><strong>{{ $abonneName }}</strong></td>
+                                <td><strong>{{$abonnement->type}}</strong></td>
                                 <td>{{ \Carbon\Carbon::parse($abonnement->date_debut)->translatedFormat('d/m/Y') }}</td>
                                 <td>{{ \Carbon\Carbon::parse($abonnement->date_fin)->translatedFormat('d/m/Y') }}</td>
                                 <td>
@@ -286,7 +280,7 @@
     const userType = row.find('td:nth-child(2)').text().trim() === 'Propriétaire' ? 'Propriétaire' : 'Agence';
     
     // Définir le prix mensuel en fonction du type d'utilisateur
-    const prixMensuel = userType === 'Propriétaire' ? 10000 : 10000;
+    const prixMensuel = userType === 'Propriétaire' ? 5000 : 10000;
     const montant = months * prixMensuel;
     
     const operation = action === 'extend' ? 'ajouter' : 'retirer';

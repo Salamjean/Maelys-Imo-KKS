@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <link rel="stylesheet" href="{{ asset('abonnement/adminStyle.css') }}">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.cinetpay.com/seamless/main.js"></script>
 <div class="col-lg-12 stretch-card mt-4">
     <div class="card subscription-card">
         <div class="card-header subscription-header">
@@ -103,7 +104,13 @@
                                             title="Générer PDF">
                                             <i class="fas fa-file-pdf"></i> PDF
                                         </a>
-                                       
+                                       <button 
+                                            class="btn btn-sm btn-warning cinetpay-btn"
+                                            data-abonnement-id="{{ $abonnement->id }}"
+                                            data-user-type="{{ $abonnement->agence_id ? 'agence' : 'proprietaire' }}"
+                                            title="Renouveler via CinetPay">
+                                            <i class="fas fa-mobile-alt"></i> Renouveler
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -348,5 +355,304 @@
     });
 }
     }); // Fin du gestionnaire pour extend-btn
+</script>
+
+<script>
+$(document).ready(function() {
+    // Gestionnaire pour le bouton d'abonnement
+    $('.renew-btn').click(function(e) {
+        e.preventDefault();
+        const abonnementId = $(this).data('abonnement-id');
+        console.log('Bouton cliqué pour l\'abonnement ID:', abonnementId); // Debug
+
+        Swal.fire({
+            title: 'Renouveler l\'abonnement',
+            html: `
+                <div class="mb-3">
+                    <label class="form-label">Type d'abonnement :</label>
+                    <select id="abonnementType" class="form-select">
+                        <option value="standard">Standard (5 000 FCFA/mois)</option>
+                        <option value="premium">Premium (7 000 FCFA/mois)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Durée :</label>
+                    <select id="abonnementDuree" class="form-select">
+                        <option value="1">1 mois (pas de réduction)</option>
+                        <option value="3">3 mois (20% de réduction)</option>
+                        <option value="6">6 mois (20% de réduction)</option>
+                        <option value="12">12 mois (17% de réduction)</option>
+                    </select>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <small>
+                        <strong>Tarif de base :</strong> 
+                        <span id="basePrice">5 000 FCFA/mois (Standard)</span>
+                        <br>
+                        <strong>Montant total :</strong> 
+                        <span id="totalPrice">5 000 FCFA (1 mois)</span>
+                        <br>
+                        <strong>Montant final :</strong> 
+                        <span id="finalPrice">5 000 FCFA</span>
+                    </small>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Confirmer le renouvellement',
+            cancelButtonText: 'Annuler',
+            width: '600px',
+            didOpen: () => {
+                updatePriceCalculation();
+                $('#abonnementType, #abonnementDuree').change(updatePriceCalculation);
+            },
+            preConfirm: () => {
+                return {
+                    type: $('#abonnementType').val(),
+                    duree: $('#abonnementDuree').val(),
+                    montant: parseFloat($('#finalPrice').text().replace(/\D/g, ''))
+                };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                console.log('Données à envoyer:', result.value); // Debug
+                renewAbonnement(abonnementId, result.value);
+            }
+        });
+    });
+
+    // Fonction pour mettre à jour le calcul des prix
+    function updatePriceCalculation() {
+        const type = $('#abonnementType').val();
+        const duree = parseInt($('#abonnementDuree').val());
+        
+        // Prix de base selon le type
+        const prixBase = type === 'standard' ? 100 : 100;
+        const prixTotal = prixBase * duree;
+        
+        // Calcul de la réduction
+        let reduction = 0;
+        let reductionText = "Pas de réduction";
+        
+        if (duree === 3 || duree === 6) {
+            reduction = 0.20; // 20% de réduction
+            reductionText = "20% de réduction";
+        } else if (duree === 12) {
+            reduction = 0.17; // 17% de réduction
+            reductionText = "17% de réduction";
+        }
+        
+        const montantFinal = duree === 1 ? prixTotal : prixTotal * (1 - reduction);
+        
+        // Mise à jour de l'affichage
+        $('#basePrice').text(`${prixBase.toLocaleString()} FCFA/mois (${type === 'standard' ? 'Standard' : 'Premium'})`);
+        $('#totalPrice').text(`${prixTotal.toLocaleString()} FCFA (${duree} mois)`);
+        $('#finalPrice').text(`${montantFinal.toLocaleString()} FCFA ${duree === 1 ? '' : 'avec ' + reductionText}`);
+    }
+
+    // Fonction pour renouveler l'abonnement via AJAX
+    function renewAbonnement(abonnementId, data) {
+        console.log('Envoi des données:', {abonnementId, data}); // Debug
+        
+        Swal.fire({
+            title: 'Traitement en cours',
+            html: 'Veuillez patienter...',
+            allowOutsideClick: true,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            url: '{{ route("abonnements.renew.agence") }}',
+            type: 'POST',
+            data: JSON.stringify({
+                _token: '{{ csrf_token() }}',
+                id: abonnementId,
+                type: data.type,
+                duree: parseInt(data.duree),
+                montant: data.montant,
+                reduction: calculateReduction(data.duree)
+            }),
+            contentType: 'application/json',
+            success: function(response) {
+                Swal.close();
+                if (response.success) {
+                    Swal.fire({
+                        title: 'Succès!',
+                        html: `L'abonnement a été renouvelé jusqu'au ${response.new_end_date}<br>
+                               Montant payé: ${response.amount_paid.toLocaleString()} FCFA`,
+                        icon: 'success'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Erreur!', response.message, 'error');
+                }
+            },
+            error: function(xhr) {
+                Swal.close();
+                console.error('Erreur AJAX:', xhr.responseJSON);
+                Swal.fire(
+                    'Erreur!', 
+                    xhr.responseJSON?.message || 'Une erreur est survenue', 
+                    'error'
+                );
+            }
+        });
+    }
+
+    // Fonction pour calculer le pourcentage de réduction
+    function calculateReduction(duree) {
+        switch(parseInt(duree)) {
+            case 3:
+            case 6: return 20;
+            case 12: return 17;
+            default: return 0;
+        }
+    }
+});
+</script>
+<script>
+$('.cinetpay-btn').click(async function() {
+    const abonnementId = $(this).data('abonnement-id');
+    // 1. Sélection type
+    const { value: type } = await Swal.fire({
+        title: 'Type d\'abonnement',
+        input: 'select',
+        inputOptions: {
+            'standard': 'Standard (5 000 FCFA/mois)',
+            'premium': 'Premium (7 000 FCFA/mois)'
+        },
+        inputValue: 'standard',
+        showCancelButton: true,
+        cancelButtonText: 'Annuler'
+    });
+    if (!type) return;
+
+    // 2. Sélection durée
+    const dureeOptions = {
+        1: {text: '1 mois', reduction: 0},
+        3: {text: '3 mois (20% réduction)', reduction: 20},
+        6: {text: '6 mois (20% réduction)', reduction: 20},
+        12: {text: '12 mois (17% réduction)', reduction: 17}
+    };
+    let dureeHtml = '';
+    for (let d in dureeOptions) {
+        dureeHtml += `<option value="${d}" data-reduction="${dureeOptions[d].reduction}">${dureeOptions[d].text}</option>`;
+    }
+    const { value: duree } = await Swal.fire({
+        title: 'Durée',
+        html: `<select id="dureeSelect" class="swal2-input">${dureeHtml}</select>`,
+        preConfirm: () => $('#dureeSelect').val(),
+        showCancelButton: true,
+        cancelButtonText: 'Annuler',
+    });
+    if (!duree) return;
+
+    // 3. Calcul du montant
+    let prixBase = type === 'standard' ? 100 : 100;
+    let montant = prixBase * duree;
+    let reduction = dureeOptions[duree].reduction;
+    if (reduction > 0) {
+        montant = montant * (1 - reduction / 100);
+    }
+
+    // 4. Paiement confirmation
+    const confirmPay = await Swal.fire({
+        title: 'Confirmer le paiement',
+        html: `<div>
+            <strong>Type:</strong> ${type}<br>
+            <strong>Durée:</strong> ${duree} mois<br>
+            <strong>Montant:</strong> ${montant.toLocaleString()} FCFA
+        </div>`,
+        showCancelButton: true,
+        cancelButtonText: 'Annuler',
+        confirmButtonText: 'Payer '
+    });
+    if (!confirmPay.isConfirmed) return;
+
+    // 5. Paiement CinetPay
+    const transactionId = 'ABN-' + Date.now();
+
+    CinetPay.setConfig({
+        apikey: '{{ config("services.cinetpay.api_key") }}',
+        site_id: '{{ config("services.cinetpay.site_id") }}',
+        notify_url: '{{ route("cinetpay.notify") }}',
+        mode: 'PRODUCTION'
+    });
+
+    Swal.fire({
+        title: 'Paiement en cours',
+        html: 'Veuillez compléter le paiement...',
+        allowOutsideClick: true,
+        didOpen: () => Swal.showLoading()
+    });
+
+    CinetPay.getCheckout({
+        transaction_id: transactionId,
+        amount: montant,
+        currency: 'XOF',
+        channels: 'ALL',
+        description: `Renouvellement ${type} (${duree} mois)`
+    });
+
+    CinetPay.waitResponse(function(data) {
+        Swal.close();
+        if (data.status === "ACCEPTED") {
+            // 6. Appel AJAX à /abonnements/renew
+            Swal.fire({
+                title: 'Traitement...',
+                html: 'Renouvellement de votre abonnement.',
+                didOpen: () => Swal.showLoading(),
+                allowOutsideClick: true,
+            });
+
+            $.ajax({
+                url: '{{ route("abonnements.renew.agence") }}',
+                type: 'POST',
+                data: JSON.stringify({
+                    _token: '{{ csrf_token() }}',
+                    id: abonnementId,
+                    type: type,
+                    duree: parseInt(duree),
+                    montant: montant,
+                    reduction: reduction
+                }),
+                contentType: 'application/json',
+                success: function(response) {
+                    Swal.close();
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès!',
+                            html: `Abonnement renouvelé jusqu'au ${response.new_end_date}<br>Montant payé: ${response.amount_paid.toLocaleString()} FCFA`
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Erreur!', response.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    Swal.close();
+                    Swal.fire('Erreur!', xhr.responseJSON?.message || 'Une erreur est survenue', 'error');
+                }
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Paiement échoué',
+                text: data.message || 'Le paiement n\'a pas pu être traité.',
+            });
+        }
+    });
+
+    CinetPay.onError(function(error) {
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur de paiement',
+            text: error.message || 'Une erreur technique est survenue.'
+        });
+    });
+});
 </script>
 @endsection

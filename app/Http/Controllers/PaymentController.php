@@ -41,6 +41,10 @@ class PaymentController extends Controller
         $bien->montant_majore = $nouveauMontant;
         $bien->save();
         
+        Log::info('Envoi email à: '.$request->email, [
+            'locataire' => $locataire->id,
+            'montant' => $nouveauMontant
+        ]);
         // Envoi de l'email avec les nouvelles informations
         Mail::to($request->email)->send(new PaymentReminderMail($locataire, $nouveauMontant, $tauxMajoration));
         

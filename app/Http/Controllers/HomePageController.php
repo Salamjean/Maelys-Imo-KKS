@@ -44,6 +44,10 @@ class HomePageController extends Controller
             'password' => 'required|confirmed|min:8',
             'rib' => 'nullable|file|mimes:pdf|max:2048',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'rccm' => 'required|string|max:255',
+            'rccm_file' => 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
+            'dfe' => 'required|string|max:255',
+            'dfe_file' => 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
         ],[
             'name.required' => 'Le nom de l\'agence est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
@@ -82,6 +86,15 @@ class HomePageController extends Controller
             if ($request->hasFile('rib')) {
                 $ribPath = $request->file('rib')->store('ribs', 'public');
             }
+
+            $rccmPath = null;
+            if ($request->hasFile('rccm_file')) {
+                $rccmPath = $request->file('rccm_file')->store('rccm_files', 'public');
+            }
+            $dfe_filePath = null;
+            if ($request->hasFile('dfe_file')) {
+                $dfe_filePath = $request->file('dfe_file')->store('dfe_files', 'public');
+            }
     
             // Création de l'agence
             $agence = new Agence();
@@ -92,6 +105,10 @@ class HomePageController extends Controller
             $agence->commune = $request->commune;
             $agence->adresse = $request->adresse;
             $agence->rib = $ribPath;
+            $agence->rccm_file = $rccmPath;
+            $agence->dfe_file = $dfe_filePath;
+            $agence->rccm = $request->rccm;
+            $agence->dfe = $request->dfe;
             $agence->password = Hash::make($request->password);
             $agence->profile_image = $profileImagePath;
             $agence->save();
@@ -109,8 +126,9 @@ class HomePageController extends Controller
             'date_debut' => $dateDebut,
             'date_fin' => $dateFin,
             'mois_abonne' => $today->format('m-Y'),
-            'montant' => 10000, // À ajuster selon votre logique métier
+            'montant' => 0, // À ajuster selon votre logique métier
             'statut' => 'actif',
+            'type' => 'standard',
             'mode_paiement' => 'offert', // Ou autre valeur par défaut
             'reference_paiement' => 'CREA-' . $agence->code_id,
             'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
@@ -243,8 +261,9 @@ class HomePageController extends Controller
             'date_debut' => $dateDebut,
             'date_fin' => $dateFin,
             'mois_abonne' => $today->format('m-Y'),
-            'montant' => 10000, // À ajuster selon votre logique métier
+            'montant' => 0, // À ajuster selon votre logique métier
             'statut' => 'actif',
+            'type' => 'standard',
             'mode_paiement' => 'offert', // Ou autre valeur par défaut
             'reference_paiement' => 'CREA-' . $owner->code_id,
             'notes' => 'Abonnement créé automatiquement lors de l\'inscription',

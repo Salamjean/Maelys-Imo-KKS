@@ -3,7 +3,7 @@
 @section('content')
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-12">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
                 <div class="card-header bg-gradient-primary py-4 text-white">
                     <div class="d-flex align-items-center justify-content-between">
@@ -69,6 +69,58 @@
                                     @enderror
                                 </div>
                                 <small class="text-muted">Contact de l'agence</small>
+                            </div>
+                        </div>
+                    <div class="row g-3">
+                        <!-- Colonne 1 -->
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="rccm" class="form-label">N° RCCM <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control @error('rccm') is-invalid @enderror" 
+                                        id="rccm" name="rccm" value="{{ old('rccm') }}" required >
+                                    @error('rccm')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                       <div class="col-md-3">
+                            <label for="rccm_file" class="form-label">Fiche RCCM</label>
+                                <div class="input-group">
+                                    <input type="file" class="form-control @error('rccm_file') is-invalid @enderror" 
+                                            id="rccm_file" name="rccm_file" value="{{ old('rccm_file') }}" >
+                                    @error('rccm_file')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                        </div>
+
+                        <!-- Colonne 2 -->
+                            
+
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="dfe" class="form-label">N° DFE <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control @error('dfe') is-invalid @enderror" 
+                                            id="dfe" name="dfe" value="{{ old('dfe') }}" required >
+                                        @error('dfe')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        <div class="col-md-3">
+                                <label for="dfe_file" class="form-label">Fiche DFE</label>
+                                    <div class="input-group">
+                                        <input type="file" class="form-control @error('dfe_file') is-invalid @enderror" 
+                                                id="dfe_file" name="dfe_file" value="{{ old('dfe_file') }}" >
+                                        @error('dfe_file')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                             </div>
                         </div>
                     </fieldset>

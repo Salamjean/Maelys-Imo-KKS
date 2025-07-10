@@ -617,7 +617,7 @@ $(document).ready(function() {
                     },
                     complete: function() {
                         button.prop('disabled', false);
-                        button.html('<i class="mdi mdi-email-send"></i>');
+                        button.html('<i class="mdi mdi-email-open"></i>Rappel');
                     }
                 });
             }
@@ -679,7 +679,7 @@ $('body').on('click', '.generate-cash-code', function() {
         },
         complete: function() {
             button.prop('disabled', false);
-            button.html('<i class="mdi mdi-cash"></i> Code Espèces');
+            button.html('<i class="mdi mdi-cash"></i> Espèces');
         }
     });
 });

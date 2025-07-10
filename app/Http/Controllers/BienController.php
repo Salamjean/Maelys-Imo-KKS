@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Abonnement;
 use App\Models\Bien;
 use App\Models\Locataire;
 use App\Models\Proprietaire;
@@ -95,6 +96,7 @@ class BienController extends Controller
 
 public function store(Request $request)
 {
+    
     // Validation des données
     $validatedData = $request->validate([
         'proprietaire_id' => 'nullable|exists:proprietaires,code_id',
@@ -222,6 +224,31 @@ public function store(Request $request)
 }
 public function storeAgence(Request $request)
 {
+     $agence = Auth::guard('agence')->user();
+    
+    // Vérifier l'abonnement du propriétaire
+    $abonnement = Abonnement::where('agence_id', $agence->code_id)
+        ->where('statut', 'actif')
+        ->latest()
+        ->first();
+    
+    // Si l'abonnement est standard, vérifier le nombre de biens
+    if ($abonnement && $abonnement->type === 'standard') {
+        $nombreBiens = Bien::where('agence_id', $agence->code_id)->count();
+        
+        if ($nombreBiens >= 15) {
+            return redirect()->back()
+                ->with('error', 'Vous avez atteint la limite de 5 biens avec votre abonnement standard. Passez à un abonnement premium pour ajouter plus de biens.')
+                ->withInput();
+        }
+    }
+    
+    // Si pas d'abonnement actif, refuser l'ajout
+    if (!$abonnement) {
+        return redirect()->back()
+            ->with('error', 'Vous devez avoir un abonnement actif pour ajouter un bien.')
+            ->withInput();
+    }
     // Validation des données
     $validatedData = $request->validate([
         'proprietaire_id' => 'nullable|exists:proprietaires,code_id',
