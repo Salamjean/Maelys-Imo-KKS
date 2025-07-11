@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('commune');
             $table->string('contact');
+            $table->string('cni');
             $table->string('choix_paiement');
             $table->string('rib')->nullable();
             $table->string('pourcentage')->nullable();

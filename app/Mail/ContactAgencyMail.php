@@ -28,7 +28,7 @@ class ContactAgencyMail extends Mailable
     public function build()
     {
         return $this->from('contact@maelysimo.com', 'Maelys-Imo') // Email d'envoi fixe
-                    ->subject($this->subject)
+                    ->subject($this->subject)   
                     ->replyTo($this->userEmail, $this->userName) // Adresse de réponse du locataire
                     ->view('emails.contact_agency')
                     ->with([

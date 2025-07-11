@@ -166,6 +166,7 @@ class HomePageController extends Controller
         'password' => 'required|confirmed|min:8',
         'rib' => 'nullable|file|mimes:pdf|max:2048',
         'diaspora' => 'nullable|string',
+        'cni' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
     ], [
         'name.required' => 'Le nom du proprietaire est obligatoire.',
@@ -210,6 +211,21 @@ class HomePageController extends Controller
                 throw new \Exception("Erreur lors de l'enregistrement de l'image de profil");
             }
         }
+        // Traitement de la pièce d'identité
+        $cniImagePath = null;
+        if ($request->hasFile('cni')) {
+            try {
+                $cniImagePath = $request->file('cni')->store('cnis', 'public');
+                Log::info('Cni enregistrée', ['path' => $cniImagePath]);
+            } catch (\Exception $e) {
+                Log::error('Erreur enregistrement la pièce', [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                throw new \Exception("Erreur lors de l'enregistrement de la pièce");
+            }
+        }
 
         // Traitement du fichier RIB
         $ribPath = null;
@@ -236,9 +252,10 @@ class HomePageController extends Controller
             'contact' => $validatedData['contact'],
             'commune' => $validatedData['commune'],
             'rib' => $ribPath,
-            'choix_paiement' => 'RIB',
+            'choix_paiement' => 'Virement Bancaire',
             'password' => Hash::make($request->input('password')), // Mot de passe par défaut si non fourni
             'profil_image' => $profileImagePath,
+            'cni' => $cniImagePath,
             'diaspora' => $request->input('diaspora', '0') === '1' ? 'Oui' : 'Non',
             'gestion' => 'proprietaire',
         ];

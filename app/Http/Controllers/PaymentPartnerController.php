@@ -40,12 +40,16 @@ class PaymentPartnerController extends Controller
         
         // Calculer le montant total et vérifier si déjà payé pour chaque propriétaire
         $currentMonth = now()->format('Y-m');
-        $owners->each(function ($owner) use ($currentMonth, $agenceId) {
-            // Calcul du montant total
-            $owner->montant_total = $owner->biens->flatMap(function ($bien) {
+            $owners->each(function ($owner) use ($currentMonth, $agenceId) {
+            // Calcul du montant total brut
+            $montantTotal = $owner->biens->flatMap(function ($bien) {
                 return $bien->paiements;
             })->sum('montant');
-            
+
+            // Application du pourcentage
+            $pourcentage = is_numeric($owner->pourcentage) ? (float) $owner->pourcentage : 0;
+            $owner->montant_total = $montantTotal * (1 - ($pourcentage / 100));
+
             // Vérifier si un paiement a déjà été effectué ce mois-ci
             $owner->deja_paye = PaymentPartner::where('proprietaire_id', $owner->code_id)
                 ->where('agence_id', $agenceId)

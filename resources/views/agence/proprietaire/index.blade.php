@@ -1,256 +1,323 @@
 @extends('agence.layouts.template')
 @section('content')
 <style>
-    /* Style personnalisé pour la pagination */
-    .pagination {
-        --bs-pagination-color: #02245b;
-        --bs-pagination-bg: #fff;
-        --bs-pagination-border-color: #dee2e6;
-        --bs-pagination-hover-color: #fff;
-        --bs-pagination-hover-bg: #02245b;
-        --bs-pagination-hover-border-color: #02245b;
-        --bs-pagination-focus-color: #fff;
-        --bs-pagination-focus-bg: #02245b;
-        --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(2, 36, 91, 0.25);
-        --bs-pagination-active-color: #fff;
-        --bs-pagination-active-bg: #02245b;
-        --bs-pagination-active-border-color: #02245b;
-        --bs-pagination-disabled-color: #6c757d;
-        --bs-pagination-disabled-bg: #fff;
-        --bs-pagination-disabled-border-color: #dee2e6;
-    }
-
-    .pagination-rounded .page-item:first-child .page-link {
-        border-top-left-radius: 20px;
-        border-bottom-left-radius: 20px;
-    }
-
-    .pagination-rounded .page-item:last-child .page-link {
-        border-top-right-radius: 20px;
-        border-bottom-right-radius: 20px;
-    }
-
-    .page-link {
-        padding: 0.5rem 1rem;
-        margin: 0 0.15rem;
-        border-radius: 50%;
-        min-width: 40px;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-
-    .page-item.active .page-link {
-        font-weight: bold;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-    .page-item:not(.active):not(.disabled) .page-link:hover {
-        transform: translateY(-2px);
+    .owner-card {
+        border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin-bottom: 20px;
+        overflow: hidden;
+        border: none;
+    }
+    .owner-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    .owner-header {
+        background-color: #02245b;
+        color: white;
+        padding: 15px;
+        position: relative;
+    }
+    .owner-body {
+        padding: 15px;
+    }
+    .owner-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: -40px;
+        margin-bottom: 10px;
+        background-color: #f8f9fa;
+    }
+    .owner-info {
+        margin-bottom: 10px;
+    }
+    .owner-info-label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+    .owner-actions {
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+    .no-owners {
+        text-align: center;
+        padding: 50px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+    }
+    .property-count {
+        font-weight: bold;
+        color: #02245b;
+    }
+    .modal-property-img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    .property-item {
+        border-bottom: 1px solid #eee;
+        padding: 10px 0;
+    }
+    .property-status {
+        font-size: 12px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-weight: bold;
+    }
+    .status-available {
+        background-color: #28a745;
+        color: white;
+    }
+    .status-occupied {
+        background-color: #dc3545;
+        color: white;
     }
 </style>
-<div class="col-lg-12 stretch-card">
-    <div class="card">
-      <div class="card-body">
-        <h4 class="card-title text-center">Propriétaire de bien inscrire dans votre agence</h4>
-        <p class="card-description text-center">
-          Listes des propriétaire de votre agence
-        </p>
 
-        <!-- Modal pour afficher les images -->
-        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="imageModalLabel">Visualisation de l'image</h5>
-                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body text-center p-0">
-                        <img id="modalImage" src="" class="img-fluid" style="max-height: 80vh; width: auto;">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mt-4 text-gray-800" style="text-align: center">Gestion des Propriétaires</h1>
+    </div>
+
+    @if($proprietaires->isEmpty())
+        <div class="no-owners">
+            <i class="fas fa-user-tie fa-3x mb-3" style="color: #6c757d;"></i>
+            <h4>Aucun propriétaire enregistré</h4>
+            <p class="text-muted">Commencez par ajouter un nouveau propriétaire</p>
+        </div>
+    @else
+        <div class="row">
+            @foreach($proprietaires as $proprietaire)
+                <!-- Modal pour les informations du propriétaire -->
+                <div class="modal fade" id="ownerInfoModal{{ $proprietaire->id }}" tabindex="-1" role="dialog" aria-labelledby="ownerInfoModalLabel{{ $proprietaire->id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="ownerInfoModalLabel{{ $proprietaire->id }}">
+                                    <i class="fas fa-user-tie"></i> Détails du propriétaire - {{ $proprietaire->prenom }} {{ $proprietaire->name }}
+                                </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">
+                                        @if($proprietaire->profil_image)
+                                            <img src="{{ asset('storage/'.$proprietaire->profil_image) }}" class="owner-avatar" alt="Photo du propriétaire">
+                                        @else
+                                            <img src="{{ asset('assets/images/useriii.jpeg') }}" class="owner-avatar" alt="Avatar par défaut">
+                                        @endif
+                                        <h5 class="mt-2">{{ $proprietaire->prenom }} {{ $proprietaire->name }}</h5>
+                                        <p class="text-muted">Code: {{ $proprietaire->code_id }}</p>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="owner-info">
+                                                    <span class="owner-info-label">Email:</span>
+                                                    <p>{{ $proprietaire->email }}</p>
+                                                </div>
+                                                
+                                                <div class="owner-info">
+                                                    <span class="owner-info-label">Téléphone:</span>
+                                                    <p>{{ $proprietaire->contact }}</p>
+                                                </div>
+                                                
+                                                <div class="owner-info">
+                                                    <span class="owner-info-label">Commune:</span>
+                                                    <p>{{ $proprietaire->commune }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="owner-info">
+                                                    <span class="owner-info-label">Méthode de paiement:</span>
+                                                    <p>{{ $proprietaire->choix_paiement }}</p>
+                                                </div>
+                                                
+                                                @if($proprietaire->rib)
+                                                <div class="owner-info">
+                                                    <span class="owner-info-label">RIB:</span>
+                                                    <p>{{ $proprietaire->rib }}</p>
+                                                </div>
+                                                @endif
+                                                
+                                                <div class="owner-info">
+                                                    <span class="owner-info-label">Pourcentage:</span>
+                                                    <p>{{ $proprietaire->pourcentage ?? 'Non spécifié' }}%</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        @if($proprietaire->diaspora)
+                                        <div class="alert alert-info mt-3">
+                                            <i class="fas fa-globe"></i> Ce propriétaire est de la diaspora
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="table-responsive pt-3">
-          <table class="table table-bordered table-hover">
-            <thead style="background-color: #02245b; color: white;">
-                <tr class="text-center">
-                    <th>ID Propriétaire</th>
-                    <th>Nom</th>
-                    <th>Email</th>
-                    <th>Lieu de résidence</th>
-                    <th>Contact</th>
-                    <th>Choix de paiement</th>
-                    <th>RIB</th>
-                    <th>Pourcentage</th>
-                    <th>Contrat</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($proprietaires as $proprietaire)
-                    <tr class="text-center pt-3" style="height: 30px">
-                        <td><strong>{{ $proprietaire->code_id }}</strong></td>
-                        <td ><strong>{{ $proprietaire->name. ' '. $proprietaire->prenom }}</strong></td>
-                        <td>{{ $proprietaire->email }}</td>
-                        <td>{{ $proprietaire->commune }}</td>
-                        <td>{{ $proprietaire->contact }}</td>
-                        <td>{{ $proprietaire->choix_paiement }}</td>
-                        <td>{{ $proprietaire->rib ?? 'N/A' }}</td>
-                        <td>{{ $proprietaire->pourcentage }}%</td>
-                        <td>
-                            @if($proprietaire->contrat)
-                                @php
-                                    $contratPath = asset('storage/' . $proprietaire->contrat);
-                                    $contratPathPdf = strtolower(pathinfo($contratPath, PATHINFO_EXTENSION)) === 'pdf';
-                                @endphp
-                                @if ($contratPathPdf)
-                                    <a href="{{ $contratPath }}" target="_blank">
-                                        <img src="{{ asset('assets/images/pdf.jpg') }}" alt="PDF" width="30" height="30">
-                                    </a>
+                <!-- Modal pour la liste des biens du propriétaire -->
+                <div class="modal fade" id="ownerPropertiesModal{{ $proprietaire->id }}" tabindex="-1" role="dialog" aria-labelledby="ownerPropertiesModalLabel{{ $proprietaire->id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="ownerPropertiesModalLabel{{ $proprietaire->id }}">
+                                    <i class="fas fa-home"></i> Biens du propriétaire - {{ $proprietaire->prenom }} {{ $proprietaire->name }}
+                                </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-primary">
+                                    <i class="fas fa-info-circle"></i> Ce propriétaire possède <strong>{{ $proprietaire->biens->count() }}</strong> biens enregistrés
+                                </div>
+                                
+                                @if($proprietaire->biens->isNotEmpty())
+                                    @foreach($proprietaire->biens as $bien)
+                                        <div class="property-item">
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    @if($bien->image)
+                                                        <img src="{{ asset('storage/'.$bien->image) }}" class="img-thumbnail" alt="Image du bien">
+                                                    @else
+                                                        <img src="{{ asset('assets/images/default-property.jpg') }}" class="img-thumbnail" alt="Image par défaut">
+                                                    @endif
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <h5>{{ $bien->type }} - {{ $bien->numero_bien }}</h5>
+                                                    <p><i class="fas fa-map-marker-alt"></i> {{ $bien->commune }}</p>
+                                                    
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <p><i class="fas fa-ruler-combined"></i> {{ $bien->superficie }} m²</p>
+                                                            <p><i class="fas fa-bed"></i> {{ $bien->nombre_de_chambres ?? '0' }} chambres</p>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <p><i class="fas fa-money-bill-wave"></i> {{ number_format($bien->prix, 2, ',', ' ') }} FCFA/mois</p>
+                                                            <p>
+                                                                Statut: 
+                                                                <span class="property-status {{ $bien->status == 'Disponible' ? 'status-available' : 'status-occupied' }}">
+                                                                    {{ $bien->status }}
+                                                                </span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 @else
-                                    <img src="{{ $contratPath }}" 
-                                        alt="Pièce du parent" 
-                                        width="50" 
-                                        height=50
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#imageModal" 
-                                        onclick="showImage(this)" 
-                                        onerror="this.onerror=null; this.src='{{ asset('assets/images/profiles/bébé.jpg') }}'">
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-circle"></i> Aucun bien enregistré pour ce propriétaire
+                                    </div>
                                 @endif
-                            @else
-                                <p>Non disponible</p>
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            <div class="btn-group " role="group" style="gap: 10px">
-                                <a href="{{ route('owner.edit', $proprietaire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
-                                    <i class="mdi mdi-pencil"></i>
-                                </a>
-                                <form action="{{ route('owner.destroy', $proprietaire->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="button" class="btn btn-sm btn-danger delete-btn" title="Supprimer">
-                                        <i class="mdi mdi-delete"></i>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Carte du propriétaire -->
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                    <div class="card owner-card">
+                        <div class="owner-header">
+                            <h5 class="mb-0">Propriétaire : {{ $proprietaire->prenom }} {{ $proprietaire->name }} </h5>
+                        </div>
+                        
+                        <div class="owner-body text-center">
+                           
+                            <div style="margin-top:50px ">
+                                 @if($proprietaire->profil_image)
+                                    <img src="{{ asset('storage/'.$proprietaire->profil_image) }}" class="owner-avatar" alt="Photo du propriétaire">
+                                @else
+                                    <img src="{{ asset('assets/images/useriii.jpeg') }}" class="owner-avatar" alt="Avatar par défaut">
+                                @endif
+                            </div>
+                            
+                            <div class="owner-info">
+                                <span class="owner-info-label">Code du proprietaire</span>
+                                <p>{{ $proprietaire->code_id }}</p>
+                            </div>
+                            <div class="owner-info">
+                                <span class="owner-info-label">Email:</span>
+                                <p>{{ $proprietaire->email }}</p>
+                            </div>
+                            
+                            <div class="owner-info">
+                                <span class="owner-info-label">Téléphone:</span>
+                                <p>{{ $proprietaire->contact }}</p>
+                            </div>
+                            
+                            <div class="owner-info">
+                                <span class="owner-info-label">Nombre de biens:</span>
+                                <p class="property-count">{{ $proprietaire->biens->count() }} biens</p>
+                            </div>
+                            
+                            <!-- Boutons d'action -->
+                            <div class="owner-actions d-flex justify-content-between">
+                                <div>
+                                    <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#ownerInfoModal{{ $proprietaire->id }}">
+                                        <i class="fas fa-info-circle"></i> Infos
                                     </button>
-                                </form>
+                                    
+                                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#ownerPropertiesModal{{ $proprietaire->id }}">
+                                        <i class="fas fa-home"></i> Biens
+                                    </button>
+                                </div>
+                                
+                                <div>
+                                    <a href="{{ route('owner.edit', $proprietaire->id) }}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </a>
+                                    
+                                    <form action="{{ route('owner.destroy', $proprietaire->id) }}" method="POST" style="display: inline-block;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm ml-2" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce propriétaire ?')">
+                                            <i class="fas fa-trash"></i> Supprimer
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="10" class="text-center py-4">
-                            <div class="alert alert-info">
-                                Aucune agence partenaire disponible pour le moment.
-                            </div>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-          </table>
-          
-          @if($proprietaires->hasPages())
-<div class="mt-4 d-flex justify-content-center">
-    <nav aria-label="Page navigation">
-        <ul class="pagination pagination-rounded">
-            {{-- Previous Page Link --}}
-            @if ($proprietaires->onFirstPage())
-                <li class="page-item disabled">
-                    <span class="page-link" aria-hidden="true">&laquo;</span>
-                </li>
-            @else
-                <li class="page-item">
-                    <a class="page-link" href="{{ $proprietaires->previousPageUrl() }}" rel="prev" aria-label="Previous">&laquo;</a>
-                </li>
-            @endif
-
-            {{-- Pagination Elements --}}
-            @foreach ($proprietaires->getUrlRange(1, $proprietaires->lastPage()) as $page => $url)
-                @if ($page == $proprietaires->currentPage())
-                    <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
-                @else
-                    <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
-                @endif
+                        </div>
+                    </div>
+                </div>
             @endforeach
-
-            {{-- Next Page Link --}}
-            @if ($proprietaires->hasMorePages())
-                <li class="page-item">
-                    <a class="page-link" href="{{ $proprietaires->nextPageUrl() }}" rel="next" aria-label="Next">&raquo;</a>
-                </li>
-            @else
-                <li class="page-item disabled">
-                    <span class="page-link" aria-hidden="true">&raquo;</span>
-                </li>
-            @endif
-        </ul>
-    </nav>
-</div>
-@endif
         </div>
-      </div>
-    </div>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center mt-4">
+            {{ $proprietaires->links() }}
+        </div>
+    @endif
 </div>
 
-<!-- Scripts nécessaires -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+<!-- Script pour gérer les modales -->
 <script>
     $(document).ready(function() {
-        // Notification SweetAlert2 modifiée pour ressembler à la confirmation
-        @if(session('success'))
-        Swal.fire({
-            title: 'Succès !',
-            text: '{{ session('success') }}',
-            icon: 'success',
-            confirmButtonColor: '#3085d6',
-            confirmButtonText: 'OK',
-            allowOutsideClick: false
-        });
-        @endif
-    
-        // Gestion des images
-        $('.preview-image').on('click', function() {
-            const imgUrl = $(this).data('image');
-            $('#modalImage').attr('src', imgUrl);
-            $('#imageModal').modal('show');
-        });
-    
-        // Confirmation de suppression (inchangé)
-        $('.delete-btn').on('click', function(e) {
-            e.preventDefault();
-            const form = $(this).closest('form');
-            
-            Swal.fire({
-                title: 'Confirmer la suppression',
-                text: "Êtes-vous sûr de vouloir supprimer cet comptable ?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Oui, supprimer!',
-                cancelButtonText: 'Annuler'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
+        // Initialisation des modales Bootstrap
+        $('.modal').modal({
+            show: false
         });
     });
-    </script>
-
-<style>
-.preview-image:hover {
-    transform: scale(1.05);
-    transition: transform 0.3s ease;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-}
-</style>
+</script>
 @endsection

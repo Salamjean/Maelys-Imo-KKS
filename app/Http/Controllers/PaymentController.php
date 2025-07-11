@@ -143,6 +143,26 @@ public function store(Request $request, Locataire $locataire)
     $methode = $request->methode_paiement === 'virement' ? 'Virement Bancaire' : 'Mobile Money';
     $statut = $request->methode_paiement === 'virement' ? 'En attente' : 'payé';
 
+    $typePrefix = '';
+    switch('methode_paiement') {
+        case 'Espèces':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Mobile Money':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Virement Bancaire':
+            $typePrefix = 'PAY-';
+            break;
+        default:
+            $typePrefix = 'PAY-'; // Par défaut si aucun cas ne correspond
+    }
+
+    do {
+        $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $numeroId = $typePrefix . $randomNumber;
+    } while (Paiement::where('reference', $numeroId)->exists());
+
     // Enregistrer le paiement
     $paiement = Paiement::create([
         'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
@@ -150,6 +170,7 @@ public function store(Request $request, Locataire $locataire)
         'mois_couvert' => $moisAPayer->format('Y-m'),
         'methode_paiement' => $methode,
         'statut' => $statut,
+        'reference' => $numeroId,
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
         'transaction_id' => $transaction_id,
@@ -218,6 +239,26 @@ public function store(Request $request, Locataire $locataire)
                 'error' => $e->getMessage()
             ]);
         }
+         $typePrefix = '';
+    switch('methode_paiement') {
+        case 'Espèces':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Mobile Money':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Virement Bancaire':
+            $typePrefix = 'PAY-';
+            break;
+        default:
+            $typePrefix = 'PAY-'; // Par défaut si aucun cas ne correspond
+    }
+
+    do {
+        $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $numeroId = $typePrefix . $randomNumber;
+    } while (Paiement::where('reference', $numeroId)->exists());
+
 
         // 5. Enregistrer définitivement le paiement
         $paiement = Paiement::create([
@@ -226,6 +267,7 @@ public function store(Request $request, Locataire $locataire)
             'mois_couvert' => $paiementData['mois_couvert'],
             'methode_paiement' => 'Mobile Money',
             'statut' => 'payé',
+            'reference' => '$numeroId',
             'locataire_id' => $paiementData['locataire_id'],
             'bien_id' => $paiementData['bien_id'],
             'comptable_id' => $paiementData['comptable_id'],
@@ -357,6 +399,26 @@ public function verifyCashCode(Request $request)
             'message' => 'Le loyer pour ce mois a déjà été payé'
         ], 400);
     }
+    $typePrefix = '';
+    switch('methode_paiement') {
+        case 'Espèces':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Mobile Money':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Virement Bancaire':
+            $typePrefix = 'PAY-';
+            break;
+        default:
+            $typePrefix = 'PAY-'; // Par défaut si aucun cas ne correspond
+    }
+
+    do {
+        $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $numeroId = $typePrefix . $randomNumber;
+    } while (Paiement::where('reference', $numeroId)->exists());
+
 
     // Enregistrement du paiement
     $paiement = Paiement::create([
@@ -365,6 +427,7 @@ public function verifyCashCode(Request $request)
         'mois_couvert' => $moisAPayer->format('Y-m'),
         'methode_paiement' => 'Espèces',
         'statut' => 'payé',
+        'reference' =>  $numeroId,
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
         'verif_espece' => $request->code
@@ -429,6 +492,27 @@ public function verifyCashCodeComptable(Request $request)
         ], 400);
     }
 
+     $typePrefix = '';
+    switch('methode_paiement') {
+        case 'Espèces':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Mobile Money':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Virement Bancaire':
+            $typePrefix = 'PAY-';
+            break;
+        default:
+            $typePrefix = 'PAY-'; // Par défaut si aucun cas ne correspond
+    }
+
+    do {
+        $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $numeroId = $typePrefix . $randomNumber;
+    } while (Paiement::where('reference', $numeroId)->exists());
+
+
     // Enregistrement du paiement
     $paiement = Paiement::create([
         'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
@@ -436,6 +520,7 @@ public function verifyCashCodeComptable(Request $request)
         'mois_couvert' => $moisAPayer->format('Y-m'),
         'methode_paiement' => 'Espèces',
         'statut' => 'payé',
+        'reference' => $numeroId ,
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
         'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
@@ -501,6 +586,27 @@ public function verifyCashCodeAgent(Request $request)
         ], 400);
     }
 
+     $typePrefix = '';
+    switch('methode_paiement') {
+        case 'Espèces':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Mobile Money':
+            $typePrefix = 'PAY-';
+            break;
+        case 'Virement Bancaire':
+            $typePrefix = 'PAY-';
+            break;
+        default:
+            $typePrefix = 'PAY-'; // Par défaut si aucun cas ne correspond
+    }
+
+    do {
+        $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $numeroId = $typePrefix . $randomNumber;
+    } while (Paiement::where('reference', $numeroId)->exists());
+
+
     // Enregistrement du paiement
     $paiement = Paiement::create([
         'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
@@ -508,6 +614,7 @@ public function verifyCashCodeAgent(Request $request)
         'mois_couvert' => $moisAPayer->format('Y-m'),
         'methode_paiement' => 'Espèces',
         'statut' => 'payé',
+        'reference' => $numeroId,
         'locataire_id' => $locataire->id,
         'bien_id' => $locataire->bien_id,
         'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
@@ -582,7 +689,7 @@ public function generateReceipt( Paiement $paiement)
     ];
 
     return Pdf::loadView('locataire.paiements.receipt', $data)
-              ->stream('recu-paiement-' . $paiement->id . '.pdf');
+              ->stream('Quittance de loyer-' . $paiement->id . '.pdf');
 }
 
 public function getMontantLoyer(Request $request)

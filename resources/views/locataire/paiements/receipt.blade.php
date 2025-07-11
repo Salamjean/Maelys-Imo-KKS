@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Reçu de paiement</title>
+    <title>Quittance de loyer</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap');
         
@@ -126,6 +126,9 @@
     <div class="receipt-container">
         <div class="header">
             <div class="title">QUITTANCE DE LOYER</div>
+            <div style="font-size: 15px; color: #000; margin-top: 5px; font-weight:bold">
+                Réf: {{ $paiement->reference }}
+            </div>
             <div class="subtitle">Reçu officiel de paiement</div>
         </div>
         <div class="section">
@@ -209,9 +212,7 @@
                 Scannez ce code pour vérifier
             </div>
             <img src="{{ $qrCode }}" alt="QR Code du reçu" style="width: 80px; height: 80px; border: 1px solid #eee; padding: 5px;">
-            <div style="font-size: 10px; color: #777; margin-top: 5px;">
-                Réf: {{ $reference }}
-            </div>
+            
         </div>
 
         <div class="footer">

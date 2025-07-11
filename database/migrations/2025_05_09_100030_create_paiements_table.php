@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->decimal('montant', 10, 2);
             $table->date('date_paiement');
+            $table->string('reference'); //reference de paiement 
             $table->string('mois_couvert'); // Format "2023-11"
             $table->enum('methode_paiement', ['Espèces', 'Mobile Money' ,'Virement Bancaire']);
             $table->string('verif_espece')->nullable(); // Code pour vérification manuelle

@@ -129,6 +129,8 @@ class ProprietaireController extends Controller
             'choix_paiement' => 'required|max:255',
             'rib' => 'nullable|max:255',
             'contrat' => 'required',
+            'profil_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'cni' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
             'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -138,6 +140,8 @@ class ProprietaireController extends Controller
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'commune.required' => 'Lieu de residence est obligatoire.',
+            'contrat.required' => 'Le contrat est obligatoire.',
+            'cni.required' => 'La pièce d\'identité est obligatoire.',
         ]);
 
         try {
@@ -151,8 +155,14 @@ class ProprietaireController extends Controller
 
             // Traitement de l'image de profil
             $profileImagePath = null;
-            if ($request->hasFile('profile_image')) {
-                $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+            if ($request->hasFile('profil_image')) {
+                $profileImagePath = $request->file('profil_image')->store('profil_images', 'public');
+            }
+
+            // Traitement de la pièce d'identité
+            $cniImagePath = null;
+            if ($request->hasFile('cni')) {
+                $cniImagePath = $request->file('cni')->store('cnis', 'public');
             }
 
             // Traitement du contrat
@@ -175,6 +185,7 @@ class ProprietaireController extends Controller
             $owner->contrat = $contratPath;
             $owner->password = Hash::make('password');
             $owner->profil_image = $profileImagePath;
+            $owner->cni = $cniImagePath;
             $owner->agence_id = $agenceId;
             $owner->save();
         
@@ -533,6 +544,23 @@ private function getAbonnementMessage($abonnement): string
             }
         }
 
+         // Traitement de la pièce d'identité
+        $cniImagePath = null;
+        if ($request->hasFile('cni')) {
+            try {
+                $cniImagePath = $request->file('cni')->store('cnis', 'public');
+                Log::info('Cni enregistrée', ['path' => $cniImagePath]);
+            } catch (\Exception $e) {
+                Log::error('Erreur enregistrement la pièce', [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                throw new \Exception("Erreur lors de l'enregistrement de la pièce");
+            }
+        }
+
+
         // Traitement du fichier RIB
         $ribPath = null;
         if ($request->hasFile('rib')) {
@@ -558,9 +586,10 @@ private function getAbonnementMessage($abonnement): string
             'contact' => $validatedData['contact'],
             'commune' => $validatedData['commune'],
             'rib' => $ribPath,
-            'choix_paiement' => 'RIB',
+            'choix_paiement' => 'Virement Bancaire',
             'password' => Hash::make('password'),
             'profil_image' => $profileImagePath,
+            'cni' => $cniImagePath,
             'diaspora' => $request->input('diaspora', '0') === '1' ? 'Oui' : 'Non',
             'gestion' => 'proprietaire',
         ];

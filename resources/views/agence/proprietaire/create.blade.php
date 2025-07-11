@@ -44,49 +44,27 @@
 
                 <!-- Section 2: Détails du bien -->
                 <div class="row">
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Lieu de résidence</label>
                             <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Commune" name="commune">
                             @error('commune')
-                                <div class="alert alert-danger mt-2">{{ $message }}</div>
+                                <div class="alert alert-danger mt-4">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="form-group">
-                            <label>Contact</label>
+                            <label>Contact <span style="color: red">*</span></label>
                             <input type="tel" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Contact du comptable" name="contact">
                             @error('contact')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="form-group">
-                            <label>Choix de paiement</label>
-                            <select class="form-control" style="border: 1px solid black; border-radius: 5px;" name="choix_paiement" id="choix_paiement">
-                                <option value="">Faites un choix</option>
-                                <option value="Virement Bancaire">Virement Bancaire</option>
-                                <option value="Chèques">Chèques</option>
-                            </select>
-                            @error('choix_paiement')
-                                <div class="alert alert-danger mt-2">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label>RIB</label>
-                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" name="rib" id="rib">
-                            @error('rib')
-                                <div class="alert alert-danger mt-2">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label>Pourcentage </label>
+                            <label>Pourcentage <span style="color: red">*</span></label>
                             <select class="form-control" style="border: 1px solid black; border-radius: 5px;" name="pourcentage">
                                 <option value="">Choissisez le pourcentage</option>
                                 <option value="1">1%</option>
@@ -110,7 +88,9 @@
                             @enderror
                         </div>
                     </div>
-                     <div class="col-md-2">
+                    
+                    
+                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Contrat <span style="color: red">*</span></label>
                             <div class="input-group">
@@ -122,6 +102,62 @@
                             </div>
                         </div>
                         @error('contrat')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+                <!-- Section 2: Détails du bien -->
+                <div class="row">
+                <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Choix de paiement <span style="color: red">*</span></label>
+                            <select class="form-control" style="border: 1px solid black; border-radius: 5px;" name="choix_paiement" id="choix_paiement">
+                                <option value="">Faites un choix</option>
+                                <option value="Virement Bancaire">Virement Bancaire</option>
+                                <option value="Chèques">Chèques</option>
+                            </select>
+                            @error('choix_paiement')
+                                <div class="alert alert-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>RIB <span style="color: red">*</span></label>
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" name="rib" id="rib">
+                            @error('rib')
+                                <div class="alert alert-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    
+                     <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Pièce d'identité <span style="color: red">*</span></label>
+                            <div class="input-group">
+                                <input type="file" name="cni" class="file-upload-default" hidden>
+                                <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Entrez pièce d'identité">
+                                <span class="input-group-append">
+                                    <button class="file-upload-browse btn btn-primary" style="background-color: #02245b" type="button">Télécharger</button>
+                                </span>
+                            </div>
+                        </div>
+                        @error('cni')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                     <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Photo de profil</label>
+                            <div class="input-group">
+                                <input type="file" name="profil_image" class="file-upload-default" hidden>
+                                <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Choisir un fichier">
+                                <span class="input-group-append">
+                                    <button class="file-upload-browse btn btn-primary" style="background-color: #02245b" type="button">Télécharger</button>
+                                </span>
+                            </div>
+                        </div>
+                        @error('profil_image')
                         <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
@@ -148,6 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateFields() {
         if (choixPaiement.value === 'Chèques') {
             ribField.disabled = true;
+            ribField.value = 'Par chèques';
             ribField.style.backgroundColor = '#e9ecef';
             banqueField.disabled = true;
             banqueField.style.backgroundColor = '#e9ecef';

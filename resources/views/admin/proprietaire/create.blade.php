@@ -44,7 +44,7 @@
 
                 <!-- Section 2: Détails du bien -->
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Lieu de résidence</label>
                             <input type="text" style="border: 1px solid black; border-radius: 5px;" value="{{ old('commune') }}" class="form-control" placeholder="Commune" name="commune">
@@ -53,7 +53,7 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Contact</label>
                             <input type="tel" style="border: 1px solid black; border-radius: 5px;" value="{{ old('contact') }}" class="form-control" placeholder="Contact du comptable" name="contact">
@@ -62,18 +62,33 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>RIB</label>
                             <div class="input-group">
                                 <input type="file" name="rib" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden>
                                 <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Télécharger le RIB" value="{{ old('rib') }}">
                                 <span class="input-group-append">
-                                    <button class="file-upload-browse btn btn-primary" style="background-color: #02245b" type="button">Télécharger</button>
+                                    <button class="file-upload-browse btn btn-primary" style="background-color: #02235b" type="button">Télécharger</button>
                                 </span>
                             </div>
                         </div>
                         @error('rib')
+                        <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Pièce d'identité</label>
+                            <div class="input-group">
+                                <input type="file" name="cni" style="border: 1px solid black; border-radius: 5px;" class="file-upload-default" hidden>
+                                <input type="text" class="form-control file-upload-info" style="border: 1px solid black; border-radius: 5px;" disabled placeholder="Télécharger la pièce d'identitée" value="{{ old('cni') }}">
+                                <span class="input-group-append">
+                                    <button class="file-upload-browse btn btn-primary" style="background-color: #02245b" type="button">Télécharger</button>
+                                </span>
+                            </div>
+                        </div>
+                        @error('cni')
                         <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>

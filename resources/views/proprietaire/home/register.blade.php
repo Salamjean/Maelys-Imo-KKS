@@ -123,7 +123,7 @@
                             
                             <div class="row g-3 mb-3">
                                 <!-- RIB -->
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label for="rib" class="form-label">RIB</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="fas fa-file-pdf text-muted"></i></span>
@@ -135,7 +135,18 @@
                                     </div>
                                     <small class="text-muted">Format PDF uniquement (max 2MB)</small>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <label for="cni" class="form-label">Pièce d'identité</label>
+                                    <div class="input-group">
+                                        <input type="file" class="form-control @error('cni') is-invalid @enderror" 
+                                               id="cni" name="cni" accept="image/*">
+                                        @error('cni')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <small class="text-muted">Format: JPG, PNG (max 2MB)</small>
+                                </div>
+                                <div class="col-md-4">
                                     <label for="profile_image" class="form-label">Photo de profile</label>
                                     <div class="input-group">
                                         <input type="file" class="form-control @error('profile_image') is-invalid @enderror" 

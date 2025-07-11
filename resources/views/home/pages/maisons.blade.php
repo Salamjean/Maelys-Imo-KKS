@@ -115,26 +115,35 @@
                         </small>
                     </div>
                     <div class="d-flex justify-content-center p-4">
-                        <button class="btn btn-primary px-4 view-details-btn" 
-                        data-bien-id="{{ $bien->id }}"
-                        data-bien-type="{{ $bien->type }}"
-                        data-bien-commune="{{ $bien->commune }}"
-                        data-bien-description="{{ $bien->description }}"
-                        data-bien-superficie="{{ $bien->superficie }}"
-                        data-bien-chambres="{{ $bien->nombre_de_chambres }}"
-                        data-bien-toilettes="{{ $bien->nombre_de_toilettes }}"
-                        data-bien-garage="{{ $bien->garage }}"
-                        data-bien-prix="{{ $bien->prix }}"
-                        data-bien-avance="{{ $bien->avance }}"
-                        data-bien-caution="{{ $bien->caution }}"
-                        data-bien-frais="{{ $bien->frais }}"
-                        data-bien-agence="{{ $bien->agence->name ?? 'Maelys-imo'}}"
-                        data-bien-contact="{{ $bien->agence->contact ?? '+225 0798278981'}}"
-                        data-bien-date="{{ $bien->date_fixe}}"
-                        data-bien-image="{{ $bien->image ? asset('storage/'.$bien->image) : asset('home/img/default-property.jpg') }}"
-                        data-bien-image1="{{ $bien->image1 ? asset('storage/'.$bien->image1) : asset('home/img/default-property-2.jpg') }}">
-                    Voir détails
-                </button>
+                            <button class="btn btn-primary px-4 view-details-btn" 
+                                    data-bien-id="{{ $bien->id }}"
+                                    data-bien-type="{{ $bien->type }}"
+                                    data-bien-commune="{{ $bien->commune }}"
+                                    data-bien-description="{{ $bien->description }}"
+                                    data-bien-superficie="{{ $bien->superficie }}"
+                                    data-bien-chambres="{{ $bien->nombre_de_chambres }}"
+                                    data-bien-toilettes="{{ $bien->nombre_de_toilettes }}"
+                                    data-bien-garage="{{ $bien->garage }}"
+                                    data-bien-prix="{{ $bien->prix }}"
+                                    data-bien-avance="{{ $bien->avance }}"
+                                    data-bien-caution="{{ $bien->caution }}"
+                                    data-bien-frais="{{ $bien->frais }}"
+                                    data-bien-agence="{{ 
+                                        $bien->agence_id 
+                                            ? ($bien->agence->name ?? 'Maelys-imo') 
+                                            : ($bien->proprietaire_id 
+                                                ? ($bien->proprietaire->gestion == 'agence' 
+                                                    ? 'Maelys-imo' 
+                                                    : ($bien->proprietaire->name.' '.$bien->proprietaire->prenom ?? 'Maelys-imo'))
+                                                : 'Maelys-imo')
+                                    }}"
+                                    data-bien-contact="{{ $bien->agence->contact ?? '+225 0798278981' }}"
+                                    data-bien-date="{{ $bien->date_fixe }}"
+                                    data-bien-image="{{ $bien->image ? asset('storage/'.$bien->image) : asset('home/img/default-property.jpg') }}"
+                                    data-bien-image1="{{ $bien->image1 ? asset('storage/'.$bien->image1) : asset('home/img/default-property-2.jpg') }}">
+                                Voir détails
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -219,7 +228,7 @@
                             <p><i class="fa fa-car text-primary me-2"></i> Garage: <strong>${bien.garage ?? 'Non'}</strong></p>
                             <p><i class="fa fa-calendar-alt text-primary me-2"></i> Date fixe de loyer: <strong>${bien.date} de chaque mois</strong> </p>
                             <p><i class="fa fa-money-bill-wave text-primary me-2"></i> Loyer mensuel: <strong>${formatPrix(bien.prix)}</strong></p>
-                            <p><i class="fa fa-home text-primary me-2"></i> Agence: <strong>${bien.agence}</strong></p>
+                            <p><i class="fa fa-home text-primary me-2"></i> Agence/Propriétaire: <strong>${bien.agence}</strong></p>
                             <p><i class="fa fa-phone text-primary me-2"></i> Contact: <strong>${bien.contact}</strong></p>
                         </div>
                     </div>
