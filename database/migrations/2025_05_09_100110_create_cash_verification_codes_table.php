@@ -16,6 +16,9 @@ return new class extends Migration
             $table->foreignId('locataire_id')->constrained()->onDelete('cascade');
             $table->foreignId('paiement_id')->nullable()->constrained()->onDelete('set null');
             $table->string('code', 6);
+            $table->integer('nombre_mois')->default(1);
+            $table->string('mois_couverts')->nullable();
+            $table->decimal('montant_total', 10, 2)->nullable();
             $table->timestamp('expires_at');
             $table->timestamp('used_at')->nullable();
             $table->boolean('is_archived')->default(false);

@@ -15,7 +15,10 @@ class CashVerificationCode extends Model
         'code',
         'expires_at',
         'used_at',
-        'is_archived'
+        'is_archived',
+        'nombre_mois',
+        'mois_couverts',
+        'montant_total',
     ];
 
     protected $casts = [
