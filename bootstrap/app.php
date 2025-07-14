@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'agence'=>AgenceMiddleware::class,
         ]);
+         $middleware->web();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

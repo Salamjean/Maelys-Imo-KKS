@@ -41,6 +41,18 @@ body::before {
     background: rgba(0, 0, 0, 0.5); /* Ajustez l'opacité (0.5 = 50%) */
     z-index: -1;
 }
+/* Style pour le bouton de visibilité du mot de passe */
+.password-toggle {
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    transition: color 0.3s;
+}
+
+.password-toggle:hover {
+    color: #495057;
+}
 </style>
 
 <body >
@@ -78,8 +90,12 @@ body::before {
                             <input type="password" 
                                    class="form-control" 
                                    name="password" 
+                                   id="password-field"
                                    placeholder="Mot de passe"
                                    required>
+                            <button type="button" class="input-group-text password-toggle" id="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
 
                          <!-- Lien Mot de passe oublié -->
@@ -108,8 +124,27 @@ body::before {
     <script src="{{ asset('login/assets/js/bootstrap.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-     <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordField = document.getElementById('password-field');
+            const togglePassword = document.getElementById('toggle-password');
+            const eyeIcon = togglePassword.querySelector('i');
+            
+            togglePassword.addEventListener('click', function() {
+                const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordField.setAttribute('type', type);
+                
+                // Changer l'icône
+                if (type === 'password') {
+                    eyeIcon.classList.remove('fa-eye-slash');
+                    eyeIcon.classList.add('fa-eye');
+                } else {
+                    eyeIcon.classList.remove('fa-eye');
+                    eyeIcon.classList.add('fa-eye-slash');
+                }
+            });
+        });
+    </script>
     
     @if($errors->any())
       <script>

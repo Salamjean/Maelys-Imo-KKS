@@ -12,33 +12,40 @@
     <title>Inscrire une agence</title>
     <!-- SweetAlert2 CSS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      /* Style pour les boutons de visibilité des mots de passe */
+      .password-toggle {
+          cursor: pointer;
+          background: transparent;
+          border: none;
+          color: #6c757d;
+          transition: color 0.3s;
+      }
+      .password-toggle:hover {
+          color: #495057;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        background-image: url("{{ asset('assets/images/proo.png') }}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        position: relative;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+      }
+    </style>
   </head>
-  <style>
-    body {
-    display: flex;
-    align-items: center;
-    /* Remplacez le dégradé par l'image */
-    background-image: url("{{ asset('assets/images/proo.png') }}");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    
-    /* Overlay sombre pour améliorer la lisibilité */
-    position: relative;
-}
-
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Ajustez l'opacité (0.5 = 50%) */
-    z-index: -1;
-}
-</style>
   <body>
     <div class="uf-form-signin">
       <div class="text-center">
@@ -55,16 +62,26 @@ body::before {
         <div class="input-group uf-input-group input-group-lg mb-3">
           <span class="input-group-text fa fa-lock"></span>
           <input type="text" class="form-control " name="code" value="{{ old('code') }}" placeholder="Code de confirmation">
-         
         </div>
+        
+        <!-- Champ Mot de passe avec œil -->
         <div class="input-group uf-input-group input-group-lg mb-3">
           <span class="input-group-text fa fa-lock"></span>
-          <input type="password" class="form-control " name="password" placeholder="Mot de passe">
+          <input type="password" class="form-control" id="password-field" name="password" placeholder="Mot de passe">
+          <button type="button" class="input-group-text password-toggle" id="toggle-password">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
+        
+        <!-- Champ Confirmation mot de passe avec œil -->
         <div class="input-group uf-input-group input-group-lg mb-3">
           <span class="input-group-text fa fa-lock"></span>
-          <input type="password" class="form-control " name="password_confirm" placeholder="Mot de passe de confirmation">
+          <input type="password" class="form-control" id="password-confirm-field" name="password_confirm" placeholder="Mot de passe de confirmation">
+          <button type="button" class="input-group-text password-toggle" id="toggle-password-confirm">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
+        
         <div class="d-grid mb-4">
           <button type="submit" class="btn uf-btn-primary btn-lg">S'inscrire</button>
         </div>
@@ -72,9 +89,38 @@ body::before {
     </div>
 
     <!-- JavaScript -->
-    <!-- Separate Popper and Bootstrap JS -->
     <script src="{{ asset('login/assets/js/popper.min.js') }}"></script>
     <script src="{{ asset('login/assets/js/bootstrap.min.js') }}"></script>
+    
+    <!-- Script pour basculer la visibilité des mots de passe -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          // Fonction pour basculer la visibilité
+          function togglePasswordVisibility(fieldId, toggleId) {
+              const passwordField = document.getElementById(fieldId);
+              const togglePassword = document.getElementById(toggleId);
+              const eyeIcon = togglePassword.querySelector('i');
+              
+              togglePassword.addEventListener('click', function() {
+                  const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                  passwordField.setAttribute('type', type);
+                  
+                  // Changer l'icône
+                  if (type === 'password') {
+                      eyeIcon.classList.remove('fa-eye-slash');
+                      eyeIcon.classList.add('fa-eye');
+                  } else {
+                      eyeIcon.classList.remove('fa-eye');
+                      eyeIcon.classList.add('fa-eye-slash');
+                  }
+              });
+          }
+          
+          // Appliquer aux deux champs
+          togglePasswordVisibility('password-field', 'toggle-password');
+          togglePasswordVisibility('password-confirm-field', 'toggle-password-confirm');
+      });
+    </script>
 
     @if($errors->any())
       <script>

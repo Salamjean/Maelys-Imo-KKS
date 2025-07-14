@@ -38,6 +38,17 @@ body::before {
     background: rgba(0, 0, 0, 0.5); /* Ajustez l'opacité (0.5 = 50%) */
     z-index: -1;
 }
+/* Style pour les boutons de visibilité des mots de passe */
+      .password-toggle {
+          cursor: pointer;
+          background: transparent;
+          border: none;
+          color: #6c757d;
+          transition: color 0.3s;
+      }
+      .password-toggle:hover {
+          color: #495057;
+      }
 </style>
   <body>
     <div class="uf-form-signin">
@@ -59,11 +70,17 @@ body::before {
         </div>
         <div class="input-group uf-input-group input-group-lg mb-3">
           <span class="input-group-text fa fa-lock"></span>
-          <input type="password" class="form-control " name="password" placeholder="Mot de passe">
+          <input type="password" class="form-control " id="password-field" name="password" placeholder="Mot de passe">
+          <button type="button" class="input-group-text password-toggle" id="toggle-password">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
         <div class="input-group uf-input-group input-group-lg mb-3">
           <span class="input-group-text fa fa-lock"></span>
-          <input type="password" class="form-control " name="password_confirm" placeholder="Mot de passe de confirmation">
+          <input type="password" class="form-control " name="password_confirm" id="password-confirm-field" placeholder="Mot de passe de confirmation">
+          <button type="button" class="input-group-text password-toggle" id="toggle-password-confirm">
+            <i class="fas fa-eye"></i>
+          </button>
         </div>
         <div class="d-grid mb-4">
           <button type="submit" class="btn uf-btn-primary btn-lg">Valider</button>
@@ -75,7 +92,35 @@ body::before {
     <!-- Separate Popper and Bootstrap JS -->
     <script src="{{ asset('login/assets/js/popper.min.js') }}"></script>
     <script src="{{ asset('login/assets/js/bootstrap.min.js') }}"></script>
-
+<!-- Script pour basculer la visibilité des mots de passe -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          // Fonction pour basculer la visibilité
+          function togglePasswordVisibility(fieldId, toggleId) {
+              const passwordField = document.getElementById(fieldId);
+              const togglePassword = document.getElementById(toggleId);
+              const eyeIcon = togglePassword.querySelector('i');
+              
+              togglePassword.addEventListener('click', function() {
+                  const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                  passwordField.setAttribute('type', type);
+                  
+                  // Changer l'icône
+                  if (type === 'password') {
+                      eyeIcon.classList.remove('fa-eye-slash');
+                      eyeIcon.classList.add('fa-eye');
+                  } else {
+                      eyeIcon.classList.remove('fa-eye');
+                      eyeIcon.classList.add('fa-eye-slash');
+                  }
+              });
+          }
+          
+          // Appliquer aux deux champs
+          togglePasswordVisibility('password-field', 'toggle-password');
+          togglePasswordVisibility('password-confirm-field', 'toggle-password-confirm');
+      });
+    </script>
     @if($errors->any())
       <script>
         Swal.fire({
