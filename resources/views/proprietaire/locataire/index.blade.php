@@ -546,54 +546,88 @@ $('body').on('click', '.generate-cash-code', function() {
     button.prop('disabled', true);
     button.html('<i class="mdi mdi-loading mdi-spin"></i>');
 
-    // D'abord générer le code
-    $.ajax({
-        url: "{{ route('paiements.generateCashCode') }}",
-        type: 'POST',
-        data: { locataire_id: locataireId },
-        success: function(response) {
-            if (response.success) {
-                // Afficher le champ de saisie après envoi réussi
-                Swal.fire({
-                    title: 'Code envoyé',
-                    html: `
-                        <p>${response.message}</p>
-                        <div class="mb-3 mt-3">
-                            <label for="cashVerificationCode" class="form-label">
-                                Entrez le code reçu par le locataire :
-                            </label>
-                            <input type="text" class="form-control" id="cashVerificationCode" 
-                                   placeholder="Code à 6 caractères" maxlength="6">
-                        </div>
-                    `,
-                    icon: 'success',
-                    showCancelButton: true,
-                    confirmButtonText: 'Valider le paiement',
-                    cancelButtonText: 'Annuler',
-                    preConfirm: () => {
-                        const code = $('#cashVerificationCode').val().trim();
-                        if (!code || code.length !== 6) {
-                            Swal.showValidationMessage('Veuillez entrer un code valide (6 caractères)');
-                            return false;
-                        }
-                        return { code: code };
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Vérifier le code
-                        verifyAndSubmitPayment(locataireId, result.value.code);
-                    }
-                });
-            } else {
-                Swal.fire('Erreur', response.message, 'error');
+    // D'abord demander le nombre de mois
+    Swal.fire({
+        title: 'Nombre de mois à payer',
+        html: `
+            <div class="mb-3">
+                <label for="nombreMois" class="form-label">Combien de mois voulez-vous payer ?</label>
+                <input type="number" class="form-control" id="nombreMois" min="1" value="1">
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Continuer',
+        cancelButtonText: 'Annuler',
+        preConfirm: () => {
+            const mois = $('#nombreMois').val();
+            if (!mois || mois < 1) {
+                Swal.showValidationMessage('Veuillez entrer un nombre valide (au moins 1 mois)');
+                return false;
             }
-        },
-        error: function(xhr) {
-            Swal.fire('Erreur', xhr.responseJSON?.message || 'Erreur lors de la génération du code', 'error');
-        },
-        complete: function() {
+            return { mois: mois };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const nombreMois = result.value.mois;
+            
+            // Ensuite générer le code avec le nombre de mois
+            $.ajax({
+                url: "{{ route('paiements.generateCashCode') }}",
+                type: 'POST',
+                data: { 
+                    locataire_id: locataireId,
+                    nombre_mois: nombreMois
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Afficher le champ de saisie après envoi réussi
+                        Swal.fire({
+                            title: 'Code envoyé',
+                            html: `
+                                <p>${response.message}</p>
+                                <p>Mois à payer: ${response.mois_couverts}</p>
+                                <div class="mb-3 mt-3">
+                                    <label for="cashVerificationCode" class="form-label">
+                                        Entrez le code reçu par le locataire :
+                                    </label>
+                                    <input type="text" class="form-control" id="cashVerificationCode" 
+                                           placeholder="Code à 6 caractères" maxlength="6">
+                                </div>
+                            `,
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonText: 'Valider le paiement',
+                            cancelButtonText: 'Annuler',
+                            preConfirm: () => {
+                                const code = $('#cashVerificationCode').val().trim();
+                                if (!code || code.length !== 6) {
+                                    Swal.showValidationMessage('Veuillez entrer un code valide (6 caractères)');
+                                    return false;
+                                }
+                                return { code: code };
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Vérifier le code
+                                verifyAndSubmitPayment(locataireId, result.value.code, nombreMois);
+                            }
+                        });
+                    } else {
+                        Swal.fire('Erreur', response.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire('Erreur', xhr.responseJSON?.message || 'Erreur lors de la génération du code', 'error');
+                },
+                complete: function() {
+                    button.prop('disabled', false);
+                    button.html('<i class="mdi mdi-cash"></i> Espèces');
+                }
+            });
+        } else {
             button.prop('disabled', false);
-            button.html('<i class="mdi mdi-cash"></i> Code Espèces');
+            button.html('<i class="mdi mdi-cash"></i> Espèces');
         }
     });
 });

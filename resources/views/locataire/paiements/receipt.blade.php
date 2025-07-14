@@ -155,7 +155,7 @@
             <div class="section-title">DÉCLARATION</div>
             <p>
                 Je soussigné(e) 
-                @if($locataire->agence_id)
+                @if($bien->agence->id)
                     {{ $locataire->agence->name ?? 'Maelys-Imo' }}, Agence
                 @elseif($locataire->proprietaire_id)
                     {{ $locataire->proprietaire->name.' '.$locataire->proprietaire->prenom ?? 'Maelys-imo' }}, Propriétaire
@@ -165,7 +165,7 @@
                 bailleur du bien ci-dessus désigné, déclare avoir reçu de :
             </p>
             <div class="highlight-box">
-                <strong>Monsieur/Madame :</strong> {{ $locataire->name.' '.$locataire->prenom ?? 'Maelys-imo' }}<br>
+                <strong>Monsieur/Madame :</strong> {{ $bien->locataire->name.' '.$bien->locataire->prenom ?? 'Maelys-imo' }}<br>
                 <strong>Montant :</strong> <span class="amount">{{ number_format($paiement->montant, 0, ',', ' ') }} FCFA</span><br>
                 <strong>Pour :</strong> Paiement du loyer et charges pour {{ \Carbon\Carbon::parse($paiement->mois_couvert)->translatedFormat('F Y') }}
             </div>
@@ -196,7 +196,7 @@
             
             <div class="signature">
                 <p class="signature-text">
-                    @if($locataire->agence_id)
+                    @if($bien->agence->id)
                         {{ $locataire->agence->name ?? 'Maelys-Imo' }}, Agence
                     @elseif($locataire->proprietaire_id)
                         {{ $locataire->proprietaire->name.' '.$locataire->proprietaire->prenom ?? 'Maelys-imo' }}, Propriétaire

@@ -342,7 +342,7 @@ public function generateCashCode(Request $request)
         [
             'code' => $code,
             'expires_at' => now()->addHours(24),
-            'nombre_mois' => $request->nombre_mois, // Bien enregistrer le nombre de mois
+            'nombre_mois' => $request->nombre_mois ?? 1, // Bien enregistrer le nombre de mois
             'mois_couverts' => $moisCouvertsStr,
             'montant_total' => $montantTotal,
             'is_archived' => false,
@@ -717,7 +717,7 @@ public function generateReceipt( Paiement $paiement)
     // 1. Contenu du QR Code formaté de manière lisible
     $qrContent = "QUITTANCE DE LOYER\n";
     $qrContent .= "---------------\n";
-    $qrContent .= "Locataire: {$locataire->name} {$locataire->prenom}\n";
+    $qrContent .= "Locataire: {$paiement->bien->locataire->name} {$paiement->bien->locataire->prenom}\n";
     $qrContent .= "Loyer : ".number_format($paiement->montant, 0, ',', ' ')." FCFA\n";
     $qrContent .= "Mois couvert: ".\Carbon\Carbon::parse($paiement->mois_couvert)->format('m/Y')."\n";
     $qrContent .= "Date de paiement : ".\Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y')."\n";

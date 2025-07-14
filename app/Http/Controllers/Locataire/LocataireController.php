@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ContactAgencyMail;
+use App\Models\Paiement;
 use App\Models\Visite;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class LocataireController extends Controller
 {
@@ -255,6 +258,12 @@ class LocataireController extends Controller
                 $image4Path = $request->file('image4')->store('locataires_images', 'public');
             }
 
+             // Récupération du bien associé
+            $bien = Bien::findOrFail($request->bien_id);
+            $avance = $bien->avance;
+            $loyer = $bien->prix;
+            $datePaiement = now();
+
             // Création du locataire
             $locataire = new Locataire();
             $locataire->code_id = $this->generateUniqueCodeId();
@@ -286,6 +295,26 @@ class LocataireController extends Controller
             $bien = Bien::find($request->bien_id);
             $bien->status = 'Loué';
             $bien->save();
+
+            // Création des paiements pour l'avance
+            if ($avance > 0) {
+                for ($i = 0; $i < $avance; $i++) {
+                    $moisCourant = Carbon::now()->addMonths($i);
+                    $moisCouvert = $moisCourant->format('Y-m');
+                    
+                    Paiement::create([
+                        'montant' => $loyer,
+                        'date_paiement' => $datePaiement,
+                        'reference' => 'AVANCE-' . Str::random(8),
+                        'mois_couvert' => $moisCouvert,
+                        'methode_paiement' => 'Espèces',
+                        'statut' => 'payé',
+                        'locataire_id' => $locataire->id,
+                        'bien_id' => $bien->id,
+                        'proof_path' => $contratPath // On utilise le contrat comme preuve de paiement
+                    ]);
+                }
+            }
 
             // Envoi de l'e-mail de vérification
             $agence = Auth::guard('agence')->user();
@@ -698,6 +727,12 @@ class LocataireController extends Controller
                 $image4Path = $request->file('image4')->store('locataires_images', 'public');
             }
 
+             // Récupération du bien associé
+            $bien = Bien::findOrFail($request->bien_id);
+            $avance = $bien->avance;
+            $loyer = $bien->prix;
+            $datePaiement = now();
+
             // Création du locataire
             $locataire = new Locataire();
             $locataire->code_id = $this->generateUniqueCodeId();
@@ -728,6 +763,26 @@ class LocataireController extends Controller
             $bien = Bien::find($request->bien_id);
             $bien->status = 'Loué';
             $bien->save();
+
+            // Création des paiements pour l'avance
+            if ($avance > 0) {
+                for ($i = 0; $i < $avance; $i++) {
+                    $moisCourant = Carbon::now()->addMonths($i);
+                    $moisCouvert = $moisCourant->format('Y-m');
+                    
+                    Paiement::create([
+                        'montant' => $loyer,
+                        'date_paiement' => $datePaiement,
+                        'reference' => 'AVANCE-' . Str::random(8),
+                        'mois_couvert' => $moisCouvert,
+                        'methode_paiement' => 'Espèces',
+                        'statut' => 'payé',
+                        'locataire_id' => $locataire->id,
+                        'bien_id' => $bien->id,
+                        'proof_path' => $contratPath // On utilise le contrat comme preuve de paiement
+                    ]);
+                }
+            }
 
             // Envoi de l'e-mail de vérification
             $agence = Auth::guard('admin')->user();

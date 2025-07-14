@@ -4,15 +4,18 @@ namespace App\Http\Controllers\Proprietaire;
 use App\Http\Controllers\Controller;
 use App\Models\Bien;
 use App\Models\Locataire;
+use App\Models\Paiement;
 use App\Models\ResetCodePasswordLocataire;
 use App\Models\Visite;
 use App\Notifications\SendEmailToLocataireAfterRegistrationNotification;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class LocataireOwnerController extends Controller
 {
@@ -171,6 +174,12 @@ class LocataireOwnerController extends Controller
                 $image4Path = $request->file('image4')->store('locataires_images', 'public');
             }
 
+              // Récupération du bien associé
+            $bien = Bien::findOrFail($request->bien_id);
+            $avance = $bien->avance;
+            $loyer = $bien->prix;
+            $datePaiement = now();
+
             // Création du locataire
             $locataire = new Locataire();
             $locataire->code_id = $this->generateUniqueCodeId();
@@ -202,6 +211,26 @@ class LocataireOwnerController extends Controller
             $bien = Bien::find($request->bien_id);
             $bien->status = 'Loué';
             $bien->save();
+
+            // Création des paiements pour l'avance
+            if ($avance > 0) {
+                for ($i = 0; $i < $avance; $i++) {
+                    $moisCourant = Carbon::now()->addMonths($i);
+                    $moisCouvert = $moisCourant->format('Y-m');
+                    
+                    Paiement::create([
+                        'montant' => $loyer,
+                        'date_paiement' => $datePaiement,
+                        'reference' => 'AVANCE-' . Str::random(8),
+                        'mois_couvert' => $moisCouvert,
+                        'methode_paiement' => 'Espèces',
+                        'statut' => 'payé',
+                        'locataire_id' => $locataire->id,
+                        'bien_id' => $bien->id,
+                        'proof_path' => $contratPath // On utilise le contrat comme preuve de paiement
+                    ]);
+                }
+            }
 
             // Envoi de l'e-mail de vérification
             $agence = Auth::guard('owner')->user();
