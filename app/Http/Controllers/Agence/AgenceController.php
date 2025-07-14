@@ -5,7 +5,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Abonnement;
 use App\Models\Agence;
 use App\Models\Bien;
+use App\Models\Paiement;
 use App\Models\ResetCodePasswordAgence;
+use App\Models\Reversement;
 use App\Models\Visite;
 use App\Notifications\SendEmailToAgenceAfterRegistrationNotification;
 use Exception;
@@ -19,6 +21,20 @@ use Illuminate\Support\Facades\Storage;
 
 class AgenceController extends Controller
 {
+     private function calculerSoldeDisponible($agenceId)
+        {
+            $totalPaiements = Paiement::where('methode_paiement', 'Mobile Money')
+                ->whereHas('bien', function($query) use ($agenceId) {
+                    $query->where('agence_id', $agenceId);
+                })
+                ->where('statut', 'payé')
+                ->sum('montant');
+            
+            $totalReversements = Reversement::where('agence_id', $agenceId)
+                ->sum('montant');
+            
+            return $totalPaiements - $totalReversements;
+        }
     public function dashboard()
     {
         $agenceId = Auth::guard('agence')->user()->code_id;
@@ -60,6 +76,7 @@ class AgenceController extends Controller
             ]
         ];
     
+        $soldeDisponible = $this->calculerSoldeDisponible($agenceId);
         // Biens récents
         $recentBiens = Bien::with('agence')
                           ->where('agence_id', $agence->code_id)
@@ -74,6 +91,7 @@ class AgenceController extends Controller
             'stats' => $stats,
             'recentBiens' => $recentBiens,
             'pendingVisits' => $pendingVisits,
+            'soldeDisponible' => $soldeDisponible
         ]);
     }
     public function index()

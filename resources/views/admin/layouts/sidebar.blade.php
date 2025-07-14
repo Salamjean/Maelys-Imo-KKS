@@ -111,13 +111,6 @@
           </ul>
         </div>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{{ route('locataire.admin.indexSerieux') }}">
-           <i class="mdi mdi-account-multiple-minus menu-icon"></i>
-          <span class="menu-title">Locataire pas sérieux</span>
-        </a>
-      </li>
-
       <li class="nav-item sidebar-category">
         <p>Paiement</p>
         <span></span>

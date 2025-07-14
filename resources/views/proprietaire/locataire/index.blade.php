@@ -129,7 +129,6 @@
                                     <select class="form-select" id="newStatus" name="status" required>
                                         <option value="Actif">Actif</option>
                                         <option value="Inactif">Inactif</option>
-                                        <option value="Pas sérieux">Pas sérieux</option>
                                     </select>
                                 </div>
                                 <div class="mb-3" id="motifField">

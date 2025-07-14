@@ -21,6 +21,8 @@ return new class extends Migration
             $table->foreignId('rib_id')->constrained()->onDelete('cascade');
             $table->string('proprietaire_id')->nullable();
             $table->foreign('proprietaire_id')->references('code_id')->on('proprietaires')->onDelete('cascade');
+            $table->string('agence_id')->nullable();
+            $table->foreign('agence_id')->references('code_id')->on('agences')->onDelete('cascade');
             $table->timestamps();
         });
     }

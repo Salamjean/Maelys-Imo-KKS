@@ -65,12 +65,7 @@
           </ul>
         </div>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{{ route('locataire.indexSerieux.owner') }}">
-          <i class="mdi mdi-view-quilt menu-icon"></i>
-          <span class="menu-title">Locataire pas sérieux</span>
-        </a>
-      </li>
+     
       @if(auth()->user()->diaspora == 'Oui')
       <li class="nav-item sidebar-category">
         <p>Agent</p>
