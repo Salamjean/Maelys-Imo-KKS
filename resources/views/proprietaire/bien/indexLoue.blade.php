@@ -6,7 +6,9 @@
             <i class="fas fa-home me-2"></i> Mes Biens Immobiliers
         </h1>
     </div>
-
+<div class="mb-3">
+                <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
+            </div>
     <div class="row">
         @forelse($biens as $bien)
         <div class="col-xl-4 col-lg-6 mb-4">
@@ -283,4 +285,65 @@
     });
 });
     </script>
+<script>
+$(document).ready(function() {
+    // Système de recherche en temps réel
+    $('#searchInput').on('keyup', function() {
+        const searchText = $(this).val().toLowerCase();
+        let hasResults = false;
+        
+        // Parcourir toutes les cartes de bien
+        $('.col-xl-4').each(function() {
+            const cardText = $(this).text().toLowerCase();
+            if (cardText.includes(searchText)) {
+                $(this).show();
+                hasResults = true;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        // Gérer le message "Aucun résultat"
+        const noResultsMessage = $('.no-results-message');
+        if (!hasResults) {
+            if (noResultsMessage.length === 0) {
+                $('.row').append(`
+                    <div class="col-12 no-results-message">
+                        <div class="card shadow border-0 text-center py-5">
+                            <div class="card-body">
+                                <i class="fas fa-search fa-4x text-muted mb-4"></i>
+                                <h5>Aucun résultat trouvé</h5>
+                                <p class="text-muted mb-4">Aucun bien ne correspond à votre recherche.</p>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            }
+        } else {
+            noResultsMessage.remove();
+        }
+    });
+});
+</script>
+<style>
+#searchInput {
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+#searchInput:focus {
+    border-color: #4b7bec;
+    box-shadow: 0 2px 10px rgba(75, 123, 236, 0.3);
+    outline: none;
+}
+
+.empty-state .empty-icon {
+    font-size: 3rem;
+    color: #a5b1c2;
+    margin-bottom: 1rem;
+}
+</style> 
 @endsection

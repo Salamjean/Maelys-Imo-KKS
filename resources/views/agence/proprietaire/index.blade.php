@@ -86,6 +86,9 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mt-4 text-gray-800" style="text-align: center">Gestion des Propriétaires</h1>
     </div>
+     <div class="mb-3">
+                <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
+            </div>
 
     @if($proprietaires->isEmpty())
         <div class="no-owners">
@@ -320,4 +323,77 @@
         });
     });
 </script>
+
+<script>
+$(document).ready(function() {
+    // Système de recherche en temps réel
+    $('#searchInput').on('keyup', function() {
+        const searchText = $(this).val().toLowerCase();
+        let hasResults = false;
+        
+        // Masquer d'abord le message "Aucun propriétaire" s'il est visible
+        $('.no-owners').hide();
+        
+        // Parcourir toutes les cartes de propriétaire
+        $('.col-lg-4.col-md-6.col-sm-12').each(function() {
+            const cardText = $(this).text().toLowerCase();
+            if (cardText.includes(searchText)) {
+                $(this).show();
+                hasResults = true;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        // Gérer le message "Aucun résultat"
+        const noResultsMessage = $('.no-results-message');
+        if (!hasResults && searchText.length > 0) {
+            if (noResultsMessage.length === 0) {
+                $('.row').append(`
+                    <div class="col-12 no-results-message">
+                        <div class="card shadow border-0 text-center py-5">
+                            <div class="card-body">
+                                <i class="fas fa-search fa-4x text-muted mb-4"></i>
+                                <h5>Aucun résultat trouvé</h5>
+                                <p class="text-muted mb-4">Aucun propriétaire ne correspond à votre recherche.</p>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            }
+        } else {
+            noResultsMessage.remove();
+            // Si la recherche est vide, on montre tout
+            if (searchText.length === 0) {
+                $('.col-lg-4.col-md-6.col-sm-12').show();
+                // On réaffiche le message "Aucun propriétaire" si c'est le cas
+                if ($('.col-lg-4.col-md-6.col-sm-12:visible').length === 0) {
+                    $('.no-owners').show();
+                }
+            }
+        }
+    });
+});
+</script>
+<style>
+#searchInput {
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+#searchInput:focus {
+    border-color: #4b7bec;
+    box-shadow: 0 2px 10px rgba(75, 123, 236, 0.3);
+    outline: none;
+}
+
+.empty-state .empty-icon {
+    font-size: 3rem;
+    color: #a5b1c2;
+    margin-bottom: 1rem;
+}
+</style> 
 @endsection
