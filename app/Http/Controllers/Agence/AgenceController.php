@@ -37,7 +37,10 @@ class AgenceController extends Controller
         }
     public function dashboard()
     {
-        $agenceId = Auth::guard('agence')->user()->code_id;
+       if (!auth('agence')->check()) {
+            return redirect()->route('agence.login');
+       }
+       $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
        $pendingVisits = Visite::where('statut', 'en attente')
                         ->whereHas('bien', function ($query) use ($agenceId) {
@@ -407,6 +410,10 @@ class AgenceController extends Controller
     }
 
     public function login(){
+        // Vérifier si l'utilisateur est déjà authentifié
+        if (auth('agence')->check()) {
+            return redirect()->route('agence.dashboard');
+        }
         return view('agence.auth.login');
      }
     

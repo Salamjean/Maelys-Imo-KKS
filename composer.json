@@ -13,7 +13,8 @@
         "endroid/qr-code": "^6.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "phpmailer/phpmailer": "*"
+        "phpmailer/phpmailer": "*",
+        "twilio/sdk": "^8.6"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
