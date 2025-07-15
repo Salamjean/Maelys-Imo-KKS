@@ -9,6 +9,7 @@ use App\Models\Proprietaire;
 use App\Models\Visite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -101,6 +102,7 @@ public function store(Request $request)
     $validatedData = $request->validate([
         'proprietaire_id' => 'nullable|exists:proprietaires,code_id',
         'type' => 'required|string',
+        'autre_utilisation' => 'nullable|string',
         'utilisation' => 'required|string',
         'description' => 'required|string|max:255',
         'superficie' => 'required|string',
@@ -162,6 +164,12 @@ public function store(Request $request)
         $numeroId = $typePrefix . $randomNumber;
     } while (Bien::where('numero_bien', $numeroId)->exists());
 
+     // Si "Autre" est sélectionné et qu'une autre utilisation est spécifiée
+    $utilisation = $validatedData['utilisation'];
+    if ($utilisation === 'Autre' && !empty($validatedData['autre_utilisation'])) {
+        $utilisation = $validatedData['autre_utilisation'];
+    }
+
     // Création d'une nouvelle instance de Bien
     $bien = new Bien();
 
@@ -169,7 +177,7 @@ public function store(Request $request)
     $bien->numero_bien = $numeroId;
     $bien->proprietaire_id = $validatedData['proprietaire_id'];
     $bien->type = $validatedData['type'];
-    $bien->utilisation = $validatedData['utilisation'];
+    $bien->utilisation = $utilisation;
     $bien->description = $validatedData['description'];
     $bien->superficie = $validatedData['superficie'];
     $bien->prix = $validatedData['prix'];
@@ -254,6 +262,7 @@ public function storeAgence(Request $request)
         'proprietaire_id' => 'nullable|exists:proprietaires,code_id',
         'type' => 'required|string',
         'utilisation' => 'required|string',
+        'autre_utilisation' => 'nullable|string',
         'description' => 'required|string',
         'superficie' => 'required|string',
         'nombre_de_chambres' => 'nullable|string',
@@ -317,6 +326,12 @@ public function storeAgence(Request $request)
         $numeroId = $typePrefix . $randomNumber;
     } while (Bien::where('numero_bien', $numeroId)->exists());
     
+     // Si "Autre" est sélectionné et qu'une autre utilisation est spécifiée
+    $utilisation = $validatedData['utilisation'];
+    if ($utilisation === 'Autre' && !empty($validatedData['autre_utilisation'])) {
+        $utilisation = $validatedData['autre_utilisation'];
+    }
+    
     // Création d'une nouvelle instance de Bien
     $bien = new Bien();
 
@@ -324,7 +339,7 @@ public function storeAgence(Request $request)
     $bien->numero_bien = $numeroId;
     $bien->proprietaire_id = $validatedData['proprietaire_id'];
     $bien->type = $validatedData['type'];
-    $bien->utilisation = $validatedData['utilisation'];
+    $bien->utilisation = $utilisation;
     $bien->description = $validatedData['description'];
     $bien->superficie = $validatedData['superficie'];
     $bien->prix = $validatedData['prix'];
@@ -393,6 +408,8 @@ public function edit($id)
 }
 public function editAgence($id)
 {
+    $bien = Bien::findOrFail($id);
+    $agence_id = Auth::guard('agence')->user()->code_id;
     $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
        $pendingVisits = Visite::where('statut', 'en attente')
@@ -400,8 +417,9 @@ public function editAgence($id)
                             $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
                         })
                         ->count();
-    $bien = Bien::findOrFail($id);
-    return view('agence.bien.edit', compact('bien', 'pendingVisits'));
+        $proprietaires = Proprietaire::where('agence_id', $agence_id)
+                                ->get();
+    return view('agence.bien.edit', compact('bien', 'pendingVisits','proprietaires'));
 }
 
 public function update(Request $request, $id)
@@ -413,6 +431,7 @@ public function update(Request $request, $id)
         'proprietaire_id' => 'nullable|exists:proprietaires,code_id',
         'type' => 'required|string',
         'utilisation' => 'required|string',
+        'autre_utilisation' => 'nullable|string',
         'description' => 'required|string',
         'superficie' => 'required|string',
         'nombre_de_chambres' => 'nullable|string',
@@ -434,10 +453,15 @@ public function update(Request $request, $id)
     ]);
 
     try {
+         // Si "Autre" est sélectionné et qu'une autre utilisation est spécifiée
+        $utilisation = $validatedData['utilisation'];
+        if ($utilisation === 'Autre' && !empty($validatedData['autre_utilisation'])) {
+            $utilisation = $validatedData['autre_utilisation'];
+        }
         // Mise à jour des propriétés obligatoires
         $bien->proprietaire_id = $validatedData['proprietaire_id'];
         $bien->type = $validatedData['type'];
-        $bien->utilisation = $validatedData['utilisation'];
+        $bien->utilisation = $utilisation;
         $bien->description = $validatedData['description'];
         $bien->superficie = $validatedData['superficie'];
         $bien->prix = $validatedData['prix'];
@@ -492,19 +516,22 @@ public function updateAgence(Request $request, $id)
 
     // Validation des données
     $validatedData = $request->validate([
-        'type' => 'required|string',
-        'description' => 'required|string',
-        'superficie' => 'required|string',
-        'nombre_de_chambres' => 'nullable|string',
-        'nombre_de_toilettes' => 'nullable|string',
-        'garage' => 'nullable|string',
+        'proprietaire_id' => 'required|exists:proprietaires,code_id',
+        'type' => 'required|string|in:Appartement,Maison,Bureau,Terrain',
+        'description' => 'required|string|max:2000',
+        'autre_utilisation' => 'nullable|string',
+        'superficie' => 'required|numeric|min:1',
+        'nombre_de_chambres' => 'nullable|integer|min:0',
+        'nombre_de_toilettes' => 'nullable|integer|min:0',
+        'garage' => 'nullable|string|in:Oui,Non',
         'avance' => 'required|integer|min:1|max:99',
         'caution' => 'required|integer|min:1|max:99',
-        'frais' => 'nullable|string',
-        'montant_total' => 'nullable|string',
-        'prix' => 'required|string',
-        'commune' => 'required|string',
-        'disponibilite' => 'required|string',
+        'frais' => 'required|integer|min:1',
+        'montant_total' => 'required|numeric|min:0',
+        'prix' => 'required|numeric|min:0',
+        'commune' => 'required|string|max:255',
+        'disponibilite' => 'required|integer|min:1|max:31',
+        'utilisation' => 'required|string|in:Habitation,Bureau,Autre',
         'main_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         'additional_images1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         'additional_images2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -513,21 +540,32 @@ public function updateAgence(Request $request, $id)
         'additional_images5' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
     ]);
 
+     // Si "Autre" est sélectionné et qu'une autre utilisation est spécifiée
+    $utilisation = $validatedData['utilisation'];
+    if ($utilisation === 'Autre' && !empty($validatedData['autre_utilisation'])) {
+        $utilisation = $validatedData['autre_utilisation'];
+    }
+
+    DB::beginTransaction();
     try {
         // Mise à jour des informations de base
-        $bien->type = $validatedData['type'];
-        $bien->description = $validatedData['description'];
-        $bien->superficie = $validatedData['superficie'];
-        $bien->prix = $validatedData['prix'];
-        $bien->commune = $validatedData['commune'];
-        $bien->date_fixe = $validatedData['disponibilite'];
-        $bien->nombre_de_chambres = $validatedData['nombre_de_chambres'] ?? null;
-        $bien->nombre_de_toilettes = $validatedData['nombre_de_toilettes'] ?? null;
-        $bien->garage = $validatedData['garage'] ?? null;
-        $bien->avance = $validatedData['avance'] ?? null;
-        $bien->caution = $validatedData['caution'] ?? null;
-        $bien->frais = $validatedData['frais'] ?? null;
-        $bien->montant_total = $validatedData['montant_total'] ?? null;
+        $bien->fill([
+            'proprietaire_id' => $validatedData['proprietaire_id'],
+            'type' => $validatedData['type'],
+            'description' => $validatedData['description'],
+            'superficie' => $validatedData['superficie'],
+            'nombre_de_chambres' => $validatedData['nombre_de_chambres'] ?? null,
+            'nombre_de_toilettes' => $validatedData['nombre_de_toilettes'] ?? null,
+            'garage' => $validatedData['garage'] ?? null,
+            'prix' => $validatedData['prix'],
+            'commune' => $validatedData['commune'],
+            'date_fixe' => $validatedData['disponibilite'],
+            'avance' => $validatedData['avance'],
+            'caution' => $validatedData['caution'],
+            'frais' => $validatedData['frais'],
+            'montant_total' => $validatedData['montant_total'],
+            'utilisation' => $utilisation,
+        ]);
 
         // Gestion de l'image principale
         if ($request->hasFile('main_image')) {
@@ -535,31 +573,41 @@ public function updateAgence(Request $request, $id)
             if ($bien->image) {
                 Storage::disk('public')->delete($bien->image);
             }
-            $mainImagePath = $request->file('main_image')->store('biens_images', 'public');
-            $bien->image = $mainImagePath;
+            $bien->image = $request->file('main_image')->store('biens_images', 'public');
+        } elseif ($request->has('delete_main_image')) {
+            // Suppression demandée via le bouton
+            Storage::disk('public')->delete($bien->image);
+            $bien->image = null;
         }
 
         // Gestion des images supplémentaires
         $imageFields = ['image1', 'image2', 'image3', 'image4', 'image5'];
         for ($i = 1; $i <= 5; $i++) {
             $fieldName = 'additional_images' . $i;
+            $deleteField = 'delete_image' . $i;
+
             if ($request->hasFile($fieldName)) {
                 // Supprimer l'ancienne image si elle existe
                 if ($bien->{$imageFields[$i-1]}) {
                     Storage::disk('public')->delete($bien->{$imageFields[$i-1]});
                 }
-                $imagePath = $request->file($fieldName)->store('biens_images', 'public');
-                $bien->{$imageFields[$i-1]} = $imagePath;
+                $bien->{$imageFields[$i-1]} = $request->file($fieldName)->store('biens_images', 'public');
+            } elseif ($request->has($deleteField)) {
+                // Suppression demandée via le bouton
+                Storage::disk('public')->delete($bien->{$imageFields[$i-1]});
+                $bien->{$imageFields[$i-1]} = null;
             }
         }
 
         $bien->save();
+        DB::commit();
 
         return redirect()->route('bien.index.agence')->with('success', 'Le bien a été mis à jour avec succès!');
 
     } catch (\Exception $e) {
-        Log::error('Error updating bien: ' . $e->getMessage());
-        return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
+        DB::rollBack();
+        Log::error('Erreur lors de la mise à jour du bien: ' . $e->getMessage());
+        return back()->with('error', 'Une erreur est survenue lors de la mise à jour: ' . $e->getMessage())->withInput();
     }
 }
 

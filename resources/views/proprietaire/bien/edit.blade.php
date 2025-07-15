@@ -1,6 +1,5 @@
 @extends('proprietaire.layouts.template')
 @section('content')
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 <div class="col-12 grid-margin stretch-card mb-4">
@@ -25,6 +24,9 @@
                                     <option value="Maison" {{ old('type', $bien->type) == 'Maison' ? 'selected' : '' }}>Maison</option>
                                     <option value="Bureau" {{ old('type', $bien->type) == 'Bureau' ? 'selected' : '' }}>Bureau</option>
                                 </select>
+                                @error('type')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -32,6 +34,9 @@
                                 <label>Superficie (m²) <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Superficie" name="superficie" 
                                        value="{{ old('superficie', $bien->superficie) }}" style="border: 1px solid black; border-radius: 5px;">
+                                @error('superficie')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
     
@@ -40,37 +45,62 @@
                                 <label>Commune <span style="color: red">*</span></label>
                                 <input type="text" class="form-control" placeholder="Commune" name="commune" 
                                        value="{{ old('commune', $bien->commune) }}" style="border: 1px solid black; border-radius: 5px;">
+                                @error('commune')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
     
                     <!-- Section 2: Détails du bien -->
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
-                                <label>Nombre de chambres</label>
+                                <label>Nombre de chambres <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de chambres" 
                                        name="nombre_de_chambres" value="{{ old('nombre_de_chambres', $bien->nombre_de_chambres) }}" 
                                        style="border: 1px solid black; border-radius: 5px;">
+                                @error('nombre_de_chambres')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
-                                <label>Nombre de toilettes</label>
+                                <label>Nombre de toilettes <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de toilettes" 
                                        name="nombre_de_toilettes" value="{{ old('nombre_de_toilettes', $bien->nombre_de_toilettes) }}" 
                                        style="border: 1px solid black; border-radius: 5px;">
+                                @error('nombre_de_toilettes')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
     
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
-                                <label>Garage</label>
+                                <label>Garage <span style="color: red">*</span></label>
                                 <select class="form-control" name="garage" style="border: 1px solid black; border-radius: 5px;">
                                     <option value="">Veuillez selectionner</option>
                                     <option value="Oui" {{ old('garage', $bien->garage) == 'Oui' ? 'selected' : '' }}>Oui</option>
                                     <option value="Non" {{ old('garage', $bien->garage) == 'Non' ? 'selected' : '' }}>Non</option>
                                 </select>
+                                @error('garage')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Type d'utilisation <span style="color: red">*</span></label>
+                                <select class="form-control" name="utilisation" style="border: 1px solid black; border-radius: 5px;">
+                                    <option value="Habitation" {{ old('utilisation', $bien->utilisation) == 'Habitation' ? 'selected' : '' }}>Habitation</option>
+                                    <option value="Bureau" {{ old('utilisation', $bien->utilisation) == 'Bureau' ? 'selected' : '' }}>Bureau</option>
+                                    <option value="Autre" {{ old('utilisation', $bien->utilisation) == 'Autre' ? 'selected' : '' }}>Autre (à préciser)</option>
+                                </select>
+                                @error('utilisation')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -82,39 +112,47 @@
                     <div class="row">
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Loyer mensuel<span style="color: red">*</span></label>
+                                <label>Loyer mensuel <span style="color: red">*</span></label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" placeholder="Montant total" 
                                            name="prix" value="{{ old('prix', $bien->prix) }}" 
                                            style="border: 1px solid black; border-radius: 5px;">
-                                   
                                 </div>
+                                @error('prix')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Avance<span style="color: red">*</span></label>
+                                <label>Avance <span style="color: red">*</span></label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" 
                                            placeholder="Entrez le nombre de mois d'avance" 
                                            name="avance" value="{{ old('avance', $bien->avance) }}"
-                                           min="1" max="99" maxlength="2"
+                                           min="1" max="12" maxlength="2"
                                            oninput="this.value=this.value.slice(0,2)"
                                            style="border: 1px solid black; border-radius: 5px;">
                                 </div>
+                                @error('avance')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Caution<span style="color: red">*</span></label>
+                                <label>Caution <span style="color: red">*</span></label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" 
                                            placeholder="Entrez le nombre de mois de caution" 
                                            name="caution" value="{{ old('caution', $bien->caution) }}"
-                                           min="1" max="99" maxlength="2"
+                                           min="1" max="12" maxlength="2"
                                            oninput="this.value=this.value.slice(0,2)"
                                            style="border: 1px solid black; border-radius: 5px;">
                                 </div>
+                                @error('caution')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -133,16 +171,24 @@
                                     <input type="number" class="form-control" name="montant_total" 
                                            value="{{ old('montant_total', $bien->montant_total) }}"
                                            style="border: 1px solid black; border-radius: 5px;" readonly>
-                                    
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Date de paiement<span style="color: red">*</span></label>
-                                <input type="text" class="form-control" name="disponibilite" 
-                                       value="{{ old('disponibilite', $bien->date_fixe) }}"
-                                       style="border: 1px solid black; border-radius: 5px;">
+                                <label>Date de paiement <span style="color: red">*</span></label>
+                                <input type="number" 
+                                    class="form-control" 
+                                    name="disponibilite" 
+                                    min="1" 
+                                    max="31" 
+                                    placeholder="Jour (1-31)" 
+                                    value="{{ old('disponibilite', $bien->date_fixe) }}" 
+                                    style="border: 1px solid black; border-radius: 5px;"
+                                    required>
+                                @error('disponibilite')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -168,6 +214,9 @@
                                 @if($bien->image)
                                     <small class="text-success">Fichier actuel: <a href="{{ asset('storage/'.$bien->image) }}" target="_blank">Voir</a></small>
                                 @endif
+                                @error('main_image')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         @for($i = 1; $i <= 5; $i++)
@@ -187,6 +236,9 @@
                                     @if($bien->{'image'.$i})
                                         <small class="text-success">Fichier actuel: <a href="{{ asset('storage/'.$bien->{'image'.$i}) }}" target="_blank">Voir</a></small>
                                     @endif
+                                    @error('additional_images'.$i)
+                                        <div class="alert alert-danger">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         @endfor
@@ -201,6 +253,9 @@
                             <textarea class="form-control" rows="4" name="description" 
                                       placeholder="Entrez une description complete du bien" 
                                       style="border: 1px solid black; border-radius: 5px;">{{ old('description', $bien->description) }}</textarea>
+                            @error('description')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -234,25 +289,82 @@ $(document).ready(function() {
         $(this).closest('.input-group').find('.file-upload-info').val(fileName);
     });
 
+    // Gestion du champ "Type d'utilisation"
+    $('select[name="utilisation"]').on('change', function() {
+        if ($(this).val() === 'Autre') {
+            Swal.fire({
+                title: 'Spécifiez le type d\'utilisation',
+                input: 'text',
+                inputPlaceholder: 'Entrez le type d\'utilisation',
+                showCancelButton: true,
+                confirmButtonText: 'Valider',
+                cancelButtonText: 'Annuler',
+                confirmButtonColor: '#02245b',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Vous devez entrer un type d\'utilisation!';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('input[name="autre_utilisation"]').remove();
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'autre_utilisation',
+                        value: result.value
+                    }).appendTo('form');
+                    
+                    $(this).find('option[value="Autre"]').text('Autre (' + result.value + ')');
+                } else {
+                    $(this).val('{{ old("utilisation", $bien->utilisation) }}').trigger('change');
+                }
+            });
+        }
+    });
+
     // Calcul du montant total
     function calculerMontantTotal() {
         const loyer = parseFloat($('input[name="prix"]').val()) || 0;
         const avance = parseFloat($('input[name="avance"]').val()) || 0;
         const caution = parseFloat($('input[name="caution"]').val()) || 0;
-        const frais = 1; // Frais d'agence fixés à 1 mois
+        const frais = 1;
         
         const montantTotal = loyer * (avance + caution + frais);
         
         $('input[name="montant_total"]').val(montantTotal.toFixed(0));
     }
     
-    // Écouter les changements sur les champs concernés
     $('input[name="prix"]').on('input', calculerMontantTotal);
     $('input[name="avance"]').on('input', calculerMontantTotal);
     $('input[name="caution"]').on('input', calculerMontantTotal);
     
-    // Calcul initial au chargement
     calculerMontantTotal();
 });
 </script>
+
+@if(session('success'))
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Succès!',
+        text: '{{ session('success') }}',
+        showConfirmButton: true,
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#02245b'
+    });
+</script>
+@endif
+
+@if(session('error'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Erreur!',
+        text: '{{ session('error') }}',
+        showConfirmButton: true,
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#02245b'
+    });
+</script>
+@endif
 @endsection

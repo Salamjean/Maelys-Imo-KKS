@@ -17,6 +17,8 @@
   <link rel="stylesheet" href="{{asset('assets/css/style.css')}}">
   <!-- endinject -->
  <link rel="icon" type="image/png" href="{{ asset('assets/images/mae-imo.png') }}">
+ <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 <body>
    <div class="container-scroller d-flex">

@@ -1,6 +1,5 @@
 @extends('agence.layouts.template')
 @section('content')
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 <div class="col-12 grid-margin stretch-card mb-4">
@@ -17,7 +16,21 @@
                 <fieldset style="border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
                     <legend style="font-size: 1.5em; font-weight: bold;">Informations du bien</legend>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Sélectionnez le propriétaire</label>
+                                <select class="form-control" name="proprietaire_id" style="border: 1px solid black; border-radius: 5px;">
+                                    <option value="">Choisir un propriétaire</option>
+                                    <option value="">{{ Auth::guard('agence')->user()->name }}</option>
+                                    @foreach($proprietaires as $proprietaire)
+                                        <option value="{{ $proprietaire->code_id }}" {{ old('proprietaire_id', $bien->proprietaire_id) == $proprietaire->code_id ? 'selected' : '' }}>
+                                            {{ $proprietaire->name }} {{ $proprietaire->prenom }} - {{ $proprietaire->contact }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Type de bien <span style="color: red">*</span></label>
                                 <select class="form-control" name="type" style="border: 1px solid black; border-radius: 5px;">
@@ -27,15 +40,14 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Superficie (m²) <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Superficie" name="superficie" 
                                        value="{{ old('superficie', $bien->superficie) }}" style="border: 1px solid black; border-radius: 5px;">
                             </div>
                         </div>
-    
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Commune <span style="color: red">*</span></label>
                                 <input type="text" class="form-control" placeholder="Commune" name="commune" 
@@ -46,7 +58,7 @@
     
                     <!-- Section 2: Détails du bien -->
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Nombre de chambres</label>
                                 <input type="number" class="form-control" placeholder="Nombre de chambres" 
@@ -54,7 +66,7 @@
                                        style="border: 1px solid black; border-radius: 5px;">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Nombre de toilettes</label>
                                 <input type="number" class="form-control" placeholder="Nombre de toilettes" 
@@ -62,8 +74,7 @@
                                        style="border: 1px solid black; border-radius: 5px;">
                             </div>
                         </div>
-    
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Garage</label>
                                 <select class="form-control" name="garage" style="border: 1px solid black; border-radius: 5px;">
@@ -72,6 +83,19 @@
                                     <option value="Non" {{ old('garage', $bien->garage) == 'Non' ? 'selected' : '' }}>Non</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Type d'utilisation <span style="color: red">*</span></label>
+                                <select class="form-control" name="utilisation" style="border: 1px solid black; border-radius: 5px;">
+                                    <option value="Habitation">Habitation</option>
+                                    <option value="Bureau">Bureau</option>
+                                    <option value="Autre">Autre (à préciser)</option>
+                                </select>
+                            </div>
+                            @error('utilisation')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </fieldset>
@@ -213,7 +237,7 @@
                 <div class="row mt-4">
                     <div class="col-md-12 text-center">
                         <button type="submit" class="btn text-white mr-2" style="background-color: #02245b;">Mettre à jour</button>
-                        <a href="{{ route('bien.index.agence') }}" class="btn btn-light">Annuler</a>
+                        <a href="{{ route('bien.index') }}" class="btn btn-light">Annuler</a>
                     </div>
                 </div>
             </form>
@@ -257,6 +281,62 @@ $(document).ready(function() {
     
     // Calcul initial au chargement
     calculerMontantTotal();
+});
+</script>
+    <script>
+$(document).ready(function() {
+    // Gestion du champ "Type d'utilisation"
+    $('select[name="utilisation"]').on('change', function() {
+        if ($(this).val() === 'Autre') {
+            // Afficher un popup demandant de spécifier le type d'utilisation
+            Swal.fire({
+                title: 'Spécifiez le type d\'utilisation',
+                input: 'text',
+                inputPlaceholder: 'Entrez le type d\'utilisation',
+                showCancelButton: true,
+                confirmButtonText: 'Valider',
+                cancelButtonText: 'Annuler',
+                confirmButtonColor: '#02245b',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Vous devez entrer un type d\'utilisation!';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Créer un champ caché pour stocker la valeur
+                    $('input[name="autre_utilisation"]').remove();
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'autre_utilisation',
+                        value: result.value
+                    }).appendTo('form');
+                    
+                    // Mettre à jour le select pour afficher "Autre (valeur spécifiée)"
+                    $(this).find('option[value="Autre"]').text('Autre (' + result.value + ')');
+                } else {
+                    // Revenir à la valeur par défaut si l'utilisateur annule
+                    $(this).val('Habitation').trigger('change');
+                }
+            });
+        }
+    });
+
+    // Modifier le formulaire pour prendre en compte la valeur "autre_utilisation" lors de la soumission
+    $('form').on('submit', function(e) {
+        const utilisation = $('select[name="utilisation"]').val();
+        const autreUtilisation = $('input[name="autre_utilisation"]').val();
+        
+        if (utilisation === 'Autre' && !autreUtilisation) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Veuillez spécifier le type d\'utilisation',
+                confirmButtonColor: '#02245b'
+            });
+        }
+    });
 });
 </script>
 @endsection

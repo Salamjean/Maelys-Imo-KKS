@@ -60,6 +60,7 @@ class AddBienOwnerController extends Controller
     $validatedData = $request->validate([
         'type' => 'required|string',
         'utilisation' => 'required|string',
+        'autre_utilisation' => 'nullable|string',
         'description' => 'required|string',
         'superficie' => 'required|string',
         'nombre_de_chambres' => 'nullable|string',
@@ -120,13 +121,19 @@ class AddBienOwnerController extends Controller
         $numeroId = $typePrefix . $randomNumber;
     } while (Bien::where('numero_bien', $numeroId)->exists());
 
+     // Si "Autre" est sélectionné et qu'une autre utilisation est spécifiée
+    $utilisation = $validatedData['utilisation'];
+    if ($utilisation === 'Autre' && !empty($validatedData['autre_utilisation'])) {
+        $utilisation = $validatedData['autre_utilisation'];
+    }
+
     // Création d'une nouvelle instance de Bien
     $bien = new Bien();
 
     // Assignation des propriétés obligatoires
     $bien->numero_bien = $numeroId;
     $bien->type = $validatedData['type'];
-    $bien->utilisation = $validatedData['utilisation'];
+    $bien->utilisation = $utilisation;
     $bien->description = $validatedData['description'];
     $bien->superficie = $validatedData['superficie'];
     $bien->prix = $validatedData['prix'];
@@ -251,81 +258,106 @@ class AddBienOwnerController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $bien = Bien::findOrFail($id);
+{
+    $bien = Bien::findOrFail($id);
+    
+    // Vérifier que le bien appartient au propriétaire connecté
+    $proprietaire = Auth::guard('owner')->user();
+    if ($bien->proprietaire_id !== $proprietaire->code_id) {
+        return redirect()->back()->with('error', 'Vous n\'êtes pas autorisé à modifier ce bien.');
+    }
 
-        // Validation des données
-        $validatedData = $request->validate([
-            'type' => 'required|string',
-            'description' => 'required|string',
-            'superficie' => 'required|string',
-            'nombre_de_chambres' => 'nullable|string',
-            'nombre_de_toilettes' => 'nullable|string',
-            'garage' => 'nullable|string',
-            'avance' => 'required|integer|min:1|max:99',
-            'caution' => 'required|integer|min:1|max:99',
-            'frais' => 'nullable|string',
-            'montant_total' => 'nullable|string',
-            'prix' => 'required|string',
-            'commune' => 'required|string',
-            'disponibilite' => 'required|string',
-            'main_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'additional_images1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'additional_images2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'additional_images3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'additional_images4' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'additional_images5' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
+    $validatedData = $request->validate([
+        'type' => 'required|string',
+        'utilisation' => 'required|string',
+        'autre_utilisation' => 'nullable|string',
+        'description' => 'required|string',
+        'superficie' => 'required|string',
+        'nombre_de_chambres' => 'nullable|string',
+        'nombre_de_toilettes' => 'nullable|string',
+        'garage' => 'nullable|string',
+        'avance' => 'required|integer|min:1|max:99',
+        'caution' => 'required|integer|min:1|max:99',
+        'frais' => 'nullable|string',
+        'montant_total' => 'nullable|string',
+        'prix' => 'required|string',
+        'commune' => 'required|string',
+        'disponibilite' => 'required|string',
+        'main_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'additional_images1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'additional_images2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'additional_images3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'additional_images4' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'additional_images5' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+    ], [
+        'type.required' => 'Le champ type est obligatoire',
+        'description.required' => 'Le champ description est obligatoire',
+        'superficie.required' => 'Le champ superficie est obligatoire',
+        'prix.required' => 'Le champ prix est obligatoire',
+        'commune.required' => 'Le champ commune est obligatoire',
+        'disponibilite.required' => 'Le champ disponibilité est obligatoire',
+        'main_image.image' => 'L\'image principale doit être une image valide',
+        'main_image.mimes' => 'L\'image principale doit être au format jpeg, png, jpg ou gif',
+        'main_image.max' => 'L\'image principale ne doit pas dépasser 2 Mo',
+        'additional_images1.image' => 'La première image supplémentaire doit être une image valide',
+        'additional_images1.mimes' => 'La première image supplémentaire doit être au format jpeg, png, jpg ou gif',
+        'additional_images1.max' => 'La première image supplémentaire ne doit pas dépasser 2 Mo',
+        'additional_images2.image' => 'La deuxième image supplémentaire doit être une image valide',
+        'additional_images2.mimes' => 'La deuxième image supplémentaire doit être au format jpeg, png, jpg ou gif',
+        'additional_images2.max' => 'La deuxième image supplémentaire ne doit pas dépasser 2 Mo',
+        'additional_images3.image' => 'La troisième image supplémentaire doit être une image valide',
+    ]);
 
-        try {
-            // Mise à jour des informations de base
-            $bien->type = $validatedData['type'];
-            $bien->description = $validatedData['description'];
-            $bien->superficie = $validatedData['superficie'];
-            $bien->prix = $validatedData['prix'];
-            $bien->commune = $validatedData['commune'];
-            $bien->date_fixe = $validatedData['disponibilite'];
-            $bien->nombre_de_chambres = $validatedData['nombre_de_chambres'] ?? null;
-            $bien->nombre_de_toilettes = $validatedData['nombre_de_toilettes'] ?? null;
-            $bien->garage = $validatedData['garage'] ?? null;
-            $bien->avance = $validatedData['avance'] ?? null;
-            $bien->caution = $validatedData['caution'] ?? null;
-            $bien->frais = $validatedData['frais'] ?? null;
-            $bien->montant_total = $validatedData['montant_total'] ?? null;
+    // Si "Autre" est sélectionné et qu'une autre utilisation est spécifiée
+    $utilisation = $validatedData['utilisation'];
+    if ($utilisation === 'Autre' && !empty($validatedData['autre_utilisation'])) {
+        $utilisation = $validatedData['autre_utilisation'];
+    }
 
-            // Gestion de l'image principale
-            if ($request->hasFile('main_image')) {
-                // Supprimer l'ancienne image si elle existe
-                if ($bien->image) {
-                    Storage::disk('public')->delete($bien->image);
-                }
-                $mainImagePath = $request->file('main_image')->store('biens_images', 'public');
-                $bien->image = $mainImagePath;
+    // Mise à jour des propriétés
+    $bien->type = $validatedData['type'];
+    $bien->utilisation = $utilisation;
+    $bien->description = $validatedData['description'];
+    $bien->superficie = $validatedData['superficie'];
+    $bien->prix = $validatedData['prix'];
+    $bien->commune = $validatedData['commune'];
+    $bien->date_fixe = $validatedData['disponibilite'];
+    $bien->nombre_de_chambres = $validatedData['nombre_de_chambres'] ?? null;
+    $bien->nombre_de_toilettes = $validatedData['nombre_de_toilettes'] ?? null;
+    $bien->garage = $validatedData['garage'] ?? null;
+    $bien->avance = $validatedData['avance'] ?? null;
+    $bien->caution = $validatedData['caution'] ?? null;
+    $bien->frais = $validatedData['frais'] ?? null;
+    $bien->montant_total = $validatedData['montant_total'] ?? null;
+
+    // Gestion de l'image principale
+    if ($request->hasFile('main_image')) {
+        // Supprimer l'ancienne image si elle existe
+        if ($bien->image && Storage::disk('public')->exists($bien->image)) {
+            Storage::disk('public')->delete($bien->image);
+        }
+        $mainImagePath = $request->file('main_image')->store('biens_images', 'public');
+        $bien->image = $mainImagePath;
+    }
+
+    // Gestion des images supplémentaires
+    for ($i = 1; $i <= 5; $i++) {
+        $fieldName = 'additional_images'.$i;
+        $imageField = 'image'.$i;
+        
+        if ($request->hasFile($fieldName)) {
+            // Supprimer l'ancienne image si elle existe
+            if ($bien->$imageField && Storage::disk('public')->exists($bien->$imageField)) {
+                Storage::disk('public')->delete($bien->$imageField);
             }
-
-            // Gestion des images supplémentaires
-            $imageFields = ['image1', 'image2', 'image3', 'image4', 'image5'];
-            for ($i = 1; $i <= 5; $i++) {
-                $fieldName = 'additional_images' . $i;
-                if ($request->hasFile($fieldName)) {
-                    // Supprimer l'ancienne image si elle existe
-                    if ($bien->{$imageFields[$i-1]}) {
-                        Storage::disk('public')->delete($bien->{$imageFields[$i-1]});
-                    }
-                    $imagePath = $request->file($fieldName)->store('biens_images', 'public');
-                    $bien->{$imageFields[$i-1]} = $imagePath;
-                }
-            }
-
-            $bien->save();
-
-            return redirect()->route('owner.bienList')->with('success', 'Le bien a été mis à jour avec succès!');
-
-        } catch (\Exception $e) {
-            Log::error('Error updating bien: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
+            $bien->$imageField = $request->file($fieldName)->store('biens_images', 'public');
         }
     }
+
+    $bien->save();
+
+    return redirect()->route('owner.bienList')->with('success', 'Le bien a été mis à jour avec succès!');
+}
 
     public function destroy($id)
     {

@@ -307,13 +307,44 @@
             @endforeach
         </div>
         
-        <!-- Pagination -->
-        <div class="d-flex justify-content-center mt-4">
-            {{ $proprietaires->links() }}
-        </div>
+        @if($proprietaires->hasPages())
+                <div class="mt-4 d-flex justify-content-center">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-rounded">
+                            @if ($proprietaires->onFirstPage())
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-hidden="true">«</span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $proprietaires->previousPageUrl() }}" rel="prev" aria-label="Previous">«</a>
+                                </li>
+                            @endif
+
+                            @foreach ($proprietaires->getUrlRange(1, $proprietaires->lastPage()) as $page => $url)
+                                @if ($page == $proprietaires->currentPage())
+                                    <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
+                                @else
+                                    <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+                                @endif
+                            @endforeach
+
+                            @if ($proprietaires->hasMorePages())
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $proprietaires->nextPageUrl() }}" rel="next" aria-label="Next">»</a>
+                                </li>
+                            @else
+                                <li class="page-item disabled">
+                                    <span class="page-link" aria-hidden="true">»</span>
+                                </li>
+                            @endif
+                        </ul>
+                    </nav>
+                </div>
+                @endif
     @endif
 </div>
-
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- Script pour gérer les modales -->
 <script>
     $(document).ready(function() {

@@ -76,7 +76,9 @@
                 </div>
             </div>
         </div>
-
+        <div class="mb-3">
+                <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
+            </div>
         <div class="table-responsive pt-3">
           <table class="table table-bordered table-hover">
             <thead style="background-color: #02245b; color: white;">
@@ -216,7 +218,64 @@
         });
     });
     </script>
+    
+       <script>
+$(document).ready(function() {
+    $('#searchInput').on('keyup', function() {
+        const searchText = $(this).val().toLowerCase();
+        let hasResults = false;
 
+        $('table tbody tr').each(function() {
+            const rowText = $(this).text().toLowerCase();
+            if (rowText.includes(searchText)) {
+                $(this).show();
+                hasResults = true;
+            } else {
+                $(this).hide();
+            }
+        });
+
+        // Affichage message "Aucun résultat"
+        if (!hasResults) {
+            if ($('.no-results-message').length === 0) {
+                $('table tbody').append(`
+                    <tr class="no-results-message">
+                        <td colspan="18" class="text-center py-4">
+                            <div class="alert alert-warning mb-0">
+                                Aucun bien ne correspond à votre recherche.
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            }
+        } else {
+            $('.no-results-message').remove();
+        }
+    });
+});
+
+</script>
+<style>
+#searchInput {
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+#searchInput:focus {
+    border-color: #4b7bec;
+    box-shadow: 0 2px 10px rgba(75, 123, 236, 0.3);
+    outline: none;
+}
+
+.empty-state .empty-icon {
+    font-size: 3rem;
+    color: #a5b1c2;
+    margin-bottom: 1rem;
+}
+</style> 
 <style>
 .preview-image:hover {
     transform: scale(1.05);

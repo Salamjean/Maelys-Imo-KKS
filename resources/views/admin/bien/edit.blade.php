@@ -1,6 +1,5 @@
 @extends('admin.layouts.template')
 @section('content')
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 <div class="col-12 grid-margin stretch-card mb-4">
@@ -89,11 +88,14 @@
                             <div class="form-group">
                                 <label>Type d'utilisation <span style="color: red">*</span></label>
                                 <select class="form-control" name="utilisation" style="border: 1px solid black; border-radius: 5px;">
-                                    <option value="Habitation" {{ old('utilisation', $bien->utilisation) == 'Habitation' ? 'selected' : '' }}>Habitation</option>
-                                    <option value="Bureau" {{ old('utilisation', $bien->utilisation) == 'Bureau' ? 'selected' : '' }}>Bureau</option>
-                                    <option value="Autre" {{ old('utilisation', $bien->utilisation) == 'Autre' ? 'selected' : '' }}>Autre</option>
+                                    <option value="Habitation">Habitation</option>
+                                    <option value="Bureau">Bureau</option>
+                                    <option value="Autre">Autre (à préciser)</option>
                                 </select>
                             </div>
+                            @error('utilisation')
+                                <div class="alert alert-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </fieldset>
@@ -279,6 +281,62 @@ $(document).ready(function() {
     
     // Calcul initial au chargement
     calculerMontantTotal();
+});
+</script>
+    <script>
+$(document).ready(function() {
+    // Gestion du champ "Type d'utilisation"
+    $('select[name="utilisation"]').on('change', function() {
+        if ($(this).val() === 'Autre') {
+            // Afficher un popup demandant de spécifier le type d'utilisation
+            Swal.fire({
+                title: 'Spécifiez le type d\'utilisation',
+                input: 'text',
+                inputPlaceholder: 'Entrez le type d\'utilisation',
+                showCancelButton: true,
+                confirmButtonText: 'Valider',
+                cancelButtonText: 'Annuler',
+                confirmButtonColor: '#02245b',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Vous devez entrer un type d\'utilisation!';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Créer un champ caché pour stocker la valeur
+                    $('input[name="autre_utilisation"]').remove();
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'autre_utilisation',
+                        value: result.value
+                    }).appendTo('form');
+                    
+                    // Mettre à jour le select pour afficher "Autre (valeur spécifiée)"
+                    $(this).find('option[value="Autre"]').text('Autre (' + result.value + ')');
+                } else {
+                    // Revenir à la valeur par défaut si l'utilisateur annule
+                    $(this).val('Habitation').trigger('change');
+                }
+            });
+        }
+    });
+
+    // Modifier le formulaire pour prendre en compte la valeur "autre_utilisation" lors de la soumission
+    $('form').on('submit', function(e) {
+        const utilisation = $('select[name="utilisation"]').val();
+        const autreUtilisation = $('input[name="autre_utilisation"]').val();
+        
+        if (utilisation === 'Autre' && !autreUtilisation) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Veuillez spécifier le type d\'utilisation',
+                confirmButtonColor: '#02245b'
+            });
+        }
+    });
 });
 </script>
 @endsection
