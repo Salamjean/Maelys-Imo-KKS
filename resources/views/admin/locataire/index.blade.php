@@ -220,11 +220,11 @@
                                     @endif
                                 </td>
                                 <td class="text-center ">
-                                    <div class="btn-group gap-2" role="group">
+                                    <div class="btn-group gap-10" role="group">
                                         <a href="{{ route('locataire.admin.edit', $locataire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                             <i class="mdi mdi-pencil"></i>
                                         </a>
-                                        <button class="btn btn-sm btn-secondary change-status-btn"
+                                        <button class="btn btn-sm btn-danger change-status-btn"
                                                 data-locataire-id="{{ $locataire->id }}"
                                                 data-current-status="{{ $locataire->status }}"
                                                 title="Changer statut">
@@ -242,19 +242,26 @@
                                 
 
                                 <td>
-                                    <button class="btn btn-sm btn-primary send-reminder-btn"
-                                    data-locataire-id="{{ $locataire->id }}"
-                                    data-locataire-email="{{ $locataire->email }}"
-                                    title="Envoyer un rappel de paiement">
-                                <i class="mdi mdi-email-open"></i> Rappel paiement
-                            </button>
+                                      @if($locataire->show_reminder_button)
+                                        <button class="btn btn-sm btn-primary send-reminder-btn"
+                                                data-locataire-id="{{ $locataire->id }}"
+                                                data-locataire-email="{{ $locataire->email }}"
+                                                title="Envoyer un rappel de paiement">
+                                            <i class="mdi mdi-email-open"></i> Rappel paiement
+                                        </button>
+                                    @endif
 
-                            <button class="btn btn-sm btn-success generate-cash-code"
-                                data-locataire-id="{{ $locataire->id }}"
-                                title="Générer un code pour paiement en espèces">
-                            <i class="mdi mdi-cash"></i> Code Espèces
-                        </button>
-                        </td>
+                                    <button class="btn btn-sm btn-success generate-cash-code"
+                                        data-locataire-id="{{ $locataire->id }}"
+                                        title="Générer un code pour paiement en espèces">
+                                    <i class="mdi mdi-cash"></i> Code Espèces
+                                </button>
+                                <button class="btn btn-sm btn-warning verify-cash-code"
+                                                data-locataire-id="{{ $locataire->id }}"
+                                                title="Saisir le code de vérification">
+                                                <i class="mdi mdi-key"></i>
+                                            </button>
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -414,23 +421,58 @@ $(document).ready(function() {
         }
     });
 
-    // Gestion de l'envoi de rappel de paiement
+  // Gestion de l'envoi de rappel de paiement
     $('body').on('click', '.send-reminder-btn', function() {
         const button = $(this);
         const locataireId = button.data('locataire-id');
         const locataireEmail = button.data('locataire-email');
         
+        // Afficher un modal avec les options de taux
         Swal.fire({
             title: 'Envoyer un rappel de paiement',
-            html: `Êtes-vous sûr de vouloir envoyer un rappel de paiement à <strong>${locataireEmail}</strong> ?`,
+            html: `
+                <div class="mb-3">
+                    <label for="tauxMajoration" class="form-label">Taux de majoration :</label>
+                    <select class="form-select" id="tauxMajoration">
+                        <option value="0">Aucune majoration (0%)</option>
+                        <option value="5">Majoration de 5%</option>
+                        <option value="10">Majoration de 10%</option>
+                        <option value="15">Majoration de 15%</option>
+                        <option value="20">Majoration de 20%</option>
+                    </select>
+                </div>
+                <p>Êtes-vous sûr de vouloir envoyer un rappel de paiement à <strong>${locataireEmail}</strong> ?</p>
+            `,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3a7bd5',
             cancelButtonColor: '#6c757d',
             confirmButtonText: 'Oui, envoyer',
-            cancelButtonText: 'Annuler'
+            cancelButtonText: 'Annuler',
+            didOpen: () => {
+                // Récupérer le montant du loyer via AJAX
+                $.ajax({
+                    url: "{{ route('locataires.getMontantLoyer') }}",
+                    type: 'GET',
+                    data: { locataire_id: locataireId },
+                    success: function(response) {
+                        $('#montantLoyer').val(response.montant + ' FCFA');
+                        $('#nouveauMontant').val(response.montant + ' FCFA');
+                    }
+                });
+
+                // Calculer le nouveau montant quand le taux change
+                $('#tauxMajoration').on('change', function() {
+                    const taux = parseFloat($(this).val()) || 0;
+                    const montant = parseFloat($('#montantLoyer').val().replace(' FCFA', '')) || 0;
+                    const nouveauMontant = montant * (1 + taux / 100);
+                    $('#nouveauMontant').val(nouveauMontant.toFixed(0) + ' FCFA');
+                });
+            }
         }).then((result) => {
             if (result.isConfirmed) {
+                const tauxMajoration = $('#tauxMajoration').val();
+                
                 button.prop('disabled', true);
                 button.html('<i class="mdi mdi-loading mdi-spin"></i>');
                 
@@ -439,7 +481,8 @@ $(document).ready(function() {
                     type: 'POST',
                     data: {
                         locataire_id: locataireId,
-                        email: locataireEmail
+                        email: locataireEmail,
+                        taux_majoration: tauxMajoration // Ce paramètre est maintenant envoyé
                     },
                     success: function(response) {
                         Swal.fire({
@@ -466,63 +509,160 @@ $(document).ready(function() {
 });
 
 // Gestion de la génération du code pour paiement en espèces
-$(document).ready(function() {
-    $('body').on('click', '.generate-cash-code', function() {
-        const locataireId = $(this).data('locataire-id');
-        const button = $(this);
-        
-        // Afficher un modal de confirmation
-        Swal.fire({
-            title: 'Générer un code de vérification',
-            text: 'Ce code permettra au locataire de valider un paiement en espèces. Continuer?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#02245b',
-            cancelButtonColor: '#ff5e14',
-            confirmButtonText: 'Générer',
-            cancelButtonText: 'Annuler',
-            showLoaderOnConfirm: true,
-            preConfirm: () => {
-                return fetch('{{ route("paiements.generateCashCode") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        locataire_id: locataireId
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(response.statusText);
+$('body').on('click', '.generate-cash-code', function() {
+    const locataireId = $(this).data('locataire-id');
+    const button = $(this);
+    
+    button.prop('disabled', true);
+    button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+    // D'abord générer le code
+    $.ajax({
+        url: "{{ route('paiements.generateCashCode') }}",
+        type: 'POST',
+        data: { locataire_id: locataireId },
+        success: function(response) {
+            if (response.success) {
+                // Afficher le champ de saisie après envoi réussi
+                Swal.fire({
+                    title: 'Code envoyé',
+                    html: `
+                        <p>${response.message}</p>
+                        <div class="mb-3 mt-3">
+                            <label for="cashVerificationCode" class="form-label">
+                                Entrez le code reçu par le locataire :
+                            </label>
+                            <input type="text" class="form-control" id="cashVerificationCode" 
+                                   placeholder="Code à 6 caractères" maxlength="6">
+                        </div>
+                    `,
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: 'Valider le paiement',
+                    cancelButtonText: 'Annuler',
+                    preConfirm: () => {
+                        const code = $('#cashVerificationCode').val().trim();
+                        if (!code || code.length !== 6) {
+                            Swal.showValidationMessage('Veuillez entrer un code valide (6 caractères)');
+                            return false;
+                        }
+                        return { code: code };
                     }
-                    return response.json();
-                })
-                .catch(error => {
-                    Swal.showValidationMessage(
-                        `Erreur: ${error}`
-                    );
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Vérifier le code
+                        verifyAndSubmitPayment(locataireId, result.value.code);
+                    }
                 });
-            },
-            allowOutsideClick: () => !Swal.isLoading()
-        }).then((result) => {
-            if (result.isConfirmed) {
-                if (result.value.success) {
-                    Swal.fire({
-                        title: 'Code généré',
-                        html: `Le code de vérification est: <strong>${result.value.code || result.value.message}</strong>`,
-                        icon: 'success',
-                        confirmButtonColor: '#02245b'
-                    });
-                } else {
-                    Swal.fire('Erreur', result.value.message || 'Erreur inconnue', 'error');
-                }
+            } else {
+                Swal.fire('Erreur', response.message, 'error');
             }
-        });
+        },
+        error: function(xhr) {
+            Swal.fire('Erreur', xhr.responseJSON?.message || 'Erreur lors de la génération du code', 'error');
+        },
+        complete: function() {
+            button.prop('disabled', false);
+            button.html('<i class="mdi mdi-cash"></i> Code Espèces');
+        }
     });
 });
+
+// Gestion du nouveau bouton de vérification
+$('body').on('click', '.verify-cash-code', function() {
+    const locataireId = $(this).data('locataire-id');
+    
+    Swal.fire({
+        title: 'Validation du paiement en espèces',
+        html: `
+            <div class="mb-3 mt-3">
+                <label for="cashVerificationCode" class="form-label">
+                    Entrez le code reçu par le locataire :
+                </label>
+                <input type="text" class="form-control" id="cashVerificationCode" 
+                       placeholder="Code à 6 caractères" maxlength="6">
+            </div>
+        `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Valider le paiement',
+        cancelButtonText: 'Annuler',
+        preConfirm: () => {
+            const code = $('#cashVerificationCode').val().trim();
+            if (!code || code.length !== 6) {
+                Swal.showValidationMessage('Veuillez entrer un code valide (6 caractères)');
+                return false;
+            }
+            return { code: code };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            verifyAndSubmitPayment(locataireId, result.value.code);
+        }
+    });
+});
+
+function verifyAndSubmitPayment(locataireId, code) {
+    Swal.fire({
+        title: 'Validation en cours',
+        html: 'Vérification du code...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    $.ajax({
+        url: "{{ route('paiements.verifyCashCode') }}",
+        type: 'POST',
+        data: { 
+            locataire_id: locataireId,
+            code: code 
+        },
+        success: function(response) {
+            if (response.success) {
+                Swal.fire({
+                    title: 'Paiement réussi',
+                    text: response.message,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    if (response.redirect_url) {
+                        window.location.href = response.redirect_url;
+                    }
+                });
+            } else {
+                Swal.fire('Erreur', response.message, 'error');
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = xhr.responseJSON?.message || 'Erreur lors du paiement';
+            Swal.fire('Erreur', errorMsg, 'error');
+        }
+    });
+}
+
+function submitCashPayment(locataireId, code) {
+    const form = $('<form>', {
+        'method': 'POST',
+        'action': "{{ route('locataire.paiements.store', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId)
+    }).append($('<input>', {
+        'type': 'hidden',
+        'name': '_token',
+        'value': '{{ csrf_token() }}'
+    })).append($('<input>', {
+        'type': 'hidden',
+        'name': 'methode_paiement',
+        'value': 'Espèces'
+    })).append($('<input>', {
+        'type': 'hidden',
+        'name': 'verif_espece',
+        'value': code
+    }));
+
+    $('body').append(form);
+    form.submit();
+}
 </script>
 
 @endsection

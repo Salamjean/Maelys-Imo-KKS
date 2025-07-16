@@ -9,7 +9,9 @@ class Versement extends Model
     protected $fillable = [
         'agent_id', 
         'comptable_id', 
-        'montant'
+        'montant_verse',
+        'montant_percu',
+        'reste_a_verser',
     ];
     
     // Relation avec l'agent (comptable de type agent)

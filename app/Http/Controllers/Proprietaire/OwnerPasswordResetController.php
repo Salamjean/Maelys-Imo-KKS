@@ -5,8 +5,11 @@ use App\Http\Controllers\Controller;
 use App\Mail\OwnerPasswordResetMail;
 use App\Models\Proprietaire;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class OwnerPasswordResetController extends Controller
@@ -86,5 +89,66 @@ class OwnerPasswordResetController extends Controller
         $agence->save();
         
         return redirect()->route('owner.login')->with('success', 'Mot de passe réinitialisé avec succès');
+    }
+
+
+    //Gestion du profil proprietaire
+    public function editProfile(){
+        $proprietaire = Auth::guard('owner')->user();
+        return view('proprietaire.auth.profile', compact('proprietaire'));
+    }
+
+   public function updateProfile(Request $request)
+    {
+        $proprietaire = Auth::guard('owner')->user();
+
+        $rules = [
+            'name' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'email' => 'required|email|unique:proprietaires,email,'.$proprietaire->id,
+            'contact' => 'required|string|min:10',
+            'commune' => 'required|string|max:255',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ];
+
+        if ($request->filled('password')) {
+            $rules['password'] = 'string|min:8|same:password_confirm';
+            $rules['password_confirm'] = 'string|min:8|same:password';
+        }
+
+        $request->validate($rules, [
+            'password.same' => 'Les mots de passe ne correspondent pas',
+            'password_confirm.same' => 'Les mots de passe ne correspondent pas',
+        ]);
+
+        try {
+            // Mise à jour de l'image de profil
+            if ($request->hasFile('profile_image')) {
+                if ($proprietaire->profil_image) { // Notez le changement ici
+                    Storage::disk('public')->delete($proprietaire->profil_image);
+                }
+                $proprietaire->profil_image = $request->file('profile_image')->store('profile_images', 'public'); // Et ici
+            }
+
+            // Mise à jour des informations de base
+            $proprietaire->name = $request->name;
+            $proprietaire->prenom = $request->prenom; // Ajout du prénom
+            $proprietaire->email = $request->email;
+            $proprietaire->contact = $request->contact;
+            $proprietaire->commune = $request->commune;
+            // Suppression de l'adresse qui n'existe pas dans la table
+
+            if ($request->filled('password')) {
+                $proprietaire->password = Hash::make($request->password);
+            }
+
+            $proprietaire->save();
+
+            return redirect()->route('owner.dashboard')->with('success', 'Vos informations ont bien été mises à jour!');
+
+        } catch (\Exception $e) {
+            Log::error('Erreur mise à jour profil proprietaire: '.$e->getMessage());
+            return back()->with('error', 'Une erreur est survenue lors de la mise à jour');
+        }
     }
 }

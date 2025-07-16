@@ -406,7 +406,7 @@ public function verifyCashCode(Request $request)
     return response()->json([
         'success' => true,
         'message' => 'Paiement enregistré avec succès pour ' . $moisAPayer->translatedFormat('F Y'),
-        'redirect_url' => route('locataire.index', $locataire->id)
+        'redirect_url' => redirect()->back()->getTargetUrl()
     ]);
 }
 public function verifyCashCodeComptable(Request $request)

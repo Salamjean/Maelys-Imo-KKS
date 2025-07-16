@@ -18,7 +18,7 @@
 
         <div class="card-body p-4">
         <!-- Formulaire de versement -->
-        <form action="{{ route('versement.store') }}" method="POST" class="needs-validation" novalidate>
+       <form action="{{ route('versement.store') }}" method="POST" class="needs-validation" novalidate>
             @csrf
 
             <div class="row">
@@ -47,7 +47,7 @@
                         <label for="totalPercu" class="form-label fw-semibold">
                             <i class="fas fa-money-bill-wave me-2"></i>Total perçu
                         </label>
-                        <input type="text" id="totalPercu" placeholder="5000"  class="form-control form-control-lg bg-light" readonly>
+                        <input type="text" id="totalPercu" class="form-control form-control-lg bg-light" readonly>
                     </div>
 
                     <!-- Total déjà versé (readonly) -->
@@ -55,7 +55,7 @@
                         <label for="totalVerse" class="form-label fw-semibold">
                             <i class="fas fa-exchange-alt me-2"></i>Total déjà versé
                         </label>
-                        <input type="text" id="totalVerse" placeholder="5000"  class="form-control form-control-lg bg-light" readonly>
+                        <input type="text" id="totalVerse" class="form-control form-control-lg bg-light" readonly>
                     </div>
                 </div>
 
@@ -66,7 +66,7 @@
                         <label for="resteActuel" class="form-label fw-semibold">
                             <i class="fas fa-calculator me-2"></i>Reste à verser
                         </label>
-                        <input type="text" id="resteActuel" placeholder="5000"  class="form-control form-control-lg bg-light" readonly>
+                        <input type="text" id="resteActuel" class="form-control form-control-lg bg-light" readonly>
                     </div>
 
                     <!-- Montant à verser (saisie) -->
@@ -76,8 +76,8 @@
                         </label>
                         <input type="number" name="montant" id="montantVerse" 
                             class="form-control form-control-lg" 
-                            placeholder="5000" 
-                            step="0.01" 
+                            placeholder="Entrez le montant" 
+                            step="100" 
                             min="1000" 
                             required>
                     </div>
@@ -87,13 +87,13 @@
                         <label for="nouveauReste" class="form-label fw-semibold">
                             <i class="fas fa-calculator me-2"></i>Nouveau reste après versement
                         </label>
-                        <input type="text" placeholder="5000"  id="nouveauReste" class="form-control form-control-lg bg-light" readonly>
+                        <input type="text" id="nouveauReste" class="form-control form-control-lg bg-light" readonly>
                     </div>
                 </div>
             </div>
 
             <!-- Bouton submit - sur toute la largeur -->
-            <div class="row mt-10">
+            <div class="row mt-3">
                 <div class="col-12">
                     <button type="submit" class="btn btn-lg shadow" style="background-color: #02245b; color: white; width: 100%;">
                         <i class="mdi mdi-content-save"></i> Enregistrer le versement
@@ -184,13 +184,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mise à jour des champs quand l'agent change
     agentSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
+        if (!selectedOption.value) return;
         
         totalPercu.value = formatMoney(selectedOption.dataset.totalPercu);
         totalVerse.value = formatMoney(selectedOption.dataset.totalVerse);
         resteActuel.value = formatMoney(selectedOption.dataset.resteActuel);
         
-        // Met à jour le max du montant à verser
-        montantVerse.max = selectedOption.dataset.resteActuel;
+        // Réinitialise les champs
         montantVerse.value = '';
         nouveauReste.value = '';
     });

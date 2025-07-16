@@ -177,11 +177,11 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="16" class="text-center py-4">
+                        <td colspan="17" class="text-center py-4">
                             <div class="alert alert-info">
                                 Aucun bien immobilier enregistré pour le moment.
                             </div>
-                            <a href="{{ route('bien.create.agence') }}" class="btn btn-primary mt-2">
+                            <a href="{{ route('bien.create') }}" class="btn btn-primary mt-2">
                                 <i class="mdi mdi-plus-circle"></i> Ajouter un nouveau bien
                             </a>
                         </td>

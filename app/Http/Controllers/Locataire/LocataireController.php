@@ -52,6 +52,15 @@ class LocataireController extends Controller
                     ->whereNull('agence_id')
                     ->whereNull('proprietaire_id')
                     ->paginate(6);
+
+        
+         // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
+        $locataires->getCollection()->transform(function($locataire) {
+            $today = now()->format('d');
+            $currentMonthPaid = $locataire->paiements->isNotEmpty();
+            $locataire->show_reminder_button = ($locataire->bien->date_fixe ?? '10' == $today) && !$currentMonthPaid;
+            return $locataire;
+        });
         return view('admin.locataire.index',compact('locataires'));
     }
     public function indexSerieux(){

@@ -113,7 +113,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-muted mb-2">Montant total</h6>
+                            <h6 class="text-muted mb-2">Montant total des loyers perçu</h6>
                             <h3 class="stat-number">{{ number_format($totalAmountThisMonth, 0, ',', ' ') }} FCFA</h3>
                         </div>
                         <i class="fas fa-coins stat-icon"></i>

@@ -294,4 +294,59 @@
         });
     });
 </script>
+
+ <!-- JavaScript -->
+    <script src="{{ asset('login/assets/js/popper.min.js') }}"></script>
+    <script src="{{ asset('login/assets/js/bootstrap.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Gestion des erreurs -->
+    @if($errors->any())
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur de connexion',
+                html: `{!! implode('<br>', $errors->all()) !!}`,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#3085d6'
+            });
+        });
+    </script>
+    @endif
+
+     <!-- Pop-up de succès après connexion -->
+    @if(session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: 'Connexion réussie',
+                text: '{{ session('success') }}',
+                showConfirmButton: false,
+                timer: 2000,
+                showConfirmButton: true,
+                confirmButtonColor: '#3085d6'
+
+            });
+        });
+    </script>
+    @endif
+    <!-- Pop-up de succès après connexion -->
+    @if(session('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: '{{ session('error') }}',
+                showConfirmButton: false,
+                timer: 2000,
+                showConfirmButton: true,
+                confirmButtonColor: '#3085d6'
+
+            });
+        });
+    </script>
+    @endif
 @endsection

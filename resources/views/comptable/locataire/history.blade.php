@@ -190,6 +190,7 @@
                     <thead class="table text-center" style="background-color: #f1f5fd;">
                         <tr>
                             <th class="py-3 px-4">Agent</th>
+                            <th class="py-3 px-4 text-end">Montant perçu</th>
                             <th class="py-3 px-4 text-end">Montant versé</th>
                             <th class="py-3 px-4 text-end">Reste à verser</th>
                             <th class="py-3 px-4">Date</th>
@@ -197,42 +198,47 @@
                         </tr>
                     </thead>
                     <tbody id="versementsBody">
-                        @forelse($versements as $versement)
-                        <tr class="text-center versement-row">
-                            <td class="text-center agent-cell">
-                                <div class="d-flex text-center align-items-center justify-content-center">
-                                    <div class="avatar-sm bg-light rounded-circle me-3 d-flex align-items-center justify-content-center text-center">
-                                        <i class="mdi mdi-camera-front-variant"></i>
-                                    </div>
-                                    <div class="text-center">
-                                        <h6 class="mb-0 text-center agent-name">{{ $versement->agent->prenom }} {{ $versement->agent->name }}</h6>
-                                        <small class="text-muted agent-email">{{ $versement->agent->email }}</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-3 px-4 align-middle text-end fw-bold text-success amount-cell">
-                                {{ number_format($versement->montant, 0, ',', ' ') }} FCFA
-                            </td>
-                            <td class="py-3 px-4 align-middle text-end">
-                                <div class="d-flex flex-column">
-                                    <span class="text-danger mt-1 pt-1 reste-cell">{{ number_format($versement->montant_percu - $versement->montant, 0, ',', ' ') }} FCFA</span>
-                                </div>
-                            </td>
-                            <td class="py-3 px-4 align-middle date-cell">
-                                {{ $versement->created_at->format('d/m/Y') }}
-                            </td>
-                            <td class="py-3 px-4 align-middle time-cell">
-                                {{ $versement->created_at->format('H:i') }}
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="py-4 text-center text-muted">
-                                <i class="fas fa-info-circle me-2"></i>Aucun versement enregistré
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
+    @forelse($versements as $versement)
+    <tr class="text-center versement-row @if($versement->reste_a_verser == 0) bg-success-light @endif" style="@if($versement->reste_a_verser == 0) background-color:#C3F7EA @endif">
+        <td class="text-center agent-cell">
+            <div class="d-flex align-items-center justify-content-center">
+                <div class="avatar-sm bg-light rounded-circle me-3 d-flex align-items-center justify-content-center">
+                    <i class="mdi mdi-camera-front-variant"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 agent-name">{{ $versement->agent->prenom }} {{ $versement->agent->name }}</h6>
+                    <small class="text-muted agent-email">{{ $versement->agent->email }}</small>
+                </div>
+            </div>
+        </td>
+        <td class="py-3 px-4 align-middle text-end">
+            <span class="text-warning"><strong>{{ number_format($versement->montant_percu, 0, ',', ' ') }} FCFA</strong></span>
+        </td>
+        <td class="py-3 px-4 align-middle text-end fw-bold text-success amount-cell">
+            {{ number_format($versement->montant_verse, 0, ',', ' ') }} FCFA
+        </td>
+        <td class="py-3 px-4 align-middle text-end">
+            <strong>
+                <span class="@if($versement->reste_a_verser == 0) text-danger @else text-danger @endif">
+                    {{ number_format($versement->reste_a_verser, 0, ',', ' ') }} FCFA
+                </span>
+            </strong>
+        </td>
+        <td class="py-3 px-4 align-middle date-cell">
+            {{ $versement->created_at->format('d/m/Y') }}
+        </td>
+        <td class="py-3 px-4 align-middle time-cell">
+            {{ $versement->created_at->format('H:i') }}
+        </td>
+    </tr>
+    @empty
+    <tr>
+        <td colspan="6" class="py-4 text-center text-muted">
+            <i class="fas fa-info-circle me-2"></i>Aucun versement enregistré
+        </td>
+    </tr>
+    @endforelse
+</tbody>
                 </table>
 
                 <div id="noResults" class="no-results">

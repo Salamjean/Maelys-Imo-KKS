@@ -234,8 +234,8 @@ Route::middleware('auth:comptable')->prefix('accounting')->group(function () {
 Route::middleware('auth:owner')->prefix('owner')->group(function () {
     Route::get('/dashboard',[ProprietaireController::class,'dashboard'])->name('owner.dashboard');
     Route::get('/logout',[ProprietaireController::class, 'logout'])->name('owner.logout');
-    Route::get('/profile/edit', [ProprietaireController::class, 'editProfile'])->name('owner.edit.profile');
-    Route::put('/profile/edit', [ProprietaireController::class, 'updateProfile'])->name('owner.update.profile');
+    Route::get('/profile/edit', [OwnerPasswordResetController::class, 'editProfile'])->name('owner.edit.profile');
+    Route::put('/profile/edit', [OwnerPasswordResetController::class, 'updateProfile'])->name('owner.update.profile');
 
     // Routes pour la gestion des biens par le propriétaire
     Route::prefix('bien')->group(function(){
