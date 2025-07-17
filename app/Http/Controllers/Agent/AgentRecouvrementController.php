@@ -116,7 +116,7 @@ class AgentRecouvrementController extends Controller
                         ELSE DATE_SUB(NOW(), INTERVAL 2 MONTH) END) as days_late')
             ->selectRaw('(SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) as last_payment_date')
             ->orderBy('days_late', 'desc')
-            ->limit(5)
+            ->limit(2)
             ->get();
         
         }else{
