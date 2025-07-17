@@ -721,114 +721,233 @@ $('body').on('click', '.generate-cash-code', function() {
 });
 
 // Fonction pour démarrer le scan du QR code
-// Modifiez la fonction startQRScanner comme ceci :
+// Fonction pour démarrer le scan du QR code (CORRIGÉE)
 function startQRScanner(locataireId, nombreMois) {
+    let scanning = true; // Variable pour contrôler le scan
+    
     const scannerModal = Swal.fire({
         title: 'Scanner le QR Code du locataire',
         html: `
             <div class="text-center">
-                <video id="qr-video" width="100%" style="border: 1px solid #ccc;"></video>
+                <div id="camera-status" class="mb-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden"></span>
+                    </div>
+                    <p class="mt-2">Demande d'accès à la caméra...</p>
+                </div>
+                <video id="qr-video" width="100%" style="border: 1px solid #ccc; display: none;"></video>
                 <div id="qr-result" class="mt-2" style="display: none;">
-                    <p>Code détecté: <span id="qr-detected-code"></span></p>
+                    <p class="text-success">Code détecté: <span id="qr-detected-code"></span></p>
+                </div>
+                <div id="camera-error" class="mt-2" style="display: none;">
+                    <div class="alert alert-warning">
+                        <i class="mdi mdi-alert-circle"></i>
+                        <span id="error-message"></span>
+                    </div>
                 </div>
             </div>
             <div class="mt-3">
                 <button id="enter-code-manually" class="btn btn-sm btn-secondary">
                     <i class="mdi mdi-keyboard"></i> Saisir le code manuellement
                 </button>
+                <button id="retry-camera" class="btn btn-sm btn-primary" style="display: none;">
+                    <i class="mdi mdi-refresh"></i> Réessayer la caméra
+                </button>
             </div>
         `,
         showCancelButton: true,
         cancelButtonText: 'Annuler',
         showConfirmButton: false,
+        allowOutsideClick: false,
         didOpen: async () => {
             const videoElement = document.getElementById('qr-video');
-            const qrResult = document.getElementById('qr-result');
-            const qrDetectedCode = document.getElementById('qr-detected-code');
+            const cameraStatus = document.getElementById('camera-status');
+            const cameraError = document.getElementById('camera-error');
+            const errorMessage = document.getElementById('error-message');
+            const retryButton = document.getElementById('retry-camera');
             
             // Gestion du bouton de saisie manuelle
             $('#enter-code-manually').on('click', function() {
-                scannerModal.close();
+                scanning = false; // Arrêter le scan
+                Swal.close(); // Fermer le modal
                 showManualCodeInput(locataireId, nombreMois);
             });
             
-            try {
-                // Vérifier d'abord les permissions
-                const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+            // Gestion du bouton retry
+            $('#retry-camera').on('click', function() {
+                initializeCamera();
+            });
+            
+            async function initializeCamera() {
+                try {
+                    // Masquer les éléments d'erreur
+                    cameraError.style.display = 'none';
+                    retryButton.style.display = 'none';
+                    cameraStatus.style.display = 'block';
+                    videoElement.style.display = 'none';
+                    
+                    // Arrêter toute caméra existante
+                    if (videoElement.srcObject) {
+                        videoElement.srcObject.getTracks().forEach(track => track.stop());
+                    }
+                    
+                    // Vérifier si l'API est disponible
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('API caméra non supportée par ce navigateur');
+                    }
+                    
+                    // Différentes configurations à essayer
+                    const constraints = [
+                        { 
+                            video: { 
+                                facingMode: "environment",
+                                width: { ideal: 1280 },
+                                height: { ideal: 720 }
+                            } 
+                        },
+                        { 
+                            video: { 
+                                facingMode: "environment",
+                                width: { ideal: 640 },
+                                height: { ideal: 480 }
+                            } 
+                        },
+                        { 
+                            video: { 
+                                facingMode: "environment"
+                            } 
+                        },
+                        { 
+                            video: { 
+                                facingMode: "user"
+                            } 
+                        },
+                        { video: true }
+                    ];
+                    
+                    let stream = null;
+                    let lastError = null;
+                    
+                    for (const constraint of constraints) {
+                        try {
+                            console.log('Tentative avec:', constraint);
+                            stream = await navigator.mediaDevices.getUserMedia(constraint);
+                            break;
+                        } catch (err) {
+                            console.log('Échec avec constraint:', constraint, err);
+                            lastError = err;
+                            continue;
+                        }
+                    }
+                    
+                    if (!stream) {
+                        throw lastError || new Error('Impossible d\'obtenir l\'accès à la caméra');
+                    }
+                    
+                    // Succès - configurer la vidéo
+                    videoElement.srcObject = stream;
+                    cameraStatus.style.display = 'none';
+                    videoElement.style.display = 'block';
+                    
+                    // Attendre que la vidéo soit prête
+                    await new Promise((resolve, reject) => {
+                        videoElement.onloadedmetadata = () => {
+                            videoElement.play().then(resolve).catch(reject);
+                        };
+                        videoElement.onerror = reject;
+                    });
+                    
+                    // Démarrer le scan
+                    startScanning();
+                    
+                } catch (err) {
+                    console.error("Erreur camera détaillée:", err);
+                    handleCameraError(err);
+                }
+            }
+            
+            function handleCameraError(err) {
+                cameraStatus.style.display = 'none';
+                cameraError.style.display = 'block';
+                retryButton.style.display = 'inline-block';
                 
-                if (permissionStatus.state === 'denied') {
-                    throw new Error('Permission refusée');
+                let userMessage = 'Erreur inconnue';
+                
+                if (err.name === 'NotAllowedError') {
+                    userMessage = 'Permission d\'accès à la caméra refusée. Veuillez autoriser l\'accès dans les paramètres de votre navigateur.';
+                } else if (err.name === 'NotFoundError') {
+                    userMessage = 'Aucune caméra trouvée sur cet appareil.';
+                } else if (err.name === 'NotReadableError') {
+                    userMessage = 'Caméra occupée par une autre application.';
+                } else if (err.name === 'OverconstrainedError') {
+                    userMessage = 'Caméra ne supporte pas les paramètres demandés.';
+                } else if (err.name === 'AbortError') {
+                    userMessage = 'Accès à la caméra interrompu.';
+                } else if (err.name === 'NotSupportedError') {
+                    userMessage = 'Caméra non supportée par ce navigateur.';
+                } else if (err.message) {
+                    userMessage = err.message;
                 }
                 
-                // Utilisation de la caméra
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    } 
-                });
+                errorMessage.textContent = userMessage;
                 
-                videoElement.srcObject = stream;
-                videoElement.play();
-                
-                // Créer un canvas pour la détection
+                // Auto-focus sur le bouton manuel après quelques secondes
+                setTimeout(() => {
+                    $('#enter-code-manually').addClass('btn-primary').removeClass('btn-secondary');
+                }, 2000);
+            }
+            
+            function startScanning() {
                 const canvasElement = document.createElement('canvas');
                 const canvasContext = canvasElement.getContext('2d');
                 
                 function scanQR() {
-                    if (!scannerModal.isVisible()) return;
+                    // Vérifier si le scan doit continuer
+                    if (!scanning) return;
                     
-                    if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
-                        canvasElement.height = videoElement.videoHeight;
-                        canvasElement.width = videoElement.videoWidth;
-                        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-                        
-                        const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height);
-                        
-                        if (code) {
-                            qrDetectedCode.textContent = code.data;
-                            qrResult.style.display = 'block';
+                    try {
+                        if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                            canvasElement.height = videoElement.videoHeight;
+                            canvasElement.width = videoElement.videoWidth;
+                            canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
                             
-                            // Fermer le scanner après 1 seconde et valider le code
-                            setTimeout(() => {
-                                scannerModal.close();
-                                verifyAndSubmitPayment(locataireId, code.data, nombreMois);
-                            }, 1000);
+                            const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                            const code = jsQR(imageData.data, imageData.width, imageData.height);
+                            
+                            if (code) {
+                                scanning = false; // Arrêter le scan
+                                document.getElementById('qr-detected-code').textContent = code.data;
+                                document.getElementById('qr-result').style.display = 'block';
+                                
+                                // Feedback visuel
+                                videoElement.style.border = '3px solid #28a745';
+                                
+                                // Fermer le scanner et valider le code
+                                setTimeout(() => {
+                                    Swal.close();
+                                    verifyAndSubmitPayment(locataireId, code.data, nombreMois);
+                                }, 1000);
+                            } else {
+                                requestAnimationFrame(scanQR);
+                            }
                         } else {
                             requestAnimationFrame(scanQR);
                         }
-                    } else {
+                    } catch (err) {
+                        console.error('Erreur pendant le scan:', err);
                         requestAnimationFrame(scanQR);
                     }
                 }
                 
                 scanQR();
-            } catch (err) {
-                console.error("Erreur camera: ", err);
-                scannerModal.close();
-                
-                // Afficher un message plus clair selon le type d'erreur
-                let errorMessage = 'Impossible d\'accéder à la caméra.';
-                
-                if (err.name === 'NotAllowedError') {
-                    errorMessage = 'Permission d\'accès à la caméra refusée.';
-                } else if (err.name === 'NotFoundError') {
-                    errorMessage = 'Aucun périphérique de caméra trouvé.';
-                }
-                
-                Swal.fire({
-                    title: 'Erreur',
-                    text: `${errorMessage} Veuillez saisir le code manuellement.`,
-                    icon: 'error'
-                }).then(() => {
-                    showManualCodeInput(locataireId, nombreMois);
-                });
             }
+            
+            // Initialiser la caméra
+            await initializeCamera();
         },
         willClose: () => {
-            // Arrêter la caméra quand le modal se ferme
+            // Arrêter le scan et la caméra quand le modal se ferme
+            scanning = false;
             const videoElement = document.getElementById('qr-video');
             if (videoElement && videoElement.srcObject) {
                 videoElement.srcObject.getTracks().forEach(track => track.stop());
@@ -837,7 +956,7 @@ function startQRScanner(locataireId, nombreMois) {
     });
 }
 
-// Fonction pour afficher l'input de code manuel
+// Fonction pour afficher l'input de code manuel (inchangée)
 function showManualCodeInput(locataireId, nombreMois) {
     Swal.fire({
         title: 'Saisie du code manuelle',
@@ -846,18 +965,42 @@ function showManualCodeInput(locataireId, nombreMois) {
                 <label for="cashVerificationCode" class="form-label">
                     Entrez le code à 6 caractères du locataire :
                 </label>
-                <input type="text" class="form-control" id="cashVerificationCode" 
-                       placeholder="Code à 6 caractères" maxlength="6">
+                <input type="text" class="form-control form-control-lg text-center" 
+                       id="cashVerificationCode" 
+                       placeholder="XXXXXX" 
+                       maxlength="6"
+                       style="letter-spacing: 0.5em; font-size: 1.2em; font-weight: bold;">
+                <small class="text-muted">Le code contient 6 caractères (lettres et chiffres)</small>
             </div>
         `,
         icon: 'info',
         showCancelButton: true,
         confirmButtonText: 'Valider',
         cancelButtonText: 'Annuler',
+        didOpen: () => {
+            const input = document.getElementById('cashVerificationCode');
+            input.focus();
+            
+            // Convertir en majuscules automatiquement
+            input.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+            
+            // Valider avec Enter
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && this.value.length === 6) {
+                    Swal.clickConfirm();
+                }
+            });
+        },
         preConfirm: () => {
-            const code = $('#cashVerificationCode').val().trim();
-            if (!code || code.length !== 6) {
-                Swal.showValidationMessage('Veuillez entrer un code valide (6 caractères)');
+            const code = document.getElementById('cashVerificationCode').value.trim();
+            if (!code) {
+                Swal.showValidationMessage('Veuillez entrer un code');
+                return false;
+            }
+            if (code.length !== 6) {
+                Swal.showValidationMessage('Le code doit contenir exactement 6 caractères');
                 return false;
             }
             return { code: code };
@@ -869,15 +1012,21 @@ function showManualCodeInput(locataireId, nombreMois) {
     });
 }
 
-// Fonction pour vérifier et soumettre le paiement
+// Fonction pour vérifier et soumettre le paiement (inchangée)
 function verifyAndSubmitPayment(locataireId, code, nombreMois = 1) {
     Swal.fire({
         title: 'Validation en cours',
-        html: 'Vérification du code...',
+        html: `
+            <div class="text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden"></span>
+                </div>
+                <p>Vérification du code <strong>${code}</strong>...</p>
+            </div>
+        `,
         allowOutsideClick: false,
+        showConfirmButton: false,
         didOpen: () => {
-            Swal.showLoading();
-            
             $.ajax({
                 url: "{{ route('paiements.verifyCashCode') }}",
                 type: 'POST',
@@ -886,17 +1035,24 @@ function verifyAndSubmitPayment(locataireId, code, nombreMois = 1) {
                     code: code,
                     nombre_mois: nombreMois
                 },
+                timeout: 30000, // 30 secondes de timeout
                 success: function(response) {
                     if (response.success) {
                         Swal.fire({
-                            title: 'Paiement réussi',
+                            title: 'Paiement réussi !',
                             html: `
-                                <p>${response.message}</p>
-                                <p>Mois payés: ${response.mois_payes}</p>
-                                <p>Montant total: ${response.montant_total} FCFA</p>
+                                <div class="text-center">
+                                    <i class="mdi mdi-check-circle text-success" style="font-size: 3rem;"></i>
+                                    <p class="mt-3"><strong>${response.message}</strong></p>
+                                    <div class="alert alert-success">
+                                        <p class="mb-1">Mois payés: <strong>${response.mois_payes}</strong></p>
+                                        <p class="mb-0">Montant total: <strong>${response.montant_total} FCFA</strong></p>
+                                    </div>
+                                </div>
                             `,
                             icon: 'success',
-                            confirmButtonText: 'OK'
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#28a745'
                         }).then(() => {
                             if (response.redirect_url) {
                                 window.location.href = response.redirect_url;
@@ -905,12 +1061,42 @@ function verifyAndSubmitPayment(locataireId, code, nombreMois = 1) {
                             }
                         });
                     } else {
-                        Swal.fire('Erreur', response.message, 'error');
+                        Swal.fire({
+                            title: 'Code invalide',
+                            text: response.message,
+                            icon: 'error',
+                            confirmButtonText: 'Réessayer',
+                            showCancelButton: true,
+                            cancelButtonText: 'Annuler'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                showManualCodeInput(locataireId, nombreMois);
+                            }
+                        });
                     }
                 },
                 error: function(xhr) {
-                    let errorMsg = xhr.responseJSON?.message || 'Erreur lors du paiement';
-                    Swal.fire('Erreur', errorMsg, 'error');
+                    let errorMsg = 'Erreur lors de la vérification du code';
+                    if (xhr.responseJSON?.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.status === 0) {
+                        errorMsg = 'Problème de connexion réseau';
+                    } else if (xhr.status === 500) {
+                        errorMsg = 'Erreur du serveur';
+                    }
+                    
+                    Swal.fire({
+                        title: 'Erreur',
+                        text: errorMsg,
+                        icon: 'error',
+                        confirmButtonText: 'Réessayer',
+                        showCancelButton: true,
+                        cancelButtonText: 'Annuler'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            showManualCodeInput(locataireId, nombreMois);
+                        }
+                    });
                 }
             });
         }

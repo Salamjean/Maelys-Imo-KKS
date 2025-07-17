@@ -312,47 +312,42 @@ public function store(Request $request, Locataire $locataire)
         ]);
     }
 
-public function generateCashCode(Request $request)
-{
-    $request->validate([
-        'locataire_id' => 'required|exists:locataires,id',
-        'nombre_mois' => 'required|integer|min:1'
+    public function generateCashCode(Request $request)
+    {
+        $request->validate([
+            'locataire_id' => 'required|exists:locataires,id',
+            'nombre_mois' => 'required|integer|min:1'
+        ]);
+
+        $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+        
+        // Générer un code aléatoire de 6 caractères
+        $code = Str::upper(Str::random(6));
+        
+        // Calculer le montant total
+        $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
+        $montantTotal = $montantParMois * $request->nombre_mois;
+
+        // Déterminer les mois couverts
+        $moisCouverts = [];
+        $dateActuelle = now();
+        for ($i = 0; $i < $request->nombre_mois; $i++) {
+            $moisCouverts[] = $dateActuelle->copy()->addMonths($i)->format('Y-m');
+        }
+        $moisCouvertsStr = implode(', ', $moisCouverts);
+
+        // Options du QR Code
+        $options = new QROptions([
+        'version' => 10, // Version plus grande (1-40, plus le nombre est grand, plus la capacité est grande)
+        'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+        'eccLevel' => QRCode::ECC_L, // Niveau de correction plus bas (L, M, Q, H)
+        'scale' => 5,
+        'imageBase64' => false,
+        'quietzoneSize' => 2,
     ]);
-
-    $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-    
-    // Générer un code aléatoire de 6 caractères
-    $code = Str::upper(Str::random(6));
-    
-    // Calculer le montant total
-    $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
-    $montantTotal = $montantParMois * $request->nombre_mois;
-
-    // Déterminer les mois couverts
-    $moisCouverts = [];
-    $dateActuelle = now();
-    for ($i = 0; $i < $request->nombre_mois; $i++) {
-        $moisCouverts[] = $dateActuelle->copy()->addMonths($i)->format('Y-m');
-    }
-    $moisCouvertsStr = implode(', ', $moisCouverts);
-
-    // Options du QR Code
-    $options = new QROptions([
-    'version' => 10, // Version plus grande (1-40, plus le nombre est grand, plus la capacité est grande)
-    'outputType' => QRCode::OUTPUT_IMAGE_PNG,
-    'eccLevel' => QRCode::ECC_L, // Niveau de correction plus bas (L, M, Q, H)
-    'scale' => 5,
-    'imageBase64' => false,
-    'quietzoneSize' => 2,
-]);
 
     // Données à encoder dans le QR code
-    $qrData = json_encode([
-        'code' => $code,
-        'locataire' => $locataire->name, // Utilisez un nom de champ plus court
-        'montant' => $montantTotal,     // Montant abrégé
-        'exp' => now()->addHours(24)->timestamp // Timestamp au lieu de date complète
-    ]);
+    $qrData = $code;
 
     // Générer le QR code
     $qrcode = (new QRCode($options))->render($qrData);
