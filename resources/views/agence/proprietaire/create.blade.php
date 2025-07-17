@@ -11,7 +11,7 @@
                 @method('POST')
                 <fieldset style="border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
                     <legend style="font-size: 1.5em; font-weight: bold;">Informations du propriétaire</legend>
-                <!-- Section 1: Informations de base -->
+                <!-- Section 1: Informati  ons de base -->
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group">

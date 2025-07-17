@@ -16,8 +16,10 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ContactAgencyMail;
+use App\Models\CashVerificationCode;
 use App\Models\Paiement;
 use App\Models\Visite;
+use PDF;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 
@@ -26,8 +28,18 @@ class LocataireController extends Controller
     public function dashboard()
     {
         // Récupérer le locataire avec son bien associé
-        $locataire = Locataire::with(['bien','agence'])->findOrFail(Auth::guard('locataire')->user()->id);
-        return view('locataire.dashboard',compact('locataire'));
+        $locataire = Locataire::with(['bien', 'agence'])
+                    ->findOrFail(Auth::guard('locataire')->user()->id);
+        
+        // Récupérer le dernier code de vérification non utilisé et non expiré
+        $qrCode = CashVerificationCode::where('locataire_id', $locataire->id)
+                    ->whereNull('used_at')
+                    ->where('expires_at', '>', now())
+                    ->where('is_archived', false)
+                    ->latest()
+                    ->first();
+
+        return view('locataire.dashboard', compact('locataire', 'qrCode'));
     }
         public function index()
     {
@@ -258,11 +270,14 @@ class LocataireController extends Controller
                 $image4Path = $request->file('image4')->store('locataires_images', 'public');
             }
 
+           
+
              // Récupération du bien associé
             $bien = Bien::findOrFail($request->bien_id);
             $avance = $bien->avance;
             $loyer = $bien->prix;
             $datePaiement = now();
+
 
             // Création du locataire
             $locataire = new Locataire();

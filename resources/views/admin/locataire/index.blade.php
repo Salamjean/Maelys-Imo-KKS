@@ -361,6 +361,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
 <script>
 $(document).ready(function() {
@@ -673,7 +674,7 @@ $('body').on('click', '.generate-cash-code', function() {
         if (result.isConfirmed) {
             const nombreMois = result.value.mois;
             
-            // Ensuite générer le code avec le nombre de mois
+            // Générer le code via AJAX
             $.ajax({
                 url: "{{ route('paiements.generateCashCode') }}",
                 type: 'POST',
@@ -683,36 +684,17 @@ $('body').on('click', '.generate-cash-code', function() {
                 },
                 success: function(response) {
                     if (response.success) {
-                        // Afficher le champ de saisie après envoi réussi
+                        // Afficher le message de succès et lancer directement le scanner
                         Swal.fire({
-                            title: 'Code envoyé',
-                            html: `
-                                <p>${response.message}</p>
-                                <p>Mois à payer: ${response.mois_couverts}</p>
-                                <div class="mb-3 mt-3">
-                                    <label for="cashVerificationCode" class="form-label">
-                                        Entrez le code reçu par le locataire :
-                                    </label>
-                                    <input type="text" class="form-control" id="cashVerificationCode" 
-                                           placeholder="Code à 6 caractères" maxlength="6">
-                                </div>
-                            `,
+                            title: 'Code généré',
+                            text: response.message,
                             icon: 'success',
+                            confirmButtonText: 'Scanner le QR code',
                             showCancelButton: true,
-                            confirmButtonText: 'Valider le paiement',
-                            cancelButtonText: 'Annuler',
-                            preConfirm: () => {
-                                const code = $('#cashVerificationCode').val().trim();
-                                if (!code || code.length !== 6) {
-                                    Swal.showValidationMessage('Veuillez entrer un code valide (6 caractères)');
-                                    return false;
-                                }
-                                return { code: code };
-                            }
+                            cancelButtonText: 'Annuler'
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                // Vérifier le code
-                                verifyAndSubmitPayment(locataireId, result.value.code, nombreMois);
+                                startQRScanner(locataireId, nombreMois);
                             }
                         });
                     } else {
@@ -720,7 +702,11 @@ $('body').on('click', '.generate-cash-code', function() {
                     }
                 },
                 error: function(xhr) {
-                    Swal.fire('Erreur', xhr.responseJSON?.message || 'Erreur lors de la génération du code', 'error');
+                    let errorMsg = 'Une erreur est survenue';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    Swal.fire('Erreur', errorMsg, 'error');
                 },
                 complete: function() {
                     button.prop('disabled', false);
@@ -734,16 +720,131 @@ $('body').on('click', '.generate-cash-code', function() {
     });
 });
 
-// Gestion du nouveau bouton de vérification
-$('body').on('click', '.verify-cash-code', function() {
-    const locataireId = $(this).data('locataire-id');
-    
-    Swal.fire({
-        title: 'Validation du paiement en espèces',
+// Fonction pour démarrer le scan du QR code
+// Modifiez la fonction startQRScanner comme ceci :
+function startQRScanner(locataireId, nombreMois) {
+    const scannerModal = Swal.fire({
+        title: 'Scanner le QR Code du locataire',
         html: `
-            <div class="mb-3 mt-3">
+            <div class="text-center">
+                <video id="qr-video" width="100%" style="border: 1px solid #ccc;"></video>
+                <div id="qr-result" class="mt-2" style="display: none;">
+                    <p>Code détecté: <span id="qr-detected-code"></span></p>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button id="enter-code-manually" class="btn btn-sm btn-secondary">
+                    <i class="mdi mdi-keyboard"></i> Saisir le code manuellement
+                </button>
+            </div>
+        `,
+        showCancelButton: true,
+        cancelButtonText: 'Annuler',
+        showConfirmButton: false,
+        didOpen: async () => {
+            const videoElement = document.getElementById('qr-video');
+            const qrResult = document.getElementById('qr-result');
+            const qrDetectedCode = document.getElementById('qr-detected-code');
+            
+            // Gestion du bouton de saisie manuelle
+            $('#enter-code-manually').on('click', function() {
+                scannerModal.close();
+                showManualCodeInput(locataireId, nombreMois);
+            });
+            
+            try {
+                // Vérifier d'abord les permissions
+                const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+                
+                if (permissionStatus.state === 'denied') {
+                    throw new Error('Permission refusée');
+                }
+                
+                // Utilisation de la caméra
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                
+                videoElement.srcObject = stream;
+                videoElement.play();
+                
+                // Créer un canvas pour la détection
+                const canvasElement = document.createElement('canvas');
+                const canvasContext = canvasElement.getContext('2d');
+                
+                function scanQR() {
+                    if (!scannerModal.isVisible()) return;
+                    
+                    if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                        canvasElement.height = videoElement.videoHeight;
+                        canvasElement.width = videoElement.videoWidth;
+                        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+                        
+                        const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        
+                        if (code) {
+                            qrDetectedCode.textContent = code.data;
+                            qrResult.style.display = 'block';
+                            
+                            // Fermer le scanner après 1 seconde et valider le code
+                            setTimeout(() => {
+                                scannerModal.close();
+                                verifyAndSubmitPayment(locataireId, code.data, nombreMois);
+                            }, 1000);
+                        } else {
+                            requestAnimationFrame(scanQR);
+                        }
+                    } else {
+                        requestAnimationFrame(scanQR);
+                    }
+                }
+                
+                scanQR();
+            } catch (err) {
+                console.error("Erreur camera: ", err);
+                scannerModal.close();
+                
+                // Afficher un message plus clair selon le type d'erreur
+                let errorMessage = 'Impossible d\'accéder à la caméra.';
+                
+                if (err.name === 'NotAllowedError') {
+                    errorMessage = 'Permission d\'accès à la caméra refusée.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage = 'Aucun périphérique de caméra trouvé.';
+                }
+                
+                Swal.fire({
+                    title: 'Erreur',
+                    text: `${errorMessage} Veuillez saisir le code manuellement.`,
+                    icon: 'error'
+                }).then(() => {
+                    showManualCodeInput(locataireId, nombreMois);
+                });
+            }
+        },
+        willClose: () => {
+            // Arrêter la caméra quand le modal se ferme
+            const videoElement = document.getElementById('qr-video');
+            if (videoElement && videoElement.srcObject) {
+                videoElement.srcObject.getTracks().forEach(track => track.stop());
+            }
+        }
+    });
+}
+
+// Fonction pour afficher l'input de code manuel
+function showManualCodeInput(locataireId, nombreMois) {
+    Swal.fire({
+        title: 'Saisie du code manuelle',
+        html: `
+            <div class="mb-3">
                 <label for="cashVerificationCode" class="form-label">
-                    Entrez le code reçu par le locataire :
+                    Entrez le code à 6 caractères du locataire :
                 </label>
                 <input type="text" class="form-control" id="cashVerificationCode" 
                        placeholder="Code à 6 caractères" maxlength="6">
@@ -751,7 +852,7 @@ $('body').on('click', '.verify-cash-code', function() {
         `,
         icon: 'info',
         showCancelButton: true,
-        confirmButtonText: 'Valider le paiement',
+        confirmButtonText: 'Valider',
         cancelButtonText: 'Annuler',
         preConfirm: () => {
             const code = $('#cashVerificationCode').val().trim();
@@ -763,50 +864,64 @@ $('body').on('click', '.verify-cash-code', function() {
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            verifyAndSubmitPayment(locataireId, result.value.code);
+            verifyAndSubmitPayment(locataireId, result.value.code, nombreMois);
         }
     });
-});
+}
 
-function verifyAndSubmitPayment(locataireId, code) {
+// Fonction pour vérifier et soumettre le paiement
+function verifyAndSubmitPayment(locataireId, code, nombreMois = 1) {
     Swal.fire({
         title: 'Validation en cours',
         html: 'Vérification du code...',
         allowOutsideClick: false,
         didOpen: () => {
             Swal.showLoading();
-        }
-    });
-
-    $.ajax({
-        url: "{{ route('paiements.verifyCashCode') }}",
-        type: 'POST',
-        data: { 
-            locataire_id: locataireId,
-            code: code 
-        },
-        success: function(response) {
-            if (response.success) {
-                Swal.fire({
-                    title: 'Paiement réussi',
-                    text: response.message,
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    if (response.redirect_url) {
-                        window.location.href = response.redirect_url;
+            
+            $.ajax({
+                url: "{{ route('paiements.verifyCashCode') }}",
+                type: 'POST',
+                data: { 
+                    locataire_id: locataireId,
+                    code: code,
+                    nombre_mois: nombreMois
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Paiement réussi',
+                            html: `
+                                <p>${response.message}</p>
+                                <p>Mois payés: ${response.mois_payes}</p>
+                                <p>Montant total: ${response.montant_total} FCFA</p>
+                            `,
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            if (response.redirect_url) {
+                                window.location.href = response.redirect_url;
+                            } else {
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        Swal.fire('Erreur', response.message, 'error');
                     }
-                });
-            } else {
-                Swal.fire('Erreur', response.message, 'error');
-            }
-        },
-        error: function(xhr) {
-            let errorMsg = xhr.responseJSON?.message || 'Erreur lors du paiement';
-            Swal.fire('Erreur', errorMsg, 'error');
+                },
+                error: function(xhr) {
+                    let errorMsg = xhr.responseJSON?.message || 'Erreur lors du paiement';
+                    Swal.fire('Erreur', errorMsg, 'error');
+                }
+            });
         }
     });
 }
+
+// Gestion du bouton de vérification manuelle existant
+$('body').on('click', '.verify-cash-code', function() {
+    const locataireId = $(this).data('locataire-id');
+    startQRScanner(locataireId);
+});
 
 function submitCashPayment(locataireId, code) {
     const form = $('<form>', {

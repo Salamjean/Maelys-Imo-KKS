@@ -112,7 +112,7 @@
                                             <label for="numero_cni" class="form-label fw-semibold">
                                                 <i class="fas fa-envelope me-2"></i>Numéro CNI du récupérateur
                                             </label>
-                                            <input type="text" 
+                                            <input type="file" 
                                                 class="form-control p-3 border-2 border-primary" 
                                                 id="numero_cni" 
                                                 name="numero_cni"

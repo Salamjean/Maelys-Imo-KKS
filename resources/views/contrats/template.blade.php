@@ -1,153 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Contrat de Location</title>
+    <title>Bail à Usage d'Habitation</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px 40px;
-        }
-        .header { 
-            text-align: center; 
-            margin-bottom: 30px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 20px;
-        }
-        .title { 
-            font-size: 20px; 
-            font-weight: bold; 
-            margin-bottom: 15px;
-            text-decoration: underline;
-        }
-        .section { 
-            margin-bottom: 25px;
-            text-align: justify;
-        }
-        .signature { 
-            margin-top: 60px;
-        }
-        .footer { 
-            margin-top: 50px; 
-            font-size: 12px; 
-            text-align: center;
-            border-top: 1px solid #000;
-            padding-top: 10px;
-        }
-        .parties {
-            margin-left: 30px;
-        }
-        .signature-table {
-            width: 100%;
-            margin-top: 40px;
-        }
-        .signature-table td {
-            width: 50%;
-            padding-top: 50px;
-        }
-        .underline {
-            display: inline-block;
-            min-width: 200px;
-            border-bottom: 1px solid #000;
-            margin: 0 10px;
-        }
+        body { font-family: Arial, sans-serif; line-height: 1.5; font-size: 14px; }
+        .header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .ministere { font-weight: bold; text-transform: uppercase; }
+        .republique { font-size: 16px; font-weight: bold; text-align: right; }
+        .devise { font-style: italic; margin-bottom: 10px; }
+        .numero { text-align: right; margin-bottom: 20px; margin-top: 10px; }
+        .titre-contract { text-align: center; font-weight: bold; font-size: 18px; text-decoration: underline; margin: 20px 0; }
+        .parties { margin: 30px 0; }
+        .partie-title { font-weight: bold; text-decoration: underline; }
+        .signature { margin-top: 50px; }
+        .footer { margin-top: 30px; font-size: 12px; text-align: center; }
+        .underline { border-bottom: 1px solid #000; display: inline-block; min-width: 300px; }
+        .page-break { page-break-after: always; }
+        .header img { max-width: 100px; margin: 0 20px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>CONTRAT DE LOCATION</h1>
-        <p>Fait à <strong>{{ $agence->commune ?? 'abidjan' }}</strong>, le <strong>{{ $date_creation }}</strong></p>
+        <div class="ministere">MINISTÈRE DE LA CONSTRUCTION <br> DU LOGEMENT ET DE L'URBANISME</div>
+        <img src="public/assets/images/embleme.png" alt="Logo" />
+        <div class="republique">RÉPUBLIQUE DE CÔTE D'IVOIRE <br> <div class="devise">Union - Discipline - Travail</div> <br><div class="numero">N°A </span></div></div>
     </div>
 
-    <div class="section">
-        <p><strong>ENTRE LES SOUSSIGNES :</strong></p>
-        <div class="parties">
-            <p><strong>{{ $agence->name ?? 'Agence non spécifiée' }}</strong>, agence immobilière, représentée par son gérant,</p>
-            <p>D'une part,</p>
-            <br>
-            <p>ET</p>
-            <br>
-            <p><strong>M./Mme {{ $locataire->name }} {{ $locataire->prenom }}</strong>,</p>
-            <p>Né(e) le : <span class="underline"></span></p>
-            <p>De nationalité : <span class="underline"></span></p>
-            <p>Demeurant à : {{ $locataire->adresse }},</p>
-            <p>D'autre part,</p>
-        </div>
+    <div class="titre-contract">BAIL À USAGE D'HABITATION</div>
+    
+    <div>
+        <strong>Texte de référence :</strong><br>
+        Loi N°2015-57 du 26 juin 2023 Instituant Code de la Construction et de l'Habitat
     </div>
 
-    <div class="section">
-        <p><strong>IL A ETE CONVENU ET ARRETE CE QUI SUIT :</strong></p>
-    </div>
-
-    <div class="section">
-        <h3 class="title">ARTICLE 1 - OBJET</h3>
-        <p>Le présent contrat a pour objet la location d'un bien immobilier situé à {{ $bien->commune ?? 'Commune non spécifiée' }}, précisément à {{ $bien->adresse ?? 'Adresse non spécifiée' }}, composé de : {{ $bien->description ?? 'Description non disponible' }}.</p>
-        <p>Le bien est loué vide/non meublé (rayer la mention inutile) et en bon état de fonctionnement.</p>
-    </div>
-
-    <div class="section">
-        <h3 class="title">ARTICLE 2 - DUREE</h3>
-        <p>Le présent contrat est conclu pour une durée déterminée de <strong>{{ $duree_mois ?? 'X' }} mois</strong> à compter du <strong>{{ \Carbon\Carbon::parse($contrat->date_debut)->format('d/m/Y') }}</strong> jusqu'au <strong>{{ \Carbon\Carbon::parse($contrat->date_fin)->format('d/m/Y') }}</strong>.</p>
-        <p>Il pourra être renouvelé par tacite reconduction pour des périodes successives d'un an, sauf résiliation par l'une ou l'autre des parties avec un préavis de trois mois.</p>
-    </div>
-
-    <div class="section">
-        <h3 class="title">ARTICLE 3 - LOYER ET CHARGES</h3>
-        <p>Le loyer mensuel est fixé à la somme de <strong>{{ number_format($contrat->loyer_mensuel, 0, ',', ' ') }} /Mois ({{ $montant_lettres ?? 'Montant en lettres' }})</strong>, payable d'avance le <strong>{{ $bien->date_fixe ?? '5' }} de chaque mois</strong>.</p>
-        <p>Un dépôt de garantie (caution) de <strong>{{ number_format($contrat->caution, 0, ',', ' ') }} MOIS</strong> a été versé par le locataire.</p>
-        <p>Une avance sur loyer de <strong>{{ number_format($contrat->avance, 0, ',', ' ') }} MOIS</strong> a été versée par le locataire.</p>
-        <p>Le total des versements effectués s'élève donc à <strong>{{ number_format($bien->montant_total, 0, ',', ' ') }} FCFA</strong>.</p>
-    </div>
-
-    <div class="section">
-        <h3 class="title">ARTICLE 4 - OBLIGATIONS DES PARTIES</h3>
-        <p><strong>4.1 Obligations du locataire :</strong></p>
-        <ul>
-            <li>Payer le loyer en temps et en heure</li>
-            <li>Utiliser le bien conformément à sa destination</li>
-            <li>Effectuer les petites réparations d'entretien</li>
-            <li>Ne pas effectuer de modifications sans accord écrit</li>
-        </ul>
+    <div class="parties">
+        <div class="partie-title">ENTRE</div>
         
-        <p><strong>4.2 Obligations du bailleur :</strong></p>
-        <ul>
-            <li>Livrer le bien en bon état</li>
-            <li>Effectuer les grosses réparations</li>
-            <li>Respecter la vie privée du locataire</li>
-        </ul>
+        <p><strong>LE PROPRIÉTAIRE :</strong></p>
+        <p>
+            Référence identité (CNI-RCCM) N° : <span class="underline"></span> établie le <span class="underline"></span><br>
+            Domicile ou siège social : <span class="underline"></span><br>
+            Tél : <span class="underline"></span> BP : <span class="underline"></span><br>
+            Email : <span class="underline"></span><br>
+            Compte contribuable n° : <span class="underline"></span>
+        </p>
+        <p>Dénommé au titre du présent acte « LE BAILLEUR » ou « LE PROPRIÉTAIRE »</p>
+        <p><strong>D'une part</strong></p>
+
+        <p><strong>ET</strong></p>
+        
+        <p><strong>LE LOCATAIRE :</strong></p>
+        <p>
+            Référence identité (CNI) N° : <span class="underline">{{ $locataire['cni'] ?? '______' }}</span> établie le <span class="underline">{{ $locataire['cni_date'] ?? '______' }}</span><br>
+            Profession : <span class="underline">{{ $locataire['profession'] }}</span><br>
+            Tél : <span class="underline">{{ $locataire['contact'] }}</span><br>
+            BP : <span class="underline">{{ $locataire['bp'] ?? '______' }}</span><br>
+            Email : <span class="underline">{{ $locataire['email'] }}</span>
+        </p>
+        <p>Dénommé au titre du présent acte « LE PRENEUR » ou « LE LOCATAIRE »</p>
+        <p><strong>D'autre part</strong></p>
     </div>
 
-    <div class="section">
-        <h3 class="title">ARTICLE 5 - RESILIATION</h3>
-        <p>En cas de résiliation anticipée, un préavis de trois mois est exigé. Le locataire perd le bénéfice du dépôt de garantie en cas de départ avant le terme du contrat.</p>
+    <div>
+        <p><strong>LESQUELS ont convenu et arrêté le contrat qui suit :</strong></p>
+        
+        <div class="titre-contract">BAIL</div>
+        
+        <p>
+            Le BAILLEUR donne à bail à titre d'habitation, pour une durée, sous les conditions et le prix ci-après indiqués au PRENEUR qui accepte, les biens immobiliers dont la désignation suit :
+        </p>
+        
+        <div class="titre-contract">DÉSIGNATION</div>
+        
+        <p>
+            <strong>Adresse du bien :</strong> {{ $bien->adresse }}<br>
+            <strong>Type :</strong> {{ $bien->type }}<br>
+            <strong>Description :</strong> {{ $bien->description }}<br>
+            <strong>Superficie :</strong> {{ $bien->superficie ?? '______' }} m²<br>
+            <strong>Composition :</strong> {{ $bien->composition ?? '______' }}
+        </p>
+        
+        <p>
+            Le PRENEUR déclare connaître parfaitement le bien loué ou l'avoir vu et visité en vue du présent bail.
+        </p>
     </div>
+
+    <div class="page-break"></div>
+
+    <div class="titre-contract">COMPOSITION DU CONTRAT</div>
+    
+    <ol>
+        <li>Contrat de location</li>
+        <li>Conclusion du bail et fixation du loyer</li>
+        <li>Obligations des parties</li>
+        <li>Fin du bail</li>
+        <li>Copropriété - Élection de domicile</li>
+        <li>Etat des lieux contradictoire</li>
+    </ol>
+
+    <div class="titre-contract">ÉTAT DES LIEUX</div>
+    
+    <p>
+        Le PRENEUR prend les lieux loués dans l'état où ils se trouvent lors de l'entrée en jouissance et les rendra en fin de bail tels qu'il les aura reçus suivant l'état des lieux dressé par les parties.
+    </p>
+    
+    <p>
+        Un état des lieux contradictoire intermédiaire pourra être réalisé en cours d'exécution du contrat, afin de permettre au BAILLEUR de s'assurer que le LOCATAIRE jouit des lieux en bon père de famille. Dans le cas contraire, le BAILLEUR pourra mettre le LOCATAIRE en demeure de procéder aux réparations que le dépôt de garantie ne pourrait couvrir.
+    </p>
+    
+    <p>
+        À l'expiration du bail, un état des lieux contradictoire, en présence des parties, est également fait par les parties ou leurs représentants dûment mandatés. Le PRENEUR veillera à la remise des lieux dans leur état primitif (agencement, enduit, peinture intérieure, etc.).
+    </p>
 
     <div class="signature">
-        <p>Fait à {{ $locataire->agence->commune ?? 'Abidjan' }}, le {{ $contrat->created_at->format('d/m/Y') }}</span></p>
-        <p>En deux exemplaires originaux, chacun des parties reconnaissant avoir reçu le sien.</p>
+        <p>Fait en deux exemplaires originaux,</p>
+        <p>Le {{ now()->format('d/m/Y') }} à Marcory</p>
         
-        <table class="signature-table">
+        <table width="100%" style="margin-top: 50px;">
             <tr>
-                <td align="center">
-                    <p><strong>LE BAILLEUR</strong></p>
-                    <p>Signature précédée de la mention "Lu et approuvé"</p>
-                    <br><br>
-                    <p>Agence : {{ $locataire->agence->name ?? 'Maelys-Imo' }}</p>
+                <td width="50%" style="text-align: center;">
+                    <p>Pour le BAILLEUR,</p>
+                    <p><span class="underline"></span></p>
+                    <p>Signature</p>
                 </td>
-                <td align="center">
-                    <p><strong>LE LOCATAIRE</strong></p>
-                    <p>Signature précédée de la mention "Lu et approuvé"</p>
-                    <br><br>
-                    <p>Nom et prénom : {{ $locataire->name }} {{ $locataire->prenom }}</p>
+                <td width="50%" style="text-align: center;">
+                    <p>Le PRENEUR,</p>
+                    <p><span class="underline">{{ $locataire['prenom'] }} {{ $locataire['nom'] }}</span></p>
+                    <p>Signature</p>
                 </td>
             </tr>
         </table>
     </div>
 
     <div class="footer">
-        <p>Document généré automatiquement par <strong>{{ $agence->name ?? 'Agence' }}</strong> - {{ $agence->contact ?? 'Contact non disponible' }} - {{ $agence->email ?? '' }}</p>
+        Contrat généré automatiquement par le système de gestion 
     </div>
 </body>
 </html>

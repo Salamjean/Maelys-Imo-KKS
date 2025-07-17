@@ -68,6 +68,10 @@ class Locataire extends Authenticatable
     {
         return $this->hasMany(EtatLieu::class, 'locataire_id', 'code_id');
     }
+    public function verifycode()
+    {
+        return $this->belongsTo(CashVerificationCode::class);
+    }
     
 
 }

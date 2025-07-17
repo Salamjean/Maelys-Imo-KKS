@@ -101,7 +101,7 @@ class AgentRecouvrementController extends Controller
                 if ($comptable->agence_id) {
                     $query->orWhere('agence_id', $comptable->agence_id);
                 }
-                if ($comptable->proprietaire_id) {
+                elseif($comptable->proprietaire_id) {
                     $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
                 }
             })

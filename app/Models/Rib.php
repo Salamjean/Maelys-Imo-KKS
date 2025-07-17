@@ -10,14 +10,15 @@ class Rib extends Model
         'rib',
         'banque',
         'proprietaire_id',
+        'agence_id'
     ];
 
     public function proprietaire()
     {
-        return $this->belongsTo(Proprietaire::class);
+        return $this->belongsTo(Proprietaire::class, 'proprietaire_id', 'code_id');
     }
     public function agence()
     {
-        return $this->belongsTo(Agence::class);
+        return $this->belongsTo(Agence::class, 'agence_id', 'code_id');
     }
 }

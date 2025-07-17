@@ -76,31 +76,47 @@ class PaymentPartnerController extends Controller
     }
 
    public function showPaymentForm($proprietaireId)
-    {
-        $agenceId = Auth::guard('agence')->user()->code_id;
-        $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);
-                        })
-                        ->count();
-        
-        $proprietaire = Proprietaire::where('code_id', $proprietaireId)
-                        ->with(['biens' => function($query) {
-                            $query->with(['paiements' => function($q) {
-                                $currentMonth = now()->format('Y-m');
-                                $q->where('mois_couvert', $currentMonth)
-                                ->where('statut', 'payé');
-                            }]);
-                        }])
-                        ->firstOrFail();
-        
-        // Calculer le montant total
-        $montantTotal = $proprietaire->biens->flatMap(function ($bien) {
-            return $bien->paiements;
-        })->sum('montant');
-        
-        return view('agence.proprietaire.partner.payment_form', compact('proprietaire', 'pendingVisits', 'montantTotal'));
-    }
+{
+    $agenceId = Auth::guard('agence')->user()->code_id;
+    $pendingVisits = Visite::where('statut', 'en attente')
+                    ->whereHas('bien', function ($query) use ($agenceId) {
+                        $query->where('agence_id', $agenceId);
+                    })
+                    ->count();
+    
+    $proprietaire = Proprietaire::where('code_id', $proprietaireId)
+                    ->with(['biens' => function($query) {
+                        $query->with(['paiements' => function($q) {
+                            $currentMonth = now()->format('Y-m');
+                            $q->where('mois_couvert', $currentMonth)
+                            ->where('statut', 'payé');
+                        }]);
+                    }])
+                    ->firstOrFail();
+    
+    // Calculer le montant total brut
+    $montantTotalBrut = $proprietaire->biens->flatMap(function ($bien) {
+        return $bien->paiements;
+    })->sum('montant');
+    
+    // Application du pourcentage (comme dans createPaymentPartner)
+    $pourcentage = is_numeric($proprietaire->pourcentage) ? (float) $proprietaire->pourcentage : 0;
+    $montantTotal = $montantTotalBrut * (1 - ($pourcentage / 100));
+    
+    // Vérifier si un paiement a déjà été effectué ce mois-ci
+    $currentMonth = now()->format('Y-m');
+    $dejaPaye = PaymentPartner::where('proprietaire_id', $proprietaire->code_id)
+                ->where('agence_id', $agenceId)
+                ->where('created_at', 'like', $currentMonth.'%')
+                ->exists();
+    
+    return view('agence.proprietaire.partner.payment_form', compact(
+        'proprietaire', 
+        'pendingVisits', 
+        'montantTotal',
+        'dejaPaye'
+    ));
+}
     public function storePayment(Request $request)
 {
     $request->validate([
@@ -112,11 +128,12 @@ class PaymentPartnerController extends Controller
         'beneficiaire_prenom' => 'required_if:est_proprietaire,0',
         'beneficiaire_contact' => 'required_if:est_proprietaire,0',
         'beneficiaire_email' => 'nullable|email|required_if:est_proprietaire,0',
-        'numero_cni' => 'nullable|string|required_if:est_proprietaire,0',
+        'numero_cni' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048|required_if:est_proprietaire,0',
     ]);
 
     $agenceId = Auth::guard('agence')->user()->code_id;
     $proprietaire = Proprietaire::where('code_id', $request->proprietaire_id)->firstOrFail();
+    
 
     $data = [
         'proprietaire_id' => $request->proprietaire_id,
@@ -127,6 +144,13 @@ class PaymentPartnerController extends Controller
         'rib' => $proprietaire->rib,
         'statut' => $request->mode_paiement === 'Virement Bancaire' ? 'payé' : 'en attente',
     ];
+
+     if (!$request->boolean('est_proprietaire')) {
+        if ($request->hasFile('numero_cni')) {
+            $cniPath = $request->file('numero_cni')->store('numero_cni', 'public');
+            $data['numero_cni'] = $cniPath;
+        }
+    }
 
     if ($request->mode_paiement === 'Virement Bancaire') {
         if ($request->hasFile('fichier_paiement')) {
@@ -145,7 +169,6 @@ class PaymentPartnerController extends Controller
             $data['beneficiaire_prenom'] = $request->beneficiaire_prenom;
             $data['beneficiaire_contact'] = $request->beneficiaire_contact;
             $data['beneficiaire_email'] = $request->beneficiaire_email;
-            $data['numero_cni'] = $request->numero_cni;
             
             // Générer un code de vérification
             $verificationCode = Str::upper(Str::random(6));

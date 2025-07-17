@@ -19,6 +19,7 @@ class CashVerificationCode extends Model
         'nombre_mois',
         'mois_couverts',
         'montant_total',
+        'qr_code_path',
     ];
 
     protected $casts = [

@@ -1,7 +1,7 @@
 @extends('agence.layouts.template')
 @section('content')
 <div class="col-12 grid-margin stretch-card mb-4">
-    <div class="card">
+    <div class="card">   
         <div class="card-body">
             <h4 class="card-title text-center">Ajout d'un comptable pour votre agence</h4>
             <p class="card-description text-center">Pour l'ajout d'un comptable, veuillez renseigner toutes les informations demandées ci-dessous</p>
@@ -9,7 +9,7 @@
             <form class="forms-sample" action="{{ route('accounting.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('POST')
-                <fieldset style="border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                <fieldset style=  "border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
                     <legend style="font-size: 1.5em; font-weight: bold;">Informations du comptable</legend>
                 <!-- Section 1: Informations de base -->
                 <div class="row">

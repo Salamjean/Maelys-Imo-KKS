@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Quittance de loyer</title>
+       <link rel="icon" type="image/png" href="{{ asset('assets/images/mae-imo.png') }}">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap');
         
@@ -155,17 +156,17 @@
             <div class="section-title">DÉCLARATION</div>
             <p>
                 Je soussigné(e) 
-                @if($bien->agence->id)
-                    {{ $locataire->agence->name ?? 'Maelys-Imo' }}, Agence
-                @elseif($locataire->proprietaire_id)
-                    {{ $locataire->proprietaire->name.' '.$locataire->proprietaire->prenom ?? 'Maelys-imo' }}, Propriétaire
-                @else
-                    Maelys-imo, Agence
-                @endif/
+                @if($paiement->bien->agence_id && $paiement->bien->agence)
+    {{ $paiement->bien->agence->name }}, Agence
+@elseif($paiement->bien->proprietaire_id && $paiement->bien->proprietaire)
+    {{ $paiement->bien->proprietaire->name.' '.$paiement->bien->proprietaire->prenom }}, Propriétaire
+@else
+    Maelys-imo, Agence
+@endif/
                 bailleur du bien ci-dessus désigné, déclare avoir reçu de :
             </p>
             <div class="highlight-box">
-                <strong>Monsieur/Madame :</strong> {{ $bien->locataire->name.' '.$bien->locataire->prenom ?? 'Maelys-imo' }}<br>
+                <strong>Monsieur/Madame :</strong> {{ $paiement->bien->locataire->name.' '.$paiement->bien->locataire->prenom ?? 'Maelys-imo' }}<br>
                 <strong>Montant :</strong> <span class="amount">{{ number_format($paiement->montant, 0, ',', ' ') }} FCFA</span><br>
                 <strong>Pour :</strong> Paiement du loyer et charges pour {{ \Carbon\Carbon::parse($paiement->mois_couvert)->translatedFormat('F Y') }}
             </div>
@@ -192,17 +193,17 @@
         </div>
 
        <div class="section">
-            <p>Fait à {{ $bien->commune }}, le {{ \Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y') }}.</p>
+            <p>Fait à {{ $paiement->bien->commune }}, le {{ \Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y') }}.</p>
             
             <div class="signature">
                 <p class="signature-text">
-                    @if($bien->agence->id)
-                        {{ $locataire->agence->name ?? 'Maelys-Imo' }}, Agence
-                    @elseif($locataire->proprietaire_id)
-                        {{ $locataire->proprietaire->name.' '.$locataire->proprietaire->prenom ?? 'Maelys-imo' }}, Propriétaire
-                    @else
-                        Maelys-imo, Agence
-                    @endif
+                   @if($paiement->bien->agence_id && $paiement->bien->agence)
+    {{ $paiement->bien->agence->name }}, Agence
+@elseif($paiement->bien->proprietaire_id && $paiement->bien->proprietaire)
+    {{ $paiement->bien->proprietaire->name.' '.$paiement->bien->proprietaire->prenom }}, Propriétaire
+@else
+    Maelys-imo, Agence
+@endif
                 </p>
                 <div class="signature-line">Signature</div>
             </div>

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('code', 6);
             $table->integer('nombre_mois')->default(1);
             $table->string('mois_couverts')->nullable();
+            $table->string('qr_code_path')->nullable();
             $table->decimal('montant_total', 10, 2)->nullable();
             $table->timestamp('expires_at');
             $table->timestamp('used_at')->nullable();

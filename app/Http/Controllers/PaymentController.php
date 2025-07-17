@@ -336,44 +336,69 @@ public function generateCashCode(Request $request)
     }
     $moisCouvertsStr = implode(', ', $moisCouverts);
 
-    // Créer ou mettre à jour le code avec TOUS les champs nécessaires
+    // Options du QR Code
+    $options = new QROptions([
+    'version' => 10, // Version plus grande (1-40, plus le nombre est grand, plus la capacité est grande)
+    'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+    'eccLevel' => QRCode::ECC_L, // Niveau de correction plus bas (L, M, Q, H)
+    'scale' => 5,
+    'imageBase64' => false,
+    'quietzoneSize' => 2,
+]);
+
+    // Données à encoder dans le QR code
+    $qrData = json_encode([
+        'code' => $code,
+        'locataire' => $locataire->name, // Utilisez un nom de champ plus court
+        'montant' => $montantTotal,     // Montant abrégé
+        'exp' => now()->addHours(24)->timestamp // Timestamp au lieu de date complète
+    ]);
+
+    // Générer le QR code
+    $qrcode = (new QRCode($options))->render($qrData);
+
+    // Sauvegarder le QR code
+    $qrCodePath = 'qrcodes/cash_payments/' . $code . '.png';
+    Storage::disk('public')->put($qrCodePath, $qrcode);
+
+    // Créer ou mettre à jour le code
     $cashCode = CashVerificationCode::updateOrCreate(
         ['locataire_id' => $locataire->id],
         [
             'code' => $code,
             'expires_at' => now()->addHours(24),
-            'nombre_mois' => $request->nombre_mois ?? 1, // Bien enregistrer le nombre de mois
+            'nombre_mois' => $request->nombre_mois ?? 1,
             'mois_couverts' => $moisCouvertsStr,
             'montant_total' => $montantTotal,
             'is_archived' => false,
             'used_at' => null,
-            'paiement_id' => null
+            'paiement_id' => null,
+            'qr_code_path' => $qrCodePath
         ]
     );
 
-    // Envoyer le code par email au locataire
+    // Envoyer le code et le QR code par email
     try {
         Mail::to($locataire->email)->send(new \App\Mail\CashPaymentCodeMail(
             $code, 
             $locataire,
             $montantTotal,
-            $moisCouvertsStr
+            $moisCouvertsStr,
+            Storage::url($qrCodePath)
         ));
-        
-        Log::info("Code espèces envoyé à {$locataire->email}: {$code} (Mois: {$request->nombre_mois})");
         
         return response()->json([
             'success' => true,
             'message' => 'Le code de vérification a été envoyé par email au locataire.',
             'mois_couverts' => $moisCouvertsStr,
-            'montant_total' => $montantTotal
+            'montant_total' => $montantTotal,
+            'qr_code_url' => Storage::url($qrCodePath),
+            'qr_code_base64' => base64_encode($qrcode) // Optionnel: pour affichage immédiat
         ]);
     } catch (\Exception $e) {
-        Log::error("Erreur envoi email code espèces: " . $e->getMessage());
-        
         return response()->json([
             'success' => false,
-            'message' => 'Le code a été généré mais l\'envoi par email a échoué. Veuillez vérifier l\'email du locataire.'
+            'message' => 'Le code a été généré mais l\'envoi par email a échoué.'
         ], 500);
     }
 }
@@ -711,6 +736,7 @@ public function verifyCashCodeAgent(Request $request)
 
 public function generateReceipt( Paiement $paiement)
 {
+    $paiement = Paiement::with(['bien.locataire', 'bien.agence', 'bien.proprietaire'])->find($paiement->id);
     \Carbon\Carbon::setLocale('fr');
 
     $locataire = Auth::guard('locataire')->user() ?? $paiement->locataire;

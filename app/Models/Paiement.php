@@ -21,6 +21,7 @@ class Paiement extends Model
     {
         return $this->belongsTo(Bien::class);
     }
+    
 
     public function contrat()
     {

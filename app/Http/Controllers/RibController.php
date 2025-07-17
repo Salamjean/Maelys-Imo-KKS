@@ -68,7 +68,7 @@ class RibController extends Controller
                             $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
                         })
                         ->count();
-        $ribs = Rib::where('proprietaire_id', Auth::guard('agence')->user()->code_id)->get();
+        $ribs = Rib::where('agence_id', Auth::guard('agence')->user()->code_id)->get();
         return view('agence.rib.create', compact('ribs', 'pendingVisits'));
     }
 
@@ -89,7 +89,7 @@ class RibController extends Controller
         Rib::create([
             'rib' => $request->rib,
             'banque' => $request->banque,
-            'proprietaire_id' => $agence->code_id,
+            'agence_id' => $agence->code_id,
         ]);
 
         return redirect()->back()->with('success', 'RIB enregistré avec succès!');

@@ -184,8 +184,31 @@
                                     {{ $paiement->beneficiaire_prenom ?? 'Propriétaire' }} {{ $paiement->beneficiaire_nom }} 
                                 @endif
                             </td>
-                            <td>{{$paiement->montant}}</td>
-                            <td>{{$paiement->numero_cni}}</td>
+                            <td>{{ number_format($paiement->montant, 0, ',', ' ') }} FCFA</td>
+                            <td>
+                                @if($paiement->numero_cni)
+                                                @php
+                                                    $contratPath = asset('storage/' . $paiement->numero_cni);
+                                                    $contratPathPdf = strtolower(pathinfo($contratPath, PATHINFO_EXTENSION)) === 'pdf';
+                                                @endphp
+                                                @if ($contratPathPdf)
+                                                    <a href="{{ $contratPath }}" target="_blank">
+                                                        <img src="{{ asset('assets/images/pdf.jpg') }}" alt="PDF" width="30" height="30">
+                                                    </a>
+                                                @else
+                                                    <img src="{{ $contratPath }}" 
+                                                        alt="Pièce du parent" 
+                                                        width="50" 
+                                                        height=50
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#imageModal" 
+                                                        onclick="showImage(this)" 
+                                                        onerror="this.onerror=null; this.src='{{ asset('assets/images/profiles/bébé.jpg') }}'">
+                                                @endif
+                                            @else
+                                                <p>Paiement non effectué</p>
+                                            @endif
+                            </td>
                             <td>
                                 @if($paiement->statut === 'en attente')
                                     <span class="badge badge-warning">En attente</span>
@@ -203,6 +226,8 @@
                                        class="btn btn-sm btn-primary">
                                         Valider
                                     </a>
+                                @else
+                                   <p>Paiement reçu</p>
                                 @endif
                             </td>
                         </tr>

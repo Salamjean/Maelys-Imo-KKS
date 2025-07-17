@@ -9,6 +9,7 @@ use App\Models\ResetCodePasswordLocataire;
 use App\Models\Visite;
 use App\Notifications\SendEmailToLocataireAfterRegistrationNotification;
 use Carbon\Carbon;
+use PDF;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -106,8 +107,8 @@ class LocataireOwnerController extends Controller
             'piece' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'adresse' => 'required|string|max:255',
             'profession' => 'required|string|max:255',
-            'attestation' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'contrat' => 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
+            'attestation' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'image3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
