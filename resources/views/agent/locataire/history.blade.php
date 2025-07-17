@@ -202,7 +202,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7">
+                                <td colspan="8">
                                     <div class="empty-state">
                                         <div class="empty-icon">
                                             <i class="fas fa-wallet"></i>

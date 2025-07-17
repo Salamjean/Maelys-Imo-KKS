@@ -14,7 +14,7 @@
             <i class="mdi mdi-home-account text-white"></i>
           </div>
           <div class="ml-3 text-right">
-            <h4 class="mb-1 text-white">Bien Loué</h4>
+            <h4 class="mb-1 mt-4 text-white">Bien Loué</h4>
             <h3 class="mb-0 text-white">{{ $locataire->bien->type }} à {{ $locataire->bien->commune }}</h3>
             <p class="mb-0 text-white font-weight-light">Agence: {{ $locataire->agence->name ?? 'Maelys-Imo' }}</p>
           </div>
@@ -32,7 +32,7 @@
             <i class="mdi mdi-cash-multiple text-white"></i>
           </div>
           <div class="ml-3 text-right">
-            <h4 class="mb-1 text-white">Loyer Mensuel</h4>
+            <h4 class="mb-1 mt-4 text-white">Loyer Mensuel</h4>
             <h3 class="mb-0 text-white">{{ number_format($locataire->bien->prix ?? 0, 0, ',', ' ') }} FCFA</h3>
             <p class="mb-0 text-white font-weight-light">Date limite: {{ $locataire->bien->date_fixe }} du mois</p>
           </div>
@@ -50,7 +50,7 @@
             <i class="mdi mdi-calendar-clock text-white"></i>
           </div>
           <div class="ml-3 text-right">
-            <h4 class="mb-1 text-white">Date de Paiement</h4>
+            <h4 class="mb-1 mt-4 text-white">Date de Paiement</h4>
             <h3 class="mb-0 text-white">{{ $locataire->bien->date_fixe }} du mois</h3>
             <p class="mb-0 text-white font-weight-light">Prochain paiement dans 15 jours</p>
           </div>

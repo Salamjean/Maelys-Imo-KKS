@@ -180,7 +180,7 @@ $recentPayments = Paiement::with(['locataire', 'bien.proprietaire', 'bien.agence
         });
     })
     ->orderBy('date_paiement', 'desc')
-    ->take(5)
+    ->take(2)
     ->get();
 
 // 3. Données pour le graphique mensuel (12 derniers mois)

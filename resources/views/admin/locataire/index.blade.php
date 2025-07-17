@@ -721,7 +721,6 @@ $('body').on('click', '.generate-cash-code', function() {
 });
 
 // Fonction pour démarrer le scan du QR code
-// Fonction pour démarrer le scan du QR code (CORRIGÉE)
 function startQRScanner(locataireId, nombreMois) {
     let scanning = true; // Variable pour contrôler le scan
     
@@ -737,12 +736,12 @@ function startQRScanner(locataireId, nombreMois) {
                 </div>
                 <video id="qr-video" width="100%" style="border: 1px solid #ccc; display: none;"></video>
                 <div id="qr-result" class="mt-2" style="display: none;">
-                    <p class="text-success">Code détecté: <span id="qr-detected-code"></span></p>
+                    <p class="text-success" style="display:none">Code détecté: <span id="qr-detected-code"></span></p>
                 </div>
                 <div id="camera-error" class="mt-2" style="display: none;">
                     <div class="alert alert-warning">
                         <i class="mdi mdi-alert-circle"></i>
-                        <span id="error-message"></span>
+                        
                     </div>
                 </div>
             </div>
