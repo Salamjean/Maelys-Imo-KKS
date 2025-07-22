@@ -38,6 +38,11 @@ class Bien extends Model
         return $this->hasOne(Locataire::class);
     }
 
+    public function etatlieu()
+    {
+        return $this->hasMany(EtatLieu::class);
+    }
+
     public function proprietaire()
     {
         return $this->belongsTo(Proprietaire::class, 'proprietaire_id', 'code_id');

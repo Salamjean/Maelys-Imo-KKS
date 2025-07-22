@@ -33,6 +33,13 @@
         <span></span>
       </li>
       <li class="nav-item">
+        <a class="nav-link" href="{{ route('locataire.etat_lieu') }}">
+           <i class="mdi mdi-home menu-icon"></i>
+          <span class="menu-title">Etat des Lieux</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
         <a class="nav-link" href="{{ route('locataire.bien.show', Auth::guard('locataire')->user()->id) }}">
            <i class="mdi mdi-home menu-icon"></i>
           <span class="menu-title">Bien loué</span>

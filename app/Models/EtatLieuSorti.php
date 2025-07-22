@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class EtatLieu extends Model
+class EtatLieuSorti extends Model
 {
      protected $fillable = [
                 'locataire_id',

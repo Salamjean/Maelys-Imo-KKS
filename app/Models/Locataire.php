@@ -22,6 +22,7 @@ class Locataire extends Authenticatable
         'agence_id',
         'proprietaire_id',
         'contrat_id',
+        'comptable_id',
         'bien_id',
         'contrat',
         'image1',
@@ -63,14 +64,27 @@ class Locataire extends Authenticatable
     {
         return $this->belongsTo(Proprietaire::class, 'proprietaire_id', 'code_id');
     }
+    public function comptable()
+    {
+        return $this->belongsTo(Comptable::class);
+    }
 
     public function etatlieu()
     {
-        return $this->hasMany(EtatLieu::class, 'locataire_id', 'code_id');
+        return $this->hasMany(EtatLieu::class);
+    }
+    public function etatlieusorti()
+    {
+        return $this->hasMany(EtatLieuSorti::class);
     }
     public function verifycode()
     {
         return $this->belongsTo(CashVerificationCode::class);
+    }
+
+    public function verificationCodes()
+    {
+        return $this->hasMany(VerificationCode::class);
     }
     
 

@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Swal.fire({
             title: 'Initialisation du paiement',
             html: 'Veuillez patienter...',
-            allowOutsideClick: false,
+            allowOutsideClick: true,
             didOpen: () => {
                 Swal.showLoading();
             }
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire({
                     title: 'Envoi en cours',
                     html: 'Traitement de votre preuve de virement...',
-                    allowOutsideClick: false,
+                    allowOutsideClick: true,
                     didOpen: () => {
                         Swal.showLoading();
                         setTimeout(() => {

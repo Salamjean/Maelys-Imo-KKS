@@ -29,6 +29,35 @@
                 </div>
             </div>
 
+            <!-- Modal pour attribuer un agent de recouvrement -->
+            <div class="modal fade" id="assignComptableModal" tabindex="-1" aria-labelledby="assignComptableModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="assignComptableModalLabel">Attribuer un agent de recouvrement</h5>
+                            <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form id="assignComptableForm" method="POST">
+                            @csrf
+                            <div class="modal-body">
+                                <input type="hidden" id="locataireId" name="locataire_id">
+                                <div class="mb-3">
+                                    <label for="comptableSelect" class="form-label">Sélectionnez un agent de recouvrement</label>
+                                    <select class="form-select" id="comptableSelect" name="comptable_id" required>
+                                        <option value="">-- Choisir un agent --</option>
+                                        <!-- Les options seront chargées dynamiquement -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <button type="submit" class="btn btn-primary">Attribuer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Modal pour afficher l'état des lieux -->
             <div class="modal fade" id="etatLieuModal" tabindex="-1" aria-labelledby="etatLieuModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
@@ -97,7 +126,7 @@
                             <th>Statut</th>
                             <th>Contrat</th>
                             <th>Actions</th>
-                            <th>Faire l'état des lieux</th>
+                            <th>Etat des lieux</th>
                             <th>Paiement</th>
                         </tr>
                     </thead>
@@ -180,26 +209,30 @@
                                     </div>
                                 </td>
                                  <td>
-                                    @php
-                                        $etatExiste = App\Models\EtatLieu::where('locataire_id', $locataire->code_id)->first();
-                                    @endphp
-                                                            
-                                    @if($etatExiste)
-                                        <button class="btn btn-sm btn-info view-etat-btn" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#etatLieuModal"
-                                                data-etat-lieu="{{ json_encode($etatExiste) }}"
-                                                title="Voir l'état des lieux">
-                                            <i class="mdi mdi-eye"></i> Voir
-                                        </button>
-                                    @else
-                                        <a href="{{ route('locataire.etat', $locataire->id) }}" 
-                                        class="btn btn-sm btn-warning" 
-                                        title="Créer l'état des lieux">
-                                            <i class="mdi mdi-file-document-edit"></i> Créer
-                                        </a>
-                                    @endif
-                                </td>
+                                        @php
+                                            $etatExiste = App\Models\EtatLieu::where('locataire_id', $locataire->code_id)->first();
+                                        @endphp
+                                                                                            
+                                        @if($etatExiste)
+                                            <button class="btn btn-sm btn-info view-etat-btn" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#etatLieuModal"
+                                                    data-etat-lieu="{{ json_encode($etatExiste) }}"
+                                                    title="Voir l'état des lieux">
+                                                <i class="mdi mdi-eye"></i> Voir
+                                            </button>
+                                        @elseif($locataire->comptable)
+                                            <span class="badge bg-primary text-white" style="font-size: 20px">
+                                                <i class="mdi mdi-account-check"></i> {{ $locataire->comptable->name }} {{ $locataire->comptable->prenom }}
+                                            </span>
+                                        @else
+                                            <button class="btn btn-sm btn-warning assign-comptable-btn"
+                                                    data-locataire-id="{{ $locataire->id }}"
+                                                    title="Attribuer un agent de recouvrement">
+                                                <i class="mdi mdi-account-plus"></i> Attribuer
+                                            </button>
+                                        @endif
+                                    </td>
 
                                     <td>
                                         @if($locataire->status === 'Actif') <!-- Vérifiez le statut du locataire -->
@@ -1197,6 +1230,114 @@ $(document).ready(function() {
     });
 });
 
+</script>
+
+{{-- Attribuer un agent de recouvrement a un locataire pour l'etat des lieux  --}}
+<script>
+    // Gestion de l'attribution d'agent de recouvrement
+$(document).on('click', '.assign-comptable-btn', function() {
+    const locataireId = $(this).data('locataire-id');
+    const button = $(this);
+    
+    // Afficher le modal
+    const modal = $('#assignComptableModal');
+    $('#locataireId').val(locataireId);
+    
+    // Charger la liste des agents de recouvrement
+    $.ajax({
+        url: "{{ route('comptables.recouvrement') }}",
+        type: 'GET',
+        data: {
+            agence_id: "{{ Auth::guard('agence')->user()->code_id }}"
+        },
+        beforeSend: function() {
+            $('#comptableSelect').html('<option value="">Chargement en cours...</option>');
+        },
+        success: function(response) {
+            if (response.length > 0) {
+                let options = '<option value="">-- Choisir un agent --</option>';
+                response.forEach(comptable => {
+                    options += `<option value="${comptable.id}">${comptable.name} ${comptable.prenom} (${comptable.contact})</option>`;
+                });
+                $('#comptableSelect').html(options);
+            } else {
+                $('#comptableSelect').html('<option value="">Aucun agent disponible</option>');
+                Swal.fire({
+                    title: 'Aucun agent disponible',
+                    text: 'Aucun agent de recouvrement n\'est disponible dans votre agence.',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            modal.modal('show');
+        },
+        error: function() {
+            Swal.fire({
+                title: 'Erreur',
+                text: 'Impossible de charger la liste des agents',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    });
+});
+
+// Soumission du formulaire d'attribution
+// Soumission du formulaire d'attribution
+$('#assignComptableForm').on('submit', function(e) {
+    e.preventDefault();
+    const form = $(this);
+    const button = form.find('button[type="submit"]');
+    const locataireId = $('#locataireId').val();
+    
+    button.prop('disabled', true);
+    button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+    
+    $.ajax({
+        url: "{{ route('locataire.assign.comptable') }}",
+        type: 'POST',
+        data: form.serialize(),
+        success: function(response) {
+            // Trouver le bouton "Attribuer" correspondant à ce locataire
+            const assignBtn = $(`.assign-comptable-btn[data-locataire-id="${locataireId}"]`);
+            
+            // Remplacer le bouton par le badge avec le nom du comptable
+            assignBtn.replaceWith(`
+                <span class="badge bg-primary">
+                    <i class="mdi mdi-account-check"></i> 
+                    ${response.comptable.name} ${response.comptable.prenom}
+                </span>
+            `);
+            
+            Swal.fire({
+                title: 'Succès !',
+                text: response.success,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                $('#assignComptableModal').modal('hide');
+                // Pas besoin de recharger la page maintenant
+            });
+        },
+        error: function(xhr) {
+            let errorMsg = 'Une erreur est survenue';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            Swal.fire({
+                title: 'Erreur !',
+                text: errorMsg,
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        },
+        complete: function() {
+            button.prop('disabled', false);
+            button.html('Attribuer');
+        }
+    });
+});
 </script>
 <style>
 #searchInput {

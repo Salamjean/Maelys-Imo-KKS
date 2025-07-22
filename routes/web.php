@@ -11,8 +11,11 @@ use App\Http\Controllers\BienController;
 use App\Http\Controllers\Agent\ComptableController;
 use App\Http\Controllers\Agent\ComptablePasswordResetController;
 use App\Http\Controllers\ContratController;
+use App\Http\Controllers\EtatAgentLocataire;
 use App\Http\Controllers\EtatLieuController;
 use App\Http\Controllers\HomePageController;
+use App\Http\Controllers\Locataire\EtatLieuController as LocataireEtatLieuController;
+use App\Http\Controllers\Locataire\EtatLieuLocataireController;
 use App\Http\Controllers\Locataire\LocataireController;
 use App\Http\Controllers\Locataire\LocatairePasswordResetController;
 use App\Http\Controllers\PaymentController;
@@ -25,6 +28,7 @@ use App\Http\Controllers\Proprietaire\ProprietaireController;
 use App\Http\Controllers\Proprietaire\ReversementController;
 use App\Http\Controllers\RibController;
 use App\Http\Controllers\PaymentPartnerController;
+use App\Http\Controllers\VerificationCodeController;
 use App\Http\Controllers\VersementController;
 use App\Http\Controllers\VisiteController;
 use App\Models\Agence;
@@ -216,6 +220,11 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
     Route::get('/locataires/{locataire}/edit', [LocataireController::class, 'edit'])->name('locataire.edit');
     Route::put('/locataires/{locataire}', [LocataireController::class, 'update'])->name('locataire.update');
 
+    // Route pour récupérer les agents de recouvrement
+    Route::get('/comptables/recouvrement', [EtatLieuController::class, 'getAgentsRecouvrement'])->name('comptables.recouvrement');
+    // Route pour attribuer un agent à un locataire
+    Route::post('/locataire/assign-comptable', [EtatLieuController::class, 'assignComptable'])->name('locataire.assign.comptable');
+
     // Routes pour la gestion des états des lieux par l'agence 
     Route::get('/locataires/{locataire}/etat', [EtatLieuController::class, 'etat'])->name('locataire.etat');
     Route::post('/locataires/{locataire}/etat', [EtatLieuController::class, 'store'])->name('locataire.etatstore');
@@ -304,7 +313,17 @@ Route::middleware('auth:locataire')->prefix('locataire')->group(function () {
     Route::get('locataire/bien/show/{id}', [LocataireController::class, 'show'])->name('locataire.bien.show');
     Route::get('/profile/edit', [LocataireController::class, 'editProfile'])->name('locataire.edit.profile');
     Route::put('/profile/edit', [LocataireController::class, 'updateProfile'])->name('locataire.update.profile');
+
+    Route::get('/etat-lieu', [EtatLieuLocataireController::class, 'etat_lieu'])->name('locataire.etat_lieu');
+    Route::get('/etat-lieux/{id}/download', [EtatAgentLocataire::class, 'download'])->name('etat-lieu.agent.download');
+    Route::post('/etat-lieu/{id}/confirm-entree', [EtatLieuLocataireController::class, 'confirmEntree'])->name('etat-lieu.confirm-entree');
+    Route::post('/etat-lieu/{id}/confirm-sortie', [EtatLieuLocataireController::class, 'confirmSortie'])->name('etat-lieu.confirm-sortie');
+
+
+    //Les routes de gestion des garanties de loyers impayés
+    Route::get('/warranty',[]);
 });
+
 Route::post('/locataire/envoyer-email-agence', [LocataireController::class, 'sendEmailToAgency'])->name('locataire.sendEmailToAgency');
 
 //routes pour la gestion des comptables 
@@ -322,6 +341,18 @@ Route::middleware('auth:comptable')->prefix('accounting')->group(function () {
     Route::get('/agent/history',[AgentRecouvrementController::class,'history'])->name('accounting.agent.history');
     Route::get('/versement/history',[VersementController::class,'history'])->name('accounting.versement.history');
     Route::get('/locataires/{locataire}/generate-code', [AgentRecouvrementController::class, 'showGenerateCodePage'])->name('locataires.generateCodePage');
+
+    //Les routes des etats des lieux 
+    Route::get('/current/situation',[EtatAgentLocataire::class,'currentSituation'])->name('accounting.current');
+    Route::get('/etat-lieux/create/{locataire_id}', [EtatAgentLocataire::class, 'create'])->name('etat.entree');
+    Route::post('/etat-entree', [EtatAgentLocataire::class, 'store'])->name('etat.entree.store');
+    Route::get('/etat-lieux/{id}/download', [EtatAgentLocataire::class, 'download'])->name('etat-lieux.download');
+    Route::post('/generate-verification-code', [VerificationCodeController::class, 'generateCode'])->name('generate.verification.code');
+    Route::post('/verify-code', [VerificationCodeController::class, 'verifyCode'])->name('verify.code');
+
+    Route::get('/etat-lieux/end/{locataire_id}', [EtatAgentLocataire::class, 'sortie'])->name('etat.sortie');
+    Route::post('/etat-sortie', [EtatAgentLocataire::class, 'storeSortie'])->name('etat.sortie.store');
+    Route::get('/etat-lieux/sortie/{id}/download', [EtatAgentLocataire::class, 'downloadSortie'])->name('etat-lieux.sortie.download');
 });
 // Routes pour la gestion des propriétaires
 Route::middleware('auth:owner')->prefix('owner')->group(function () {

@@ -34,6 +34,7 @@ return new class extends Migration
             $table->string('agence_id')->nullable();$table->foreign('agence_id')->references('code_id')->on('agences')->onDelete('cascade');
             $table->foreignId('bien_id')->nullable()->constrained('biens')->onDelete('set null');
             $table->string('proprietaire_id')->nullable();$table->foreign('proprietaire_id')->references('code_id')->on('proprietaires')->onDelete('cascade');
+            $table->foreignId('comptable_id')->nullable()->constrained('comptables')->onDelete('set null');
             
             $table->timestamps();
         });

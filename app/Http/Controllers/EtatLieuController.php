@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bien;
+use App\Models\Comptable;
 use App\Models\EtatLieu;
 use App\Models\Locataire;
 use App\Models\Visite;
@@ -190,9 +191,6 @@ class EtatLieuController extends Controller
         return redirect()->route('locataire.admin.index')->with('success', 'État des lieux enregistré avec succès.');
     }
 
-
-
-
      //les fonctions des états des lieux par l'administrateur
     public function etatOwner($id)
     {
@@ -278,6 +276,40 @@ class EtatLieuController extends Controller
         $etatLieu->save();
         
         return redirect()->route('locataire.index.owner')->with('success', 'État des lieux enregistré avec succès.');
+    }
+
+    public function getAgentsRecouvrement(Request $request)
+    {
+        $agenceId = $request->query('agence_id');
+        
+        $agents = Comptable::where('user_type', 'Agent de recouvrement')
+                    ->where('agence_id', $agenceId)
+                    ->get(['id', 'name', 'prenom', 'contact']);
+        
+        return response()->json($agents);
+    }
+
+    public function assignComptable(Request $request)
+    {
+        $request->validate([
+            'locataire_id' => 'required|exists:locataires,id',
+            'comptable_id' => 'required|exists:comptables,id'
+        ]);
+        
+        $locataire = Locataire::findOrFail($request->locataire_id);
+        $locataire->comptable_id = $request->comptable_id;
+        $locataire->save();
+        
+        // Charger les informations du comptable
+        $comptable = $locataire->comptable;
+        
+        return response()->json([
+            'success' => 'Agent de recouvrement attribué avec succès!',
+            'comptable' => [
+                'name' => $comptable->name,
+                'prenom' => $comptable->prenom
+            ]
+        ]);
     }
 
 }

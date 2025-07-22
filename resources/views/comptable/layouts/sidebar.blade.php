@@ -104,6 +104,15 @@
           </a>
       </li>
 
+      @if($user->user_type === 'Agent de recouvrement')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('accounting.current') }}">
+                    <i class="mdi mdi-cash menu-icon"></i>
+                    <span class="menu-title">Etat des lieux</span>
+                </a>
+            </li>
+        @endif
+
       {{-- <li class="nav-item">
         <a class="nav-link" href="{{ route('visite.index.agence') }}">
           <i class="mdi mdi-view-headline menu-icon"></i>
