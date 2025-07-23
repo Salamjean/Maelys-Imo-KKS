@@ -386,6 +386,11 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
         Route::put('/locataires/{locataire}', [LocataireOwnerController::class, 'update'])->name('locataire.update.owner');
     });
 
+    // Route pour récupérer les agents de recouvrement
+    Route::get('/comptables/recouvrement', [EtatLieuController::class, 'getAgentsRecouvrementOwner'])->name('comptables.recouvrement.owner');
+    // Route pour attribuer un agent à un locataire
+    Route::post('/locataire/assign-comptable', [EtatLieuController::class, 'assignComptableOwner'])->name('locataire.assign.comptable.owner');
+
     //Les routes de gestion de paiments 
     Route::prefix('payment')->group(function(){
         Route::get('/management',[PaymentManagementController::class, 'indexOwner'])->name('payment.management.owner');

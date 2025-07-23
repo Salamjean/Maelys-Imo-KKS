@@ -292,17 +292,6 @@ public function renewAgence(Request $request)
                                 ->where('statut', 'actif')
                                 ->first();
 
-    if ($abonnementActif) {
-        Log::info('Abonnement actif existant', [
-            'agence_id' => $agence->code_id,
-            'date_fin' => $abonnementActif->date_fin
-        ]);
-        
-        return redirect()->route('agence.dashboard')
-                    ->with('warning', 'Vous avez déjà un abonnement actif valable jusqu\'au ' 
-                           . $abonnementActif->date_fin->format('d/m/Y'));
-    }
-
     // Configuration des plans d'abonnement
     $abonnements = [
         'standard' => [

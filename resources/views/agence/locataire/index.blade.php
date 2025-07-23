@@ -29,52 +29,6 @@
                 </div>
             </div>
 
-            <!-- Modal pour attribuer un agent de recouvrement -->
-            <div class="modal fade" id="assignComptableModal" tabindex="-1" aria-labelledby="assignComptableModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="assignComptableModalLabel">Attribuer un agent de recouvrement</h5>
-                            <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form id="assignComptableForm" method="POST">
-                            @csrf
-                            <div class="modal-body">
-                                <input type="hidden" id="locataireId" name="locataire_id">
-                                <div class="mb-3">
-                                    <label for="comptableSelect" class="form-label">Sélectionnez un agent de recouvrement</label>
-                                    <select class="form-select" id="comptableSelect" name="comptable_id" required>
-                                        <option value="">-- Choisir un agent --</option>
-                                        <!-- Les options seront chargées dynamiquement -->
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                <button type="submit" class="btn btn-primary">Attribuer</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal pour afficher l'état des lieux -->
-            <div class="modal fade" id="etatLieuModal" tabindex="-1" aria-labelledby="etatLieuModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header text-white" style="background-color: #02245b;">
-                            <h5 class="modal-title" id="etatLieuModalLabel">Détails de l'état des lieux</h5>
-                            <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body" id="etatLieuContent">
-                            <!-- Le contenu sera généré dynamiquement par JavaScript -->
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Modal pour changer le statut -->
             <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
@@ -1285,56 +1239,131 @@ $(document).on('click', '.assign-comptable-btn', function() {
 
 // Soumission du formulaire d'attribution
 // Soumission du formulaire d'attribution
-$('#assignComptableForm').on('submit', function(e) {
-    e.preventDefault();
-    const form = $(this);
-    const button = form.find('button[type="submit"]');
-    const locataireId = $('#locataireId').val();
+// Gestion de l'attribution d'agent de recouvrement avec SweetAlert2
+$(document).on('click', '.assign-comptable-btn', function() {
+    const locataireId = $(this).data('locataire-id');
+    const button = $(this);
     
+    // Afficher un indicateur de chargement
     button.prop('disabled', true);
     button.html('<i class="mdi mdi-loading mdi-spin"></i>');
     
+    // Charger la liste des agents de recouvrement
     $.ajax({
-        url: "{{ route('locataire.assign.comptable') }}",
-        type: 'POST',
-        data: form.serialize(),
+        url: "{{ route('comptables.recouvrement') }}",
+        type: 'GET',
+        data: {
+            agence_id: "{{ Auth::guard('agence')->user()->code_id }}"
+        },
         success: function(response) {
-            // Trouver le bouton "Attribuer" correspondant à ce locataire
-            const assignBtn = $(`.assign-comptable-btn[data-locataire-id="${locataireId}"]`);
+            button.prop('disabled', false);
+            button.html('<i class="mdi mdi-account-plus"></i> Attribuer');
             
-            // Remplacer le bouton par le badge avec le nom du comptable
-            assignBtn.replaceWith(`
-                <span class="badge bg-primary">
-                    <i class="mdi mdi-account-check"></i> 
-                    ${response.comptable.name} ${response.comptable.prenom}
-                </span>
-            `);
+            if (response.length === 0) {
+                Swal.fire({
+                    title: 'Aucun agent disponible',
+                    text: 'Aucun agent de recouvrement n\'est disponible dans votre agence.',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
             
+            // Préparer les options pour le select
+            let options = '';
+            response.forEach(comptable => {
+                options += `<option value="${comptable.id}">${comptable.name} ${comptable.prenom} (${comptable.contact})</option>`;
+            });
+            
+            // Afficher le popup SweetAlert2
             Swal.fire({
-                title: 'Succès !',
-                text: response.success,
-                icon: 'success',
-                confirmButtonText: 'OK'
-            }).then(() => {
-                $('#assignComptableModal').modal('hide');
-                // Pas besoin de recharger la page maintenant
+                title: 'Attribuer un agent de recouvrement',
+                html: `
+                    <form id="swalAssignForm">
+                        <input type="hidden" name="locataire_id" value="${locataireId}">
+                        <div class="mb-3">
+                            <label for="swalComptableSelect" class="form-label">Sélectionnez un agent :</label>
+                            <select class="form-select" id="swalComptableSelect" name="comptable_id" required>
+                                <option value="">-- Choisir un agent --</option>
+                                ${options}
+                            </select>
+                        </div>
+                    </form>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Attribuer',
+                cancelButtonText: 'Annuler',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const selectedId = $('#swalComptableSelect').val();
+                    if (!selectedId) {
+                        Swal.showValidationMessage('Veuillez sélectionner un agent');
+                        return false;
+                    }
+                    return {
+                        locataire_id: locataireId,
+                        comptable_id: selectedId
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Envoyer la requête d'attribution
+                    button.prop('disabled', true);
+                    button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+                    
+                    $.ajax({
+                        url: "{{ route('locataire.assign.comptable') }}",
+                        type: 'POST',
+                        data: result.value,
+                        success: function(response) {
+                            // Trouver le bouton "Attribuer" correspondant à ce locataire
+                            const assignBtn = $(`.assign-comptable-btn[data-locataire-id="${locataireId}"]`);
+                            
+                            // Remplacer le bouton par le badge avec le nom du comptable
+                            assignBtn.replaceWith(`
+                                <span class="badge bg-primary text-white" style="font-size: 20px">
+                                    <i class="mdi mdi-account-check"></i> 
+                                    ${response.comptable.name} ${response.comptable.prenom}
+                                </span>
+                            `);
+                            
+                            Swal.fire({
+                                title: 'Succès !',
+                                text: response.success,
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            });
+                        },
+                        error: function(xhr) {
+                            let errorMsg = 'Une erreur est survenue';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            Swal.fire({
+                                title: 'Erreur !',
+                                text: errorMsg,
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        },
+                        complete: function() {
+                            button.prop('disabled', false);
+                            button.html('<i class="mdi mdi-account-plus"></i> Attribuer');
+                        }
+                    });
+                }
             });
         },
-        error: function(xhr) {
-            let errorMsg = 'Une erreur est survenue';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMsg = xhr.responseJSON.message;
-            }
+        error: function() {
+            button.prop('disabled', false);
+            button.html('<i class="mdi mdi-account-plus"></i> Attribuer');
+            
             Swal.fire({
-                title: 'Erreur !',
-                text: errorMsg,
+                title: 'Erreur',
+                text: 'Impossible de charger la liste des agents',
                 icon: 'error',
                 confirmButtonText: 'OK'
             });
-        },
-        complete: function() {
-            button.prop('disabled', false);
-            button.html('Attribuer');
         }
     });
 });
@@ -1346,6 +1375,19 @@ $('#assignComptableForm').on('submit', function(e) {
     border: 1px solid #ddd;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     transition: all 0.3s;
+}
+
+.swal2-popup .form-select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.swal2-popup .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
 }
 
 #searchInput:focus {

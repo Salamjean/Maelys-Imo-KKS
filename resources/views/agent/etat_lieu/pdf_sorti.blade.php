@@ -3,17 +3,18 @@
 <head>
     <meta charset="utf-8">
     <title>État des lieux - {{ $etatLieuSorti->locataire->name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         @page {
             size: A4;
-            margin: 1.5cm;
+            margin: 2cm;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.5;
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
             color: #333;
-            background-color: #fff;
+            background-color: #f7f9fc;
             padding: 20px;
         }
         
@@ -21,25 +22,25 @@
             max-width: 1000px;
             margin: 0 auto;
             background-color: #fff;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 30px;
-            border-radius: 5px;
+            border-radius: 8px;
         }
         
         .header {
             text-align: center;
             margin-bottom: 30px;
-            border-bottom: 2px solid #3498db;
+            border-bottom: 4px solid #3498db;
             padding-bottom: 20px;
         }
         
         .title {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
             color: #2c3e50;
             margin-bottom: 5px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
         
         .subtitle {
@@ -54,16 +55,16 @@
         }
         
         .section {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
         
         .section-title {
             font-weight: bold;
-            font-size: 18px;
+            font-size: 20px;
             color: #2c3e50;
-            border-bottom: 2px solid #3498db;
+            border-bottom: 3px solid #3498db;
             margin-bottom: 15px;
-            padding-bottom: 5px;
+            padding-bottom: 10px;
             display: flex;
             align-items: center;
         }
@@ -71,8 +72,8 @@
         .section-title:before {
             content: "";
             display: inline-block;
-            width: 8px;
-            height: 20px;
+            width: 10px;
+            height: 25px;
             background-color: #3498db;
             margin-right: 10px;
         }
@@ -81,7 +82,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
-            font-size: 14px;
+            font-size: 15px;
         }
         
         table thead {
@@ -90,28 +91,28 @@
         }
         
         table th {
-            padding: 12px 15px;
+            padding: 10px 15px;
             text-align: left;
-            font-weight: 600;
+            font-weight: 700;
         }
         
         table td {
-            padding: 10px 15px;
+            padding: 12px 15px;
             border-bottom: 1px solid #ecf0f1;
             vertical-align: top;
         }
         
         table tr:nth-child(even) {
-            background-color: #f8f9fa;
+            background-color: #f2f2f2;
         }
         
         table tr:hover {
-            background-color: #f1f9ff;
+            background-color: #e1f5fe;
         }
         
         .observation-cell {
             white-space: pre-wrap;
-            line-height: 1.4;
+            line-height: 1.5;
         }
         
         .bad-state {
@@ -153,9 +154,9 @@
         
         .badge {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 14px;
             font-weight: bold;
         }
         
@@ -172,7 +173,7 @@
         .info-box {
             background-color: #f8f9fa;
             border-left: 4px solid #3498db;
-            padding: 15px;
+            padding: 20px;
             margin-bottom: 20px;
             border-radius: 0 4px 4px 0;
         }
@@ -182,9 +183,13 @@
             margin-bottom: 5px;
             color: #2c3e50;
         }
+        
         .signature {
-            page-break-inside: avoid; /* Pour éviter que les signatures ne soient coupées entre deux pages */
-            margin-top: 100px;
+            display: flex;
+            justify-content: space-between;
+            page-break-inside: avoid;
+            margin-top: 80px;
+            font-size: 10px;
             padding-top: 20px;
             border-top: 1px solid #eee;
         }
@@ -193,9 +198,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <!-- Vous pouvez ajouter un logo ici si nécessaire -->
-            <!-- <img src="logo.png" alt="Logo" class="logo"> -->
-            <div class="title">ÉTAT DES LIEUX - SORTIE</div>
+            <!-- Logo optional -->
+            <div class="title">ÉTAT DES LIEUX - ENTRÉE</div>
             <div class="subtitle">Fait le {{ $etatLieuSorti->created_at->format('d/m/Y') }}</div>
         </div>
         
@@ -355,66 +359,28 @@
                         </td>
                         <td class="observation-cell">{{ $chambre['observation_plafond'] ?? '-' }}</td>
                     </tr>
-                    {{-- <tr>
-                        <td>Portes</td>
-                        <td>
-                            <span class="badge {{ isset($chambre['porte']) && $chambre['porte'] === 'bon' ? 'badge-good' : 'badge-bad' }}">
-                                {{ ucfirst($chambre['porte'] ?? 'Non renseigné') }}
-                            </span>
-                        </td>
-                        <td class="observation-cell">{{ $chambre['observation_porte'] ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Fenêtres</td>
-                        <td>
-                            <span class="badge {{ isset($chambre['fenetre']) && $chambre['fenetre'] === 'bon' ? 'badge-good' : 'badge-bad' }}">
-                                {{ ucfirst($chambre['fenetre'] ?? 'Non renseigné') }}
-                            </span>
-                        </td>
-                        <td class="observation-cell">{{ $chambre['observation_fenetre'] ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Interrupteurs</td>
-                        <td>
-                            <span class="badge {{ isset($chambre['interrupteur']) && $chambre['interrupteur'] === 'bon' ? 'badge-good' : 'badge-bad' }}">
-                                {{ ucfirst($chambre['interrupteur'] ?? 'Non renseigné') }}
-                            </span>
-                        </td>
-                        <td class="observation-cell">{{ $chambre['observation_interrupteur'] ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Prises électriques</td>
-                        <td>
-                            <span class="badge {{ isset($chambre['prise']) && $chambre['prise'] === 'bon' ? 'badge-good' : 'badge-bad' }}">
-                                {{ ucfirst($chambre['prise'] ?? 'Non renseigné') }}
-                            </span>
-                        </td>
-                        <td class="observation-cell">{{ $chambre['observation_prise'] ?? '-' }}</td>
-                    </tr> --}}
                 </tbody>
             </table>
         </div>
         @endforeach
         
-         <div class="signature">
-            <div style="width: 100%; display: flex; justify-content: space-between; margin-top: 80px;">
-                <!-- Signature locataire -->
-                <div style="width: 45%; text-align: center;">
-                    <p style="margin-bottom: 60px;">Signature du locataire :</p>
-                    <p style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 5px;">
-                        {{ $etatLieuSorti->locataire->name }} {{ $etatLieuSorti->locataire->prenom }}
-                    </p>
-                    <p style="margin-top: 10px;">Date : {{ $etatLieuSorti->created_at->format('d/m/Y') }}</p>
-                </div>
-                
-                <!-- Signature propriétaire/gestionnaire -->
-                <div style="width: 45%; text-align: center;">
-                    <p style="margin-bottom: 60px;">Signature du propriétaire/gestionnaire :</p>
-                    <p style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 5px;">
-                        {{ Auth::user()->name }}
-                    </p>
-                    <p style="margin-top: 10px;">Date : {{ now()->format('d/m/Y') }}</p>
-                </div>
+        <div class="signature" style="display: flex; justify-content: space-between; margin-top: 80px;">
+            <!-- Signature locataire -->
+            <div style="flex: 1; text-align: center;">
+                <p style="margin-bottom: 60px;">Signature du locataire :</p>
+                <p style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 5px;">
+                    {{ $etatLieuSorti->locataire->name }} {{ $etatLieuSorti->locataire->prenom }}
+                </p>
+                <p style="margin-top: 10px;">Date : {{ $etatLieuSorti->created_at->format('d/m/Y') }}</p>
+            </div>
+
+            <!-- Signature propriétaire/gestionnaire -->
+            <div style="flex: 1; text-align: center;">
+                <p style="margin-bottom: 60px;">Signature du propriétaire/gestionnaire :</p>
+                <p style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 5px;">
+                    {{ Auth::user()->name }} {{ Auth::user()->prenom }}
+                </p>
+                <p style="margin-top: 10px;">Date : {{ now()->format('d/m/Y') }}</p>
             </div>
         </div>
         

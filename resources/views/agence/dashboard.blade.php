@@ -1,63 +1,163 @@
 @extends('agence.layouts.template')
 @section('title', 'Dashboard')
 @section('content')
+<style>
+    .text-gradient {
+        background: linear-gradient(45deg, #4e73df, #1cc88a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+    }
+    
+    .text-gradient-primary {
+        color: #4e73df;
+    }
+    
+    .text-gradient-success {
+        color: #1cc88a;
+    }
+    
+    .text-gradient-info {
+        color: #36b9cc;
+    }
+    
+    .text-gradient-warning {
+        color: #f6c23e;
+    }
+    
+    .section-title {
+        position: relative;
+        padding-bottom: 10px;
+    }
+    
+    .section-title:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(45deg, #4e73df, #1cc88a);
+        border-radius: 3px;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .nav-pills-custom .nav-link {
+        color: #6c757d;
+        border-radius: 20px;
+        margin: 0 5px;
+        padding: 5px 15px;
+        transition: all 0.3s;
+    }
+    
+    .nav-pills-custom .nav-link.active {
+        background: linear-gradient(45deg, #4e73df, #1cc88a);
+        color: white;
+        box-shadow: 0 4px 15px rgba(78, 115, 223, 0.3);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+</style>
 <div class="main-panel">
   <div >
     <!-- row end -->
-    <h2 class="text-center mb-4">Total de bien publié sur la plateforme</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="" style="color: #02245b; text-align:center">Tableau de Bord</h2>
+      <div class="date-display bg-light p-2 rounded">
+        <span id="current-date" class="text-muted"></span>
+      </div>
+    </div>
+
+    <!-- Cartes Statistiques -->
+    <h4 class="section-title mb-4">Total de biens publiés sur la plateforme</h4>
     <div class="row">
-      <div class="col-md-3 grid-margin stretch-card">
-        <div class="card bg-facebook d-flex align-items-center">
-          <div class="card-body py-5">
-            <div class="d-flex flex-row align-items-center flex-wrap justify-content-md-center justify-content-xl-start py-1">
-              <i class="mdi mdi-home-account text-white icon-lg"></i>
-              <div class="ml-3 ml-md-0 ml-xl-3">
-                <h5 class="text-white font-weight-bold">Total d'appartement</h5>
-                <h3 class="text-white font-weight-bold">{{ $totalAppartements }}</h3>
-                <p class="mt-2 text-white card-text">Sur notre plateforme</p>
+      <!-- Carte Appartement -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow-sm h-100 py-2" style="background-color:#02245b">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-white text-uppercase mb-1">Appartements</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800 text-white text-center" style="font-size: 50px">{{ $totalAppartements }}</div>
               </div>
+              <div class="col-auto">
+                <i class="mdi mdi-home-account text-white icon-lg"></i>
+              </div>
+            </div>
+            <div class="mt-2">
+              <span class="badge badge-pill badge-light">Sur notre plateforme</span>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-md-3 grid-margin stretch-card">
-        <div class="card bg-google d-flex align-items-center">
-          <div class="card-body py-5">
-            <div class="d-flex flex-row align-items-center flex-wrap justify-content-md-center justify-content-xl-start py-1">
-              <i class="mdi mdi-home-variant text-white icon-lg"></i>
-              <div class="ml-3 ml-md-0 ml-xl-3">
-                <h5 class="text-white font-weight-bold">Total de maison</h5>
-                <h3 class="text-white font-weight-bold">{{ $totalMaisons }}</h3>
-                <p class="mt-2 text-white card-text">Sur notre plateforme</p>
+
+      <!-- Carte Maison -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow-sm h-100 py-2" style="background-color: #00d082">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-white text-uppercase mb-1">Maisons</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800 text-white text-center" style="font-size: 50px">{{ $totalMaisons }}</div>
               </div>
+              <div class="col-auto">
+                <i class="mdi mdi-home-variant text-white icon-lg"></i>
+              </div>
+            </div>
+            <div class="mt-2">
+              <span class="badge badge-pill badge-light">Sur notre plateforme</span>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-md-3 grid-margin stretch-card">
-        <div class="card bg-twitter d-flex align-items-center">
-          <div class="card-body py-5">
-            <div class="d-flex flex-row align-items-center flex-wrap justify-content-md-center justify-content-xl-start py-1">
-              <i class="mdi mdi-home text-white icon-lg"></i>
-              <div class="ml-3 ml-md-0 ml-xl-3">
-                <h5 class="text-white font-weight-bold">Total de magasin</h5>
-                <h3 class="text-white font-weight-bold">{{ $totalMagasins }}</h3>
-                <p class="mt-2 text-white card-text">Sur notre plateforme</p>
+
+      <!-- Carte Magasin -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow-sm h-100 py-2" style="background-color: #1cbccd">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold  text-uppercase mb-1 text-white">Bureaux</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800 text-white text-center" style="font-size: 50px">{{ $totalMagasins }}</div>
               </div>
+              <div class="col-auto">
+                <i class="mdi mdi-home icon-lg text-white"></i>
+              </div>
+            </div>
+            <div class="mt-2">
+              <span class="badge badge-pill badge-light">Sur notre plateforme</span>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-md-3 grid-margin stretch-card">
-        <div class="card bg-twitter d-flex align-items-center">
-          <div class="card-body py-5">
-            <div class="d-flex flex-row align-items-center flex-wrap justify-content-md-center justify-content-xl-start py-1">
-              <i class="mdi mdi-cash text-white icon-lg"></i>
-              <div class="ml-3 ml-md-0 ml-xl-3">
-                <h5 class="text-white font-weight-bold">Solde disponible</h5>
-                <h3 class="text-white font-weight-bold">{{ $soldeDisponible }}</h3>
-                <p class="mt-2 text-white card-text">Sur la plateforme</p>
+
+      <!-- Carte Solde -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow-sm h-100 py-2 text-white" style="background-color: #ff5e14; ">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-uppercase mb-1 text-white">Solde disponible</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800 text-white text-center" style="font-size: 50px">{{ $soldeDisponible }}</div>
               </div>
+              <div class="col-auto">
+                <i class="mdi mdi-cash  icon-lg"></i>
+              </div>
+            </div>
+            <div class="mt-2">
+              <span class="badge badge-pill badge-light">Sur la plateforme</span>
             </div>
           </div>
         </div>

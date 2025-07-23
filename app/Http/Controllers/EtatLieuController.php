@@ -288,8 +288,40 @@ class EtatLieuController extends Controller
         
         return response()->json($agents);
     }
+    public function getAgentsRecouvrementOwner(Request $request)
+    {
+        $agenceId = $request->query('proprietaire_id');
+        
+        $agents = Comptable::where('user_type', 'Agent de recouvrement')
+                    ->where('proprietaire_id', $agenceId)
+                    ->get(['id', 'name', 'prenom', 'contact']);
+        
+        return response()->json($agents);
+    }
 
     public function assignComptable(Request $request)
+    {
+        $request->validate([
+            'locataire_id' => 'required|exists:locataires,id',
+            'comptable_id' => 'required|exists:comptables,id'
+        ]);
+        
+        $locataire = Locataire::findOrFail($request->locataire_id);
+        $locataire->comptable_id = $request->comptable_id;
+        $locataire->save();
+        
+        // Charger les informations du comptable
+        $comptable = $locataire->comptable;
+        
+        return response()->json([
+            'success' => 'Agent de recouvrement attribué avec succès!',
+            'comptable' => [
+                'name' => $comptable->name,
+                'prenom' => $comptable->prenom
+            ]
+        ]);
+    }
+    public function assignComptableOwner(Request $request)
     {
         $request->validate([
             'locataire_id' => 'required|exists:locataires,id',
