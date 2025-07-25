@@ -37,6 +37,9 @@ class ProprietaireController extends Controller
         }
    public function dashboard()
     {
+        if (!auth('owner')->check()) {
+            return redirect()->route('owner.login');
+       }
         $ownerId = Auth::guard('owner')->user()->code_id;
      // Demandes de visite en attente
        $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')

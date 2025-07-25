@@ -127,6 +127,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/locataires/{locataire}/etat', [EtatLieuController::class, 'etatAdmin'])->name('locataire.admin.etat');
     Route::post('/locataires/{locataire}/etat', [EtatLieuController::class, 'storeAdmin'])->name('locataire.admin.etatstore');
     
+    // Route pour récupérer les agents de recouvrement
+    Route::get('/comptables/recouvrement', [EtatLieuController::class, 'getAgentsRecouvrementAdmin'])->name('comptables.recouvrement.admin');
+    // Route pour attribuer un agent à un locataire
+    Route::post('/locataire/assign-comptable', [EtatLieuController::class, 'assignComptableAdmin'])->name('locataire.assign.comptable.admin');
 
     // Routes pour la gestion des visites par l'administrateur
     Route::prefix('visit')->group(function(){

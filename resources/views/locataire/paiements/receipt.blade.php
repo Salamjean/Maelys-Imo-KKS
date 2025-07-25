@@ -157,16 +157,16 @@
             <p>
                 Je soussigné(e) 
                 @if($paiement->bien->agence_id && $paiement->bien->agence)
-    {{ $paiement->bien->agence->name }}, Agence
-@elseif($paiement->bien->proprietaire_id && $paiement->bien->proprietaire)
-    {{ $paiement->bien->proprietaire->name.' '.$paiement->bien->proprietaire->prenom }}, Propriétaire
-@else
-    Maelys-imo, Agence
-@endif/
+                    {{ $paiement->bien->agence->name }}, Agence
+                @elseif($paiement->bien->proprietaire_id && $paiement->bien->proprietaire)
+                    {{ $paiement->bien->proprietaire->name.' '.$paiement->bien->proprietaire->prenom }}, Propriétaire
+                @else
+                    Maelys-imo, Agence
+                @endif/
                 bailleur du bien ci-dessus désigné, déclare avoir reçu de :
             </p>
             <div class="highlight-box">
-                <strong>Monsieur/Madame :</strong> {{ $paiement->bien->locataire->name.' '.$paiement->bien->locataire->prenom ?? 'Maelys-imo' }}<br>
+                <strong>Monsieur/Madame :</strong> {{ $paiement->bien->locataire ? $paiement->bien->locataire->name . ' ' . $paiement->bien->locataire->prenom : 'il n\'est plus locataire'  }}<br>
                 <strong>Montant :</strong> <span class="amount">{{ number_format($paiement->montant, 0, ',', ' ') }} FCFA</span><br>
                 <strong>Pour :</strong> Paiement du loyer et charges pour {{ \Carbon\Carbon::parse($paiement->mois_couvert)->translatedFormat('F Y') }}
             </div>

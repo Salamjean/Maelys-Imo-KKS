@@ -22,6 +22,7 @@
                     <thead>
                         <tr class="text-center">
                             <th>Locataire</th>
+                            <th>Reference</th>
                             <th>Mois couvert</th>
                             <th>Montant</th>
                             <th>Date Paiement</th>
@@ -37,6 +38,7 @@
                                     <td>
                                         {{ $paiement->bien->locataire ? $paiement->bien->locataire->name . ' ' . $paiement->bien->locataire->prenom : 'il n\'est plus locataire' }}
                                     </td>
+                                    <td><strong>{{ $paiement->reference ?? 'pas de refrence'}} </strong></td>
                                     <td class="text-center">{{ \Carbon\Carbon::parse($paiement->mois_couvert)->translatedFormat('F Y') }}</td>
                                     <td class="text-center">{{ number_format($paiement->montant, 0, ',', ' ') }} FCFA</td>
                                     <td class="text-center">{{ \Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y') }}</td>
@@ -73,7 +75,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">Aucun paiement effectué.</td>
+                                    <td colspan="9" class="text-center">Aucun paiement effectué.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

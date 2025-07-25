@@ -81,7 +81,7 @@
         /* Cartes d'abonnement */
         .subscription-options {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -269,16 +269,14 @@
 
             <div class="subscription-options">
                 <!-- Standard -->
-                <div class="subscription-card standard-card" onclick="selectSubscription(1, 100, 'standard')">
-                    <div class="highlight">Économisez 20%</div>
+                <div class="subscription-card standard-card" onclick="selectSubscription(1, 10000, 'standard')">
                     <h2>1 Mois</h2>
                     <div class="price">
                         10.000 Fcfa
                         <span>10.000 Fcfa/mois</span>
                     </div>
                     <ul class="features">
-                        <li>Gestion jusqu'à 20 biens</li>
-                        <li>5 comptes agents inclus</li>
+                        <li>Gestion jusqu'à 15 biens</li>
                         <li>Support technique standard</li>
                         <li>Tableau de bord de base</li>
                     </ul>
@@ -292,8 +290,34 @@
                         <span>8.000 Fcfa/mois</span>
                     </div>
                     <ul class="features">
-                        <li>Gestion jusqu'à 50 biens</li>
-                        <li>10 comptes agents inclus</li>
+                        <li>Gestion jusqu'à 15 biens</li>
+                        <li>Support prioritaire</li>
+                        <li>Statistiques avancées</li>
+                    </ul>
+                </div>
+
+                <div class="subscription-card standard-card" onclick="selectSubscription(6, 48000, 'standard')">
+                    <div class="highlight">Économisez 20%</div>
+                    <h2>6 Mois</h2>
+                    <div class="price">
+                        48.0000 Fcfa
+                        <span>8.000 Fcfa/mois</span>
+                    </div>
+                    <ul class="features">
+                        <li>Gestion jusqu'à 15 biens</li>
+                        <li>Support prioritaire</li>
+                        <li>Statistiques avancées</li>
+                    </ul>
+                </div>
+                <div class="subscription-card standard-card" onclick="selectSubscription(12, 100000, 'standard')">
+                    <div class="highlight">Économisez 20%</div>
+                    <h2>1 an</h2>
+                    <div class="price">
+                        100.0000 Fcfa
+                        <span>8.000 Fcfa/mois</span>
+                    </div>
+                    <ul class="features">
+                        <li>Gestion jusqu'à 15 biens</li>
                         <li>Support prioritaire</li>
                         <li>Statistiques avancées</li>
                     </ul>

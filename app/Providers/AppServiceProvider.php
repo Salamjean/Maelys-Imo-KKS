@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Interfaces\SMSProviderInterface;
+use App\Services\OrangeSMSService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;

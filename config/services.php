@@ -40,5 +40,12 @@ return [
     'site_id' => env('CINETPAY_SITE_ID'),
     'mode' => env('CINETPAY_MODE', 'TEST')
     ],
+    
+    'orange' => [
+        'client_id' => env('ORANGE_CLIENT_ID'),
+        'client_secret' => env('ORANGE_CLIENT_SECRET'),
+        'auth_header' => env('ORANGE_AUTH_HEADER'),
+        'sender_number' => env('ORANGE_SENDER_NUMBER'),
+    ],
 
 ];

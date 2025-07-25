@@ -79,17 +79,17 @@ class AgenceReversementController extends Controller
                             $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
                         })
                         ->count();
-        $proprietaireId = Auth::user()->code_id;
+        $agenceId = Auth::user()->code_id;
         
-        $ribs = Rib::where('proprietaire_id', $proprietaireId)
+        $ribs = Rib::where('agence_id', $agenceId)
             ->orderBy('created_at', 'desc')
             ->get();
         
-        $soldeDisponible = $this->calculerSoldeDisponible($proprietaireId);
+        $soldeDisponible = $this->calculerSoldeDisponible($agenceId);
         
         // Récupérer les 3 derniers reversements
         $lastReversements = Reversement::with('rib')
-            ->where('proprietaire_id', $proprietaireId)
+            ->where('agence_id', $agenceId)
             ->orderBy('created_at', 'desc')
             ->take(2)
             ->get();
@@ -116,8 +116,8 @@ class AgenceReversementController extends Controller
 
     public function store(Request $request)
     {
-        $proprietaireId = Auth::user()->code_id;
-        $soldeDisponible = $this->calculerSoldeDisponible($proprietaireId);
+        $agenceId = Auth::user()->code_id;
+        $soldeDisponible = $this->calculerSoldeDisponible($agenceId);
         
         $request->validate([
             'banque' => 'required|exists:ribs,id',
@@ -153,12 +153,12 @@ class AgenceReversementController extends Controller
             'recu_paiement' => $recuPath,
             'statut' => 'En attente',
             'rib_id' => $request->banque,
-            'proprietaire_id' => $proprietaireId,
+            'agence_id' => $agenceId,
         ]);
 
         return redirect()->route('reversement.create.agence')
             ->with('success', 'Reversement effectué avec succès! Référence: ' . $reference)
-            ->with('solde', $this->calculerSoldeDisponible($proprietaireId));
+            ->with('solde', $this->calculerSoldeDisponible($agenceId));
     }
 
     public function getRib($id)
