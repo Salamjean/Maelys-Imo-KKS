@@ -10,8 +10,6 @@ use App\Models\Bien;
 use App\Models\Visite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class VisiteController extends Controller
@@ -144,88 +142,40 @@ class VisiteController extends Controller
                         ->paginate(10);
         return view('admin.visites.done', compact('visites', 'pendingVisits'));
     }
-
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'bien_id' => 'required|exists:biens,id',
-        'nom' => 'required|string|max:255',
-        'email' => 'required|email|max:255',
-        'telephone' => 'required|string|max:20',
-        'date_visite' => 'required|date|after_or_equal:today',
-        'heure_visite' => 'required',
-        'message' => 'nullable|string|max:50',
-        'statut' => 'in:en attente,confirmée,effectuée,annulée'
-    ],[
-        'bien_id.required' => 'Le bien est obligatoire.',
-        'bien_id.exists' => 'Le bien sélectionné n\'existe pas.',
-        'nom.required' => 'Le nom est obligatoire.',
-        'email.required' => 'L\'email est obligatoire.',
-        'telephone.required' => 'Le téléphone est obligatoire.',
-        'date_visite.required' => 'La date de visite est obligatoire.',
-        'date_visite.after_or_equal' => 'La date de visite doit être aujourd\'hui ou une date future.',
-        'heure_visite.required' => 'L\'heure de visite est obligatoire.',
-        'message.max' => 'Le message ne peut pas dépasser 50 caractères.'
-    ]);
-
-    // Créer la visite
-    $visite = Visite::create($validated);
-
-    // Récupérer les infos du bien
-    $bien = Bien::find($validated['bien_id']);
-
-    // Envoyer un email de confirmation
-    // Mail::to($validated['email'])->send(new VisiteConfirmation($visite, $bien));
-
-    // Envoyer un SMS via l'API Orange
-    $this->sendOrangeSMS(
-        $validated['telephone'],
-        "Votre demande de visite pour le bien a été enregistrée Merci!"
-    );
-
-    return redirect()->route('home')->with('success', 'Votre demande de visite a été enregistrée avec succès. Nous vous contacterons pour confirmation.');
-}
-
-private function sendOrangeSMS($recipient, $message)
-{
-    try {
-        // Récupérer le token d'accès
-        $tokenResponse = Http::withHeaders([
-            'Authorization' => 'Basic ' . env('ORANGE_SMS_AUTHORIZATION_HEADER'),
-            'Content-Type' => 'application/x-www-form-urlencoded'
-        ])->asForm()->post('https://api.orange.com/oauth/v2/token', [
-            'grant_type' => 'client_credentials',
-            'client_id' => env('ORANGE_SMS_CLIENT_ID'),
-            'client_secret' => env('ORANGE_SMS_CLIENT_SECRET')
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'bien_id' => 'required|exists:biens,id',
+            'nom' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'telephone' => 'required|string|max:20',
+            'date_visite' => 'required|date|after_or_equal:today',
+            'heure_visite' => 'required',
+            'message' => 'nullable|string|max:50',
+            'statut' => 'in:en attente,confirmée,effectuée,annulée'
+        ],[
+            'bien_id.required' => 'Le bien est obligatoire.',
+            'bien_id.exists' => 'Le bien sélectionné n\'existe pas.',
+            'nom.required' => 'Le nom est obligatoire.',
+            'email.required' => 'L\'email est obligatoire.',
+            'telephone.required' => 'Le téléphone est obligatoire.',
+            'date_visite.required' => 'La date de visite est obligatoire.',
+            'date_visite.after_or_equal' => 'La date de visite doit être aujourd\'hui ou une date future.',
+            'heure_visite.required' => 'L\'heure de visite est obligatoire.',
+            'message.max' => 'Le message ne peut pas dépasser 50 caractères.'
         ]);
 
-        if ($tokenResponse->successful()) {
-            $accessToken = $tokenResponse->json()['access_token'];
-            
-            // Envoyer le SMS
-            $smsResponse = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $accessToken,
-                'Content-Type' => 'application/json'
-            ])->post('https://api.orange.com/smsmessaging/v1/outbound/' . urlencode(env('ORANGE_SMS_SENDER_NUMBER')) . '/requests', [
-                'outboundSMSMessageRequest' => [
-                    'address' => 'tel:+' . preg_replace('/[^0-9]/', '', $recipient),
-                    'senderAddress' => 'tel:+' . env('ORANGE_SMS_SENDER_NUMBER'),
-                    'outboundSMSTextMessage' => [
-                        'message' => $message
-                    ]
-                ]
-            ]);
+        // Créer la visite
+        $visite = Visite::create($validated);
 
-            if (!$smsResponse->successful()) {
-                Log::error('Échec de l\'envoi du SMS Orange: ' . $smsResponse->body());
-            }
-        } else {
-            Log::error('Échec de l\'obtention du token Orange SMS: ' . $tokenResponse->body());
-        }
-    } catch (\Exception $e) {
-        Log::error('Erreur lors de l\'envoi du SMS Orange: ' . $e->getMessage());
+        // Récupérer les infos du bien
+        $bien = Bien::find($validated['bien_id']);
+
+        // Envoyer un email de confirmation (optionnel)
+        Mail::to($validated['email'])->send(new VisiteConfirmation($visite, $bien));
+
+        return redirect()->route('home')->with('success', 'Votre demande de visite a été enregistrée avec succès. Nous vous contacterons pour confirmation.');
     }
-}
 
     public function confirm(Visite $visite)
     {
