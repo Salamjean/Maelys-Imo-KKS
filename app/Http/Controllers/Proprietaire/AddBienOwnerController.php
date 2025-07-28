@@ -439,6 +439,7 @@ public function attribuerBien(Request $request, Locataire $locataire)
     // Mettre à jour le locataire
     $locataire->bien_id = $request->bien_id;
     $locataire->proprietaire_id = Auth::user()->code_id;
+    $locataire->agence_id = null;
     $locataire->status = 'Actif';
     $locataire->motif = null;
     $locataire->save();

@@ -825,6 +825,8 @@ public function attribuerBien(Request $request, Locataire $locataire)
     // Mettre à jour le locataire
     $locataire->bien_id = $request->bien_id;
     $locataire->status = 'Actif';
+    $locataire->agence_id = null;
+    $locataire->proprietaire_id = null;
     $locataire->motif = null;
     $locataire->save();
 
@@ -859,6 +861,7 @@ public function attribuerBienAgence(Request $request, Locataire $locataire)
     // Mettre à jour le locataire
     $locataire->bien_id = $request->bien_id;
     $locataire->agence_id = Auth::user()->code_id;
+    $locataire->proprietaire_id = null;
     $locataire->status = 'Actif';
     $locataire->motif = null;
     $locataire->save();

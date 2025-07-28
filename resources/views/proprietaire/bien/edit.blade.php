@@ -110,7 +110,7 @@
                 <fieldset style="border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
                     <legend style="font-size: 1.5em; font-weight: bold;">Conditions</legend>
                     <div class="row">
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Loyer mensuel <span style="color: red">*</span></label>
                                 <div class="input-group">
@@ -123,7 +123,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Avance <span style="color: red">*</span></label>
                                 <div class="input-group">
@@ -139,7 +139,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Caution <span style="color: red">*</span></label>
                                 <div class="input-group">
@@ -155,16 +155,9 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label>Frais d'agence</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" value="1" name="frais" 
-                                           style="border: 1px solid black; border-radius: 5px;" readonly>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>Montant total</label>
                                 <div class="input-group">
@@ -174,7 +167,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>Date de paiement <span style="color: red">*</span></label>
                                 <input type="number" 
@@ -327,9 +320,8 @@ $(document).ready(function() {
         const loyer = parseFloat($('input[name="prix"]').val()) || 0;
         const avance = parseFloat($('input[name="avance"]').val()) || 0;
         const caution = parseFloat($('input[name="caution"]').val()) || 0;
-        const frais = 1;
         
-        const montantTotal = loyer * (avance + caution + frais);
+        const montantTotal = loyer * (avance + caution);
         
         $('input[name="montant_total"]').val(montantTotal.toFixed(0));
     }
