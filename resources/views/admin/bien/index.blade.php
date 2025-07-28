@@ -88,8 +88,8 @@
                     <th>Type</th>
                     <th>Superficie (m²)</th>
                     <th>Localisation</th>
-                    <th>Chambres</th>
-                    <th>Toilettes</th>
+                    <th>Pièce</th>
+                    <th>Toilette</th>
                     <th>Garage</th>
                     <th>Type d'utilisation</th>
                     <th>Avance</th>

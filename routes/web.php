@@ -516,6 +516,9 @@ Route::post('/validate-owner-account/{email}', [ProprietaireController::class, '
 
  //routes de gestions des onglets du menus 
 Route::get('/maelys/about',[HomePageController::class,'about'])->name('maelys.about');
+Route::get('/privacy-policy',[HomePageController::class,'privacy'])->name('maelys.privacy');
+Route::get('/contact',[HomePageController::class,'contact'])->name('maelys.contact');
+Route::post('/contact', [HomePageController::class, 'send'])->name('contact.send');
 Route::get('/maelys/service',[HomePageController::class,'service'])->name('maelys.service');
 Route::get('/maelys/abonnement',[HomePageController::class,'abonnement'])->name('maelys.abonnement');
 Route::get('/biens/appartemnets',[BienController::class, 'appartements'])->name('bien.appartement');

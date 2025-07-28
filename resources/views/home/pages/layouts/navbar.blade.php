@@ -50,6 +50,7 @@
              </div>
          </div>
         <a href="{{ route('maelys.abonnement') }}" class="nav-item nav-link">Abonnement</a>
+        <a href="{{ route('maelys.contact') }}" class="nav-item nav-link">Contactez-nous</a>
      </div>
     <div style="margin-left: 20px;" class="navbar-nav ms-auto p-4 p-lg-0 gap-2">
          <div class="d-flex align-items-center">

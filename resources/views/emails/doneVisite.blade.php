@@ -111,9 +111,6 @@
             </div>
             
             <p>Merci pour votre confiance et à très bientôt,</p>
-            
-            <p>Cordialement,<br>
-            <strong>L'équipe de votre agence immobilière</strong></p>
         </div>
         
         <div class="footer">

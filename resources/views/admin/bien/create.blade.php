@@ -68,7 +68,7 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Nombre de chambres <span style="color: red">*</span></label>
+                                <label>Nombre de pièces <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de chambres" value="{{ old('nombre_de_chambres') }}" name="nombre_de_chambres" style="border: 1px solid black; border-radius: 5px;">
                                 @error('nombre_de_chambres')
                                     <div class="alert alert-danger">{{ $message }}</div>

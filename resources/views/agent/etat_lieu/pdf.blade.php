@@ -322,7 +322,7 @@
         
         @foreach($etatLieu->chambres as $index => $chambre)
         <div class="section">
-            <div class="section-title">CHAMBRE {{ $index + 1 }}</div>
+            <div class="section-title">PIECE {{ $index + 1 }}</div>
             <table>
                 <thead>
                     <tr>

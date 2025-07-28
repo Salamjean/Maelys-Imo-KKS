@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactMail;
 use App\Models\Abonnement;
 use App\Models\Agence;
 use App\Models\Proprietaire;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,6 +21,25 @@ class HomePageController extends Controller
 {
     public function about(){
         return view('home.about');
+    }
+    public function contact(){
+        return view('home.contact');
+    }
+    public function send(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        Mail::to('contact@maelysimo.com')->send(new ContactMail($validated));
+
+        return redirect()->route('maelys.contact')->with('success', 'Votre message a été envoyé avec succès!');
+    }
+    public function privacy(){
+        return view('home.privacy');
     }
     public function service(){
         return view('home.service');

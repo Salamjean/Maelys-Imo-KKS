@@ -33,9 +33,6 @@
         </div>
     </div>
 </div>
-@endsection
-
-@section('styles')
 <style>
     .verification-code {
         font-size: 2rem;

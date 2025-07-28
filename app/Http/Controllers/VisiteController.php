@@ -217,31 +217,31 @@ class VisiteController extends Controller
     Mail::to($validated['email'])->send(new VisiteConfirmation($visite, $bien));
 
     // Envoyer un SMS
-    try {
-        $phoneNumber = $this->formatIvorianNumberForTwilio($validated['telephone']);
+    // try {
+    //     $phoneNumber = $this->formatIvorianNumberForTwilio($validated['telephone']);
         
-        $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+    //     $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
         
-        $httpClient = new \Twilio\Http\CurlClient([
-            CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-        ]);
-        $twilio->setHttpClient($httpClient);
+    //     $httpClient = new \Twilio\Http\CurlClient([
+    //         CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+    //         CURLOPT_SSL_VERIFYPEER => true,
+    //         CURLOPT_SSL_VERIFYHOST => 2,
+    //     ]);
+    //     $twilio->setHttpClient($httpClient);
 
-        $message = $twilio->messages->create(
-            $phoneNumber,
-            [
-                'from' => env('TWILIO_PHONE_NUMBER'),
-                'body' => "Bonjour {$validated['nom']}, votre visite pour {$bien->type} est confirmée."
-            ]
-        );
+    //     $message = $twilio->messages->create(
+    //         $phoneNumber,
+    //         [
+    //             'from' => env('TWILIO_PHONE_NUMBER'),
+    //             'body' => "Bonjour {$validated['nom']}, votre visite pour {$bien->type} est confirmée."
+    //         ]
+    //     );
 
-        Log::info("SMS envoyé à $phoneNumber");
+    //     Log::info("SMS envoyé à $phoneNumber");
 
-    } catch (TwilioException $e) {
-        Log::error("Erreur Twilio: " . $e->getMessage());
-    }
+    // } catch (TwilioException $e) {
+    //     Log::error("Erreur Twilio: " . $e->getMessage());
+    // }
 
     return redirect()->route('home')->with('success', 'Demande enregistrée!');
 }
@@ -593,6 +593,44 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
 
     // Envoyer un email de confirmation
     Mail::to($visite->email)->send(new ConfirmVisite($visite, $visite->bien));
+    // Envoyer un SMS de confirmation
+    try {
+        $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+        
+        // Configurer SSL (si nécessaire)
+        $httpClient = new \Twilio\Http\CurlClient([
+            CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+        ]);
+        $twilio->setHttpClient($httpClient);
+
+        // Formater le numéro
+        $phoneNumber = $this->formatIvorianNumberForTwilio($visite->telephone);
+
+        // Envoyer le SMS
+        $message = $twilio->messages->create(
+            $phoneNumber,
+            [
+                'from' => env('TWILIO_PHONE_NUMBER'), // ou un Alphanumeric Sender ID
+                'body' => "Bonjour {$visite->nom}, votre visite du {$visite->date_visite} à {$visite->heure_visite} est confirmée. Bien: {$visite->bien->type}"
+            ]
+        );
+
+        // Logger le succès
+        Log::channel('sms')->info("SMS de confirmation envoyé", [
+            'visite_id' => $visite->id,
+            'to' => $phoneNumber,
+            'sid' => $message->sid
+        ]);
+
+    } catch (TwilioException $e) {
+        Log::channel('sms')->error("Erreur SMS confirmation", [
+            'visite_id' => $visite->id,
+            'error' => $e->getMessage(),
+            'code' => $e->getCode()
+        ]);
+    }
 
     return response()->json(['success' => true]);
 }
@@ -606,6 +644,55 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
         // Envoyer un email d'effectuation 
         Mail::to($visite->email)->send(new DoneVisite($visite, $visite->bien));
 
+        // Envoyer un SMS de notification
+        try {
+            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+            
+            // Configuration SSL (obligatoire en production)
+            $httpClient = new \Twilio\Http\CurlClient([
+                CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+            $twilio->setHttpClient($httpClient);
+
+            // Formater le numéro (méthode réutilisée depuis votre code)
+            $phoneNumber = $this->formatIvorianNumberForTwilio($visite->telephone);
+
+            // Contenu du SMS plus complet
+            $smsContent = "Merci {$visite->nom} d'avoir visité notre bien \"{$visite->bien->type}\". "
+                    . "Votre avis nous intéresse ! Répondez à ce SMS pour nous faire part de vos impressions.";
+
+            $message = $twilio->messages->create(
+                $phoneNumber,
+                [
+                    'from' => env('TWILIO_PHONE_NUMBER'), // Ou 'MONAGENCE' pour Alphanumeric Sender ID
+                    'body' => $smsContent,
+                ]
+            );
+
+            // Log de succès structuré
+            Log::channel('sms')->info('SMS visite effectuée envoyé', [
+                'visite_id' => $visite->id,
+                'numero' => $phoneNumber,
+                'message_sid' => $message->sid,
+                'timestamp' => now()->toDateTimeString()
+            ]);
+
+        } catch (TwilioException $e) {
+            Log::channel('sms')->error('Erreur Twilio', [
+                'visite_id' => $visite->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'stack' => $e->getTraceAsString()
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'sms_sent' => isset($message) ? true : false
+        ]);
+
         return response()->json(['success' => true]);
     }
 
@@ -617,6 +704,57 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
 
     // Envoyer un email d'annulation 
     Mail::to($visite->email)->send(new CancelVisite($visite, $visite->bien));
+
+        // Envoyer un SMS d'annulation
+        try {
+            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+            
+            // Configuration SSL
+            $httpClient = new \Twilio\Http\CurlClient([
+                CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+            $twilio->setHttpClient($httpClient);
+
+            // Formater le numéro
+            $phoneNumber = $this->formatIvorianNumberForTwilio($visite->telephone);
+
+            // Message SMS clair avec motif
+            $smsContent = "Monsieur/Madame {$visite->nom}, votre visite du {$visite->date_visite} "
+                        . "a été annulée. Motif: {$request->motif}. "
+                        . "Nous restons à disposition pour reprogrammer. "
+                        . "Contact: " . config('app.contact_phone');
+
+            $message = $twilio->messages->create(
+                $phoneNumber,
+                [
+                    'from' => env('TWILIO_PHONE_NUMBER'), // Ou votre Alphanumeric Sender ID
+                    'body' => $smsContent,
+                ]
+            );
+
+            // Log structuré
+            Log::channel('sms')->info('SMS annulation envoyé', [
+                'visite_id' => $visite->id,
+                'to' => $phoneNumber,
+                'message_sid' => $message->sid,
+                'motif' => $request->motif
+            ]);
+
+        } catch (TwilioException $e) {
+            Log::channel('sms')->error('Échec envoi SMS annulation', [
+                'visite_id' => $visite->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'sms_sent' => isset($message) ? true : false,
+            'motif' => $request->motif
+        ]);
 
     return response()->json(['success' => true]);
 }
@@ -646,6 +784,45 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
         // Envoyer un email de confirmation
         Mail::to($visite->email)->send(new ConfirmVisite($visite, $visite->bien));
 
+        //Envoie d'sms 
+        try {
+            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+            
+            // Configurer SSL (si nécessaire)
+            $httpClient = new \Twilio\Http\CurlClient([
+                CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+            $twilio->setHttpClient($httpClient);
+
+            // Formater le numéro
+            $phoneNumber = $this->formatIvorianNumberForTwilio($visite->telephone);
+
+            // Envoyer le SMS
+            $message = $twilio->messages->create(
+                $phoneNumber,
+                [
+                    'from' => env('TWILIO_PHONE_NUMBER'), // ou un Alphanumeric Sender ID
+                    'body' => "Bonjour {$visite->nom}, votre visite du {$visite->date_visite} à {$visite->heure_visite} est confirmée. Bien: {$visite->bien->type}"
+                ]
+            );
+
+            // Logger le succès
+            Log::channel('sms')->info("SMS de confirmation envoyé", [
+                'visite_id' => $visite->id,
+                'to' => $phoneNumber,
+                'sid' => $message->sid
+            ]);
+
+        } catch (TwilioException $e) {
+            Log::channel('sms')->error("Erreur SMS confirmation", [
+                'visite_id' => $visite->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]);
+        }
+
         return response()->json(['success' => true]);
     }
 
@@ -658,7 +835,54 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
         // Envoyer un email d'effectuation 
         Mail::to($visite->email)->send(new DoneVisite($visite, $visite->bien));
 
-        return response()->json(['success' => true]);
+        // Envoyer un SMS de notification
+        try {
+            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+            
+            // Configuration SSL (obligatoire en production)
+            $httpClient = new \Twilio\Http\CurlClient([
+                CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+            $twilio->setHttpClient($httpClient);
+
+            // Formater le numéro (méthode réutilisée depuis votre code)
+            $phoneNumber = $this->formatIvorianNumberForTwilio($visite->telephone);
+
+            // Contenu du SMS plus complet
+            $smsContent = "Merci {$visite->nom} d'avoir visité notre bien \"{$visite->bien->type}\". "
+                    . "Votre avis nous intéresse ! Répondez à ce SMS pour nous faire part de vos impressions.";
+
+            $message = $twilio->messages->create(
+                $phoneNumber,
+                [
+                    'from' => env('TWILIO_PHONE_NUMBER'), // Ou 'MONAGENCE' pour Alphanumeric Sender ID
+                    'body' => $smsContent,
+                ]
+            );
+
+            // Log de succès structuré
+            Log::channel('sms')->info('SMS visite effectuée envoyé', [
+                'visite_id' => $visite->id,
+                'numero' => $phoneNumber,
+                'message_sid' => $message->sid,
+                'timestamp' => now()->toDateTimeString()
+            ]);
+
+        } catch (TwilioException $e) {
+            Log::channel('sms')->error('Erreur Twilio', [
+                'visite_id' => $visite->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'stack' => $e->getTraceAsString()
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'sms_sent' => isset($message) ? true : false
+        ]);
     }
 
     public function ownerCancel(Visite $visite, Request $request)
@@ -669,6 +893,58 @@ protected function sendVisitUpdateEmail($visite, $oldDate, $oldTime)
 
         // Envoyer un email d'annulation 
         Mail::to($visite->email)->send(new CancelVisite($visite, $visite->bien));
+
+
+        // Envoyer un SMS d'annulation
+        try {
+            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+            
+            // Configuration SSL
+            $httpClient = new \Twilio\Http\CurlClient([
+                CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+            $twilio->setHttpClient($httpClient);
+
+            // Formater le numéro
+            $phoneNumber = $this->formatIvorianNumberForTwilio($visite->telephone);
+
+            // Message SMS clair avec motif
+            $smsContent = "Monsieur/Madame {$visite->nom}, votre visite du {$visite->date_visite} "
+                        . "a été annulée. Motif: {$request->motif}. "
+                        . "Nous restons à disposition pour reprogrammer. "
+                        . "Contact: " . config('app.contact_phone');
+
+            $message = $twilio->messages->create(
+                $phoneNumber,
+                [
+                    'from' => env('TWILIO_PHONE_NUMBER'), // Ou votre Alphanumeric Sender ID
+                    'body' => $smsContent,
+                ]
+            );
+
+            // Log structuré
+            Log::channel('sms')->info('SMS annulation envoyé', [
+                'visite_id' => $visite->id,
+                'to' => $phoneNumber,
+                'message_sid' => $message->sid,
+                'motif' => $request->motif
+            ]);
+
+        } catch (TwilioException $e) {
+            Log::channel('sms')->error('Échec envoi SMS annulation', [
+                'visite_id' => $visite->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'sms_sent' => isset($message) ? true : false,
+            'motif' => $request->motif
+        ]);
 
         return response()->json(['success' => true]);
     }

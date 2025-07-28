@@ -60,7 +60,7 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Nombre de chambres</label>
+                                <label>Nombre de pièce</label>
                                 <input type="number" class="form-control" placeholder="Nombre de chambres" 
                                        name="nombre_de_chambres" value="{{ old('nombre_de_chambres', $bien->nombre_de_chambres) }}" 
                                        style="border: 1px solid black; border-radius: 5px;">
@@ -68,7 +68,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Nombre de toilettes</label>
+                                <label>Nombre de toilette</label>
                                 <input type="number" class="form-control" placeholder="Nombre de toilettes" 
                                        name="nombre_de_toilettes" value="{{ old('nombre_de_toilettes', $bien->nombre_de_toilettes) }}" 
                                        style="border: 1px solid black; border-radius: 5px;">

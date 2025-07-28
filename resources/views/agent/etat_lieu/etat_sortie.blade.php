@@ -88,7 +88,7 @@
                         @for($i = 0; $i < $bien->nombre_de_chambres; $i++)
                             <div class="card mb-4" style="border-color: #02245b;">
                                 <div class="card-header text-white" style="background-color: #02245b;">
-                                    <h4 class="mb-0"><i class="fas fa-bed me-2"></i>Chambre {{ $i + 1 }}</h4>
+                                    <h4 class="mb-0"><i class="fas fa-bed me-2"></i>Pièce {{ $i + 1 }}</h4>
                                 </div>
                                 <div class="card-body">
                                     <input type="hidden" name="chambres[{{ $i }}][nom]" value="Chambre {{ $i + 1 }}">

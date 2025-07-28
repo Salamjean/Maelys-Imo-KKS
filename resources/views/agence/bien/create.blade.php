@@ -69,7 +69,7 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Nombre de chambres <span style="color: red">*</span></label>
+                                <label>Nombre de pièce <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de chambres" name="nombre_de_chambres" style="border: 1px solid black; border-radius: 5px;">
                                 @error('nombre_de_chambres')
                                     <div class="alert alert-danger">{{ $message }}</div>
@@ -78,7 +78,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Nombre de toilettes <span style="color: red">*</span></label>
+                                <label>Nombre de toilette <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de toilettes" name="nombre_de_toilettes" style="border: 1px solid black; border-radius: 5px;">
                                 @error('nombre_de_toilettes')
                                     <div class="alert alert-danger">{{ $message }}</div>

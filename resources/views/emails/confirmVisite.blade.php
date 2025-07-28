@@ -104,8 +104,6 @@
             
             <p>Nous sommes impatients de vous faire découvrir ce bien et restons à votre disposition pour toute information complémentaire.</p>
             
-            <p>Cordialement,<br>
-            <strong>L'équipe de votre agence immobilière</strong></p>
         </div>
         
         <div class="footer">

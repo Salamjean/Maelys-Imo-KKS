@@ -265,13 +265,13 @@
                
                 <div class="video-wrapper">
                     <!-- Remplacez l'URL par votre vidéo -->
-                    <iframe src="{{ asset('assets/images/preMael.mp4') }}" allowfullscreen></iframe>
+                    <iframe src="{{ asset('assets/images/preMael.mp4') }}?autoplay=0" allowfullscreen></iframe>
                 </div>
             </div>
             <div class="video-frame">
                 <div class="video-wrapper">
                     <!-- Remplacez l'URL par votre vidéo -->
-                    <iframe src="{{ asset('assets/images/suitMael.mp4') }}" allowfullscreen></iframe>
+                    <iframe src="{{ asset('assets/images/suitMael.mp4') }}?autoplay=0" allowfullscreen></iframe>
                 </div>
             </div>
         </div>

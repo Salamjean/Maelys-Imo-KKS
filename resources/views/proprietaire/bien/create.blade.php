@@ -52,7 +52,7 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Nombre de chambres <span style="color: red">*</span></label>
+                                <label>Nombre de pièces <span style="color: red">*</span></label>
                                 <input type="number" class="form-control" placeholder="Nombre de chambres" value="{{ old('nombre_de_chambres') }}" name="nombre_de_chambres" style="border: 1px solid black; border-radius: 5px;">
                                 @error('nombre_de_chambres')
                                     <div class="alert alert-danger">{{ $message }}</div>
@@ -102,7 +102,7 @@
                 <fieldset style="border: 2px solid black; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
                     <legend style="font-size: 1.5em; font-weight: bold;">Conditions</legend>
                     <div class="row">
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Loyer mensuel</label><span style="color: red">*</span>
                                 <div class="input-group">
@@ -114,7 +114,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Avance  <span style="color: red">*</span></label>
                                 <div class="input-group">
@@ -133,7 +133,7 @@
                                 <div class="alert alert-danger">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Caution <span style="color: red">*</span></label>
                                 <div class="input-group">
@@ -152,15 +152,9 @@
                                 <div class="alert alert-danger">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label>Frais d'agence<span style="color: red">*</span></label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" value="1" name="frais" style="border: 1px solid black; border-radius: 5px;" readonly>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>Montant total</label>
                                 <div class="input-group">
@@ -173,7 +167,7 @@
                             @enderror
 
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>Date de paiement <span style="color: red">*</span></label>
                                 <input type="number" 
@@ -391,9 +385,8 @@
             const loyer = parseFloat(prixInput.val()) || 0;
             const avance = parseFloat(avanceInput.val()) || 0;
             const caution = parseFloat(cautionInput.val()) || 0;
-            const frais = 1; // Frais d'agence fixés à 1 mois
             
-            const montantTotal = loyer * (avance + caution + frais);
+            const montantTotal = loyer * (avance + caution);
             
             $('input[name="montant_total"]').val(montantTotal.toFixed(0));
         }

@@ -99,7 +99,7 @@
                             <div class="card mb-4 border-primary">
                                 <div class="card-header text-white bg-primary-dark">
                                     <h3 class="h5 mb-0">
-                                        <i class="fas fa-bed fa-fw me-2"></i>Chambre {{ $i + 1 }}
+                                        <i class="fas fa-bed fa-fw me-2"></i>Pièce {{ $i + 1 }}
                                     </h3>
                                 </div>
                                 <div class="card-body px-4 py-3">

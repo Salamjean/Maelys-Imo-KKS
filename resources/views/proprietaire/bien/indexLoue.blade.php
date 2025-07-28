@@ -40,7 +40,7 @@
                     <div class="property-features d-flex flex-wrap gap-2 mb-3">
                         @if($bien->nombre_de_chambres)
                         <span class="badge bg-light text-dark">
-                            <i class="fas fa-bed me-1"></i> {{ $bien->nombre_de_chambres }} chambres
+                            <i class="fas fa-bed me-1"></i> {{ $bien->nombre_de_chambres }} Pièce
                         </span>
                         @endif
                         @if($bien->superficie)
@@ -50,7 +50,7 @@
                         @endif
                          @if($bien->nombre_de_toilettes)
                         <span class="badge bg-light text-dark">
-                            <i class="fas fa-bed me-1"></i> {{ $bien->nombre_de_toilettes }} Toillettes
+                            <i class="fas fa-bed me-1"></i> {{ $bien->nombre_de_toilettes }} Toillette
                         </span>
                         @endif
                          @if($bien->garage)

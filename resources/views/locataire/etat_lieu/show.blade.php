@@ -244,7 +244,7 @@
                                     @foreach($etatLieu->chambres as $index => $chambre)
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="chambre{{ $index }}-tab" data-bs-toggle="tab" data-bs-target="#chambre{{ $index }}" type="button" role="tab">
-                                            <i class="fas fa-bed me-1"></i> Chambre {{ $index + 1 }}
+                                            <i class="fas fa-bed me-1"></i> Pièce {{ $index + 1 }}
                                         </button>
                                     </li>
                                     @endforeach
@@ -397,7 +397,7 @@
                                     @foreach($etatLieuSortie->chambres as $index => $chambre)
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="chambre-sortie-{{ $index }}-tab" data-bs-toggle="tab" data-bs-target="#chambre-sortie-{{ $index }}" type="button" role="tab">
-                                            <i class="fas fa-bed me-1"></i> Chambre {{ $index + 1 }}
+                                            <i class="fas fa-bed me-1"></i> Pièce {{ $index + 1 }}
                                         </button>
                                     </li>
                                     @endforeach

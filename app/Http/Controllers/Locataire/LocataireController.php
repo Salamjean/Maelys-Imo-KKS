@@ -365,7 +365,7 @@ class LocataireController extends Controller
                     // Construire le message SMS avec code et lien
                     $validationUrl = url('/validate-locataire-account/' . $locataire->email);
                     $smsContent = "Bonjour {$locataire->prenom},\n\n"
-                                . "Votre code de validation: {$code}\n"
+                                . "Votre code de validation: {$code}\n\n"
                                 . "Validez votre compte ici: {$validationUrl}\n\n"
                                 . "Agence: {$agence->name}";
 
@@ -887,6 +887,54 @@ class LocataireController extends Controller
 
             Notification::route('mail', $locataire->email)
                 ->notify(new SendEmailToLocataireAfterRegistrationNotification($code, $locataire->email, $agence->name));
+
+             /**********************************************************************
+             * INTÉGRATION DU SYSTÈME D'ENVOI DE SMS AVEC TWILIO (NOUVEAU CODE)
+             **********************************************************************/
+            try {
+                    $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+                    
+                    // Configuration SSL
+                    $httpClient = new \Twilio\Http\CurlClient([
+                        CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                        CURLOPT_SSL_VERIFYPEER => true,
+                        CURLOPT_SSL_VERIFYHOST => 2,
+                    ]);
+                    $twilio->setHttpClient($httpClient);
+
+                    // Formater le numéro
+                    $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
+
+                    // Construire le message SMS avec code et lien
+                    $validationUrl = url('/validate-locataire-account/' . $locataire->email);
+                    $smsContent = "Bonjour {$locataire->prenom},\n\n"
+                                . "Votre code de validation: {$code}\n\n"
+                                . "Validez votre compte ici: {$validationUrl}\n\n"
+                                . "Agence: {$agence->name}";
+
+                    $message = $twilio->messages->create(
+                        $phoneNumber,
+                        [
+                            'from' => env('TWILIO_PHONE_NUMBER'),
+                            'body' => $smsContent,
+                        ]
+                    );
+
+                    Log::channel('sms')->info('SMS validation envoyé', [
+                        'locataire_id' => $locataire->id,
+                        'to' => $phoneNumber,
+                        'message_sid' => $message->sid
+                    ]);
+
+                } catch (TwilioException $e) {
+                    Log::channel('sms')->error('Erreur SMS validation', [
+                        'locataire_id' => $locataire->id,
+                        'error' => $e->getMessage()
+                    ]);
+            }
+            /**********************************************************************
+             * FIN DE L'INTÉGRATION SMS
+             **********************************************************************/
                 
             return redirect()->route('locataire.admin.index')->with('success', 'Locataire créé avec succès!');
     
