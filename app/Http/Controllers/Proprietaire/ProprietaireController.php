@@ -11,6 +11,7 @@ use App\Models\Reversement;
 use App\Models\Visite;
 use App\Notifications\SendEmailToOwnerAfterRegistrationNotification;
 use Exception;
+use Twilio\Rest\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Twilio\Exceptions\TwilioException;
 
 class ProprietaireController extends Controller
 {
@@ -122,7 +124,7 @@ class ProprietaireController extends Controller
     public function store(Request $request)
     {
         // Validation des données
-        $request->validate([
+        $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|unique:proprietaires,email',
@@ -147,58 +149,131 @@ class ProprietaireController extends Controller
             'cni.required' => 'La pièce d\'identité est obligatoire.',
         ]);
 
-        try {
-            $agenceId = Auth::guard('agence')->user()->code_id;
-            
-            // Génération du code PRO unique
-            do {
-                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-                $codeId = 'PRO' . $randomNumber;
-            } while (Proprietaire::where('code_id', $codeId)->exists());
-
-            // Traitement de l'image de profil
-            $profileImagePath = null;
-            if ($request->hasFile('profil_image')) {
-                $profileImagePath = $request->file('profil_image')->store('profil_images', 'public');
-            }
-
-            // Traitement de la pièce d'identité
-            $cniImagePath = null;
-            if ($request->hasFile('cni')) {
-                $cniImagePath = $request->file('cni')->store('cnis', 'public');
-            }
-
-            // Traitement du contrat
-             $contratPath = null;
-            if ($request->hasFile('contrat')) {
-                $contratPath = $request->file('contrat')->store('contrats', 'public');
-            }
-
-            // Création du propriétaire
-            $owner = new Proprietaire();
-            $owner->code_id = $codeId; // Ajout du code généré
-            $owner->name = $request->name;
-            $owner->prenom = $request->prenom;
-            $owner->email = $request->email;
-            $owner->contact = $request->contact;
-            $owner->commune = $request->commune;
-            $owner->pourcentage = $request->pourcentage;
-            $owner->choix_paiement = $request->choix_paiement;
-            $owner->rib = $request->rib;
-            $owner->contrat = $contratPath;
-            $owner->password = Hash::make('password');
-            $owner->profil_image = $profileImagePath;
-            $owner->cni = $cniImagePath;
-            $owner->agence_id = $agenceId;
-            $owner->save();
+       
+    try {
+        $agence = Auth::guard('agence')->user();
+        $agenceId = $agence->code_id;
         
-            return redirect()->route('owner.index')->with('success', 'Propriétaire de bien enregistrée avec succès.');
+        // Génération du code PRO unique
+        do {
+            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            $codeId = 'PRO' . $randomNumber;
+        } while (Proprietaire::where('code_id', $codeId)->exists());
 
-        } catch (\Exception $e) {
-            Log::error('Error creating propriataire: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
-        }
+        // Traitement des fichiers (inchangé)
+        $profileImagePath = $request->hasFile('profil_image') 
+            ? $request->file('profil_image')->store('profil_images', 'public')
+            : null;
+
+        $cniImagePath = $request->hasFile('cni')
+            ? $request->file('cni')->store('cnis', 'public')
+            : null;
+
+        $contratPath = $request->hasFile('contrat')
+            ? $request->file('contrat')->store('contrats', 'public')
+            : null;
+
+        // Création du propriétaire
+        $owner = Proprietaire::create([
+            'code_id' => $codeId,
+            'name' => $validatedData['name'],
+            'prenom' => $validatedData['prenom'],
+            'email' => $validatedData['email'],
+            'contact' => $validatedData['contact'],
+            'commune' => $validatedData['commune'],
+            'pourcentage' => $validatedData['pourcentage'],
+            'choix_paiement' => $validatedData['choix_paiement'],
+            'rib' => $validatedData['rib'],
+            'contrat' => $contratPath,
+            'password' => Hash::make('password'),
+            'profil_image' => $profileImagePath,
+            'cni' => $cniImagePath,
+            'agence_id' => $agenceId
+        ]);
+
+        // Envoi SMS de bienvenue
+        $this->sendOwnerWelcomeSms($owner, $agence);
+
+        return redirect()->route('owner.index')->with('success', 'Propriétaire enregistré avec succès.');
+
+    } catch (\Exception $e) {
+        Log::error('Erreur création propriétaire: ' . $e->getMessage());
+        return back()->withErrors(['error' => 'Une erreur est survenue'])->withInput();
     }
+}
+
+/**
+ * Envoi SMS de bienvenue au propriétaire
+ */
+private function sendOwnerWelcomeSms(Proprietaire $owner, $agence)
+{
+    try {
+        $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+        
+        // Configuration SSL
+        $httpClient = new \Twilio\Http\CurlClient([
+            CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+        ]);
+        $twilio->setHttpClient($httpClient);
+
+        // Formater le numéro
+        $phoneNumber = $this->formatPhoneNumberForSms($owner->contact);
+
+        // Message personnalisé
+        $smsContent = "Bonjour {$owner->prenom} {$owner->name},\n"
+                    . "Bienvenue chez {$agence->name}! Votre compte propriétaire a été créé.\n"
+                    . "Code: {$owner->code_id}\n"
+                    . "Email: {$owner->email}\n"
+                    . "Contact: {$agence->contact}";
+
+        $message = $twilio->messages->create(
+            $phoneNumber,
+            [
+                'from' => env('TWILIO_PHONE_NUMBER'),
+                'body' => $smsContent,
+            ]
+        );
+
+        Log::channel('sms')->info('SMS bienvenue envoyé', [
+            'proprietaire_id' => $owner->id,
+            'to' => $phoneNumber,
+            'message_sid' => $message->sid
+        ]);
+
+    } catch (TwilioException $e) {
+        Log::channel('sms')->error('Erreur SMS bienvenue', [
+            'proprietaire_id' => $owner->id,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * Formatage des numéros pour SMS
+ */
+private function formatPhoneNumberForSms(string $phone): string
+{
+    $cleaned = preg_replace('/[^0-9+]/', '', $phone);
+    
+    // Formatage spécifique pour la Côte d'Ivoire
+    if (str_starts_with($cleaned, '+225') && strlen($cleaned) === 12) {
+        return $cleaned;
+    }
+    
+    $cleaned = ltrim($cleaned, '+');
+    $cleaned = preg_replace('/^00/', '', $cleaned);
+    
+    // Extraction des derniers chiffres
+    $baseNumber = substr($cleaned, -8);
+    
+    if (!preg_match('/^[0-9]{8,15}$/', $baseNumber)) {
+        throw new \Exception('Numéro de téléphone invalide');
+    }
+    
+    return '+225' . $baseNumber;
+}
 
     public function edit($id)
     {

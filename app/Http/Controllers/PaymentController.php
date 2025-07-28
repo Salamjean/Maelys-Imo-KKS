@@ -19,42 +19,95 @@ use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Twilio\Rest\Client;
 
 class PaymentController extends Controller
 {
-        public function sendPaymentReminder(Request $request)
-    {
-        $request->validate([
-            'locataire_id' => 'required|exists:locataires,id',
-            'email' => 'required|email',
-            'taux_majoration' => 'nullable|numeric|min:0|max:100'
-        ]);
+      public function sendPaymentReminder(Request $request)
+        {
+            $request->validate([
+                'locataire_id' => 'required|exists:locataires,id',
+                'email' => 'required|email',
+                'taux_majoration' => 'nullable|numeric|min:0|max:100'
+            ]);
 
-        $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-        
-        // Calcul du nouveau montant avec majoration
-        $montantLoyer = $locataire->bien->prix ?? 0;
-        $tauxMajoration = $request->taux_majoration ?? 0;
-        $nouveauMontant = $montantLoyer * (1 + $tauxMajoration / 100);
-        
-        // Mise à jour du montant majoré dans la table biens avec save()
-        $bien = $locataire->bien->fresh();
-        $bien->montant_majore = $nouveauMontant;
-        $bien->save();
-        
-        Log::info('Envoi email à: '.$request->email, [
-            'locataire' => $locataire->id,
-            'montant' => $nouveauMontant
-        ]);
-        // Envoi de l'email avec les nouvelles informations
-        Mail::to($request->email)->send(new PaymentReminderMail($locataire, $nouveauMontant, $tauxMajoration));
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Le rappel de paiement a été envoyé avec succès',
-            'nouveau_montant' => $nouveauMontant
-        ]);
-    }
+            $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+            
+            // Calcul du nouveau montant avec majoration
+            $montantLoyer = $locataire->bien->prix ?? 0;
+            $tauxMajoration = $request->taux_majoration ?? 0;
+            $nouveauMontant = $montantLoyer * (1 + $tauxMajoration / 100);
+            
+            // Mise à jour du montant majoré
+            $bien = $locataire->bien->fresh();
+            $bien->montant_majore = $nouveauMontant;
+            $bien->save();
+            
+            // Log de l'action
+            Log::info('Envoi email à: '.$request->email, [
+                'locataire' => $locataire->id,
+                'montant' => $nouveauMontant
+            ]);
+
+            // Envoi de l'email (code existant)
+            Mail::to($request->email)->send(new PaymentReminderMail($locataire, $nouveauMontant, $tauxMajoration));
+            
+            /**********************************************************************
+             * ENVOI DU RAPPEL PAR SMS (NOUVEAU CODE)
+             **********************************************************************/
+            try {
+                $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+                
+                $httpClient = new \Twilio\Http\CurlClient([
+                    CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                    CURLOPT_SSL_VERIFYPEER => true,
+                    CURLOPT_SSL_VERIFYHOST => 2,
+                ]);
+                $twilio->setHttpClient($httpClient);
+
+                $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
+
+                // Construction du message SMS
+                $smsContent = "Bonjour {$locataire->prenom},\n\n"
+                            . "Rappel: Paiement du loyer du {$bien->type}\n"
+                            . "Montant: " . number_format($nouveauMontant, 0, ',', ' ') . " FCFA\n";
+                
+                if ($tauxMajoration > 0) {
+                    $smsContent .= "Majoration: {$tauxMajoration}%\n";
+                }
+                
+                $smsContent .= "\nMerci de régler avant le {$bien->date_fixe} de ce mois.";
+
+                $message = $twilio->messages->create(
+                    $phoneNumber,
+                    [
+                        'from' => env('TWILIO_PHONE_NUMBER'),
+                        'body' => $smsContent,
+                    ]
+                );
+
+                Log::channel('sms')->info('SMS rappel envoyé', [
+                    'locataire_id' => $locataire->id,
+                    'montant' => $nouveauMontant,
+                    'message_sid' => $message->sid
+                ]);
+
+            } catch (\Exception $e) {
+                Log::channel('sms')->error('Erreur envoi SMS rappel', [
+                    'locataire_id' => $locataire->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+            /**********************************************************************
+             * FIN DU NOUVEAU CODE
+             **********************************************************************/
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Le rappel de paiement a été envoyé par email et SMS avec succès',
+                'nouveau_montant' => $nouveauMontant
+            ]);
+        }
 
     public function index($locataireId)
     {
@@ -313,46 +366,41 @@ public function store(Request $request, Locataire $locataire)
     }
 
     public function generateCashCode(Request $request)
-    {
-        $request->validate([
-            'locataire_id' => 'required|exists:locataires,id',
-            'nombre_mois' => 'required|integer|min:1'
-        ]);
+{
+    $request->validate([
+        'locataire_id' => 'required|exists:locataires,id',
+        'nombre_mois' => 'required|integer|min:1'
+    ]);
 
-        $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-        
-        // Générer un code aléatoire de 6 caractères
-        $code = Str::upper(Str::random(6));
-        
-        // Calculer le montant total
-        $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
-        $montantTotal = $montantParMois * $request->nombre_mois;
+    $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+    
+    // Générer un code aléatoire de 6 caractères
+    $code = Str::upper(Str::random(6));
+    
+    // Calculer le montant total
+    $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
+    $montantTotal = $montantParMois * $request->nombre_mois;
 
-        // Déterminer les mois couverts
-        $moisCouverts = [];
-        $dateActuelle = now();
-        for ($i = 0; $i < $request->nombre_mois; $i++) {
-            $moisCouverts[] = $dateActuelle->copy()->addMonths($i)->format('Y-m');
-        }
-        $moisCouvertsStr = implode(', ', $moisCouverts);
+    // Déterminer les mois couverts
+    $moisCouverts = [];
+    $dateActuelle = now();
+    for ($i = 0; $i < $request->nombre_mois; $i++) {
+        $moisCouverts[] = $dateActuelle->copy()->addMonths($i)->format('Y-m');
+    }
+    $moisCouvertsStr = implode(', ', $moisCouverts);
 
-        // Options du QR Code
-        $options = new QROptions([
-        'version' => 10, // Version plus grande (1-40, plus le nombre est grand, plus la capacité est grande)
+    // Options du QR Code
+    $options = new QROptions([
+        'version' => 10,
         'outputType' => QRCode::OUTPUT_IMAGE_PNG,
-        'eccLevel' => QRCode::ECC_L, // Niveau de correction plus bas (L, M, Q, H)
+        'eccLevel' => QRCode::ECC_L,
         'scale' => 5,
         'imageBase64' => false,
         'quietzoneSize' => 2,
     ]);
 
-    // Données à encoder dans le QR code
-    $qrData = $code;
-
     // Générer le QR code
-    $qrcode = (new QRCode($options))->render($qrData);
-
-    // Sauvegarder le QR code
+    $qrcode = (new QRCode($options))->render($code);
     $qrCodePath = 'qrcodes/cash_payments/' . $code . '.png';
     Storage::disk('public')->put($qrCodePath, $qrcode);
 
@@ -382,20 +430,88 @@ public function store(Request $request, Locataire $locataire)
             Storage::url($qrCodePath)
         ));
         
+        /**********************************************************************
+         * ENVOI DU CODE PAR SMS (NOUVEAU CODE)
+         **********************************************************************/
+        try {
+            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+            
+            $httpClient = new \Twilio\Http\CurlClient([
+                CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+            $twilio->setHttpClient($httpClient);
+
+            $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
+
+            $smsContent = "Bonjour {$locataire->prenom},\n\n"
+                        . "Votre code de paiement cash: {$code}\n"
+                        . "Montant: {$montantTotal} FCFA\n"
+                        . "Mois: {$moisCouvertsStr}\n\n"
+                        . "Ce code expire dans 24h.";
+
+            $message = $twilio->messages->create(
+                $phoneNumber,
+                [
+                    'from' => env('TWILIO_PHONE_NUMBER'),
+                    'body' => $smsContent
+                ]
+            );
+
+            Log::channel('sms')->info('SMS cash code envoyé', [
+                'locataire_id' => $locataire->id,
+                'code' => $code,
+                'message_sid' => $message->sid
+            ]);
+
+        } catch (\Exception $e) {
+            Log::channel('sms')->error('Erreur envoi SMS cash code', [
+                'locataire_id' => $locataire->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+        /**********************************************************************
+         * FIN DU NOUVEAU CODE
+         **********************************************************************/
+
         return response()->json([
             'success' => true,
-            'message' => 'Le code de vérification a été envoyé par email au locataire.',
+            'message' => 'Le code de vérification a été envoyé par email et SMS au locataire.',
             'mois_couverts' => $moisCouvertsStr,
             'montant_total' => $montantTotal,
             'qr_code_url' => Storage::url($qrCodePath),
-            'qr_code_base64' => base64_encode($qrcode) // Optionnel: pour affichage immédiat
+            'qr_code_base64' => base64_encode($qrcode)
         ]);
+
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
             'message' => 'Le code a été généré mais l\'envoi par email a échoué.'
         ], 500);
     }
+}
+
+/**
+ * Méthode helper pour formater les numéros (à conserver)
+ */
+private function formatPhoneNumberForSms(string $phone): string
+{
+    $cleaned = preg_replace('/[^0-9+]/', '', $phone);
+    
+    if (str_starts_with($cleaned, '+225') && strlen($cleaned) === 12) {
+        return $cleaned;
+    }
+    
+    $cleaned = ltrim($cleaned, '+');
+    $cleaned = preg_replace('/^00/', '', $cleaned);
+    $baseNumber = substr($cleaned, -8);
+    
+    if (!preg_match('/^[0-9]{8,15}$/', $baseNumber)) {
+        throw new \Exception('Numéro de téléphone invalide');
+    }
+    
+    return '+225' . $baseNumber;
 }
     
 public function verifyCashCode(Request $request)

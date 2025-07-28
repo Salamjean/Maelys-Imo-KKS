@@ -54,7 +54,7 @@ Route::get('/', function (Request $request) {
     }
     
     // Pagination et tri
-    $biens = $query->orderBy('created_at', 'desc')->paginate(6);
+    $biens = $query->orderBy('created_at', 'desc')->paginate(15);
     
     // Compteurs par type (sans les filtres pour garder les totaux)
     $appartements = Bien::where('status', 'Disponible')
@@ -85,7 +85,7 @@ Route::get('/', function (Request $request) {
                 })
         )
         ->sortByDesc('created_at')
-        ->take(10);
+        ->take(6);
     return view('home.accueil', compact('biens', 'appartements', 'maisons', 'terrains','derniersPartenaires'));
 })->name('home');
 

@@ -21,7 +21,9 @@ use App\Models\Paiement;
 use App\Models\Visite;
 use PDF;
 use Carbon\Carbon;
+use Twilio\Rest\Client;
 use Illuminate\Support\Str;
+use Twilio\Exceptions\TwilioException;
 
 class LocataireController extends Controller
 {
@@ -311,7 +313,7 @@ class LocataireController extends Controller
             $bien->status = 'Loué';
             $bien->save();
 
-            // Création des paiements pour l'avance
+            // Création des paiements pour l'avance (votre code existant)
             if ($avance > 0) {
                 for ($i = 0; $i < $avance; $i++) {
                     $moisCourant = Carbon::now()->addMonths($i);
@@ -326,12 +328,12 @@ class LocataireController extends Controller
                         'statut' => 'payé',
                         'locataire_id' => $locataire->id,
                         'bien_id' => $bien->id,
-                        'proof_path' => $contratPath // On utilise le contrat comme preuve de paiement
+                        'proof_path' => $contratPath
                     ]);
                 }
             }
 
-            // Envoi de l'e-mail de vérification
+            // Envoi de l'e-mail de vérification (votre code existant)
             $agence = Auth::guard('agence')->user();
             ResetCodePasswordLocataire::where('email', $locataire->email)->delete();
             $code = rand(1000, 4000);
@@ -342,13 +344,88 @@ class LocataireController extends Controller
 
             Notification::route('mail', $locataire->email)
                 ->notify(new SendEmailToLocataireAfterRegistrationNotification($code, $locataire->email, $agence->name));
-                
+
+            /**********************************************************************
+             * INTÉGRATION DU SYSTÈME D'ENVOI DE SMS AVEC TWILIO (NOUVEAU CODE)
+             **********************************************************************/
+            try {
+                    $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+                    
+                    // Configuration SSL
+                    $httpClient = new \Twilio\Http\CurlClient([
+                        CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                        CURLOPT_SSL_VERIFYPEER => true,
+                        CURLOPT_SSL_VERIFYHOST => 2,
+                    ]);
+                    $twilio->setHttpClient($httpClient);
+
+                    // Formater le numéro
+                    $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
+
+                    // Construire le message SMS avec code et lien
+                    $validationUrl = url('/validate-locataire-account/' . $locataire->email);
+                    $smsContent = "Bonjour {$locataire->prenom},\n\n"
+                                . "Votre code de validation: {$code}\n"
+                                . "Validez votre compte ici: {$validationUrl}\n\n"
+                                . "Agence: {$agence->name}";
+
+                    $message = $twilio->messages->create(
+                        $phoneNumber,
+                        [
+                            'from' => env('TWILIO_PHONE_NUMBER'),
+                            'body' => $smsContent,
+                        ]
+                    );
+
+                    Log::channel('sms')->info('SMS validation envoyé', [
+                        'locataire_id' => $locataire->id,
+                        'to' => $phoneNumber,
+                        'message_sid' => $message->sid
+                    ]);
+
+                } catch (TwilioException $e) {
+                    Log::channel('sms')->error('Erreur SMS validation', [
+                        'locataire_id' => $locataire->id,
+                        'error' => $e->getMessage()
+                    ]);
+            }
+            /**********************************************************************
+             * FIN DE L'INTÉGRATION SMS
+             **********************************************************************/
+
             return redirect()->route('locataire.index')->with('success', 'Locataire créé avec succès!');
 
         } catch (\Exception $e) {
             Log::error('Error creating locataire: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
+    }
+
+    /**
+     * Méthode pour formater le numéro de téléphone (à ajouter à votre contrôleur)
+     */
+    private function formatPhoneNumberForSms(string $phone): string
+    {
+        $cleaned = preg_replace('/[^0-9+]/', '', $phone);
+        
+        // Si déjà au format +225...
+        if (str_starts_with($cleaned, '+225') && strlen($cleaned) === 12) {
+            return $cleaned;
+        }
+        
+        // Suppression du + ou 00
+        $cleaned = ltrim($cleaned, '+');
+        $cleaned = preg_replace('/^00/', '', $cleaned);
+        
+        // Extraction des derniers 8 chiffres
+        $baseNumber = substr($cleaned, -8);
+        
+        // Vérification du numéro
+        if (!preg_match('/^[0-9]{8,15}$/', $baseNumber)) {
+            throw new \Exception('Numéro de téléphone invalide');
+        }
+        
+        return '+225' . $baseNumber;
     }
 
         private function generateUniqueCodeId()
