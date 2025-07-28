@@ -858,6 +858,7 @@ public function attribuerBienAgence(Request $request, Locataire $locataire)
 
     // Mettre à jour le locataire
     $locataire->bien_id = $request->bien_id;
+    $locataire->agence_id = Auth::user()->code_id;
     $locataire->status = 'Actif';
     $locataire->motif = null;
     $locataire->save();

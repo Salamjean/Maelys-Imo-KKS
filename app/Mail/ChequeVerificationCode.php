@@ -20,6 +20,7 @@ class ChequeVerificationCode extends Mailable
     public function build()
     {
         return $this->subject('Code de vérification pour votre paiement par chèque')
+                    ->from('contact@maelysimo.com', 'Maelys-Imo')
                     ->view('emails.cheque_verification_code');
     }
 }

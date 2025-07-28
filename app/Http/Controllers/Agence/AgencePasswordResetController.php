@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordResetMail;
 use App\Models\Agence;
+use App\Models\Locataire;
+use App\Models\Visite;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -87,5 +89,33 @@ class AgencePasswordResetController extends Controller
         $agence->save();
         
         return redirect()->route('agence.login')->with('success', 'Mot de passe réinitialisé avec succès');
+    }
+
+    public function move(){
+             // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
+        // Récupération de tous les locataires
+        $locataires = Locataire::where('status','Inactif')
+                    ->whereNull('bien_id')
+                    ->paginate(6);
+
+        
+         // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
+        $locataires->getCollection()->transform(function($locataire) {
+            $today = now()->format('d');
+            $currentMonthPaid = $locataire->paiements->isNotEmpty();
+            $locataire->show_reminder_button = ($locataire->bien->date_fixe ?? '10' == $today) && !$currentMonthPaid;
+            return $locataire;
+        });
+        
+        return view('agence.locataire.move', compact('locataires', 'pendingVisits'));
     }
 }

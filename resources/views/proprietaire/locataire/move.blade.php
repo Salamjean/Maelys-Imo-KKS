@@ -143,9 +143,7 @@
                             <th>Pièce d'identité</th>
                             <th>Statut</th>
                             <th>Contrat</th>
-                            <th>Actions</th>
-                            <th>Faire l'état des lieux</th>
-                            <th>Paiement</th>
+                            <th>Attribuer un bien</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -203,22 +201,24 @@
                                 </td>
                                 <td class="text-center ">
                                     <div class="btn-group gap-2" role="group">
+                                    @if(($locataire->bien_id) && $locataire->status === 'Inactif')
                                         <a href="{{ route('locataire.edit.owner', $locataire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                             <i class="mdi mdi-pencil"></i>
                                         </a>
+                                        
                                         <button class="btn btn-sm btn-danger change-status-btn"
                                                 data-locataire-id="{{ $locataire->id }}"
                                                 data-current-status="{{ $locataire->status }}"
                                                 title="Changer statut">
                                             <i class="mdi mdi-account-convert"></i>
                                         </button>
-                                         @if(is_null($locataire->bien_id) && $locataire->status === 'Inactif')
+                                        @endif
                                             <button class="btn btn-sm btn-primary attribuer-bien-btn"
                                                     data-locataire-id="{{ $locataire->id }}"
                                                     title="Attribuer un bien">
                                                 <i class="mdi mdi-home-plus"></i>
                                             </button>
-                                        @endif
+                                        
                                         {{-- <form action="#" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
@@ -227,58 +227,6 @@
                                             </button>
                                         </form> --}}
                                     </div>
-                                </td>
-                                <td>
-                                        @php
-                                            $etatExiste = App\Models\EtatLieu::where('locataire_id', $locataire->code_id)->first();
-                                        @endphp
-                                                                                            
-                                        @if($etatExiste)
-                                            <button class="btn btn-sm btn-info view-etat-btn" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#etatLieuModal"
-                                                    data-etat-lieu="{{ json_encode($etatExiste) }}"
-                                                    title="Voir l'état des lieux">
-                                                <i class="mdi mdi-eye"></i> Voir
-                                            </button>
-                                        @elseif($locataire->comptable)
-                                            <span class="badge bg-primary text-white" style="font-size: 20px">
-                                                <i class="mdi mdi-account-check"></i> {{ $locataire->comptable->name }} {{ $locataire->comptable->prenom }}
-                                            </span>
-                                        @else
-                                            <button class="btn btn-sm btn-warning assign-comptable-btn"
-                                                    data-locataire-id="{{ $locataire->id }}"
-                                                    title="Attribuer un agent de recouvrement">
-                                                <i class="mdi mdi-account-plus"></i> Attribuer
-                                            </button>
-                                        @endif
-                                    </td>
-
-                                <td>
-                                    @if($locataire->status === 'Actif') <!-- Vérifiez le statut du locataire -->
-                                        @if($locataire->show_reminder_button)
-                                            <button class="btn btn-sm btn-primary send-reminder-btn"
-                                                    data-locataire-id="{{ $locataire->id }}"
-                                                    data-locataire-email="{{ $locataire->email }}"
-                                                    title="Envoyer un rappel de paiement">
-                                                <i class="mdi mdi-email-open"></i> Rappel
-                                            </button>
-                                        @endif
-
-                                        <button class="btn btn-sm btn-success generate-cash-code"
-                                                data-locataire-id="{{ $locataire->id }}"
-                                                title="Générer un code pour paiement en espèces">
-                                            <i class="mdi mdi-cash"></i>Espèces
-                                        </button>
-                                        
-                                        <button class="btn btn-sm btn-warning verify-cash-code"
-                                                data-locataire-id="{{ $locataire->id }}"
-                                                title="Saisir le code de vérification">
-                                            <i class="mdi mdi-key"></i>
-                                        </button>
-                                    @else
-                                        <span class="text-danger">Locataire inactif - aucune action disponible.</span>
-                                    @endif
                                 </td>
                             </tr>
                         @empty

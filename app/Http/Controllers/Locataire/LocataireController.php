@@ -58,6 +58,7 @@ class LocataireController extends Controller
                 ->whereYear('created_at', now()->year);
         }])
         ->where('status', '!=', 'Pas sérieux')
+        ->whereNotNull('bien_id')
         ->where('agence_id', Auth::guard('agence')->user()->code_id)
         ->paginate(6);
 
@@ -86,6 +87,7 @@ class LocataireController extends Controller
         $locataires = Locataire::where('status', '!=', 'Pas sérieux')
                     ->whereNull('agence_id')
                     ->whereNull('proprietaire_id')
+                    ->whereNotNull('bien_id')
                     ->paginate(6);
 
         

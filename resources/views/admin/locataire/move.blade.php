@@ -1,73 +1,84 @@
-@extends('proprietaire.layouts.template')
+@extends('admin.layouts.template')
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <style>
+    /* Boutons personnalisés */
     .send-reminder-btn {
-        color: white;
         background-color: #3a7bd5;
         border-color: #3a7bd5;
     }
-
     .send-reminder-btn:hover {
         background-color: #2c5fb3;
         border-color: #2c5fb3;
     }
     
-    .pagination {
+    /* Pagination personnalisée */
+    .pagination.pagination-custom {
         --bs-pagination-color: #02245b;
-        --bs-pagination-bg: #fff;
-        --bs-pagination-border-color: #dee2e6;
         --bs-pagination-hover-color: #fff;
         --bs-pagination-hover-bg: #02245b;
         --bs-pagination-hover-border-color: #02245b;
         --bs-pagination-focus-color: #fff;
         --bs-pagination-focus-bg: #02245b;
-        --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(2, 36, 91, 0.25);
-        --bs-pagination-active-color: #fff;
         --bs-pagination-active-bg: #02245b;
         --bs-pagination-active-border-color: #02245b;
-        --bs-pagination-disabled-color: #6c757d;
-        --bs-pagination-disabled-bg: #fff;
-        --bs-pagination-disabled-border-color: #dee2e6;
     }
-
+    
     .pagination-rounded .page-item:first-child .page-link {
-        border-top-left-radius: 20px;
-        border-bottom-left-radius: 20px;
+        border-radius: 20px 0 0 20px;
     }
-
+    
     .pagination-rounded .page-item:last-child .page-link {
-        border-top-right-radius: 20px;
-        border-bottom-right-radius: 20px;
+        border-radius: 0 20px 20px 0;
     }
-
-    .page-link {
+    
+    .pagination-rounded .page-link {
         padding: 0.5rem 1rem;
         margin: 0 0.15rem;
-        border-radius: 50%;
         min-width: 40px;
         text-align: center;
         transition: all 0.3s ease;
     }
-
-    .page-item.active .page-link {
+    
+    .pagination-rounded .page-item.active .page-link {
         font-weight: bold;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
-
-    .page-item:not(.active):not(.disabled) .page-link:hover {
+    
+    .pagination-rounded .page-item:not(.active):not(.disabled) .page-link:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-
+    
+    /* Images preview */
+    .preview-image {
+        transition: all 0.3s ease;
+    }
+    
     .preview-image:hover {
         transform: scale(1.05);
-        transition: transform 0.3s ease;
         box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    
+    /* Tableau */
+    .table-custom thead {
+        background-color: #02245b;
+        color: white;
+    }
+    
+    /* Modal image */
+    .modal-image {
+        max-height: 80vh;
+        width: auto;
+    }
+    
+    /* Hauteur des lignes du tableau */
+    .table-row-custom {
+        height: 30px;
     }
 </style>
 
-<div class="col-lg-12 stretch-card">
+<div class="col-12 grid-margin stretch-card mb-4">
     <div class="card">
         <div class="card-body">
             <h4 class="card-title text-center">Locataires actuels</h4>
@@ -79,7 +90,7 @@
             <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header text-white" style="background-color: #02245b;">
                             <h5 class="modal-title" id="imageModalLabel">Visualisation de l'image</h5>
                             <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
@@ -94,11 +105,30 @@
             </div>
 
 
+           <!-- Modal pour afficher l'état des lieux -->
+            <div class="modal fade" id="etatLieuModal" tabindex="-1" aria-labelledby="etatLieuModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header text-white" style="background-color: #02245b;">
+                            <h5 class="modal-title" id="etatLieuModalLabel">Détails de l'état des lieux</h5>
+                            <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="etatLieuContent">
+                            <!-- Le contenu sera généré dynamiquement par JavaScript -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             <!-- Modal pour changer le statut -->
             <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header  text-white" style="background-color: #02245b;">
                             <h5 class="modal-title" id="statusModalLabel">Changer le statut du locataire</h5>
                             <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
@@ -120,16 +150,16 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                                <button type="submit" class="btn text-white " style="background-color: #02245b;">Enregistrer</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
-           <div class="mb-3">
+
+            <div class="mb-3">
                 <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
             </div>
-
             <div class="table-responsive pt-3">
                 <table class="table table-bordered table-hover">
                     <thead style="background-color: #02245b; color: white;">
@@ -140,12 +170,10 @@
                             <th>Contact</th>
                             <th>Profession</th>
                             <th>Adresse complète</th>
-                            <th>Pièce d'identité</th>
+                            <th>Pièce d'identité</th>  
                             <th>Statut</th>
                             <th>Contrat</th>
                             <th>Actions</th>
-                            <th>Faire l'état des lieux</th>
-                            <th>Paiement</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -162,14 +190,12 @@
                                         <button class="btn btn-sm btn-info preview-image"
                                                 data-image="{{ asset('storage/'.$locataire->piece) }}"
                                                 data-title="Pièce d'identité de {{ $locataire->name }}">
-                                            Voir
+                                            Voir la pièce
                                         </button>
                                     @else
                                         <span class="text-muted">Non fournie</span>
                                     @endif
                                 </td>
-                               
-                                
                                 <td>
                                     @if($locataire->status == 'Actif')
                                         <span class="badge bg-success text-white">Actif</span>
@@ -202,23 +228,25 @@
                                     @endif
                                 </td>
                                 <td class="text-center ">
-                                    <div class="btn-group gap-2" role="group">
-                                        <a href="{{ route('locataire.edit.owner', $locataire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
-                                            <i class="mdi mdi-pencil"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-danger change-status-btn"
-                                                data-locataire-id="{{ $locataire->id }}"
-                                                data-current-status="{{ $locataire->status }}"
-                                                title="Changer statut">
-                                            <i class="mdi mdi-account-convert"></i>
-                                        </button>
-                                         @if(is_null($locataire->bien_id) && $locataire->status === 'Inactif')
+                                    <div class="btn-group gap-10" role="group">
+                                         @if(($locataire->bien_id) && $locataire->status === 'Inactif')
+                                            <a href="{{ route('locataire.admin.edit', $locataire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            
+                                            <button class="btn btn-sm btn-danger change-status-btn"
+                                                    data-locataire-id="{{ $locataire->id }}"
+                                                    data-current-status="{{ $locataire->status }}"
+                                                    title="Changer statut">
+                                                <i class="mdi mdi-account-convert"></i>
+                                            </button>
+                                           @endif
                                             <button class="btn btn-sm btn-primary attribuer-bien-btn"
                                                     data-locataire-id="{{ $locataire->id }}"
                                                     title="Attribuer un bien">
                                                 <i class="mdi mdi-home-plus"></i>
                                             </button>
-                                        @endif
+                                     
                                         {{-- <form action="#" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
@@ -228,62 +256,10 @@
                                         </form> --}}
                                     </div>
                                 </td>
-                                <td>
-                                        @php
-                                            $etatExiste = App\Models\EtatLieu::where('locataire_id', $locataire->code_id)->first();
-                                        @endphp
-                                                                                            
-                                        @if($etatExiste)
-                                            <button class="btn btn-sm btn-info view-etat-btn" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#etatLieuModal"
-                                                    data-etat-lieu="{{ json_encode($etatExiste) }}"
-                                                    title="Voir l'état des lieux">
-                                                <i class="mdi mdi-eye"></i> Voir
-                                            </button>
-                                        @elseif($locataire->comptable)
-                                            <span class="badge bg-primary text-white" style="font-size: 20px">
-                                                <i class="mdi mdi-account-check"></i> {{ $locataire->comptable->name }} {{ $locataire->comptable->prenom }}
-                                            </span>
-                                        @else
-                                            <button class="btn btn-sm btn-warning assign-comptable-btn"
-                                                    data-locataire-id="{{ $locataire->id }}"
-                                                    title="Attribuer un agent de recouvrement">
-                                                <i class="mdi mdi-account-plus"></i> Attribuer
-                                            </button>
-                                        @endif
-                                    </td>
-
-                                <td>
-                                    @if($locataire->status === 'Actif') <!-- Vérifiez le statut du locataire -->
-                                        @if($locataire->show_reminder_button)
-                                            <button class="btn btn-sm btn-primary send-reminder-btn"
-                                                    data-locataire-id="{{ $locataire->id }}"
-                                                    data-locataire-email="{{ $locataire->email }}"
-                                                    title="Envoyer un rappel de paiement">
-                                                <i class="mdi mdi-email-open"></i> Rappel
-                                            </button>
-                                        @endif
-
-                                        <button class="btn btn-sm btn-success generate-cash-code"
-                                                data-locataire-id="{{ $locataire->id }}"
-                                                title="Générer un code pour paiement en espèces">
-                                            <i class="mdi mdi-cash"></i>Espèces
-                                        </button>
-                                        
-                                        <button class="btn btn-sm btn-warning verify-cash-code"
-                                                data-locataire-id="{{ $locataire->id }}"
-                                                title="Saisir le code de vérification">
-                                            <i class="mdi mdi-key"></i>
-                                        </button>
-                                    @else
-                                        <span class="text-danger">Locataire inactif - aucune action disponible.</span>
-                                    @endif
-                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="12" class="text-center py-4">
+                                <td colspan="11" class="text-center py-4">
                                     <div class="alert alert-info">
                                         Aucun locataire enregistré pour le moment.
                                     </div>
@@ -409,7 +385,7 @@ $(document).ready(function() {
         const currentStatus = $(this).data('current-status');
 
         const form = $('#statusForm');
-        form.attr('action', "{{ route('locataires.updateStatus.owner', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId));
+        form.attr('action', "{{ route('locataire.admin.updateStatus', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId));
 
         const statusSelect = $('#newStatus');
         statusSelect.val(currentStatus);
@@ -440,7 +416,7 @@ $(document).ready(function() {
         }
     });
 
-    // Gestion de l'envoi de rappel de paiement
+  // Gestion de l'envoi de rappel de paiement
     $('body').on('click', '.send-reminder-btn', function() {
         const button = $(this);
         const locataireId = button.data('locataire-id');
@@ -527,6 +503,96 @@ $(document).ready(function() {
     });
 });
 
+
+
+$(document).ready(function() {
+    // Gestion de l'affichage des états des lieux
+    $(document).on('click', '.view-etat-btn', function() {
+        const etatLieuData = $(this).data('etat-lieu');
+        const modal = $('#etatLieuModal');
+        
+        // Remplir le contenu de la modal
+        $('#etatLieuContent').html(`
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Informations générales</h5>
+                    <hr>
+                    <p><strong>Adresse du bien:</strong> ${etatLieuData.adresse_bien || 'Non renseigné'}</p>
+                    <p><strong>Type de bien:</strong> ${etatLieuData.type_bien || 'Non renseigné'}</p>
+                    <p><strong>Date de l'état:</strong> ${etatLieuData.date_etat || 'Non renseigné'}</p>
+                    <p><strong>Nature de l'état:</strong> ${etatLieuData.nature_etat || 'Non renseigné'}</p>
+                    <p><strong>Nom du locataire:</strong> ${etatLieuData.nom_locataire || 'Non renseigné'}</p>
+                    <p><strong>Nom du propriétaire/agence:</strong> ${etatLieuData.nom_proprietaire || 'Non renseigné'}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h5>Relevés des compteurs</h5>
+                    <hr>
+                    <p><strong>Type compteur:</strong> ${etatLieuData.type_compteur || 'Non renseigné'}</p>
+                    <p><strong>Numéro compteur:</strong> ${etatLieuData.numero_compteur || 'Non renseigné'}</p>
+                    <p><strong>Relevé entrée:</strong> ${etatLieuData.releve_entre || 'Non renseigné'}</p>
+                    <p><strong>Relevé sortie:</strong> ${etatLieuData.releve_sorti || 'Non renseigné'}</p>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>État des lieux par pièce</h5>
+                    <hr>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Élément</th>
+                                    <th>État</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Sol</td>
+                                    <td>${etatLieuData.sol || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Murs</td>
+                                    <td>${etatLieuData.murs || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Plafond</td>
+                                    <td>${etatLieuData.plafond || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Porte</td>
+                                    <td>${etatLieuData.porte_entre || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Interrupteurs</td>
+                                    <td>${etatLieuData.interrupteur || 'Non renseigné'}</td>
+                                </tr>
+                                <tr>
+                                    <td>Éclairage</td>
+                                    <td>${etatLieuData.eclairage || 'Non renseigné'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            ${etatLieuData.remarque ? `
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h5>Remarques</h5>
+                    <hr>
+                    <p>${etatLieuData.remarque}</p>
+                </div>
+            </div>
+            ` : ''}
+        `);
+        
+        // Afficher la modal
+        modal.modal('show');
+    });
+});
 // Gestion de la génération du code pour paiement en espèces
 $('body').on('click', '.generate-cash-code', function() {
     const locataireId = $(this).data('locataire-id');
@@ -993,6 +1059,7 @@ $('body').on('click', '.verify-cash-code', function() {
     const locataireId = $(this).data('locataire-id');
     startQRScanner(locataireId);
 });
+
 function submitCashPayment(locataireId, code) {
     const form = $('<form>', {
         'method': 'POST',
@@ -1025,7 +1092,7 @@ $(document).on('click', '.attribuer-bien-btn', function() {
     button.html('<i class="mdi mdi-loading mdi-spin"></i>');
 
     // Charger la liste des biens disponibles
-    $.get("{{ route('biens.disponibles.owner') }}", function(biens) {
+    $.get("{{ route('biens.disponibles') }}", function(biens) {
         button.prop('disabled', false);
         button.html('<i class="mdi mdi-home-plus"></i>');
         
@@ -1080,7 +1147,7 @@ $(document).on('click', '.attribuer-bien-btn', function() {
                 button.html('<i class="mdi mdi-loading mdi-spin"></i>');
                 
                 $.ajax({
-                    url: "{{ route('locataire.attribuer-bien.owner', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId),
+                    url: "{{ route('locataire.attribuer-bien', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId),
                     method: 'POST',
                     data: {
                         bien_id: result.value.bienId,
@@ -1127,7 +1194,7 @@ $(document).on('click', '.attribuer-bien-btn', function() {
     });
 });
 </script>
-<script>
+  <script>
 $(document).ready(function() {
     $('#searchInput').on('keyup', function() {
         const searchText = $(this).val().toLowerCase();
@@ -1163,60 +1230,7 @@ $(document).ready(function() {
 });
 
 </script>
-
-{{-- Attribuer un agent de recouvrement a un locataire pour l'etat des lieux  --}}
 <script>
-    // Gestion de l'attribution d'agent de recouvrement
-$(document).on('click', '.assign-comptable-btn', function() {
-    const locataireId = $(this).data('locataire-id');
-    const button = $(this);
-    
-    // Afficher le modal
-    const modal = $('#assignComptableModal');
-    $('#locataireId').val(locataireId);
-    
-    // Charger la liste des agents de recouvrement
-    $.ajax({
-        url: "{{ route('comptables.recouvrement.owner') }}",
-        type: 'GET',
-        data: {
-            proprietaire_id: "{{ Auth::guard('owner')->user()->code_id }}"
-        },
-        beforeSend: function() {
-            $('#comptableSelect').html('<option value="">Chargement en cours...</option>');
-        },
-        success: function(response) {
-            if (response.length > 0) {
-                let options = '<option value="">-- Choisir un agent --</option>';
-                response.forEach(comptable => {
-                    options += `<option value="${comptable.id}">${comptable.name} ${comptable.prenom} (${comptable.contact})</option>`;
-                });
-                $('#comptableSelect').html(options);
-            } else {
-                $('#comptableSelect').html('<option value="">Aucun agent disponible</option>');
-                Swal.fire({
-                    title: 'Aucun agent disponible',
-                    text: 'Aucun agent de recouvrement n\'est disponible dans votre agence.',
-                    icon: 'warning',
-                    confirmButtonText: 'OK'
-                });
-                return;
-            }
-            modal.modal('show');
-        },
-        error: function() {
-            Swal.fire({
-                title: 'Erreur',
-                text: 'Impossible de charger la liste des agents',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        }
-    });
-});
-
-// Soumission du formulaire d'attribution
-// Soumission du formulaire d'attribution
 // Gestion de l'attribution d'agent de recouvrement avec SweetAlert2
 $(document).on('click', '.assign-comptable-btn', function() {
     const locataireId = $(this).data('locataire-id');
@@ -1228,11 +1242,9 @@ $(document).on('click', '.assign-comptable-btn', function() {
     
     // Charger la liste des agents de recouvrement
     $.ajax({
-        url: "{{ route('comptables.recouvrement.owner') }}",
+        url: "{{ route('comptables.recouvrement.admin') }}",
         type: 'GET',
-        data: {
-            proprietaire_id: "{{ Auth::guard('owner')->user()->code_id }}"
-        },
+       
         success: function(response) {
             button.prop('disabled', false);
             button.html('<i class="mdi mdi-account-plus"></i> Attribuer');
@@ -1290,7 +1302,7 @@ $(document).on('click', '.assign-comptable-btn', function() {
                     button.html('<i class="mdi mdi-loading mdi-spin"></i>');
                     
                     $.ajax({
-                        url: "{{ route('locataire.assign.comptable.owner') }}",
+                        url: "{{ route('locataire.assign.comptable.admin') }}",
                         type: 'POST',
                         data: result.value,
                         success: function(response) {
@@ -1366,5 +1378,5 @@ $(document).on('click', '.assign-comptable-btn', function() {
     color: #a5b1c2;
     margin-bottom: 1rem;
 }
-</style>
+</style> 
 @endsection

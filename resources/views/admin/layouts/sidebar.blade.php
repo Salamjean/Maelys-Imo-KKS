@@ -148,5 +148,12 @@
           </ul>
         </div>
       </li>
+
+       <li class="nav-item">
+        <a class="nav-link" href="{{ route('admin.tenant.move') }}">
+          <i class="mdi mdi-account menu-icon"></i>
+          <span class="menu-title">Locataire - déménager</span>
+        </a>
+      </li>
     </ul>
   </nav>

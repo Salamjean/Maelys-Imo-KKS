@@ -37,10 +37,11 @@ class LocataireOwnerController extends Controller
         $locataires = Locataire::with(['bien', 'paiements' => function($query) {
             $query->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year);
-        }])
-        ->where('status', '!=', 'Pas sérieux')
-        ->where('proprietaire_id',$ownerId)
-        ->paginate(6);
+            }])
+            ->where('status', '!=', 'Pas sérieux')
+            ->where('proprietaire_id',$ownerId)
+            ->whereNotNull('bien_id')
+            ->paginate(6);
 
         // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
         $locataires->getCollection()->transform(function($locataire) {
@@ -489,5 +490,67 @@ class LocataireOwnerController extends Controller
         $locataires = Locataire::where('status', 'Pas sérieux')
                     ->paginate(6);
         return view('proprietaire.locataire.indexSerieux',compact('locataires', 'pendingVisits'));
+    }
+
+    public function move(){
+             // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
+        // Récupération de tous les locataires
+        $locataires = Locataire::where('status','Inactif')
+                    ->whereNull('bien_id')
+                    ->paginate(6);
+
+        
+         // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
+        $locataires->getCollection()->transform(function($locataire) {
+            $today = now()->format('d');
+            $currentMonthPaid = $locataire->paiements->isNotEmpty();
+            $locataire->show_reminder_button = ($locataire->bien->date_fixe ?? '10' == $today) && !$currentMonthPaid;
+            return $locataire;
+        });
+        return view('proprietaire.locataire.move', compact('locataires', 'pendingVisits'));
+    }
+
+     public function updateStatus(Request $request, Locataire $locataire)
+    {
+        $request->validate([
+            'status' => 'required|in:Actif,Inactif,Pas sérieux',
+            'motif' => 'required_if:status,Inactif,Pas sérieux|nullable|string|max:255'
+        ]);
+
+        try {
+            // Sauvegarder l'ancien bien_id avant de le modifier
+            $ancienBienId = $locataire->bien_id;
+
+            $locataire->status = $request->status;
+            $locataire->motif = in_array($request->status, ['Inactif', 'Pas sérieux']) ? $request->motif : null;
+            
+            // Si le statut est "Pas sérieux", on libère le bien
+            if ($request->status === 'Pas sérieux') {
+                $locataire->bien_id = null;
+            }
+            
+            $locataire->save();
+
+            // Mettre à jour le statut du bien si nécessaire
+            if ($ancienBienId && $request->status === 'Pas sérieux') {
+                $bien = Bien::find($ancienBienId);
+                $bien->status = 'Disponible';
+                $bien->save();
+            }
+
+            return redirect()->back()->with('success', 'Statut du locataire mis à jour avec succès!');
+        } catch (\Exception $e) {
+            Log::error('Error updating locataire status: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Une erreur est survenue lors de la mise à jour du statut']);
+        }
     }
 }

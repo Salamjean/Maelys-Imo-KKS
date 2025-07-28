@@ -180,6 +180,9 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::post('/abonnements/deactivate', [AbonnementController::class, 'deactivate'])->name('abonnements.deactivate');
     Route::post('/abonnements/extend', [AbonnementController::class, 'extend'])->name('abonnements.extend');
     Route::post('/abonnements/reduce', [AbonnementController::class, 'reduce'])->name('abonnements.reduce');
+
+    //Locataire qui a demenager 
+    Route::get('/move/out',[AdminController::class, 'move'])->name('admin.tenant.move');
     
 });
 
@@ -289,6 +292,8 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
         Route::post('/reversement', [AgenceReversementController::class, 'store'])->name('reversement.store.agence');
         Route::get('/reversement/solde', [AgenceReversementController::class, 'getSolde'])->name('reversement.solde.agence');
     });
+
+    Route::get('/move/out',[AgencePasswordResetController::class, 'move'])->name('agence.tenant.move');
 });
 // Routes pour la gestion des paiements
 Route::post('/locataires/send-payment-reminder', [PaymentController::class, 'sendPaymentReminder'])->name('locataires.sendPaymentReminder');
@@ -443,6 +448,8 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
         Route::post('/reversement', [ReversementController::class, 'store'])->name('reversement.store');
         Route::get('/reversement/solde', [ReversementController::class, 'getSolde'])->name('reversement.solde');
     });
+
+    Route::get('/move/out',[LocataireOwnerController::class, 'move'])->name('owner.tenant.move');
 });
 
 
@@ -580,6 +587,7 @@ Route::prefix('agence')->group(function () {
    Route::post('/agence/activate', [AbonnementController::class, 'activateAccountAgence'])->name('agence.activate');
    Route::post('/notify', [AbonnementController::class, 'handleCinetPayNotificationAgence'])->name('cinetpay.notify.agence');
 });
+
 
 
 

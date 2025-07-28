@@ -32,6 +32,7 @@ class VerificationCodeMail extends Mailable
     public function build()
     {
         return $this->subject('Votre code de vérification pour l\'état des lieux')
+                    ->from('contact@maelysimo.com', 'Maelys-Imo')
                     ->view('emails.etat_lieux_code_text')
                     ->with([
                         'code' => $this->code,

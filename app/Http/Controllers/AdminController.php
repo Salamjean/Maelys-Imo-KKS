@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use App\Models\Bien;
+use App\Models\Locataire;
 use App\Models\Proprietaire;
 use App\Models\Visite;
 use Exception;
@@ -163,5 +164,32 @@ class AdminController extends Controller
     {
         $owners = Proprietaire::paginate(10);
         return view('admin.abonnement.abonnement',compact('owners'));
+    }
+
+    public function move(){
+             // Demandes de visite en attente
+       $pendingVisits = Visite::where('statut', 'en attente')
+                        ->whereHas('bien', function ($query) {
+                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                                ->orWhereHas('proprietaire', function($q) {
+                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                                });
+                        })
+                        ->count();
+        // Récupération de tous les locataires
+        $locataires = Locataire::where('status','Inactif')
+                    ->whereNull('bien_id')
+                    ->paginate(6);
+
+        
+         // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
+        $locataires->getCollection()->transform(function($locataire) {
+            $today = now()->format('d');
+            $currentMonthPaid = $locataire->paiements->isNotEmpty();
+            $locataire->show_reminder_button = ($locataire->bien->date_fixe ?? '10' == $today) && !$currentMonthPaid;
+            return $locataire;
+        });
+        return view('admin.locataire.move', compact('locataires', 'pendingVisits'));
     }
 }

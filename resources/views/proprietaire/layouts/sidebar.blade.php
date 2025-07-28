@@ -115,5 +115,12 @@
           <span class="menu-title">Mon abonnement</span>
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link" href="{{ route('owner.tenant.move') }}">
+          <i class="mdi mdi-account menu-icon"></i>
+          <span class="menu-title">Locataire - déménager</span>
+        </a>
+      </li>
     </ul>
   </nav>
