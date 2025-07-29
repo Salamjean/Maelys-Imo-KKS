@@ -532,7 +532,7 @@ Route::get('/biens/appartemnets',[BienController::class, 'appartements'])->name(
 Route::get('/biens/maisons',[BienController::class, 'maisons'])->name('bien.maison');
 Route::get('/biens/terrains',[BienController::class, 'terrains'])->name('bien.terrain');
 Route::get('/visiter-bien/{id}', [BienController::class, 'visiter'])->name('bien.visiter');
-Route::post('/visite', [VisiteController::class, 'store'])->name('visite.store'); //Les routes de gestion des visites
+Route::post('/visite', [VisiteController::class, 'store'])->name('visite.store');
 
 
 //routes pour la gestion des contrats

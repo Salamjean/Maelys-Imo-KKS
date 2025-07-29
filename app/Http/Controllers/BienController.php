@@ -663,10 +663,10 @@ public function updateAgence(Request $request, $id)
     }
 
     public function visiter($id)
-{
-    $bien = Bien::findOrFail($id);
-    return view('home.visite', compact('bien'));
-}
+    {
+        $bien = Bien::findOrFail($id);
+        return view('home.visite', compact('bien'));
+    }
 
 public function rented(){
     // Récupération de l'agence connectée
