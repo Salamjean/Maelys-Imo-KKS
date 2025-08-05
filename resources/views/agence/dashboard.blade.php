@@ -150,7 +150,7 @@
             <div class="row no-gutters align-items-center">
               <div class="col mr-2">
                 <div class="text-xs font-weight-bold text-uppercase mb-1 text-white">Solde disponible</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800 text-white text-center" style="font-size: 50px">{{ $soldeDisponible }}</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800 text-white text-center" style="font-size: 50px">{{ $soldeDisponible }} Fcfa</div>
               </div>
               <div class="col-auto">
                 <i class="mdi mdi-cash  icon-lg"></i>
