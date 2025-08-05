@@ -29,25 +29,44 @@ class RibController extends Controller
 
     public function store(Request $request)
     {
+        $proprietaire = Auth::guard('owner')->user();
+        $maxRibs = 2; // Nombre maximum de RIBs autorisés
+
+        // Vérification du quota
+        $existingRibsCount = Rib::where('proprietaire_id', $proprietaire->code_id)->count();
+        
+        if ($existingRibsCount >= $maxRibs) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Vous avez atteint le nombre maximum de IBAN autorisés ('.$maxRibs.')');
+        }
+
+        // Validation
         $request->validate([
             'rib' => 'required|string|unique:ribs,rib',
             'banque' => 'required|string',
-        ],
-        [
-            'rib.required' => 'Le RIB est obligatoire.',
-            'rib.unique' => 'Ce RIB existe déjà.',
+            'path_rib_file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ], [
+            'rib.required' => 'Le IBAN est obligatoire.',
+            'rib.unique' => 'Ce IBAN est déjà enregistré pour votre compte.',
             'banque.required' => 'Le nom de la banque est obligatoire.',
+            'path_rib_file.required' => 'Le fichier IBAN est obligatoire.',
+            'path_rib_file.mimes' => 'Le fichier doit être au format JPG, JPEG, PNG ou PDF.',
+            'path_rib_file.max' => 'Le fichier ne doit pas dépasser 2Mo.',
         ]);
 
-        $proprietaire = Auth::guard('owner')->user();
+        // Traitement du fichier RIB
+        $ribPath = $request->file('path_rib_file')->store('ribs/proprietaires', 'public');
 
+        // Création du RIB
         Rib::create([
             'rib' => $request->rib,
             'banque' => $request->banque,
+            'path_rib_file' => $ribPath,
             'proprietaire_id' => $proprietaire->code_id,
         ]);
 
-        return redirect()->back()->with('success', 'RIB enregistré avec succès!');
+        return redirect()->back()->with('success', 'IBAN enregistré avec succès!');
     }
 
      public function destroy($id)
@@ -74,25 +93,40 @@ class RibController extends Controller
 
     public function storeAgence(Request $request)
     {
+        // Vérifier d'abord le nombre de RIB existants
+        $agence = Auth::guard('agence')->user();
+        $maxRibs = 2; // Définir le nombre maximum autorisé
+
+        if (Rib::where('agence_id', $agence->code_id)->count() >= $maxRibs) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Vous avez atteint le nombre maximum de IBAN autorisés ('.$maxRibs.')');
+        }
+
+        // Validation des données
         $request->validate([
             'rib' => 'required|string|unique:ribs,rib',
             'banque' => 'required|string',
-        ],
-        [
-            'rib.required' => 'Le RIB est obligatoire.',
-            'rib.unique' => 'Ce RIB existe déjà.',
+            'path_rib_file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ], [
+            'rib.required' => 'L\'IBAN est obligatoire.',
+            'rib.unique' => 'Cet IBAN est déjà associé à une banque.',
             'banque.required' => 'Le nom de la banque est obligatoire.',
+            'path_rib_file.required' => 'Le fichier IBAN est obligatoire'
         ]);
 
-        $agence = Auth::guard('agence')->user();
+        // Traitement du fichier
+        $ribPath = $request->file('path_rib_file')->store('fichier_rib', 'public');
 
+        // Création du RIB
         Rib::create([
             'rib' => $request->rib,
             'banque' => $request->banque,
+            'path_rib_file' => $ribPath,
             'agence_id' => $agence->code_id,
         ]);
 
-        return redirect()->back()->with('success', 'RIB enregistré avec succès!');
+        return redirect()->back()->with('success', 'IBAN enregistré avec succès !');
     }
 
      public function destroyAgence($id)

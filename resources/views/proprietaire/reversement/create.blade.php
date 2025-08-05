@@ -18,7 +18,7 @@
                                 <div>
                                     <h6 class="text-muted mb-1">Solde disponible</h6>
                                     <h3 class="font-weight-bold mb-0" style="color: #02245b">
-                                        <span id="solde-disponible">{{ number_format($soldeDisponible ) }}</span> FCFA
+                                        <span id="solde-disponible">{{ number_format($soldeDisponible , 0, ',', ' ') }}</span> FCFA
                                     </h3>
                                 </div>
                                 <div class="bg-primary-light rounded-circle p-3">

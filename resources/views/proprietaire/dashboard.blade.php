@@ -84,7 +84,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="card-title text-muted mb-0">Solde disponible</h6>
-                            <h2 class="font-weight-bold mb-0">{{ number_format($soldeDisponible) }} FCFA</h2>
+                            <h2 class="font-weight-bold mb-0">{{ number_format($soldeDisponible, 0, ',', ' ') }} FCFA</h2>
                         </div>
                         <div class="icon icon-shape text-white rounded-circle shadow" style="background-color: #02245b">
                             <i class="mdi mdi-cash-multiple"></i>

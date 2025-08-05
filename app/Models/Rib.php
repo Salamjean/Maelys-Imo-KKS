@@ -9,6 +9,7 @@ class Rib extends Model
     protected $fillable = [
         'rib',
         'banque',
+        'path_rib_file',
         'proprietaire_id',
         'agence_id'
     ];

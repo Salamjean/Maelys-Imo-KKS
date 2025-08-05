@@ -34,12 +34,12 @@
                                 <tbody>
                                     @foreach($reversements as $reversement)
                                     <tr class="text-center">
-                                        <td>{{ $reversement->proprietaire->name.' '.$reversement->proprietaire->prenom }}</td>
+                                        <td>{{ $reversement->proprietaire ? $reversement->proprietaire->name.' '.$reversement->proprietaire->prenom : ($reversement->agence->name ?? 'N/A') }}</td>
                                         <td>{{ $reversement->created_at->format('d/m/Y') }}</td>
                                         <td>{{ $reversement->created_at->format('H:i') }}</td>
                                         <td><span class="badge text-white" style="background-color: #02245b">{{ $reversement->reference }}</span></td>
                                         <td>{{ $reversement->rib->banque }}</td>
-                                        <td>{{ substr($reversement->rib->rib, 0, 4) }}******{{ substr($reversement->rib->rib, -4) }}</td>
+                                        <td>{{ $reversement->rib->rib }}</td>
                                         <td>
                                             @if($reversement->statut == 'En attente')
                                                 <span class="badge badge-warning">En attente</span>

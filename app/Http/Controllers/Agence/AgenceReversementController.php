@@ -64,7 +64,7 @@ class AgenceReversementController extends Controller
             ->where('statut', 'payé')
             ->sum('montant');
         
-        $totalReversements = Reversement::where('proprietaire_id', $proprietaireId)
+        $totalReversements = Reversement::where('agence_id', $proprietaireId)
             ->sum('montant');
         
         return $totalPaiements - $totalReversements;

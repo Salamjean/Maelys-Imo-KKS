@@ -7,15 +7,22 @@
         <div class="col-md-5">
             <div class="card form-card">
                 <div class="card-header">
-                    <h2 class="text-center">Enregistrer mon RIB</h2>
+                    <h2 class="text-center">Enregistrer mon compte bancaire</h2>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('rib.store.agence') }}" method="POST" class="form-styled">
+                    <form action="{{ route('rib.store.agence') }}" method="POST" class="form-styled" enctype="multipart/form-data">
                         @csrf
                         <div class="form-group">
-                            <label for="rib">Numéro RIB</label>
+                            <label for="rib">Numéro IBAN</label>
                             <input type="text" class="form-control" id="rib" name="rib" value="{{ old('rib') }}" required>
                             @error('rib')
+                                <div class="alert alert-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label for="rib">Fichier IBAN</label>
+                            <input type="file" class="form-control" id="path_rib_file" name="path_rib_file" value="{{ old('path_rib_file') }}" required>
+                            @error('path_rib_file')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
                         </div>
@@ -38,14 +45,15 @@
         <div class="col-md-7">
             <div class="card table-card">
                 <div class="card-header">
-                    <h3 class="text-center">RIBs Enregistrés</h3>
+                    <h3 class="text-center">Les comptes enregistrés</h3>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                                 <tr class="text-center">
-                                    <th>Numéro RIB</th>
+                                    <th>Numéro IBAN</th>
+                                    <th>Fichier IBAN</th>
                                     <th>Nom de la Banque</th>
                                     <th>Actions</th>
                                 </tr>
@@ -54,9 +62,33 @@
                                 @foreach($ribs as $rib)
                                     <tr>
                                         <td class="text-center">{{ substr($rib->rib, 0, 4) }}******{{ substr($rib->rib, -4) }}</td>
+                                    <td class="text-center">
+                                    @if($rib->path_rib_file)
+                                        @php
+                                            $ribPath = asset('storage/' . $rib->path_rib_file);
+                                            $ribPathPdf = strtolower(pathinfo($ribPath, PATHINFO_EXTENSION)) === 'pdf';
+                                        @endphp
+                                            @if ($ribPathPdf)
+                                                <a href="{{ $ribPath }}" target="_blank">
+                                                    <img src="{{ asset('assets/images/pdf.jpg') }}" alt="PDF" width="30" height="30">
+                                                </a>
+                                            @else
+                                                <img src="{{ $ribPath }}" 
+                                                    alt="Pièce du parent" 
+                                                    width="50" 
+                                                    height=50
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#imageModal" 
+                                                    onclick="showImage(this)" 
+                                                    onerror="this.onerror=null; this.src='{{ asset('assets/images/profiles/bébé.jpg') }}'">
+                                            @endif
+                                                @else
+                                                    <p>Aucun IBAN fournir</p>
+                                            @endif
+                                    </td>
                                         <td class="text-center">{{ $rib->banque }}</td>
                                         <td class="text-center">
-                                            <form action="{{ route('rib.destroy', $rib->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('rib.destroy.agence', $rib->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-danger delete-btn" title="Supprimer">

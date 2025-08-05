@@ -12,6 +12,7 @@ class Reversement extends Model
         'date_reversement',
         'rib_id',
         'proprietaire_id',
+        'agence_id',
     ];
 
     public function rib()
@@ -22,5 +23,9 @@ class Reversement extends Model
     public function proprietaire()
     {
         return $this->belongsTo(Proprietaire::class, 'proprietaire_id', 'code_id');
+    }
+    public function agence()
+    {
+        return $this->belongsTo(Agence::class, 'agence_id', 'code_id');
     }
 }

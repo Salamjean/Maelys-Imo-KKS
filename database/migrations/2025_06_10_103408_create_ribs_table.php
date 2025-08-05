@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('rib')->unique();
             $table->string('banque');
+            $table->string('path_rib_file');
             $table->string('proprietaire_id')->nullable();$table->foreign('proprietaire_id')->references('code_id')->on('proprietaires')->onDelete('cascade');
             $table->string('agence_id')->nullable();$table->foreign('agence_id')->references('code_id')->on('agences')->onDelete('cascade');
             $table->timestamps();
