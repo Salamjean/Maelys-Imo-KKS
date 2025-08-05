@@ -54,7 +54,7 @@ Route::get('/', function (Request $request) {
     }
     
     // Pagination et tri
-    $biens = $query->orderBy('created_at', 'desc')->paginate(15);
+    $biens = $query->orderBy('created_at', 'desc')->paginate(30);
     
     // Compteurs par type (sans les filtres pour garder les totaux)
     $appartements = Bien::where('status', 'Disponible')
