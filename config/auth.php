@@ -41,6 +41,11 @@ return [
             'provider' => 'users',
         ],
 
+        'api' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+        ],
+
         'admin' => [
             'driver' => 'session',
             'provider' => 'admins',
@@ -54,8 +59,19 @@ return [
             'driver' => 'session',
             'provider' => 'locataires',
         ],
+
+        'locataire-api' => [
+            'driver' => 'sanctum',
+            'provider' => 'locataires',
+        ],
+
         'comptable' => [
             'driver' => 'session',
+            'provider' => 'comptables',
+        ],
+
+        'comptable-api' => [
+            'driver' => 'sanctum',
             'provider' => 'comptables',
         ],
         'owner' => [

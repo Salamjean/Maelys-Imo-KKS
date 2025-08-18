@@ -1,0 +1,2736 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Immobilière",
+        "description": "API pour la gestion des biens immobiliers",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Connecter un utilisateur (locataire ou comptable)",
+                "description": "Authentifie un utilisateur avec son code_id et mot de passe. Le système vérifie s'il s'agit d'un locataire ou d'un comptable et renvoie un token Sanctum en cas de succès.",
+                "operationId": "loginUser",
+                "requestBody": {
+                    "description": "Identifiants de l'utilisateur",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code_id",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "code_id": {
+                                        "type": "string",
+                                        "example": "LOC12345"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "description": "Données de l'utilisateur",
+                                            "type": "object"
+                                        },
+                                        "token": {
+                                            "description": "Token d'authentification Sanctum",
+                                            "type": "string"
+                                        },
+                                        "user_type": {
+                                            "type": "string",
+                                            "example": "locataire"
+                                        },
+                                        "redirect": {
+                                            "type": "string",
+                                            "example": "http://localhost/locataire/dashboard"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Identifiants incorrects",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Identifiants incorrects"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Compte désactivé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Compte désactivé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur"
+                    }
+                }
+            }
+        },
+        "/api/password/forgot": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Demander la réinitialisation du mot de passe",
+                "description": "Envoie un lien de réinitialisation de mot de passe à l'email associé au code_id fourni.",
+                "operationId": "sendPasswordResetLink",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code_id"
+                                ],
+                                "properties": {
+                                    "code_id": {
+                                        "type": "string",
+                                        "example": "COMPTA001"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lien de réinitialisation envoyé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Un lien de réinitialisation a été envoyé à votre email"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Aucun email associé"
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé"
+                    }
+                }
+            }
+        },
+        "/api/password/reset": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Réinitialiser le mot de passe avec un token",
+                "description": "Définit un nouveau mot de passe pour un utilisateur en utilisant le token de réinitialisation.",
+                "operationId": "resetUserPassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "code_id",
+                                    "type",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "example": "longrandomtokenstring..."
+                                    },
+                                    "code_id": {
+                                        "type": "string",
+                                        "example": "LOC12345"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "locataire",
+                                            "comptable"
+                                        ],
+                                        "example": "locataire"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NouveauMotDePasse123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NouveauMotDePasse123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe réinitialisé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mot de passe réinitialisé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Token invalide ou expiré"
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé"
+                    },
+                    "422": {
+                        "description": "Erreur de validation (ex: mots de passe non identiques)"
+                    }
+                }
+            }
+        },
+        "/api": {
+            "get": {
+                "tags": [
+                    "Accueil"
+                ],
+                "summary": "Page d'accueil avec statistiques",
+                "description": "Retourne les biens disponibles, les compteurs par type et les derniers partenaires",
+                "operationId": "b8252aa1447571b92ef9b434d95e9f2b",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type de bien",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "commune",
+                        "in": "query",
+                        "description": "Filtrer par commune",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "prix_max",
+                        "in": "query",
+                        "description": "Filtrer par prix maximum",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HomeResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/biens/available": {
+            "get": {
+                "tags": [
+                    "Biens"
+                ],
+                "summary": "Liste des biens disponibles",
+                "description": "Retourne une liste paginée des biens disponibles avec filtres optionnels",
+                "operationId": "d741d83b782acac11ca5e4012a83aabb",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type de bien",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "commune",
+                        "in": "query",
+                        "description": "Filtrer par commune",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "prix_max",
+                        "in": "query",
+                        "description": "Filtrer par prix maximum",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 6
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BienPagination"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/biens/appartements": {
+            "get": {
+                "tags": [
+                    "Biens"
+                ],
+                "summary": "Liste des appartements disponibles",
+                "description": "Retourne une liste paginée des appartements disponibles",
+                "operationId": "6aa229ff1d610f0f2df19a100e9c0952",
+                "parameters": [
+                    {
+                        "name": "commune",
+                        "in": "query",
+                        "description": "Filtrer par commune",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "prix_max",
+                        "in": "query",
+                        "description": "Filtrer par prix maximum",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BienPagination"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/biens/maisons": {
+            "get": {
+                "tags": [
+                    "Biens"
+                ],
+                "summary": "Liste des maisons disponibles",
+                "description": "Retourne une liste paginée des maisons disponibles avec les relations propriétaire et agence",
+                "operationId": "6a7561f418b50ff2e5cc89a6d9e1d654",
+                "parameters": [
+                    {
+                        "name": "commune",
+                        "in": "query",
+                        "description": "Filtrer par commune",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "prix_max",
+                        "in": "query",
+                        "description": "Filtrer par prix maximum",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BienWithRelationsPagination"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/biens/bureaux": {
+            "get": {
+                "tags": [
+                    "Biens"
+                ],
+                "summary": "Liste des terrains disponibles",
+                "description": "Retourne une liste paginée des terrains disponibles",
+                "operationId": "f89d7f712c32286fa936061fc78132f4",
+                "parameters": [
+                    {
+                        "name": "commune",
+                        "in": "query",
+                        "description": "Filtrer par commune",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "prix_max",
+                        "in": "query",
+                        "description": "Filtrer par prix maximum",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Bien"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/contact": {
+            "post": {
+                "tags": [
+                    "Contact"
+                ],
+                "summary": "Envoyer un message de contact",
+                "description": "Envoie un email de contact à l'administrateur",
+                "operationId": "ce097f78a3ce942f69ea505abc892e20",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Message envoyé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Votre message a été envoyé avec succès!"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email"
+                                                },
+                                                "subject": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Le champ email est obligatoire."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/biens/{id}": {
+            "get": {
+                "tags": [
+                    "Biens"
+                ],
+                "summary": "Détails d'un bien",
+                "description": "Retourne les détails complets d'un bien spécifique",
+                "operationId": "483c6f51076e8b64523a3c4f9d934f32",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du bien",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/BienWithRelations"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bien non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tenant/profil/edit": {
+            "get": {
+                "tags": [
+                    "Locataires"
+                ],
+                "summary": "Récupérer le profil du locataire connecté",
+                "operationId": "e87b4a481270f33dd5dc432a2cb09b8e",
+                "responses": {
+                    "200": {
+                        "description": "Profil récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Locataire"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur serveur"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/tenant/profile/photo": {
+            "post": {
+                "tags": [
+                    "Locataires"
+                ],
+                "summary": "Mettre à jour la photo de profil",
+                "operationId": "263e604bda412f2fc80ae2233399d67d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "profile_image"
+                                ],
+                                "properties": {
+                                    "profile_image": {
+                                        "description": "Image de profil (jpeg,png,jpg,gif, max 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Photo de profil mise à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Photo de profil mise à jour avec succès"
+                                        },
+                                        "profile_image_url": {
+                                            "type": "string",
+                                            "example": "http://example.com/storage/profile_images/image.jpg"
+                                        },
+                                        "locataire": {
+                                            "properties": {
+                                                "code_id": {
+                                                    "type": "string",
+                                                    "example": "LOC123"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "profile_image": [
+                                                    "Le fichier doit être une image (jpeg, png, jpg, gif)"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Échec de la mise à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Échec de la mise à jour de la photo de profil"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/tenant/profile/update-password": {
+            "post": {
+                "tags": [
+                    "Locataires"
+                ],
+                "summary": "Mettre à jour le mot de passe",
+                "operationId": "d25adc5fd763639a4f919016118c7fbf",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "example": "ancienMotDePasse"
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "nouveauMotDePasse"
+                                    },
+                                    "new_password_confirmation": {
+                                        "type": "string",
+                                        "example": "nouveauMotDePasse"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mot de passe mis à jour avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "current_password": [
+                                                    "Le champ mot de passe actuel est requis."
+                                                ],
+                                                "new_password_confirmation": [
+                                                    "Les mots de passe ne correspondent pas"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Échec de la mise à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Échec de la mise à jour du mot de passe"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/tenant/profile/update-email": {
+            "post": {
+                "tags": [
+                    "Locataires"
+                ],
+                "summary": "Mettre à jour l'email",
+                "operationId": "d3dc8ed6210609f564a691471c56a789",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "new_email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "new_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "nouveau@email.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "motDePasseActuel"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email mis à jour avec succès"
+                                        },
+                                        "new_email": {
+                                            "type": "string",
+                                            "example": "nouveau@email.com"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "new_email": [
+                                                    "Cet email est déjà utilisé par un autre compte"
+                                                ],
+                                                "password": [
+                                                    "Le mot de passe est incorrect"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Échec de la mise à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Échec de la mise à jour de l'email"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/tenant/dashboard": {
+            "get": {
+                "tags": [
+                    "Locataires"
+                ],
+                "summary": "Récupérer les données du tableau de bord",
+                "operationId": "bc7bd0ab7848402adce37b0809a3952e",
+                "responses": {
+                    "200": {
+                        "description": "Données du tableau de bord récupérées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "locataire": {
+                                                    "$ref": "#/components/schemas/LocataireWithRelations"
+                                                },
+                                                "qr_code": {
+                                                    "$ref": "#/components/schemas/CashVerificationCode"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Échec du chargement",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to load dashboard data"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/tenant/contrat": {
+            "get": {
+                "tags": [
+                    "Locataires"
+                ],
+                "summary": "Récupérer le lien du contrat",
+                "operationId": "b8a027ad030ef1f416931c8074d2c30d",
+                "responses": {
+                    "200": {
+                        "description": "Lien du contrat récupéré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "contrat_url": {
+                                            "type": "string",
+                                            "example": "http://example.com/storage/contrats/contrat_123.pdf"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Contrat non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun contrat trouvé pour ce locataire"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de la récupération du contrat"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/tenant/{locataireId}/contrat": {
+            "get": {
+                "tags": [
+                    "Locataires"
+                ],
+                "summary": "Télécharger le contrat",
+                "operationId": "84ab2449a60d71ff41ec5740687d5002",
+                "parameters": [
+                    {
+                        "name": "locataireId",
+                        "in": "path",
+                        "description": "ID du locataire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contrat téléchargé",
+                        "content": {
+                            "application/pdf": {}
+                        }
+                    },
+                    "404": {
+                        "description": "Ressource non trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Locataire non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors du téléchargement du contrat"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/tenant/contact/agency": {
+            "post": {
+                "tags": [
+                    "Locataire"
+                ],
+                "summary": "Envoyer un message à l'agence",
+                "description": "Permet au locataire authentifié d'envoyer un email à son agence.",
+                "operationId": "sendEmailToAgency",
+                "requestBody": {
+                    "description": "Données du message à envoyer",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "subject",
+                                    "message",
+                                    "agency_email"
+                                ],
+                                "properties": {
+                                    "subject": {
+                                        "type": "string",
+                                        "example": "Problème avec la plomberie"
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "Bonjour, je vous contacte car j'ai une fuite d'eau dans la salle de bain."
+                                    },
+                                    "agency_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "agence.immobiliere@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Message envoyé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Message envoyé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Authentification requise"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur serveur: ..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/tenant/{locataireId}/paiements": {
+            "get": {
+                "tags": [
+                    "Paiements"
+                ],
+                "summary": "Lister les paiements d'un locataire",
+                "operationId": "d8e9f4cd8b406f507606012c1d0e4848",
+                "parameters": [
+                    {
+                        "name": "locataireId",
+                        "in": "path",
+                        "description": "ID du locataire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des paiements récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "locataire": {
+                                                    "$ref": "#/components/schemas/LocataireWithPaiements"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Paiements récupérés avec succès"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Locataire non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Locataire non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Paiements"
+                ],
+                "summary": "Enregistrer un nouveau paiement",
+                "operationId": "3bbf431b6638c32ef23fbe410c1eee19",
+                "parameters": [
+                    {
+                        "name": "locataireId",
+                        "in": "path",
+                        "description": "ID du locataire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mois_couvert",
+                                    "methode_paiement"
+                                ],
+                                "properties": {
+                                    "mois_couvert": {
+                                        "description": "Mois couvert par le paiement (format YYYY-MM)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2023-12"
+                                    },
+                                    "methode_paiement": {
+                                        "description": "Méthode de paiement",
+                                        "type": "string",
+                                        "enum": [
+                                            "mobile_money",
+                                            "virement"
+                                        ],
+                                        "example": "mobile_money"
+                                    },
+                                    "transaction_id": {
+                                        "description": "ID de transaction (requis pour mobile money)",
+                                        "type": "string",
+                                        "example": "MM_123456789"
+                                    },
+                                    "proof_file": {
+                                        "description": "Fichier de preuve (requis pour virement bancaire)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Paiement enregistré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Paiement enregistré avec succès pour le mois de Décembre 2023"
+                                        },
+                                        "paiement": {
+                                            "$ref": "#/components/schemas/Paiement"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Locataire non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Locataire non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Paiement déjà existant",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Paiement déjà enregistré pour Décembre 2023"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Le loyer pour Décembre 2023 a déjà été payé."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "mois_couvert": [
+                                                    "Le champ mois couvert est requis."
+                                                ],
+                                                "methode_paiement": [
+                                                    "La méthode de paiement sélectionnée est invalide."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de l'enregistrement du paiement"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tenant/paiements/{id}": {
+            "get": {
+                "tags": [
+                    "Paiements"
+                ],
+                "summary": "Afficher les détails d'un paiement",
+                "operationId": "8d476501be5f66267621b70892b589b9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du paiement",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du paiement récupérés avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Détails du paiement récupérés avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/PaiementDetails"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Paiement non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Paiement non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visit/store": {
+            "post": {
+                "tags": [
+                    "Visites"
+                ],
+                "summary": "Créer une nouvelle demande de visite",
+                "operationId": "7de35ba7b1c85bb30b3c3350f67ac141",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "bien_id",
+                                    "nom",
+                                    "email",
+                                    "telephone",
+                                    "date_visite",
+                                    "heure_visite"
+                                ],
+                                "properties": {
+                                    "bien_id": {
+                                        "description": "ID du bien à visiter",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "nom": {
+                                        "description": "Nom du visiteur",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "description": "Email du visiteur",
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255,
+                                        "example": "john@example.com"
+                                    },
+                                    "telephone": {
+                                        "description": "Numéro de téléphone ivoirien (mobile)",
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "07 98 27 89 81"
+                                    },
+                                    "date_visite": {
+                                        "description": "Date souhaitée pour la visite (au format YYYY-MM-DD)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-12-31"
+                                    },
+                                    "heure_visite": {
+                                        "description": "Heure souhaitée pour la visite",
+                                        "type": "string",
+                                        "example": "14:00"
+                                    },
+                                    "message": {
+                                        "description": "Message supplémentaire",
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "Je souhaite visiter en matinée si possible",
+                                        "nullable": true
+                                    },
+                                    "statut": {
+                                        "description": "Statut de la visite (par défaut: en attente)",
+                                        "type": "string",
+                                        "enum": [
+                                            "en attente",
+                                            "confirmée",
+                                            "effectuée",
+                                            "annulée"
+                                        ],
+                                        "example": "en attente"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Demande de visite créée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Demande de visite enregistrée avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "visite": {
+                                                    "$ref": "#/components/schemas/Visite"
+                                                },
+                                                "bien": {
+                                                    "$ref": "#/components/schemas/Bien"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur de validation"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "email": [
+                                                    "L'email doit être une adresse valide"
+                                                ],
+                                                "telephone": [
+                                                    "Le numéro doit être un mobile ivoirien valide"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur est survenue lors de la création de la visite"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HomeResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "data": {
+                        "properties": {
+                            "biens": {
+                                "$ref": "#/components/schemas/BienPagination"
+                            },
+                            "counts": {
+                                "properties": {
+                                    "appartements": {
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "maisons": {
+                                        "type": "integer",
+                                        "example": 8
+                                    },
+                                    "terrains": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "derniers_partenaires": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Partenaire"
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "BienPagination": {
+                "properties": {
+                    "current_page": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Bien"
+                        }
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 6
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 20
+                    }
+                },
+                "type": "object"
+            },
+            "BienWithRelationsPagination": {
+                "properties": {
+                    "current_page": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BienWithRelations"
+                        }
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 15
+                    }
+                },
+                "type": "object"
+            },
+            "Bien": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "titre": {
+                        "type": "string",
+                        "example": "Appartement spacieux"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "Appartement"
+                    },
+                    "prix": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 750.5
+                    },
+                    "surface": {
+                        "type": "integer",
+                        "example": 80
+                    },
+                    "commune": {
+                        "type": "string",
+                        "example": "Paris"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "Disponible"
+                    }
+                },
+                "type": "object"
+            },
+            "BienWithRelations": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Bien"
+                    },
+                    {
+                        "properties": {
+                            "proprietaire": {
+                                "$ref": "#/components/schemas/Proprietaire"
+                            },
+                            "agence": {
+                                "$ref": "#/components/schemas/Agence"
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "Partenaire": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Dupont"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "example": "Jean"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "jean.dupont@example.com"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "Propriétaire"
+                    }
+                },
+                "type": "object"
+            },
+            "Proprietaire": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Dupont"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "example": "Jean"
+                    }
+                },
+                "type": "object"
+            },
+            "Agence": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Agence Immo Paris"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRequest": {
+                "required": [
+                    "name",
+                    "email",
+                    "subject",
+                    "message"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Jean Dupont"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "jean.dupont@example.com"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "example": "Demande d'information"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Bonjour, je souhaiterais plus d'informations sur..."
+                    }
+                },
+                "type": "object"
+            },
+            "HomeController": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "code_id": {
+                        "type": "string",
+                        "example": "LOC12345"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john.doe@example.com"
+                    },
+                    "contact": {
+                        "type": "string",
+                        "example": "0102030405"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "Actif"
+                    },
+                    "profile_image": {
+                        "type": "string",
+                        "example": "profile_images/image.jpg",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "LocataireWithRelations": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Locataire"
+                    },
+                    {
+                        "properties": {
+                            "bien": {
+                                "$ref": "#/components/schemas/Bien"
+                            },
+                            "agence": {
+                                "$ref": "#/components/schemas/Agence"
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "LocataireWithPaiements": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Locataire"
+                    },
+                    {
+                        "properties": {
+                            "paiements": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Paiement"
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "Paiement": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "PAY-12345"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 500
+                    },
+                    "date_paiement": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-26T10:00:00Z"
+                    },
+                    "mois_couvert": {
+                        "type": "string",
+                        "example": "2023-10"
+                    },
+                    "statut": {
+                        "type": "string",
+                        "enum": [
+                            "payé",
+                            "En attente"
+                        ],
+                        "example": "payé"
+                    }
+                },
+                "type": "object"
+            },
+            "PaiementDetails": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Paiement"
+                    },
+                    {
+                        "properties": {
+                            "locataire": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "prenom": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "bien": {
+                                "properties": {
+                                    "commune": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "CashVerificationCode": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "ABC-123"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-26T11:00:00Z"
+                    },
+                    "used_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Visite": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john.doe@example.com"
+                    },
+                    "date_visite": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2023-11-15"
+                    }
+                },
+                "type": "object"
+            },
+            "Locataire": {
+                "title": "Locataire",
+                "description": "Modèle de locataire",
+                "required": [
+                    "name",
+                    "email",
+                    "password",
+                    "contact"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "ID du locataire",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "description": "Nom du locataire",
+                        "type": "string"
+                    },
+                    "prenom": {
+                        "description": "Prénom du locataire",
+                        "type": "string"
+                    },
+                    "email": {
+                        "description": "Email du locataire",
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "contact": {
+                        "description": "Contact du locataire",
+                        "type": "string"
+                    },
+                    "piece": {
+                        "description": "Type de pièce d'identité",
+                        "type": "string"
+                    },
+                    "adresse": {
+                        "description": "Adresse du locataire",
+                        "type": "string"
+                    },
+                    "profession": {
+                        "description": "Profession du locataire",
+                        "type": "string"
+                    },
+                    "status": {
+                        "description": "Statut du locataire",
+                        "type": "string",
+                        "enum": [
+                            "Actif",
+                            "Inactif"
+                        ]
+                    },
+                    "agence_id": {
+                        "description": "ID de l'agence associée",
+                        "type": "integer"
+                    },
+                    "proprietaire_id": {
+                        "description": "ID du propriétaire associé",
+                        "type": "integer"
+                    },
+                    "contrat_id": {
+                        "description": "ID du contrat associé",
+                        "type": "integer"
+                    },
+                    "bien_id": {
+                        "description": "ID du bien associé",
+                        "type": "integer"
+                    },
+                    "image1": {
+                        "description": "Image 1 du locataire",
+                        "type": "string",
+                        "format": "binary"
+                    },
+                    "image2": {
+                        "description": "Image 2 du locataire",
+                        "type": "string",
+                        "format": "binary"
+                    },
+                    "image3": {
+                        "description": "Image 3 du locataire",
+                        "type": "string",
+                        "format": "binary"
+                    },
+                    "image4": {
+                        "description": "Image 4 du locataire",
+                        "type": "string",
+                        "format": "binary"
+                    },
+                    "created_at": {
+                        "description": "Date de création",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Date de mise à jour",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentification",
+            "description": "Points de terminaison pour la connexion et la gestion des mots de passe"
+        },
+        {
+            "name": "Accueil",
+            "description": "Endpoints principaux"
+        },
+        {
+            "name": "Biens",
+            "description": "Gestion des biens immobiliers"
+        },
+        {
+            "name": "Contact",
+            "description": "Envoi de messages de contact"
+        },
+        {
+            "name": "Locataires",
+            "description": "Endpoints pour la gestion des locataires"
+        },
+        {
+            "name": "Locataire",
+            "description": "Points de terminaison pour la gestion du profil du locataire"
+        },
+        {
+            "name": "Paiements",
+            "description": "Endpoints pour la gestion des paiements de loyer"
+        },
+        {
+            "name": "Visites",
+            "description": "Endpoints pour la gestion des demandes de visite"
+        }
+    ]
+}

@@ -328,9 +328,6 @@ Route::middleware('auth:locataire')->prefix('locataire')->group(function () {
     Route::post('/etat-lieu/{id}/confirm-entree', [EtatLieuLocataireController::class, 'confirmEntree'])->name('etat-lieu.confirm-entree');
     Route::post('/etat-lieu/{id}/confirm-sortie', [EtatLieuLocataireController::class, 'confirmSortie'])->name('etat-lieu.confirm-sortie');
 
-
-    //Les routes de gestion des garanties de loyers impayés
-    Route::get('/warranty',[]);
 });
 
 Route::post('/locataire/envoyer-email-agence', [LocataireController::class, 'sendEmailToAgency'])->name('locataire.sendEmailToAgency');

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('comptables', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('code_id')->unique();
             $table->string('prenom');
             $table->string('email')->unique();
             $table->string('commune');

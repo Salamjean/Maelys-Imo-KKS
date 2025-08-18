@@ -75,6 +75,7 @@ class OwnerComptableController extends Controller
             // Création de l'agent
             $comptable = new Comptable();
             $comptable->name = $request->name;
+            $comptable->code_id = $this->generateUniqueCodeId();
             $comptable->prenom = $request->prenom;
             $comptable->email = $request->email;
             $comptable->contact = $request->contact;
@@ -104,6 +105,15 @@ class OwnerComptableController extends Controller
             Log::error('Error creating Agent: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
+    }
+
+        private function generateUniqueCodeId()
+    {
+        do {
+            $code = 'AGT' . str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (Comptable::where('code_id', $code)->exists());
+
+        return $code;
     }
 
       public function destroy($id)
