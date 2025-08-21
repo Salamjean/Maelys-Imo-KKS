@@ -243,7 +243,7 @@ class VisiteController extends Controller
     //     Log::error("Erreur Twilio: " . $e->getMessage());
     // }
 
-    return redirect()->route('home')->with('success', 'Demande enregistrée!');
+    return redirect()->route('login')->with('success', 'Votre demande de visite a été enregistrée avec succès. Nous vous contacterons pour confirmation.');
 }
 
 /**

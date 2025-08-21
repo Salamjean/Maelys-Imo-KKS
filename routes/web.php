@@ -87,7 +87,7 @@ Route::get('/', function (Request $request) {
         ->sortByDesc('created_at')
         ->take(6);
     return view('home.accueil', compact('biens', 'appartements', 'maisons', 'terrains','derniersPartenaires'));
-})->name('home');
+})->name('login');
 
 Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/dashboard',[AdminController::class, 'dashboard'])->name('admin.dashboard');
