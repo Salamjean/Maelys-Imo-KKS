@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\Agent\ApiAgentCodeEtatLieu;
+use App\Http\Controllers\Api\Agent\ApiAgentDashboard;
+use App\Http\Controllers\Api\Agent\ApiAgentEtatLieu;
+use App\Http\Controllers\Api\Agent\ApiAgentPaiement;
 use App\Http\Controllers\Api\Authenticate\UserAuthentucateController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\Locataire\ApiLocataireController;
@@ -20,13 +24,38 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('tenant')->group(fu
     Route::get('/contrat', [ApiLocataireController::class, 'getContratLink']);
     Route::get('/{locataire}/contrat', [ApiLocataireController::class, 'downloadContrat']);
     
+    
     //paiements locataire
     Route::post('/{locataire}/paiements', [Paiementcontroller::class, 'store']);
     Route::get('/{locataireId}/paiements', [PaiementController::class, 'index']);
     Route::get('/paiements/{id}', [PaiementController::class, 'show']);
+    Route::get('/paiement/mon-qr-code', [PaiementController::class, 'getMyQrCode']); 
 });
 
+Route::get('/tenant/qr-code', [ApiAgentCodeEtatLieu::class, 'getQrCode']);
+Route::get('/etat-lieux/{id}/download', [ApiAgentEtatLieu::class, 'downloadApi']);
+Route::post('/paiement/verifier-code-especes', [ApiAgentPaiement::class, 'verifyCashCodeAgent']);
+//Les routes de gestion des locataires 
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('agent')->group(function(){
+      Route::get('/dashboard', [ApiAgentDashboard::class, 'dashboard']);
+      Route::get('/etats-lieu/warning', [ApiAgentEtatLieu::class, 'getLocataireAvecEtatsLieuEnAttente']);
+      Route::get('/etats-lieu/effectues', [ApiAgentEtatLieu::class, 'getAllEtatsLieuEffectues']);
+      Route::get('/etats/end', [ApiAgentEtatLieu::class, 'getEtatsLieuFin']);
+      Route::post('/etat-lieux', [ApiAgentEtatLieu::class, 'store']);
+      
 
+      //Les codes de verification des etats des lieux 
+      Route::post('/generate', [ApiAgentCodeEtatLieu::class, 'generateCode']);
+      Route::post('/verify', [ApiAgentCodeEtatLieu::class, 'verifyCode']);
+
+      //Les routes de paiements 
+      Route::get('/paiements/history', [ApiAgentPaiement::class, 'historyApi']);
+      Route::get('/locataires/retard', [ApiAgentPaiement::class, 'getLocatairesRetard']);
+      Route::get('/locataires/a-jour', [ApiAgentPaiement::class, 'getLocatairesAJour']);
+      Route::get('/locataires/en-attente', [ApiAgentPaiement::class, 'getLocatairesEnAttente']);
+      Route::get('/locataire/{id}/details', [ApiAgentPaiement::class, 'getLocataireDetails']);
+      Route::post('/paiement/generer-code-especes', [ApiAgentPaiement::class, 'generateCashCode']);
+});
 
 //Les routes d'authentification 
 Route::post('/login', [UserAuthentucateController::class, 'login']);

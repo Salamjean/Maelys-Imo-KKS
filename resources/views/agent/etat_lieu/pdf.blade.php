@@ -1,8 +1,25 @@
+{{-- resources/views/agent/etat_lieu/pdf.blade.php --}}
+<?php
+// Debug temporaire
+\Log::debug('=== DÉBUT RENDU PDF ===');
+\Log::debug('Locataire: ' . ($etatLieu->locataire ? 'existe' : 'null'));
+\Log::debug('Bien: ' . ($etatLieu->bien ? 'existe' : 'null'));
+
+// Vérifiez toutes les données susceptibles d'être null
+$debugData = [
+    'locataire' => $etatLieu->locataire ? $etatLieu->locataire->toArray() : 'null',
+    'bien' => $etatLieu->bien ? $etatLieu->bien->toArray() : 'null',
+    'parties_communes' => $etatLieu->parties_communes,
+    'chambres' => $etatLieu->chambres,
+];
+\Log::debug('Données complètes:', $debugData);
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>État des lieux - {{ $etatLieu->locataire->name }}</title>
+    <title>État des lieux - {{ $etatLieu->locataire->name ?? '' }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         @page {
@@ -208,7 +225,7 @@
             <table>
                 <tr>
                     <td width="30%"><strong>Locataire:</strong></td>
-                    <td>{{ $etatLieu->locataire->name }} {{ $etatLieu->locataire->prenom }}</td>
+                    <td>{{ $etatLieu->locataire->name  ?? '' }} {{ $etatLieu->locataire->prenom  ?? '' }}</td>
                 </tr>
                 <tr>
                     <td><strong>Contact:</strong></td>
@@ -369,7 +386,7 @@
             <div style="flex: 1; text-align: center;">
                 <p style="margin-bottom: 60px;">Signature du locataire :</p>
                 <p style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 5px;">
-                    {{ $etatLieu->locataire->name }} {{ $etatLieu->locataire->prenom }}
+                    {{ $etatLieu->locataire->name  ?? ''}} {{ $etatLieu->locataire->prenom  ?? ''}}
                 </p>
                 <p style="margin-top: 10px;">Date : {{ $etatLieu->created_at->format('d/m/Y') }}</p>
             </div>
@@ -378,7 +395,7 @@
             <div style="flex: 1; text-align: center;">
                 <p style="margin-bottom: 60px;">Signature du propriétaire/gestionnaire :</p>
                 <p style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 5px;">
-                    {{ Auth::user()->name }} {{ Auth::user()->prenom }}
+                    {{ Auth::user()->name  ?? ''}} {{ Auth::user()->prenom  ?? '' }}
                 </p>
                 <p style="margin-top: 10px;">Date : {{ now()->format('d/m/Y') }}</p>
             </div>

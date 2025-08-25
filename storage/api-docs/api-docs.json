@@ -6,6 +6,1822 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/agent/code-etat-lieux/generate": {
+            "post": {
+                "tags": [
+                    "Agent - Codes État des Lieux"
+                ],
+                "summary": "Générer un nouveau code de vérification",
+                "description": "Génère un code aléatoire et un QR code associé pour l'état des lieux d'un locataire",
+                "operationId": "generateVerificationCode",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "locataire_id"
+                                ],
+                                "properties": {
+                                    "locataire_id": {
+                                        "description": "ID du locataire",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Code généré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ABC123"
+                                        },
+                                        "qr_code_base64": {
+                                            "description": "QR code encodé en base64",
+                                            "type": "string"
+                                        },
+                                        "expires_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-15 14:30:00"
+                                        },
+                                        "email_sent": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code généré avec succès et envoyé par email"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Le champ locataire_id est requis."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/agent/code-etat-lieux/verify": {
+            "post": {
+                "tags": [
+                    "Agent - Codes État des Lieux"
+                ],
+                "summary": "Vérifier un code de vérification",
+                "description": "Vérifie si un code de vérification est valide pour un locataire",
+                "operationId": "verifyCode",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "locataire_id",
+                                    "verification_code"
+                                ],
+                                "properties": {
+                                    "locataire_id": {
+                                        "description": "ID du locataire",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "verification_code": {
+                                        "description": "Code de vérification à valider",
+                                        "type": "string",
+                                        "example": "ABC123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code vérifié avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code vérifié avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Code invalide, expiré ou déjà utilisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code invalide, expiré ou déjà utilisé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/agent/code-etat-lieux/qr-code": {
+            "get": {
+                "tags": [
+                    "Agent - Codes État des Lieux"
+                ],
+                "summary": "Récupérer le QR code d'un locataire",
+                "description": "Récupère le QR code valide pour un locataire",
+                "operationId": "getQrCode",
+                "parameters": [
+                    {
+                        "name": "locataire_id",
+                        "in": "query",
+                        "description": "ID du locataire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR code récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "qr_code": {
+                                            "type": "string",
+                                            "example": "http://localhost/storage/qrcodes/etat_lieux/ABC123.png"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "ABC123"
+                                        },
+                                        "expires_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-15 14:30:00"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code QR récupéré avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun code valide trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun code QR valide trouvé pour ce locataire"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/agent/dashboard": {
+            "get": {
+                "tags": [
+                    "Dashboard Agent"
+                ],
+                "summary": "Récupère les statistiques du tableau de bord de l'agent",
+                "description": "Retourne les données statistiques pour le tableau de bord de l'agent connecté",
+                "operationId": "c67728950efec95f7e2014cb070c4945",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_loyers_percus": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 15000.5
+                                                },
+                                                "locataires_a_jour": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "locataires_en_retard": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "paiements_en_attente": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "etats_lieu_effectues": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "mois_courant": {
+                                                    "type": "string",
+                                                    "example": "2024-01"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de la récupération des données"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/agent/etats-lieu/warning": {
+            "get": {
+                "tags": [
+                    "Agent - États des Lieux"
+                ],
+                "summary": "Récupérer les locataires avec états des lieux en attente",
+                "description": "Retourne la liste des locataires qui n'ont pas d'état des lieux d'entrée avec statut 'Oui'",
+                "operationId": "3134cb38155ee8fef86120afa668b419",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "locataires": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "nom": {
+                                                                "type": "string"
+                                                            },
+                                                            "prenom": {
+                                                                "type": "string"
+                                                            },
+                                                            "email": {
+                                                                "type": "string"
+                                                            },
+                                                            "contact": {
+                                                                "type": "string"
+                                                            },
+                                                            "type_bien": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "commune_bien": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "date_etat_lieu": {
+                                                                "type": "string"
+                                                            },
+                                                            "status_etat_entre": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/agent/etats/end": {
+            "get": {
+                "tags": [
+                    "Agent - États des Lieux"
+                ],
+                "summary": "Récupérer les états des lieux terminés",
+                "description": "Retourne la liste des états des lieux avec statut 'Oui' (terminés)",
+                "operationId": "65fd61c9540b9497baf5b0162e9a7b28",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "etats_lieu": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "type_bien": {
+                                                                "type": "string"
+                                                            },
+                                                            "commune_bien": {
+                                                                "type": "string"
+                                                            },
+                                                            "nom_locataire": {
+                                                                "type": "string"
+                                                            },
+                                                            "prenom_locataire": {
+                                                                "type": "string"
+                                                            },
+                                                            "date_creation": {
+                                                                "type": "string"
+                                                            },
+                                                            "status_etat_entre": {
+                                                                "type": "string"
+                                                            },
+                                                            "bien_numero": {
+                                                                "type": "string"
+                                                            },
+                                                            "bien_adresse": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/agent/etats-lieu/effectues": {
+            "get": {
+                "tags": [
+                    "Agent - États des Lieux"
+                ],
+                "summary": "Récupérer tous les états des lieux effectués",
+                "description": "Retourne tous les états des lieux avec pagination et détails complets",
+                "operationId": "2409e06e6241a0c913933b1282cc0993",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page (défaut: 10)",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de page (défaut: 1)",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "etats_lieu": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "informations_generales": {
+                                                                "properties": {
+                                                                    "type_bien": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "commune_bien": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "presence_partie": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "status_etat_entre": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "status_sorti": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "nombre_cle": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "date_creation": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "date_modification": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "parties_communes": {
+                                                                "type": "object"
+                                                            },
+                                                            "chambres": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "locataire": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "code_id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "nom": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "prenom": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "contact": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "adresse": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "profession": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "piece_identite": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "status": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "bien": {
+                                                                "type": "object",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer"
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer"
+                                                        },
+                                                        "total": {
+                                                            "type": "integer"
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer"
+                                                        },
+                                                        "from": {
+                                                            "type": "integer"
+                                                        },
+                                                        "to": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/agent/etat-lieux": {
+            "post": {
+                "tags": [
+                    "Agent - États des Lieux"
+                ],
+                "summary": "Créer un nouvel état des lieux",
+                "description": "Enregistre un nouvel état des lieux pour un locataire et un bien",
+                "operationId": "0770ac1d7b56071722014563687dfdb3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "locataire_id",
+                                    "bien_id",
+                                    "presence_partie",
+                                    "chambres",
+                                    "nombre_cle"
+                                ],
+                                "properties": {
+                                    "locataire_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "bien_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "type_bien": {
+                                        "type": "string",
+                                        "example": "Appartement",
+                                        "nullable": true
+                                    },
+                                    "commune_bien": {
+                                        "type": "string",
+                                        "example": "Paris",
+                                        "nullable": true
+                                    },
+                                    "presence_partie": {
+                                        "type": "string",
+                                        "enum": [
+                                            "oui",
+                                            "non"
+                                        ],
+                                        "example": "oui"
+                                    },
+                                    "status_etat_entre": {
+                                        "type": "string",
+                                        "example": "En attente",
+                                        "nullable": true
+                                    },
+                                    "parties_communes": {
+                                        "properties": {
+                                            "sol": {
+                                                "type": "string",
+                                                "example": "Bon état"
+                                            },
+                                            "observation_sol": {
+                                                "type": "string",
+                                                "example": "Quelques rayures"
+                                            },
+                                            "murs": {
+                                                "type": "string",
+                                                "example": "Très bon état"
+                                            },
+                                            "observation_murs": {
+                                                "type": "string",
+                                                "example": "Peinture fraîche"
+                                            },
+                                            "plafond": {
+                                                "type": "string",
+                                                "example": "Bon état"
+                                            },
+                                            "observation_plafond": {
+                                                "type": "string",
+                                                "example": "Propre"
+                                            },
+                                            "porte_entre": {
+                                                "type": "string",
+                                                "example": "Fonctionnelle"
+                                            },
+                                            "observation_porte_entre": {
+                                                "type": "string",
+                                                "example": "Serrure à changer"
+                                            },
+                                            "interrupteur": {
+                                                "type": "string",
+                                                "example": "Fonctionnel"
+                                            },
+                                            "observation_interrupteur": {
+                                                "type": "string",
+                                                "example": "Tous opérationnels"
+                                            },
+                                            "robinet": {
+                                                "type": "string",
+                                                "example": "Fonctionnel"
+                                            },
+                                            "observation_robinet": {
+                                                "type": "string",
+                                                "example": "Pas de fuite"
+                                            },
+                                            "lavabo": {
+                                                "type": "string",
+                                                "example": "Bon état"
+                                            },
+                                            "observation_lavabo": {
+                                                "type": "string",
+                                                "example": "Propre"
+                                            },
+                                            "douche": {
+                                                "type": "string",
+                                                "example": "Fonctionnelle"
+                                            },
+                                            "observation_douche": {
+                                                "type": "string",
+                                                "example": "Bon débit d'eau"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "chambres": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "nom"
+                                            ],
+                                            "properties": {
+                                                "nom": {
+                                                    "type": "string",
+                                                    "example": "Chambre principale"
+                                                },
+                                                "sol": {
+                                                    "type": "string",
+                                                    "example": "Parquet"
+                                                },
+                                                "observation_sol": {
+                                                    "type": "string",
+                                                    "example": "Quelques rayures"
+                                                },
+                                                "murs": {
+                                                    "type": "string",
+                                                    "example": "Peints"
+                                                },
+                                                "observation_murs": {
+                                                    "type": "string",
+                                                    "example": "Propres"
+                                                },
+                                                "plafond": {
+                                                    "type": "string",
+                                                    "example": "Blanc"
+                                                },
+                                                "observation_plafond": {
+                                                    "type": "string",
+                                                    "example": "Sans tache"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "nombre_cle": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "État des lieux créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "État des lieux enregistré avec succès."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/etat-lieux/{id}/download": {
+            "get": {
+                "tags": [
+                    "Agent - États des Lieux"
+                ],
+                "summary": "Télécharger un état des lieux en PDF",
+                "description": "Génère et télécharge un état des lieux au format PDF",
+                "operationId": "d2b721d9f27d25b5ee701aa8321101f9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'état des lieux",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "PDF généré avec succès",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "État des lieux non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/agent/paiements/history": {
+            "get": {
+                "tags": [
+                    "Agent - Paiements"
+                ],
+                "summary": "Historique des paiements",
+                "description": "Récupère l'historique des paiements gérés par l'agent connecté",
+                "operationId": "getPaymentHistory",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Historique récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Paiement"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur non connecté"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Erreur serveur"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/agent/locataires/retard": {
+            "get": {
+                "tags": [
+                    "Agent - Paiements"
+                ],
+                "summary": "Locataires en retard de paiement",
+                "description": "Récupère la liste des locataires en retard de paiement pour le mois courant",
+                "operationId": "getLocatairesRetard",
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Dupont"
+                                                    },
+                                                    "prenom": {
+                                                        "type": "string",
+                                                        "example": "Jean"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "jean.dupont@email.com"
+                                                    },
+                                                    "contact": {
+                                                        "type": "string",
+                                                        "example": "+33123456789"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/agent/locataires/a-jour": {
+            "get": {
+                "tags": [
+                    "Agent - Paiements"
+                ],
+                "summary": "Locataires à jour de paiement",
+                "description": "Récupère la liste des locataires à jour de paiement pour le mois courant",
+                "operationId": "getLocatairesAJour",
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Martin"
+                                                    },
+                                                    "prenom": {
+                                                        "type": "string",
+                                                        "example": "Sophie"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "sophie.martin@email.com"
+                                                    },
+                                                    "contact": {
+                                                        "type": "string",
+                                                        "example": "+33123456790"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 8
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/agent/locataires/en-attente": {
+            "get": {
+                "tags": [
+                    "Agent - Paiements"
+                ],
+                "summary": "Locataires avec paiement en attente",
+                "description": "Récupère la liste des locataires avec des paiements en statut d'attente",
+                "operationId": "getLocatairesEnAttente",
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Dubois"
+                                                    },
+                                                    "prenom": {
+                                                        "type": "string",
+                                                        "example": "Pierre"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "pierre.dubois@email.com"
+                                                    },
+                                                    "contact": {
+                                                        "type": "string",
+                                                        "example": "+33123456791"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/agent/locataire/{id}/details": {
+            "get": {
+                "tags": [
+                    "Agent - Paiements"
+                ],
+                "summary": "Détails d'un locataire",
+                "description": "Récupère les détails d'un locataire avec ses informations de paiement",
+                "operationId": "getLocataireDetails",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du locataire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails récupérés avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "locataire": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": "Dupont"
+                                                        },
+                                                        "prenom": {
+                                                            "type": "string",
+                                                            "example": "Jean"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "jean.dupont@email.com"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "+33123456789"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "bien": {
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "Appartement"
+                                                        },
+                                                        "commune": {
+                                                            "type": "string",
+                                                            "example": "Paris 15e"
+                                                        },
+                                                        "prix": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 750.5
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "prochain_mois_a_payer": {
+                                                    "properties": {
+                                                        "mois_couvert": {
+                                                            "type": "string",
+                                                            "example": "2024-01"
+                                                        },
+                                                        "mois_couvert_display": {
+                                                            "type": "string",
+                                                            "example": "janvier 2024"
+                                                        },
+                                                        "annee": {
+                                                            "type": "integer",
+                                                            "example": 2024
+                                                        },
+                                                        "mois_numero": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "montant": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 750.5
+                                                        },
+                                                        "deja_paye": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Locataire non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Locataire non trouvé ou non autorisé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/agent/paiement/generer-code-especes": {
+            "post": {
+                "tags": [
+                    "Agent - Paiements"
+                ],
+                "summary": "Générer un code de paiement en espèces",
+                "description": "Génère un code unique pour le paiement en espèces avec QR code",
+                "operationId": "generateCashCode",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "locataire_id",
+                                    "nombre_mois"
+                                ],
+                                "properties": {
+                                    "locataire_id": {
+                                        "description": "ID du locataire",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "nombre_mois": {
+                                        "description": "Nombre de mois à payer",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code généré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code de paiement généré avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "ABC123"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès non autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès non autorisé à ce locataire"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données fournies sont invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "champ": [
+                                                    "Le champ est requis"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/paiement/verifier-code-especes": {
+            "post": {
+                "tags": [
+                    "Agent - Paiements"
+                ],
+                "summary": "Vérifier un code de paiement en espèces",
+                "description": "Vérifie et traite un code de paiement en espèces",
+                "operationId": "verifyCashCodeAgent",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "locataire_id",
+                                    "code"
+                                ],
+                                "properties": {
+                                    "locataire_id": {
+                                        "description": "ID du locataire",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "code": {
+                                        "description": "Code de vérification",
+                                        "type": "string",
+                                        "example": "ABC123"
+                                    },
+                                    "nombre_mois": {
+                                        "description": "Nombre de mois à payer",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Paiement traité avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Paiement enregistré avec succès pour 1 mois: janvier 2024"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Code invalide ou mois déjà payés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code invalide ou expiré"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Une erreur est survenue lors du traitement du paiement"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/login": {
             "post": {
                 "tags": [
@@ -2004,6 +3820,168 @@
                 }
             }
         },
+        "/tenant/paiement/mon-qr-code": {
+            "get": {
+                "tags": [
+                    "Locataire - Paiements"
+                ],
+                "summary": "Récupérer le QR code de paiement actif du locataire",
+                "description": "Retourne le dernier code QR de vérification non utilisé et non expiré pour le locataire authentifié",
+                "operationId": "21a84c48ffbf53354039f487c40aa27c",
+                "responses": {
+                    "200": {
+                        "description": "QR code récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "code": {
+                                                    "description": "Code de vérification",
+                                                    "type": "string",
+                                                    "example": "ABC123XYZ"
+                                                },
+                                                "expires_at": {
+                                                    "description": "Date d'expiration du code",
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-12-31T23:59:59Z"
+                                                },
+                                                "expires_in": {
+                                                    "description": "Temps restant avant expiration",
+                                                    "type": "string",
+                                                    "example": "48 heures"
+                                                },
+                                                "montant_total": {
+                                                    "description": "Montant total à payer",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1500
+                                                },
+                                                "nombre_mois": {
+                                                    "description": "Nombre de mois couverts",
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "mois_couverts": {
+                                                    "description": "Mois couverts par le paiement",
+                                                    "type": "string",
+                                                    "example": "Janvier, Février, Mars"
+                                                },
+                                                "qr_code_url": {
+                                                    "description": "URL du QR code image",
+                                                    "type": "string",
+                                                    "format": "uri",
+                                                    "example": "https://example.com/storage/qr-codes/abc123.png",
+                                                    "nullable": true
+                                                },
+                                                "is_valid": {
+                                                    "description": "Indique si le code est toujours valide",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès non autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès réservé aux locataires"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun code QR trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun code QR actif trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur interne du serveur"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/visit/store": {
             "post": {
                 "tags": [
@@ -2177,6 +4155,23 @@
     },
     "components": {
         "schemas": {
+            "ErrorResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Une erreur s'est produite"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "field": [
+                                "Erreur de validation"
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "HomeResponse": {
                 "properties": {
                     "success": {
@@ -2701,6 +4696,10 @@
     },
     "tags": [
         {
+            "name": "Agent - Codes État des Lieux",
+            "description": "Endpoints pour la gestion des codes de vérification d'état des lieux par les agents"
+        },
+        {
             "name": "Authentification",
             "description": "Points de terminaison pour la connexion et la gestion des mots de passe"
         },
@@ -2731,6 +4730,22 @@
         {
             "name": "Visites",
             "description": "Endpoints pour la gestion des demandes de visite"
+        },
+        {
+            "name": "Dashboard Agent",
+            "description": "Dashboard Agent"
+        },
+        {
+            "name": "Agent - États des Lieux",
+            "description": "Agent - États des Lieux"
+        },
+        {
+            "name": "Agent - Paiements",
+            "description": "Agent - Paiements"
+        },
+        {
+            "name": "Locataire - Paiements",
+            "description": "Locataire - Paiements"
         }
     ]
 }

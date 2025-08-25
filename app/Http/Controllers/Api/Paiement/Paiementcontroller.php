@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Api\Paiement;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashVerificationCode;
 use App\Models\Locataire;
 use App\Models\Paiement;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -311,5 +315,108 @@ class Paiementcontroller extends Controller
                 'message' => 'Paiement non trouvé'
             ], 404);
         }
+    }
+
+    /**
+ * @OA\Get(
+ *     path="/tenant/paiement/mon-qr-code",
+ *     summary="Récupérer le QR code de paiement actif du locataire",
+ *     description="Retourne le dernier code QR de vérification non utilisé et non expiré pour le locataire authentifié",
+ *     tags={"Locataire - Paiements"},
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="QR code récupéré avec succès",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="success", type="boolean", example=true),
+ *             @OA\Property(
+ *                 property="data",
+ *                 type="object",
+ *                 @OA\Property(property="code", type="string", example="ABC123XYZ", description="Code de vérification"),
+ *                 @OA\Property(property="expires_at", type="string", format="date-time", example="2024-12-31T23:59:59Z", description="Date d'expiration du code"),
+ *                 @OA\Property(property="expires_in", type="string", example="48 heures", description="Temps restant avant expiration"),
+ *                 @OA\Property(property="montant_total", type="number", format="float", example=1500.00, description="Montant total à payer"),
+ *                 @OA\Property(property="nombre_mois", type="integer", example=3, description="Nombre de mois couverts"),
+ *                 @OA\Property(property="mois_couverts", type="string", example="Janvier, Février, Mars", description="Mois couverts par le paiement"),
+ *                 @OA\Property(property="qr_code_url", type="string", format="uri", nullable=true, example="https://example.com/storage/qr-codes/abc123.png", description="URL du QR code image"),
+ *                 @OA\Property(property="is_valid", type="boolean", example=true, description="Indique si le code est toujours valide")
+ *             )
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=403,
+ *         description="Accès non autorisé",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="success", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string", example="Accès réservé aux locataires")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Aucun code QR trouvé",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="success", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string", example="Aucun code QR actif trouvé")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Non authentifié",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Unauthenticated")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Erreur serveur",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="success", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string", example="Erreur interne du serveur"),
+ *             @OA\Property(property="error", type="string", example="Message d'erreur détaillé")
+ *         )
+ *     )
+ * )
+ */
+    public function getMyQrCode(Request $request)
+    {
+        // Récupérer le locataire authentifié
+        $locataire = Auth::guard('sanctum')->user();
+        
+        // Vérifier que l'utilisateur est bien un locataire
+        if (!$locataire instanceof Locataire) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès réservé aux locataires'
+            ], 403);
+        }
+
+        // Récupérer le dernier code de vérification non utilisé et non expiré
+        $qrCode = CashVerificationCode::where('locataire_id', $locataire->id)
+                    ->whereNull('used_at')
+                    ->where('expires_at', '>', now())
+                    ->where('is_archived', false)
+                    ->latest()
+                    ->first();
+
+        if (!$qrCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aucun code QR actif trouvé'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'code' => $qrCode->code,
+                'expires_at' => $qrCode->expires_at->toIso8601String(),
+                'expires_in' => now()->diffInHours($qrCode->expires_at) . ' heures',
+                'montant_total' => $qrCode->montant_total,
+                'nombre_mois' => $qrCode->nombre_mois,
+                'mois_couverts' => $qrCode->mois_couverts,
+                'qr_code_url' => $qrCode->qr_code_path ? Storage::url($qrCode->qr_code_path) : null,
+                'is_valid' => $qrCode->expires_at > now() && is_null($qrCode->used_at)
+            ]
+        ]);
     }
 }
