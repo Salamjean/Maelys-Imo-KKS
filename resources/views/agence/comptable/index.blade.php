@@ -83,6 +83,7 @@
           <table class="table table-bordered table-hover">
             <thead style="background-color: #02245b; color: white;">
                 <tr class="text-center">
+                    <th>ID de l'agent</th>
                     <th>Nom du comptable</th>
                     <th>Email</th>
                     <th>Lieu de résidence</th>
@@ -95,6 +96,7 @@
             <tbody>
                 @forelse($comptables as $comptable)
                     <tr class="text-center pt-3" style="height: 30px">
+                        <td>{{ $comptable->code_id }}</td>
                         <td ><strong>{{ $comptable->name. ' '. $comptable->prenom }}</strong></td>
                         <td>{{ $comptable->email }}</td>
                         <td>{{ $comptable->commune }}</td>
