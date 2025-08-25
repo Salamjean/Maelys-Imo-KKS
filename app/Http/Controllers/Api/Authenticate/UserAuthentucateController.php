@@ -78,6 +78,14 @@ class UserAuthentucateController extends Controller
      */
     public function login(Request $request)
     {
+        Log::info('Tentative de connexion API', [
+            'code_id' => $request->code_id,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'origin' => $request->header('origin'),
+            'timestamp' => now()
+        ]);
+
         $request->validate([
             'code_id' => 'required|string',
             'password' => 'required|string|min:8',
@@ -88,12 +96,21 @@ class UserAuthentucateController extends Controller
         ]);
 
         try {
+            Log::debug('Recherche utilisateur', ['code_id' => $request->code_id]);
+
             // Essayer d'abord comme locataire
             $locataire = Locataire::where('code_id', $request->code_id)->first();
             
             if ($locataire) {
+                Log::debug('Locataire trouvé', ['id' => $locataire->id, 'status' => $locataire->status]);
+
                 // Vérifier le statut du locataire
                 if (in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
+                    Log::warning('Compte locataire désactivé', [
+                        'code_id' => $request->code_id,
+                        'status' => $locataire->status
+                    ]);
+
                     return response()->json([
                         'error' => 'Compte désactivé',
                         'message' => 'Votre compte est désactivé. Veuillez contacter votre propriétaire/agence pour plus d\'informations.',
@@ -103,14 +120,21 @@ class UserAuthentucateController extends Controller
 
                 if (Auth::guard('locataire')->attempt(['code_id' => $request->code_id, 'password' => $request->password])) {
                     $user = Auth::guard('locataire')->user();
-                     $token = $user->createToken('LocataireAuthToken')->plainTextToken;
+                    $token = $user->createToken('LocataireAuthToken')->plainTextToken;
                     
+                    Log::info('Connexion locataire réussie', [
+                        'user_id' => $user->id,
+                        'code_id' => $user->code_id
+                    ]);
+
                     return response()->json([
                         'user' => $user,
                         'token' => $token,
                         'user_type' => 'locataire',
                         'redirect' => route('locataire.dashboard')
                     ]);
+                } else {
+                    Log::warning('Mot de passe locataire incorrect', ['code_id' => $request->code_id]);
                 }
             }
 
@@ -118,6 +142,8 @@ class UserAuthentucateController extends Controller
             $comptable = Comptable::where('code_id', $request->code_id)->first();
             
             if ($comptable) {
+                Log::debug('Comptable trouvé', ['id' => $comptable->id, 'user_type' => $comptable->user_type]);
+
                 if (Auth::guard('comptable')->attempt(['code_id' => $request->code_id, 'password' => $request->password])) {
                     $user = Auth::guard('comptable')->user();
                     $token = $user->createToken('ComptableAuthToken')->plainTextToken;
@@ -126,6 +152,12 @@ class UserAuthentucateController extends Controller
                         ? route('accounting.agent.dashboard') 
                         : route('accounting.dashboard');
                     
+                    Log::info('Connexion comptable réussie', [
+                        'user_id' => $user->id,
+                        'code_id' => $user->code_id,
+                        'role' => $user->user_type
+                    ]);
+
                     return response()->json([
                         'user' => $user,
                         'token' => $token,
@@ -133,20 +165,32 @@ class UserAuthentucateController extends Controller
                         'role' => $user->user_type,
                         'redirect' => $redirect
                     ]);
+                } else {
+                    Log::warning('Mot de passe comptable incorrect', ['code_id' => $request->code_id]);
                 }
             }
 
             // Si aucun des deux
+            Log::warning('Aucun utilisateur trouvé avec ce code_id', ['code_id' => $request->code_id]);
+
             return response()->json([
                 'error' => 'Identifiants incorrects',
                 'message' => 'Le code ID ou le mot de passe est incorrect.'
             ], 401);
 
         } catch (Exception $e) {
-            Log::error('Erreur survenue : '.$e->getMessage()."\n".$e->getTraceAsString());
+            Log::error('ERREUR CONNEXION:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'code_id' => $request->code_id ?? 'null'
+            ]);
+
             return response()->json([
                 'error' => 'Erreur de connexion',
-                'message' => 'Une erreur est survenue lors de la connexion.'
+                'message' => 'Une erreur est survenue lors de la connexion.',
+                'debug' => env('APP_DEBUG') ? $e->getMessage() : null
             ], 500);
         }
     }
