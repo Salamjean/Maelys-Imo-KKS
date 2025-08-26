@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Bien;
 use App\Models\Proprietaire;
 use App\Models\Agence;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -319,75 +320,129 @@ class HomeController extends Controller
             ]
         ]);
     }
-
-    /**
-     * @OA\Get(
-     *     path="/api/biens/available",
-     *     summary="Liste des biens disponibles",
-     *     description="Retourne une liste paginée des biens disponibles avec filtres optionnels",
-     *     tags={"Biens"},
-     *     @OA\Parameter(
-     *         name="type",
-     *         in="query",
-     *         description="Filtrer par type de bien",
-     *         required=false,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="commune",
-     *         in="query",
-     *         description="Filtrer par commune",
-     *         required=false,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="prix_max",
-     *         in="query",
-     *         description="Filtrer par prix maximum",
-     *         required=false,
-     *         @OA\Schema(type="number", format="float")
-     *     ),
-     *     @OA\Parameter(
-     *         name="per_page",
-     *         in="query",
-     *         description="Nombre d'éléments par page",
-     *         required=false,
-     *         @OA\Schema(type="integer", default=6)
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Succès",
-     *         @OA\JsonContent(ref="#/components/schemas/BienPagination")
-     *     )
-     * )
-     */
-    public function availableApi(Request $request)
-    {
-        // Initialisation de la requête pour les biens disponibles
-        $query = Bien::where('status', 'Disponible');
-        
-        // Filtres de recherche
-        if ($request->has('type') && $request->type != '') {
-            $query->where('type', $request->type);
-        }
-        
-        if ($request->has('commune') && $request->commune != '') {
-            $query->where('commune', 'like', '%'.$request->commune.'%');
-        }
-        
-        if ($request->has('prix_max') && $request->prix_max != '') {
-            $query->where('prix', '<=', $request->prix_max);
-        }
-        
-        // Pagination et tri
-        $biens = $query->orderBy('created_at', 'desc')->paginate($request->get('per_page', 6));
-        
-        return response()->json([
-            'success' => true,
-            'data' => $biens,
-            'message' => 'Liste des biens disponibles récupérée avec succès'
-        ]);
+/**
+ * @OA\Get(
+ *     path="/api/biens/available",
+ *     summary="Liste des biens disponibles",
+ *     description="Retourne une liste paginée des biens disponibles avec filtres optionnels",
+ *     tags={"Biens"},
+ *     @OA\Parameter(
+ *         name="type",
+ *         in="query",
+ *         description="Filtrer par type de bien",
+ *         required=false,
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Parameter(
+ *         name="commune",
+ *         in="query",
+ *         description="Filtrer par commune",
+ *         required=false,
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Parameter(
+ *         name="prix_max",
+ *         in="query",
+ *         description="Filtrer par prix maximum",
+ *         required=false,
+ *         @OA\Schema(type="number", format="float")
+ *     ),
+ *     @OA\Parameter(
+ *         name="per_page",
+ *         in="query",
+ *         description="Nombre d'éléments par page",
+ *         required=false,
+ *         @OA\Schema(type="integer", default=6)
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Succès",
+ *         @OA\JsonContent(ref="#/components/schemas/BienPagination")
+ *     )
+ * )
+ */
+public function availableApi(Request $request)
+{
+    // Initialisation de la requête pour les biens disponibles
+    $query = Bien::where('status', 'Disponible');
+    
+    // Filtres de recherche
+    if ($request->has('type') && $request->type != '') {
+        $query->where('type', $request->type);
     }
+    
+    if ($request->has('commune') && $request->commune != '') {
+        $query->where('commune', 'like', '%'.$request->commune.'%');
+    }
+    
+    if ($request->has('prix_max') && $request->prix_max != '') {
+        $query->where('prix', '<=', $request->prix_max);
+    }
+    
+    // Pagination et tri
+    $biens = $query->orderBy('created_at', 'desc')->paginate($request->get('per_page', 6));
+    
+    // Transformer les données pour regrouper les images dans un tableau
+    $transformedBiens = $biens->getCollection()->map(function ($bien) {
+        $images = [];
+        
+        // Ajouter l'image principale
+        if (!empty($bien->image)) {
+            $images[] = asset('storage/' . $bien->image);
+        }
+        
+        // Ajouter les images supplémentaires
+        $additionalImages = [
+            $bien->image1,
+            $bien->image2,
+            $bien->image3,
+            $bien->image4,
+            $bien->image5
+        ];
+        
+        foreach ($additionalImages as $image) {
+            if (!empty($image)) {
+                $images[] = asset('storage/' . $image);
+            }
+        }
+        
+        // Retourner le bien avec les images transformées
+        return [
+            'id' => $bien->id,
+            'type' => $bien->type,
+            'numero_bien' => $bien->numero_bien,
+            'utilisation' => $bien->utilisation,
+            'description' => $bien->description,
+            'superficie' => $bien->superficie,
+            'nombre_de_chambres' => $bien->nombre_de_chambres,
+            'nombre_de_toilettes' => $bien->nombre_de_toilettes,
+            'garage' => $bien->garage,
+            'avance' => $bien->avance,
+            'caution' => $bien->caution,
+            'frais' => $bien->frais,
+            'montant_total' => $bien->montant_total,
+            'prix' => $bien->prix,
+            'commune' => $bien->commune,
+            'montant_majore' => $bien->montant_majore,
+            'date_fixe' => $bien->date_fixe,
+            'images' => $images, // Tableau de toutes les images
+            'status' => $bien->status,
+            'agence_id' => $bien->agence_id,
+            'proprietaire_id' => $bien->proprietaire_id,
+            'created_at' => $bien->created_at,
+            'updated_at' => $bien->updated_at
+        ];
+    });
+    
+    // Remplacer la collection paginée par la collection transformée
+    $biens->setCollection($transformedBiens);
+    
+    return response()->json([
+        'success' => true,
+        'data' => $biens,
+        'message' => 'Liste des biens disponibles récupérée avec succès'
+    ]);
+}
 
     /**
      * @OA\Get(
@@ -792,4 +847,67 @@ class HomeController extends Controller
             ], 404);
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/biens/types/avec-ids",
+     *     summary="Liste des types de biens disponibles avec leurs IDs",
+     *     description="Retourne la liste de tous les types de biens distincts avec leurs IDs correspondants",
+     *     tags={"Biens"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="type", type="string", example="Appartement")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="error", type="string")
+     *         )
+     *     )
+     * )
+     */
+    public function typesDeBiensApi()
+    {
+        try {
+            // Récupère les IDs et les noms des types distincts
+            $types = Bien::where('status', 'Disponible')
+                        ->select('id', 'type')
+                        ->distinct('type')
+                        ->orderBy('type')
+                        ->get()
+                        ->map(function ($bien) {
+                            return [
+                                'id' => $bien->id,
+                                'type' => $bien->type
+                            ];
+                        });
+
+            return response()->json([
+                'success' => true,
+                'data' => $types
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération de la liste des types avec IDs',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+}
 }

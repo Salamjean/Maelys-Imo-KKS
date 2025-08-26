@@ -77,6 +77,15 @@ class ApiLocataireController extends Controller
                 ], 404);
             }
             
+            // Charger les relations avec agence, propriétaire et bien
+            $locataire->load([
+                'agence',
+                'proprietaire',
+                'bien' => function ($query) {
+                    $query->with(['proprietaire', 'agence']);
+                }
+            ]);
+            
             return response()->json([
                 'success' => true,
                 'data' => $locataire
