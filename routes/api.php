@@ -61,7 +61,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('agent')->group(fun
 Route::post('/login', [UserAuthentucateController::class, 'login']);
 
 Route::prefix('password')->group(function(){
-    Route::post('/forgot', [UserAuthentucateController::class, 'sendResetLink']);
+    Route::post('/forgot', [UserAuthentucateController::class, 'sendResetOTP']);
     Route::post('/reset', [UserAuthentucateController::class, 'resetPassword']);
 });
 

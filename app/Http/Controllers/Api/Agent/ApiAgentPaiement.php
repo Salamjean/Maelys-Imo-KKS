@@ -158,6 +158,7 @@ class ApiAgentPaiement extends Controller
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example="1"),
      *                     @OA\Property(property="name", type="string", example="Dupont"),
      *                     @OA\Property(property="prenom", type="string", example="Jean"),
      *                     @OA\Property(property="email", type="string", example="jean.dupont@email.com"),
@@ -199,7 +200,7 @@ class ApiAgentPaiement extends Controller
                     $query->where('mois_couvert', $currentMonth)
                         ->where('statut', 'payé');
                 })
-                ->select('name', 'prenom', 'email', 'contact')
+                ->select('id','name', 'prenom', 'email', 'contact')
                 ->get();
         }
 
@@ -228,6 +229,7 @@ class ApiAgentPaiement extends Controller
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example="1"),
      *                     @OA\Property(property="name", type="string", example="Martin"),
      *                     @OA\Property(property="prenom", type="string", example="Sophie"),
      *                     @OA\Property(property="email", type="string", example="sophie.martin@email.com"),
@@ -258,7 +260,7 @@ class ApiAgentPaiement extends Controller
                     $query->where('mois_couvert', $currentMonth)
                           ->where('statut', 'payé');
                 })
-                ->select('name', 'prenom', 'email', 'contact')
+                ->select('id','name', 'prenom', 'email', 'contact')
                 ->get();
         } else {
             $upToDateLocataires = Locataire::whereNull('agence_id')
@@ -297,6 +299,7 @@ class ApiAgentPaiement extends Controller
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example="1"),
      *                     @OA\Property(property="name", type="string", example="Dubois"),
      *                     @OA\Property(property="prenom", type="string", example="Pierre"),
      *                     @OA\Property(property="email", type="string", example="pierre.dubois@email.com"),
@@ -327,7 +330,7 @@ class ApiAgentPaiement extends Controller
                     $query->where('mois_couvert', $currentMonth)
                           ->where('statut', '!=', 'payé');
                 })
-                ->select('name', 'prenom', 'email', 'contact')
+                ->select('id','name', 'prenom', 'email', 'contact')
                 ->get();
         } else {
             $pendingLocataires = Locataire::whereNull('agence_id')

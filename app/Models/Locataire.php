@@ -61,6 +61,14 @@ class Locataire extends Authenticatable
         'image2',
         'image3',
         'image4',
+        // ... autres champs
+        'password_reset_token',
+        'password_reset_expires',
+        'password_reset_otp',
+        'otp_attempts',
+        'reset_access_token',
+        'reset_access_expires',
+        'otp_verified_at'
     ];
 
     protected $hidden = [

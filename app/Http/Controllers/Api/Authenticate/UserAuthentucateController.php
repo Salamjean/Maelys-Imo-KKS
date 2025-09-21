@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Authenticate;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ComptablePasswordResetMail;
+use App\Mail\PasswordResetOTPMail;
 use App\Models\Comptable;
 use App\Models\Locataire;
 use Exception;
@@ -199,10 +200,10 @@ class UserAuthentucateController extends Controller
     /**
      * @OA\Post(
      *      path="/api/password/forgot",
-     *      operationId="sendPasswordResetLink",
+     *      operationId="sendPasswordResetOTP",
      *      tags={"Authentification"},
-     *      summary="Demander la réinitialisation du mot de passe",
-     *      description="Envoie un lien de réinitialisation de mot de passe à l'email associé au code_id fourni.",
+     *      summary="Demander un OTP pour réinitialisation du mot de passe",
+     *      description="Envoie un code OTP à l'email associé au code_id fourni.",
      *      @OA\RequestBody(
      *          required=true,
      *          @OA\JsonContent(
@@ -212,10 +213,10 @@ class UserAuthentucateController extends Controller
      *      ),
      *      @OA\Response(
      *          response=200,
-     *          description="Lien de réinitialisation envoyé",
+     *          description="OTP envoyé avec succès",
      *          @OA\JsonContent(
      *              @OA\Property(property="success", type="boolean", example=true),
-     *              @OA\Property(property="message", type="string", example="Un lien de réinitialisation a été envoyé à votre email")
+     *              @OA\Property(property="message", type="string", example="Un code OTP a été envoyé à votre email")
      *          )
      *      ),
      *      @OA\Response(
@@ -228,7 +229,7 @@ class UserAuthentucateController extends Controller
      *      )
      * )
      */
-    public function sendResetLink(Request $request)
+    public function sendResetOTP(Request $request)
     {
         $request->validate([
             'code_id' => 'required|string'
@@ -236,12 +237,12 @@ class UserAuthentucateController extends Controller
 
         $locataire = Locataire::where('code_id', $request->code_id)->first();
         if ($locataire) {
-            return $this->handleUserReset($locataire, 'locataire');
+            return $this->handleUserOTP($locataire, 'locataire');
         }
 
         $comptable = Comptable::where('code_id', $request->code_id)->first();
         if ($comptable) {
-            return $this->handleUserReset($comptable, 'comptable');
+            return $this->handleUserOTP($comptable, 'comptable');
         }
 
         return response()->json([
@@ -250,7 +251,7 @@ class UserAuthentucateController extends Controller
         ], 404);
     }
 
-    protected function handleUserReset($user, $userType)
+    protected function handleUserOTP($user, $userType)
     {
         if (empty($user->email)) {
             return response()->json([
@@ -259,34 +260,40 @@ class UserAuthentucateController extends Controller
             ], 400);
         }
 
+        // Générer un OTP de 6 chiffres
+        $otp = rand(100000, 999999);
         $token = Str::random(60);
+
+        // Stocker l'OTP et le token
+        $user->password_reset_otp = $otp;
         $user->password_reset_token = $token;
-        $user->password_reset_expires = now()->addHours(1);
+        $user->password_reset_expires = now()->addMinutes(15); // OTP valide 15 minutes
+        $user->otp_attempts = 0; // Réinitialiser les tentatives
         $user->save();
 
-        $resetLink = url("/api/password/reset?token=$token&code_id={$user->code_id}&type=$userType");
-        Mail::to($user->email)->send(new ComptablePasswordResetMail($resetLink));
+        // Envoyer l'OTP par email
+        Mail::to($user->email)->send(new PasswordResetOTPMail($otp, $user->name));
 
         return response()->json([
             'success' => true,
-            'message' => 'Un lien de réinitialisation a été envoyé à votre email'
+            'message' => 'Un code OTP a été envoyé à votre email'
         ]);
     }
 
     /**
      * @OA\Post(
      *      path="/api/password/reset",
-     *      operationId="resetUserPassword",
+     *      operationId="resetPasswordWithOTP",
      *      tags={"Authentification"},
-     *      summary="Réinitialiser le mot de passe avec un token",
-     *      description="Définit un nouveau mot de passe pour un utilisateur en utilisant le token de réinitialisation.",
+     *      summary="Réinitialiser le mot de passe avec OTP",
+     *      description="Vérifie l'OTP et réinitialise le mot de passe immédiatement.",
      *      @OA\RequestBody(
      *          required=true,
      *          @OA\JsonContent(
-     *              required={"token", "code_id", "type", "password", "password_confirmation"},
-     *              @OA\Property(property="token", type="string", example="longrandomtokenstring..."),
+     *              required={"code_id", "type", "otp", "password", "password_confirmation"},
      *              @OA\Property(property="code_id", type="string", example="LOC12345"),
      *              @OA\Property(property="type", type="string", enum={"locataire", "comptable"}, example="locataire"),
+     *              @OA\Property(property="otp", type="string", example="123456"),
      *              @OA\Property(property="password", type="string", format="password", example="NouveauMotDePasse123"),
      *              @OA\Property(property="password_confirmation", type="string", format="password", example="NouveauMotDePasse123")
      *          )
@@ -301,7 +308,7 @@ class UserAuthentucateController extends Controller
      *      ),
      *      @OA\Response(
      *          response=400,
-     *          description="Token invalide ou expiré"
+     *          description="OTP invalide, expiré ou trop de tentatives"
      *      ),
      *      @OA\Response(
      *          response=404,
@@ -309,19 +316,20 @@ class UserAuthentucateController extends Controller
      *      ),
      *      @OA\Response(
      *          response=422,
-     *          description="Erreur de validation (ex: mots de passe non identiques)"
+     *          description="Erreur de validation"
      *      )
      * )
      */
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'token' => 'required',
             'code_id' => 'required',
             'type' => 'required|in:locataire,comptable',
+            'otp' => 'required|digits:6',
             'password' => 'required|min:8|confirmed'
         ]);
 
+        // Trouver l'utilisateur
         $user = $request->type === 'locataire' 
             ? Locataire::where('code_id', $request->code_id)->first()
             : Comptable::where('code_id', $request->code_id)->first();
@@ -330,14 +338,38 @@ class UserAuthentucateController extends Controller
             return response()->json(['success' => false, 'message' => 'Utilisateur non trouvé'], 404);
         }
 
-        if ($user->password_reset_token !== $request->token || 
-            now()->gt($user->password_reset_expires)) {
-            return response()->json(['success' => false, 'message' => 'Lien de réinitialisation invalide ou expiré'], 400);
+        // Vérifier l'expiration
+        if (now()->gt($user->password_reset_expires)) {
+            return response()->json(['success' => false, 'message' => 'OTP expiré'], 400);
         }
 
+        // Vérifier les tentatives (max 3 tentatives)
+        if ($user->otp_attempts >= 3) {
+            return response()->json(['success' => false, 'message' => 'Trop de tentatives. Veuillez demander un nouvel OTP'], 400);
+        }
+
+        // Vérifier l'OTP
+        if ($user->password_reset_otp != $request->otp) {
+            $user->otp_attempts += 1;
+            $user->save();
+
+            $remainingAttempts = 3 - $user->otp_attempts;
+            
+            return response()->json([
+                'success' => false, 
+                'message' => 'OTP incorrect',
+                'remaining_attempts' => $remainingAttempts
+            ], 400);
+        }
+
+        // OTP correct - réinitialiser le mot de passe
         $user->password = Hash::make($request->password);
+        
+        // Nettoyer tous les champs de réinitialisation
+        $user->password_reset_otp = null;
         $user->password_reset_token = null;
         $user->password_reset_expires = null;
+        $user->otp_attempts = 0;
         $user->save();
 
         return response()->json(['success' => true, 'message' => 'Mot de passe réinitialisé avec succès']);

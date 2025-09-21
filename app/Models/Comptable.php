@@ -21,6 +21,14 @@ class Comptable extends Authenticatable
         'date_naisance',
         'user_type',
         'profile_image',
+        // ... autres champs
+        'password_reset_token',
+        'password_reset_expires',
+        'password_reset_otp',
+        'otp_attempts',
+        'reset_access_token',
+        'reset_access_expires',
+        'otp_verified_at'
     ];
     public function agence()
     {
