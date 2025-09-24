@@ -3592,12 +3592,129 @@
                 ]
             }
         },
+        "/api/etat-lieu/entree": {
+            "get": {
+                "tags": [
+                    "Etat des Lieux"
+                ],
+                "summary": "Liste des états des lieux à l'entrée",
+                "description": "Retourne la liste des états des lieux à l'entrée du locataire connecté",
+                "operationId": "b4fad1809874037829eb3d09b7f6ba7a",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "etats_lieu": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/etat-lieu/sortie": {
+            "get": {
+                "tags": [
+                    "Etat des Lieux"
+                ],
+                "summary": "Liste des états des lieux à la sortie",
+                "description": "Retourne la liste des états des lieux à la sortie du locataire connecté",
+                "operationId": "147ea2b0f923cd73f5aac0e74aaada22",
+                "responses": {
+                    "200": {
+                        "description": "Succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/etat-lieu/all": {
+            "get": {
+                "tags": [
+                    "Etat des Lieux"
+                ],
+                "summary": "Tous les états des lieux",
+                "description": "Retourne tous les états des lieux (entrée et sortie) du locataire connecté",
+                "operationId": "e6277b9dc97979dd953d47250d9875a1",
+                "responses": {
+                    "200": {
+                        "description": "Succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/etat-lieu/entree/{id}": {
+            "get": {
+                "tags": [
+                    "Etat des Lieux"
+                ],
+                "summary": "Détails d'un état des lieux à l'entrée",
+                "description": "Retourne les détails d'un état des lieux à l'entrée spécifique",
+                "operationId": "7fc607109e8d49ebfe9d80dfb0fb1b57",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'état des lieux",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès"
+                    },
+                    "404": {
+                        "description": "État des lieux non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/tenant/{locataireId}/paiements": {
             "get": {
                 "tags": [
                     "Paiements"
                 ],
                 "summary": "Lister les paiements d'un locataire",
+                "description": "Récupère la liste de tous les paiements d'un locataire spécifique avec les détails du bien associé",
                 "operationId": "d8e9f4cd8b406f507606012c1d0e4848",
                 "parameters": [
                     {
@@ -3606,7 +3723,8 @@
                         "description": "ID du locataire",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 123
                         }
                     }
                 ],
@@ -3617,10 +3735,64 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "data": {
                                             "properties": {
                                                 "locataire": {
-                                                    "$ref": "#/components/schemas/LocataireWithPaiements"
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 123
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "DUPONT"
+                                                        },
+                                                        "prenom": {
+                                                            "type": "string",
+                                                            "example": "Jean"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "jean.dupont@example.com"
+                                                        },
+                                                        "contact": {
+                                                            "type": "string",
+                                                            "example": "+2250700000000"
+                                                        },
+                                                        "bien": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 456
+                                                                },
+                                                                "prix": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 75000
+                                                                },
+                                                                "commune": {
+                                                                    "type": "string",
+                                                                    "example": "Cocody"
+                                                                },
+                                                                "type": {
+                                                                    "type": "string",
+                                                                    "example": "Appartement"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "paiements": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/Paiement"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 },
                                                 "message": {
                                                     "type": "string",
@@ -3641,6 +3813,10 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
                                         "message": {
                                             "type": "string",
                                             "example": "Locataire non trouvé"
@@ -3650,44 +3826,69 @@
                                 }
                             }
                         }
+                    },
+                    "500": {
+                        "description": "Erreur serveur interne",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de la récupération des paiements"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
                     "Paiements"
                 ],
-                "summary": "Enregistrer un nouveau paiement",
+                "summary": "Enregistrer un nouveau paiement ou initialiser paiement Mobile Money",
+                "description": "Cette endpoint permet d'enregistrer un paiement pour un locataire. \n     *                  Pour les paiements par virement bancaire, le paiement est enregistré immédiatement.\n     *                  Pour les paiements Mobile Money, l'endpoint initialise la transaction et retourne les données nécessaires pour l'intégration CinetPay.",
                 "operationId": "3bbf431b6638c32ef23fbe410c1eee19",
                 "parameters": [
                     {
                         "name": "locataireId",
                         "in": "path",
-                        "description": "ID du locataire",
+                        "description": "ID du locataire pour lequel effectuer le paiement",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 123
                         }
                     }
                 ],
                 "requestBody": {
+                    "description": "Données du paiement à enregistrer",
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "required": [
-                                    "mois_couvert",
                                     "methode_paiement"
                                 ],
                                 "properties": {
-                                    "mois_couvert": {
-                                        "description": "Mois couvert par le paiement (format YYYY-MM)",
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "2023-12"
-                                    },
                                     "methode_paiement": {
-                                        "description": "Méthode de paiement",
+                                        "description": "Méthode de paiement choisie",
                                         "type": "string",
                                         "enum": [
                                             "mobile_money",
@@ -3696,12 +3897,12 @@
                                         "example": "mobile_money"
                                     },
                                     "transaction_id": {
-                                        "description": "ID de transaction (requis pour mobile money)",
+                                        "description": "ID de transaction (optionnel pour mobile money, généré automatiquement si non fourni)",
                                         "type": "string",
                                         "example": "MM_123456789"
                                     },
                                     "proof_file": {
-                                        "description": "Fichier de preuve (requis pour virement bancaire)",
+                                        "description": "Fichier de preuve de virement (requis pour virement bancaire, formats: jpg, jpeg, png, pdf, max: 2MB)",
                                         "type": "string",
                                         "format": "binary"
                                     }
@@ -3712,8 +3913,92 @@
                     }
                 },
                 "responses": {
+                    "200": {
+                        "description": "Initialisation Mobile Money réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "example": "mobile_money_init"
+                                        },
+                                        "cinetpay_data": {
+                                            "description": "Données nécessaires pour l'intégration CinetPay",
+                                            "properties": {
+                                                "api_key": {
+                                                    "type": "string",
+                                                    "example": "YOUR_API_KEY"
+                                                },
+                                                "site_id": {
+                                                    "type": "string",
+                                                    "example": "YOUR_SITE_ID"
+                                                },
+                                                "notify_url": {
+                                                    "type": "string",
+                                                    "example": "NOTIFY_URL"
+                                                },
+                                                "mode": {
+                                                    "type": "string",
+                                                    "example": "PRODUCTION"
+                                                },
+                                                "transaction_id": {
+                                                    "type": "string",
+                                                    "example": "PAY_1703500000000"
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 75000
+                                                },
+                                                "currency": {
+                                                    "type": "string",
+                                                    "example": "XOF"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Paiement loyer Décembre 2023"
+                                                },
+                                                "customer_name": {
+                                                    "type": "string",
+                                                    "example": "DUPONT"
+                                                },
+                                                "customer_surname": {
+                                                    "type": "string",
+                                                    "example": "Jean"
+                                                },
+                                                "customer_phone_number": {
+                                                    "type": "string",
+                                                    "example": "+2250700000000"
+                                                },
+                                                "channels": {
+                                                    "type": "string",
+                                                    "example": "ALL"
+                                                },
+                                                "metadata": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "locataire_id": 123,
+                                                        "bien_id": 456,
+                                                        "mois_couvert": "2023-12",
+                                                        "montant": 75000
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
                     "201": {
-                        "description": "Paiement enregistré avec succès",
+                        "description": "Paiement par virement enregistré avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3727,7 +4012,64 @@
                                             "example": "Paiement enregistré avec succès pour le mois de Décembre 2023"
                                         },
                                         "paiement": {
-                                            "$ref": "#/components/schemas/Paiement"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "montant": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 75000
+                                                },
+                                                "date_paiement": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2023-12-15 10:30:00"
+                                                },
+                                                "mois_couvert": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2023-12"
+                                                },
+                                                "methode_paiement": {
+                                                    "type": "string",
+                                                    "example": "Virement Bancaire"
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "example": "En attente"
+                                                },
+                                                "reference": {
+                                                    "type": "string",
+                                                    "example": "PAY-00123"
+                                                },
+                                                "transaction_id": {
+                                                    "type": "string",
+                                                    "example": "VIR_ABC123DEF"
+                                                },
+                                                "proof_path": {
+                                                    "type": "string",
+                                                    "example": "preuves_virements/fichier.jpg"
+                                                },
+                                                "locataire_id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "bien_id": {
+                                                    "type": "integer",
+                                                    "example": 456
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -3776,7 +4118,7 @@
                         }
                     },
                     "422": {
-                        "description": "Erreur de validation",
+                        "description": "Erreur de validation ou paiement déjà effectué",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3792,11 +4134,11 @@
                                         "errors": {
                                             "type": "object",
                                             "example": {
-                                                "mois_couvert": [
-                                                    "Le champ mois couvert est requis."
-                                                ],
                                                 "methode_paiement": [
                                                     "La méthode de paiement sélectionnée est invalide."
+                                                ],
+                                                "proof_file": [
+                                                    "Le fichier de preuve est requis pour les virements bancaires."
                                                 ]
                                             }
                                         }
@@ -3807,7 +4149,7 @@
                         }
                     },
                     "500": {
-                        "description": "Erreur serveur",
+                        "description": "Erreur serveur interne",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3830,7 +4172,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/tenant/paiements/{id}": {
@@ -3838,7 +4185,8 @@
                 "tags": [
                     "Paiements"
                 ],
-                "summary": "Afficher les détails d'un paiement",
+                "summary": "Afficher les détails d'un paiement spécifique",
+                "description": "Récupère les détails complets d'un paiement spécifique avec les informations du locataire et du bien associé",
                 "operationId": "8d476501be5f66267621b70892b589b9",
                 "parameters": [
                     {
@@ -3847,7 +4195,8 @@
                         "description": "ID du paiement",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -3894,8 +4243,37 @@
                                 }
                             }
                         }
+                    },
+                    "500": {
+                        "description": "Erreur serveur interne",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de la récupération du paiement"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Message d'erreur détaillé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/tenant/paiement/mon-qr-code": {
@@ -4029,7 +4407,7 @@
                         }
                     },
                     "500": {
-                        "description": "Erreur serveur",
+                        "description": "Erreur serveur interne",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -4058,6 +4436,206 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/cinetpay/notify": {
+            "post": {
+                "tags": [
+                    "Paiements - Webhooks"
+                ],
+                "summary": "Gérer les notifications de paiement CinetPay",
+                "description": "Endpoint de callback pour recevoir et traiter les notifications de paiement de CinetPay",
+                "operationId": "50b1027379e9431fb8935bdc65a77a02",
+                "requestBody": {
+                    "description": "Données de notification CinetPay",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "cpm_trans_id",
+                                    "cpm_amount",
+                                    "cpm_currency",
+                                    "cpm_result",
+                                    "cpm_trans_date"
+                                ],
+                                "properties": {
+                                    "cpm_site_id": {
+                                        "description": "ID du site CinetPay",
+                                        "type": "string",
+                                        "example": "859043"
+                                    },
+                                    "cpm_trans_id": {
+                                        "description": "ID de transaction unique",
+                                        "type": "string",
+                                        "example": "PAY_1703500000000"
+                                    },
+                                    "cpm_trans_date": {
+                                        "description": "Date de la transaction",
+                                        "type": "string",
+                                        "example": "20231215103000"
+                                    },
+                                    "cpm_amount": {
+                                        "description": "Montant de la transaction",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 75000
+                                    },
+                                    "cpm_currency": {
+                                        "description": "Devise de la transaction",
+                                        "type": "string",
+                                        "example": "XOF"
+                                    },
+                                    "cpm_result": {
+                                        "description": "Résultat du paiement (00: succès)",
+                                        "type": "string",
+                                        "example": "00"
+                                    },
+                                    "signature": {
+                                        "description": "Signature de vérification",
+                                        "type": "string"
+                                    },
+                                    "payment_method": {
+                                        "description": "Méthode de paiement utilisée",
+                                        "type": "string",
+                                        "example": "MOBILE_MONEY"
+                                    },
+                                    "cel_phone_num": {
+                                        "description": "Numéro de téléphone du payeur",
+                                        "type": "string",
+                                        "example": "+2250700000000"
+                                    },
+                                    "cpm_phone_prefixe": {
+                                        "description": "Préfixe téléphonique",
+                                        "type": "string",
+                                        "example": "+225"
+                                    },
+                                    "cpm_language": {
+                                        "description": "Langue utilisée",
+                                        "type": "string",
+                                        "example": "fr"
+                                    },
+                                    "cpm_version": {
+                                        "description": "Version de l'API",
+                                        "type": "string",
+                                        "example": "1.0"
+                                    },
+                                    "cpm_payment_config": {
+                                        "description": "Configuration du paiement",
+                                        "type": "string",
+                                        "example": "SINGLE"
+                                    },
+                                    "cpm_page_action": {
+                                        "description": "Action de la page",
+                                        "type": "string",
+                                        "example": "PAYMENT"
+                                    },
+                                    "cpm_custom": {
+                                        "description": "Champ personnalisé",
+                                        "type": "string"
+                                    },
+                                    "cpm_designation": {
+                                        "description": "Désignation du paiement",
+                                        "type": "string",
+                                        "example": "Paiement loyer"
+                                    },
+                                    "cpm_error_message": {
+                                        "description": "Message d'erreur éventuel",
+                                        "type": "string"
+                                    },
+                                    "cpm_operation_id": {
+                                        "description": "ID de l'opération CinetPay",
+                                        "type": "string",
+                                        "example": "OP123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notification traitée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Paiement enregistré"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Session de paiement invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Session de paiement invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Mois déjà payé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mois déjà payé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur interne",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur interne du serveur"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/visit/store": {
@@ -4822,8 +5400,16 @@
             "description": "Agent - Paiements"
         },
         {
+            "name": "Etat des Lieux",
+            "description": "Etat des Lieux"
+        },
+        {
             "name": "Locataire - Paiements",
             "description": "Locataire - Paiements"
+        },
+        {
+            "name": "Paiements - Webhooks",
+            "description": "Paiements - Webhooks"
         }
     ]
 }

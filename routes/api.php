@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Authenticate\UserAuthentucateController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\Locataire\ApiLocataireController;
 use App\Http\Controllers\Api\Locataire\ContacterAgenceController;
+use App\Http\Controllers\Api\Locataire\EtatLieuController;
 use App\Http\Controllers\Api\Paiement\Paiementcontroller;
 use App\Http\Controllers\Api\Visite\ApiVisiteController;
 use Illuminate\Support\Facades\Route;
@@ -29,7 +30,15 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('tenant')->group(fu
     Route::post('/{locataire}/paiements', [Paiementcontroller::class, 'store']);
     Route::get('/{locataireId}/paiements', [PaiementController::class, 'index']);
     Route::get('/paiements/{id}', [PaiementController::class, 'show']);
-    Route::get('/paiement/mon-qr-code', [PaiementController::class, 'getMyQrCode']); 
+    Route::get('/paiement/mon-qr-code', [PaiementController::class, 'getMyQrCode']);
+    Route::post('/cinetpay/notify', [PaiementController::class, 'handleCinetPayNotification'])->name('api.cinetpay.notify'); 
+
+   Route::prefix('etat-lieu')->group(function () {
+        Route::get('/entree', [EtatLieuController::class, 'getEtatsLieuEntree']);
+        Route::get('/sortie', [EtatLieuController::class, 'getEtatsLieuSortie']);
+        Route::get('/all', [EtatLieuController::class, 'getAllEtatsLieu']);
+        Route::get('/entree/{id}', [EtatLieuController::class, 'getEtatLieuEntreeById']);
+    });
 });
 
 Route::get('/tenant/qr-code', [ApiAgentCodeEtatLieu::class, 'getQrCode']);
