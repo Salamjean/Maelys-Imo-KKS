@@ -48,6 +48,8 @@ Route::post('/paiement/verifier-code-especes', [ApiAgentPaiement::class, 'verify
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('agent')->group(function(){
       Route::get('/dashboard', [ApiAgentDashboard::class, 'dashboard']);
       Route::get('/etats-lieu/warning', [ApiAgentEtatLieu::class, 'getLocataireAvecEtatsLieuEnAttente']);
+      // routes/api.php
+      Route::get('/etats-lieu/{locataireId}/details', [ApiAgentEtatLieu::class, 'getLocataireAvecBienEtEtatsLieu']);
       Route::get('/etats-lieu/effectues', [ApiAgentEtatLieu::class, 'getAllEtatsLieuEffectues']);
       Route::get('/etats/end', [ApiAgentEtatLieu::class, 'getEtatsLieuFin']);
       Route::post('/etat-lieux', [ApiAgentEtatLieu::class, 'store']);

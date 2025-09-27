@@ -124,6 +124,179 @@ class ApiAgentEtatLieu extends Controller
         }
     }
 
+/**
+ * @OA\Get(
+ *     path="/agent/locataires/{locataireId}/details-complets",
+ *     summary="Récupérer les données complètes d'un locataire avec son bien et états des lieux",
+ *     description="Retourne les données d'un locataire avec les informations de son bien et tous ses états des lieux",
+ *     tags={"Agent - Locataires"},
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Parameter(
+ *         name="locataireId",
+ *         in="path",
+ *         required=true,
+ *         description="ID du locataire",
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Succès",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="success", type="boolean", example=true),
+ *             @OA\Property(
+ *                 property="data",
+ *                 type="object",
+ *                 @OA\Property(property="locataire", type="object",
+ *                     @OA\Property(property="id", type="integer"),
+ *                     @OA\Property(property="nom", type="string"),
+ *                     @OA\Property(property="prenom", type="string"),
+ *                     @OA\Property(property="email", type="string"),
+ *                     @OA\Property(property="contact", type="string"),
+ *                     @OA\Property(property="status", type="string"),
+ *                     @OA\Property(property="date_entree", type="string", format="date"),
+ *                     @OA\Property(property="date_sortie", type="string", format="date", nullable=true),
+ *                     @OA\Property(property="comptable_id", type="integer")
+ *                 ),
+ *                 @OA\Property(property="bien", type="object",
+ *                     @OA\Property(property="id", type="integer"),
+ *                     @OA\Property(property="type", type="string"),
+ *                     @OA\Property(property="adresse", type="string"),
+ *                     @OA\Property(property="commune", type="string"),
+ *                     @OA\Property(property="ville", type="string"),
+ *                     @OA\Property(property="code_postal", type="string"),
+ *                     @OA\Property(property="surface", type="number", format="float"),
+ *                     @OA\Property(property="loyer", type="number", format="float")
+ *                 ),
+ *                 @OA\Property(property="etats_lieu", type="array",
+ *                     @OA\Items(
+ *                         @OA\Property(property="id", type="integer"),
+ *                         @OA\Property(property="type_etat", type="string", enum={"entrée", "sortie"}),
+ *                         @OA\Property(property="status_etat_entre", type="string", enum={"Oui", "Non", "En attente"}),
+ *                         @OA\Property(property="status_etat_sortie", type="string", enum={"Oui", "Non", "En attente"}),
+ *                         @OA\Property(property="date_etat", type="string", format="date-time"),
+ *                         @OA\Property(property="remarques", type="string", nullable=true),
+ *                         @OA\Property(property="created_at", type="string", format="date-time"),
+ *                         @OA\Property(property="updated_at", type="string", format="date-time")
+ *                     )
+ *                 )
+ *             )
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Non authentifié",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="success", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Locataire non trouvé",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="success", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Erreur serveur",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="success", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string"),
+ *             @OA\Property(property="error", type="string")
+ *         )
+ *     )
+ * )
+ */
+public function getLocataireAvecBienEtEtatsLieu($locataireId)
+{
+    try {
+        $comptable = Auth::guard('sanctum')->user();
+        
+        if (!$comptable) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Utilisateur non authentifié'
+            ], 401);
+        }
+
+        // Récupérer le locataire avec ses relations
+        $locataire = Locataire::with(['bien', 'etatLieu' => function($query) {
+                $query->orderBy('created_at', 'desc');
+            }])
+            ->where('id', $locataireId)
+            ->where('comptable_id', $comptable->id)
+            ->first();
+
+        if (!$locataire) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Locataire non trouvé'
+            ], 404);
+        }
+
+        // Structurer les données de réponse
+        $data = [
+            'locataire' => [
+                'id' => $locataire->id,
+                'nom' => $locataire->name,
+                'prenom' => $locataire->prenom,
+                'email' => $locataire->email,
+                'contact' => $locataire->contact,
+                'status' => $locataire->status,
+                'date_entree' => $locataire->date_entree ? $locataire->date_entree->format('Y-m-d') : null,
+                'date_sortie' => $locataire->date_sortie ? $locataire->date_sortie->format('Y-m-d') : null,
+                'comptable_id' => $locataire->comptable_id
+            ],
+            'bien' => null,
+            'etats_lieu' => []
+        ];
+
+        // Ajouter les informations du bien si exists
+        if ($locataire->bien) {
+            $data['bien'] = [
+                'id' => $locataire->bien->id,
+                'type' => $locataire->bien->type,
+                'adresse' => $locataire->bien->adresse,
+                'commune' => $locataire->bien->commune,
+                'ville' => $locataire->bien->ville,
+                'code_postal' => $locataire->bien->code_postal,
+                'surface' => $locataire->bien->surface,
+                'loyer' => $locataire->bien->loyer
+            ];
+        }
+
+        // Ajouter les états des lieux
+        if ($locataire->etatLieu->isNotEmpty()) {
+            $data['etats_lieu'] = $locataire->etatLieu->map(function($etatLieu) {
+                return [
+                    'id' => $etatLieu->id,
+                    'type_etat' => $etatLieu->type_etat,
+                    'status_etat_entre' => $etatLieu->status_etat_entre,
+                    'status_etat_sortie' => $etatLieu->status_etat_sortie,
+                    'date_etat' => $etatLieu->date_etat ? $etatLieu->date_etat->format('Y-m-d H:i:s') : null,
+                    'remarques' => $etatLieu->remarques,
+                    'created_at' => $etatLieu->created_at->format('Y-m-d H:i:s'),
+                    'updated_at' => $etatLieu->updated_at->format('Y-m-d H:i:s')
+                ];
+            });
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la récupération des données du locataire',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
 
     /**
      * @OA\Get(
