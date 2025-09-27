@@ -499,6 +499,231 @@
                 ]
             }
         },
+        "/agent/etats-lieu/{locataireId}/details": {
+            "get": {
+                "tags": [
+                    "Agent - Locataires"
+                ],
+                "summary": "Récupérer les données complètes d'un locataire avec son bien et états des lieux",
+                "description": "Retourne les données d'un locataire avec les informations de son bien et tous ses états des lieux",
+                "operationId": "7688773e3bd38daaa9379b551d9bb727",
+                "parameters": [
+                    {
+                        "name": "locataireId",
+                        "in": "path",
+                        "description": "ID du locataire",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "locataire": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "nom": {
+                                                            "type": "string"
+                                                        },
+                                                        "prenom": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "contact": {
+                                                            "type": "string"
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        },
+                                                        "date_entree": {
+                                                            "type": "string",
+                                                            "format": "date"
+                                                        },
+                                                        "date_sortie": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "nullable": true
+                                                        },
+                                                        "comptable_id": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "bien": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "type": {
+                                                            "type": "string"
+                                                        },
+                                                        "adresse": {
+                                                            "type": "string"
+                                                        },
+                                                        "commune": {
+                                                            "type": "string"
+                                                        },
+                                                        "ville": {
+                                                            "type": "string"
+                                                        },
+                                                        "code_postal": {
+                                                            "type": "string"
+                                                        },
+                                                        "surface": {
+                                                            "type": "number",
+                                                            "format": "float"
+                                                        },
+                                                        "loyer": {
+                                                            "type": "number",
+                                                            "format": "float"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "etats_lieu": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "type_etat": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "entrée",
+                                                                    "sortie"
+                                                                ]
+                                                            },
+                                                            "status_etat_entre": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "Oui",
+                                                                    "Non",
+                                                                    "En attente"
+                                                                ]
+                                                            },
+                                                            "status_etat_sortie": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "Oui",
+                                                                    "Non",
+                                                                    "En attente"
+                                                                ]
+                                                            },
+                                                            "date_etat": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "remarques": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Locataire non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/agent/etats/end": {
             "get": {
                 "tags": [
@@ -2026,7 +2251,6 @@
                             "schema": {
                                 "required": [
                                     "code_id",
-                                    "type",
                                     "otp",
                                     "password",
                                     "password_confirmation"
@@ -2035,14 +2259,6 @@
                                     "code_id": {
                                         "type": "string",
                                         "example": "LOC12345"
-                                    },
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "locataire",
-                                            "comptable"
-                                        ],
-                                        "example": "locataire"
                                     },
                                     "otp": {
                                         "type": "string",
@@ -3654,17 +3870,203 @@
                 ]
             }
         },
-        "/api/etat-lieu/all": {
+        "/api/tenant/all": {
             "get": {
                 "tags": [
                     "Etat des Lieux"
                 ],
-                "summary": "Tous les états des lieux",
-                "description": "Retourne tous les états des lieux (entrée et sortie) du locataire connecté",
-                "operationId": "e6277b9dc97979dd953d47250d9875a1",
+                "summary": "États des lieux du locataire",
+                "description": "Retourne les états des lieux d'entrée et de sortie du locataire connecté avec les données décodées",
+                "operationId": "a67a6f0ee43e69f75ce443478a79d5e2",
                 "responses": {
                     "200": {
-                        "description": "Succès"
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "locataire": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "prenom": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "contact": {
+                                                            "type": "string"
+                                                        },
+                                                        "bien_id": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "comptable": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "contact": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "etat_lieu_entree": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "type_etat": {
+                                                            "type": "string"
+                                                        },
+                                                        "date_etat": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        },
+                                                        "status_etat_entre": {
+                                                            "type": "string"
+                                                        },
+                                                        "status_etat_sortie": {
+                                                            "type": "string"
+                                                        },
+                                                        "remarques": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "parties_communes": {
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        },
+                                                        "chambres": {
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "etat_lieu_sortie": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "type_etat": {
+                                                            "type": "string"
+                                                        },
+                                                        "date_etat": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        },
+                                                        "status_etat_entre": {
+                                                            "type": "string"
+                                                        },
+                                                        "status_etat_sortie": {
+                                                            "type": "string"
+                                                        },
+                                                        "remarques": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "parties_communes": {
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        },
+                                                        "chambres": {
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -5394,6 +5796,10 @@
         {
             "name": "Agent - États des Lieux",
             "description": "Agent - États des Lieux"
+        },
+        {
+            "name": "Agent - Locataires",
+            "description": "Agent - Locataires"
         },
         {
             "name": "Agent - Paiements",

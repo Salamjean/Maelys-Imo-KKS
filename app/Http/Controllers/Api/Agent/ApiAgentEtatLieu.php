@@ -126,7 +126,7 @@ class ApiAgentEtatLieu extends Controller
 
 /**
  * @OA\Get(
- *     path="/agent/locataires/{locataireId}/details-complets",
+ *     path="/agent/etats-lieu/{locataireId}/details",
  *     summary="Récupérer les données complètes d'un locataire avec son bien et états des lieux",
  *     description="Retourne les données d'un locataire avec les informations de son bien et tous ses états des lieux",
  *     tags={"Agent - Locataires"},
