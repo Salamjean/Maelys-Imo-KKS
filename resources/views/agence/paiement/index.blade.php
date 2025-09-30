@@ -29,6 +29,7 @@
                             <th>Méthode</th>
                             <th>Statut</th>
                             <th>Preuve de virement</th>
+                            <th>ID transaction</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -57,6 +58,7 @@
                                             <span class="text-muted">Espèce ou <br> Mobile money</span>
                                         @endif
                                     </td>
+                                    <td><strong>{{ $paiement->transaction_id ?? 'pas de refrence'}} </strong></td>
                                     <td class="text-center">
                                         @if($paiement->statut == 'payé')
                                             <a href="{{ route('locataire.paiements.receipt', $paiement->id) }}" 
