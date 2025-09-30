@@ -472,8 +472,13 @@ private function verifyCinetPaySignature(Request $request)
     $apiKey = config('services.cinetpay.api_key');
     $receivedSignature = $request->input('signature');
     
+    // Ancienne méthode MD5 (ne marche plus)
+    // $signatureData = $transactionId . $siteId . $apiKey;
+    // $computedSignature = md5($signatureData);
+    
+    // Nouvelle méthode HMAC SHA256
     $signatureData = $transactionId . $siteId . $apiKey;
-    $computedSignature = md5($signatureData);
+    $computedSignature = hash_hmac('sha256', $signatureData, $apiKey);
     
     $isValid = hash_equals($computedSignature, $receivedSignature);
     
@@ -483,6 +488,10 @@ private function verifyCinetPaySignature(Request $request)
             'received' => $receivedSignature,
             'data' => $signatureData
         ]);
+        
+        // Pour debug, loguez aussi l'ancienne méthode MD5
+        $md5Signature = md5($signatureData);
+        Log::info('Signature MD5 (ancienne): ' . $md5Signature);
     }
     
     return $isValid;
