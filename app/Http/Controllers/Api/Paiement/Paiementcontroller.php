@@ -182,6 +182,14 @@ class Paiementcontroller extends Controller
  */
 public function store(Request $request, $locataireId)
 {
+    // Dans la méthode store, après l'initialisation du paiement
+    Log::info('URLs de callback CinetPay', [
+        'notify_url' => route('api.cinetpay.notify'),
+        'return_url' => route('api.cinetpay.return'),
+        'current_domain' => request()->getHttpHost(),
+        'full_notify_url' => url(route('api.cinetpay.notify')),
+        'full_return_url' => url(route('api.cinetpay.return'))
+    ]);
     Log::info('Début de la méthode store - Enregistrement paiement', [
         'locataire_id' => $locataireId,
         'methode_paiement' => $request->methode_paiement,
@@ -851,196 +859,210 @@ public function getMyQrCode(Request $request)
      *     )
      * )
      */
-    public function handleCinetPayNotification(Request $request)
-    {
-        Log::info('=== DÉBUT Notification CinetPay Webhook ===', $request->all());
+   public function handleCinetPayNotification(Request $request)
+{
+    Log::info('=== DÉBUT Notification CinetPay Webhook ===', $request->all());
 
-        try {
-            // Validation des données requises
-            $request->validate([
-                'cpm_trans_id' => 'required|string',
-                'cpm_amount' => 'required|numeric',
-                'cpm_currency' => 'required|string',
-                'cpm_result' => 'required|string',
-                'cpm_trans_date' => 'required|string',
-                'signature' => 'required|string',
-            ]);
+    try {
+        // Validation des données requises
+        $request->validate([
+            'cpm_trans_id' => 'required|string',
+            'cpm_amount' => 'required|numeric',
+            'cpm_currency' => 'required|string',
+            'cpm_result' => 'required|string',
+            'cpm_trans_date' => 'required|string',
+            'signature' => 'required|string',
+        ]);
 
-            $transactionId = $request->cpm_trans_id;
-            $amount = $request->cpm_amount;
-            $result = $request->cpm_result;
+        $transactionId = $request->cpm_trans_id;
+        $amount = $request->cpm_amount;
+        $result = $request->cpm_result;
 
-            Log::info('Données notification validées', [
+        Log::info('Données notification validées', [
+            'transaction_id' => $transactionId,
+            'amount' => $amount,
+            'result' => $result,
+            'cpm_error_message' => $request->cpm_error_message ?? 'Aucun message d\'erreur'
+        ]);
+
+        // Vérification de la signature
+        $cinetPayService = new CinetPayService();
+        $isValidSignature = $cinetPayService->verifySignature($request->all(), $request->signature);
+
+        if (!$isValidSignature) {
+            Log::error('Signature CinetPay invalide', [
                 'transaction_id' => $transactionId,
-                'amount' => $amount,
-                'result' => $result
+                'received_signature' => $request->signature
+            ]);
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Signature invalide'
+            ], 400);
+        }
+
+        Log::info('Signature vérifiée avec succès');
+
+        // Récupérer la session de paiement
+        $paiementSession = PaiementSession::where('transaction_id', $transactionId)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$paiementSession) {
+            Log::error('Session de paiement non trouvée ou expirée', [
+                'transaction_id' => $transactionId,
+                'now' => now(),
+                'sessions_existantes' => PaiementSession::where('transaction_id', $transactionId)->exists()
+            ]);
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Session de paiement non trouvée'
+            ], 404);
+        }
+
+        // Déterminer le statut et le message
+        $statut = $this->mapCinetPayStatus($result);
+        $message = $this->getCinetPayStatusMessage($result, $request->cpm_error_message);
+        
+        Log::info('Statut déterminé', [
+            'statut' => $statut,
+            'message' => $message,
+            'code_result' => $result
+        ]);
+
+        // Vérifier si le paiement existe déjà
+        $existingPayment = Paiement::where('transaction_id', $transactionId)->first();
+        
+        if ($existingPayment) {
+            Log::info('Paiement existant trouvé', [
+                'paiement_id' => $existingPayment->id,
+                'statut_actuel' => $existingPayment->statut
             ]);
 
-            // Vérification de la signature
-            $cinetPayService = new CinetPayService();
-            $isValidSignature = $cinetPayService->verifySignature($request->all(), $request->signature);
-
-            if (!$isValidSignature) {
-                Log::error('Signature CinetPay invalide', [
-                    'transaction_id' => $transactionId,
-                    'received_signature' => $request->signature
-                ]);
-                return response()->json([
-                    'status' => 'error', 
-                    'message' => 'Signature invalide'
-                ], 400);
-            }
-
-            Log::info('Signature vérifiée avec succès');
-
-            // Récupérer la session de paiement
-            $paiementSession = PaiementSession::where('transaction_id', $transactionId)
-                ->where('expires_at', '>', now())
-                ->first();
-
-            if (!$paiementSession) {
-                Log::error('Session de paiement non trouvée ou expirée', [
-                    'transaction_id' => $transactionId,
-                    'now' => now(),
-                    'sessions_existantes' => PaiementSession::where('transaction_id', $transactionId)->exists()
-                ]);
-                return response()->json([
-                    'status' => 'error', 
-                    'message' => 'Session de paiement non trouvée'
-                ], 404);
-            }
-
-            Log::info('Session de paiement trouvée', [
-                'session_id' => $paiementSession->id,
-                'locataire_id' => $paiementSession->locataire_id,
-                'montant_session' => $paiementSession->montant,
-                'montant_reçu' => $amount
-            ]);
-
-            // Vérifier si le paiement existe déjà
-            $existingPayment = Paiement::where('transaction_id', $transactionId)->first();
-            
-            if ($existingPayment) {
-                Log::warning('Paiement déjà existant', [
-                    'paiement_id' => $existingPayment->id,
-                    'statut_actuel' => $existingPayment->statut
-                ]);
-
-                // Mettre à jour le statut si nécessaire
-                $nouveauStatut = $this->mapCinetPayStatus($result);
-                if ($existingPayment->statut !== $nouveauStatut) {
-                    $existingPayment->update([
-                        'statut' => $nouveauStatut,
-                        'date_paiement' => $nouveauStatut === 'payé' ? now() : $existingPayment->date_paiement,
-                    ]);
-                    
-                    Log::info('Statut du paiement mis à jour', [
-                        'ancien_statut' => $existingPayment->statut,
-                        'nouveau_statut' => $nouveauStatut
-                    ]);
-                }
-
-                // Marquer la session comme utilisée
-                $paiementSession->update(['used_at' => now()]);
-
-                return response()->json([
-                    'status' => 'success', 
-                    'message' => 'Statut du paiement mis à jour'
-                ]);
-            }
-
-            // Vérifier la correspondance du montant
-            if ($paiementSession->montant != $amount) {
-                Log::error('Incohérence de montant', [
-                    'montant_session' => $paiementSession->montant,
-                    'montant_reçu' => $amount,
-                    'difference' => abs($paiementSession->montant - $amount)
+            // Mettre à jour le statut si nécessaire
+            if ($existingPayment->statut !== $statut) {
+                $existingPayment->update([
+                    'statut' => $statut,
+                    'date_paiement' => $statut === 'payé' ? now() : $existingPayment->date_paiement,
+                    'metadata' => array_merge(
+                        $existingPayment->metadata ?? [],
+                        [
+                            'cinetpay_update' => $request->all(),
+                            'error_message' => $request->cpm_error_message,
+                            'updated_at' => now()->toISOString()
+                        ]
+                    )
                 ]);
                 
-                // Vous pouvez choisir de rejeter ou d'accepter avec un warning
-                // return response()->json(['status' => 'error', 'message' => 'Incohérence de montant'], 400);
+                Log::info('Statut du paiement mis à jour', [
+                    'ancien_statut' => $existingPayment->statut,
+                    'nouveau_statut' => $statut,
+                    'message' => $message
+                ]);
             }
-
-            // Déterminer le statut
-            $statut = $this->mapCinetPayStatus($result);
-            
-            // Générer une référence unique
-            do {
-                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-                $reference = 'PAY-' . $randomNumber;
-            } while (Paiement::where('reference', $reference)->exists());
-
-            // Créer le paiement
-            $paiement = Paiement::create([
-                'montant' => $paiementSession->montant,
-                'date_paiement' => $statut === 'payé' ? now() : null,
-                'mois_couvert' => $paiementSession->mois_couvert,
-                'methode_paiement' => 'Mobile Money',
-                'statut' => $statut,
-                'reference' => $reference,
-                'locataire_id' => $paiementSession->locataire_id,
-                'bien_id' => $paiementSession->bien_id,
-                'transaction_id' => $transactionId,
-                'metadata' => [
-                    'cinetpay_data' => $request->all(),
-                    'session_metadata' => $paiementSession->metadata,
-                    'processed_at' => now()->toISOString()
-                ]
-            ]);
-
-            Log::info('Paiement créé avec succès', [
-                'paiement_id' => $paiement->id,
-                'reference' => $paiement->reference,
-                'statut' => $paiement->statut
-            ]);
 
             // Marquer la session comme utilisée
             $paiementSession->update(['used_at' => now()]);
 
-            // Si le paiement est réussi, réinitialiser le montant majoré si nécessaire
-            if ($statut === 'payé') {
-                $bien = $paiementSession->bien;
-                if ($bien && $bien->montant_majore) {
-                    Log::info('Réinitialisation du montant majoré', [
-                        'bien_id' => $bien->id,
-                        'ancien_montant_majore' => $bien->montant_majore
-                    ]);
-                    $bien->update(['montant_majore' => null]);
-                }
-            }
-
-            Log::info('=== FIN Notification CinetPay Webhook - Succès ===');
-
             return response()->json([
                 'status' => 'success', 
-                'message' => 'Paiement traité avec succès',
-                'paiement_id' => $paiement->id,
-                'statut' => $statut
+                'message' => 'Statut du paiement mis à jour: ' . $message
             ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Erreur validation notification CinetPay', [
-                'errors' => $e->errors(),
-                'data' => $request->all()
-            ]);
-            return response()->json([
-                'status' => 'error', 
-                'message' => 'Données de notification invalides',
-                'errors' => $e->errors()
-            ], 400);
-
-        } catch (\Exception $e) {
-            Log::error('Erreur lors du traitement de la notification CinetPay', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'transaction_id' => $request->cpm_trans_id ?? 'inconnu'
-            ]);
-            return response()->json([
-                'status' => 'error', 
-                'message' => 'Erreur interne du serveur'
-            ], 500);
         }
+
+        // Vérifier la correspondance du montant (uniquement pour les paiements réussis)
+        if ($statut === 'payé' && $paiementSession->montant != $amount) {
+            Log::error('Incohérence de montant pour paiement réussi', [
+                'montant_session' => $paiementSession->montant,
+                'montant_reçu' => $amount,
+                'difference' => abs($paiementSession->montant - $amount)
+            ]);
+            
+            // Pour les échecs, on accepte même avec des incohérences de montant
+            // car le montant peut être 0 ou différent en cas d'échec
+        }
+
+        // Générer une référence unique
+        do {
+            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            $reference = 'PAY-' . $randomNumber;
+        } while (Paiement::where('reference', $reference)->exists());
+
+        // Créer le paiement avec le statut d'échec si nécessaire
+        $paiement = Paiement::create([
+            'montant' => $paiementSession->montant, // On garde le montant original de la session
+            'date_paiement' => $statut === 'payé' ? now() : null,
+            'mois_couvert' => $paiementSession->mois_couvert,
+            'methode_paiement' => 'Mobile Money',
+            'statut' => $statut,
+            'reference' => $reference,
+            'locataire_id' => $paiementSession->locataire_id,
+            'bien_id' => $paiementSession->bien_id,
+            'transaction_id' => $transactionId,
+            'metadata' => [
+                'cinetpay_data' => $request->all(),
+                'session_metadata' => $paiementSession->metadata,
+                'error_message' => $request->cpm_error_message,
+                'status_message' => $message,
+                'processed_at' => now()->toISOString(),
+                'result_code' => $result
+            ]
+        ]);
+
+        Log::info('Paiement créé avec statut: ' . $statut, [
+            'paiement_id' => $paiement->id,
+            'reference' => $paiement->reference,
+            'statut' => $paiement->statut,
+            'message' => $message
+        ]);
+
+        // Marquer la session comme utilisée
+        $paiementSession->update(['used_at' => now()]);
+
+        // Si le paiement est réussi, réinitialiser le montant majoré si nécessaire
+        if ($statut === 'payé') {
+            $bien = $paiementSession->bien;
+            if ($bien && $bien->montant_majore) {
+                Log::info('Réinitialisation du montant majoré', [
+                    'bien_id' => $bien->id,
+                    'ancien_montant_majore' => $bien->montant_majore
+                ]);
+                $bien->update(['montant_majore' => null]);
+            }
+        }
+
+        Log::info('=== FIN Notification CinetPay Webhook - Statut: ' . $statut . ' ===');
+
+        return response()->json([
+            'status' => 'success', 
+            'message' => 'Paiement traité: ' . $message,
+            'paiement_id' => $paiement->id,
+            'statut' => $statut,
+            'user_message' => $message
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Erreur validation notification CinetPay', [
+            'errors' => $e->errors(),
+            'data' => $request->all()
+        ]);
+        return response()->json([
+            'status' => 'error', 
+            'message' => 'Données de notification invalides',
+            'errors' => $e->errors()
+        ], 400);
+
+    } catch (\Exception $e) {
+        Log::error('Erreur lors du traitement de la notification CinetPay', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'transaction_id' => $request->cpm_trans_id ?? 'inconnu'
+        ]);
+        return response()->json([
+            'status' => 'error', 
+            'message' => 'Erreur interne du serveur'
+        ], 500);
     }
+}
 
     /**
      * @OA\Get(
@@ -1251,29 +1273,71 @@ public function getMyQrCode(Request $request)
     /**
      * Mapper les statuts CinetPay vers les statuts de l'application
      */
-    private function mapCinetPayStatus($cinetPayStatus)
-    {
-        Log::debug('Mapping statut CinetPay', ['cinetpay_status' => $cinetPayStatus]);
-        
-        $statusMap = [
-            '00' => 'payé',           // Paiement réussi
-            '01' => 'échoué',         // Paiement refusé
-            '02' => 'en_attente',     // Paiement en attente
-            '03' => 'annulé',         // Paiement annulé
-            '04' => 'en_attente',     // Paiement en cours
-            '05' => 'expiré',         // Paiement expiré
-            '06' => 'échoué',         // Échec du paiement
-            '07' => 'en_attente',     // En attente de confirmation
-            '08' => 'en_attente',     // En cours de traitement
-            '09' => 'échoué',         // Transaction abandonnée
-            '10' => 'en_attente',     // En attente d'authorisation
-        ];
+   /**
+ * Mapper les statuts CinetPay vers les statuts de l'application avec gestion détaillée des échecs
+ */
+private function mapCinetPayStatus($cinetPayStatus)
+{
+    Log::debug('Mapping statut CinetPay', ['cinetpay_status' => $cinetPayStatus]);
+    
+    $statusMap = [
+        '00' => 'payé',           // Paiement réussi
+        '01' => 'échoué',         // Paiement refusé
+        '02' => 'en_attente',     // Paiement en attente
+        '03' => 'annulé',         // Paiement annulé
+        '04' => 'en_attente',     // Paiement en cours
+        '05' => 'expiré',         // Paiement expiré
+        '06' => 'échoué',         // Échec du paiement
+        '07' => 'en_attente',     // En attente de confirmation
+        '08' => 'en_attente',     // En cours de traitement
+        '09' => 'échoué',         // Transaction abandonnée
+        '10' => 'en_attente',     // En attente d'authorisation
+        '11' => 'échoué',         // Transaction refusée par la banque
+        '12' => 'échoué',         // Solde insuffisant
+        '13' => 'échoué',         // Compte inexistant
+        '14' => 'échoué',         // Numéro de téléphone invalide
+        '15' => 'échoué',         // Plafond de transaction dépassé
+    ];
 
-        $result = $statusMap[$cinetPayStatus] ?? 'en_attente';
-        Log::debug('Statut mappé', ['cinetpay_status' => $cinetPayStatus, 'result' => $result]);
-        
-        return $result;
+    $result = $statusMap[$cinetPayStatus] ?? 'en_attente';
+    Log::debug('Statut mappé', ['cinetpay_status' => $cinetPayStatus, 'result' => $result]);
+    
+    return $result;
+}
+
+/**
+ * Obtenir le message détaillé selon le code CinetPay
+ */
+private function getCinetPayStatusMessage($cinetPayStatus, $errorMessage = null)
+{
+    $messages = [
+        '00' => 'Paiement effectué avec succès',
+        '01' => 'Paiement refusé',
+        '02' => 'Paiement en attente de confirmation',
+        '03' => 'Paiement annulé',
+        '04' => 'Paiement en cours de traitement',
+        '05' => 'Paiement expiré',
+        '06' => 'Échec du paiement',
+        '07' => 'En attente de confirmation du réseau mobile',
+        '08' => 'Transaction en cours de traitement',
+        '09' => 'Transaction abandonnée',
+        '10' => 'En attente d\'autorisation',
+        '11' => 'Transaction refusée par votre banque',
+        '12' => 'Solde insuffisant',
+        '13' => 'Compte mobile money inexistant',
+        '14' => 'Numéro de téléphone invalide',
+        '15' => 'Plafond de transaction dépassé',
+    ];
+
+    $baseMessage = $messages[$cinetPayStatus] ?? 'Statut inconnu';
+    
+    // Ajouter le message d'erreur spécifique de CinetPay si disponible
+    if ($errorMessage && $cinetPayStatus !== '00') {
+        return $baseMessage . ' - ' . $errorMessage;
     }
+    
+    return $baseMessage;
+}
 
     /**
      * Obtenir le message correspondant au statut
