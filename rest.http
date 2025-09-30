@@ -1,0 +1,33 @@
+
+POST https://api-checkout.cinetpay.com/v2/payment
+content-type : application/json
+
+ {
+      "apikey": "521006956621e4e7a6a3d16.70681548",
+      "site_id": "859043",
+      "transaction_id": "PAY_123445589", 
+      "amount": "100",
+      "currency": "XOF",
+      "alternative_currency": "",
+      "description": "amount is mandatory",
+      "customer_id": "172",
+      "customer_name": "KOUADIO",
+      "customer_surname": "Francisse",
+      "customer_email": "harrissylver@gmail.com",
+      "customer_phone_number": "+225004315545",
+      "customer_address": "Antananarivo",
+      "customer_city": "Antananarivo",
+      "customer_country": "CM",
+      "customer_state": "CM",
+      "customer_zip_code": "065100",
+      "notify_url": "http://127.0.0.1:8000/api/tenant/cinetpay/notify",
+      "return_url": "https://webhook.site/d1dbbb89-52c7-49af-a689-b3c412df820d",
+      "channels": "ALL",
+      "metadata": "user1",
+      "lang": "FR",
+      "invoice_data": {
+        "Donnee1": "",
+        "Donnee2": "",
+        "Donnee3": ""
+      }
+ }

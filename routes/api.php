@@ -31,7 +31,8 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('tenant')->group(fu
     Route::get('/{locataireId}/paiements', [PaiementController::class, 'index']);
     Route::get('/paiements/{id}', [PaiementController::class, 'show']);
     Route::get('/paiement/mon-qr-code', [PaiementController::class, 'getMyQrCode']);
-    Route::post('/cinetpay/notify', [PaiementController::class, 'handleCinetPayNotification'])->name('api.cinetpay.notify'); 
+    Route::post('/cinetpay/notify', [PaiementController::class, 'handleCinetPayNotification'])->name('api.cinetpay.notify');
+    Route::get('/cinetpay/return', [Paiementcontroller::class, 'handleCinetPayReturn'])->name('api.cinetpay.return'); 
 
    Route::prefix('etat-lieu')->group(function () {
         Route::get('/entree', [EtatLieuController::class, 'getEtatsLieuEntree']);

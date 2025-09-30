@@ -585,6 +585,10 @@ Route::prefix('agence')->group(function () {
    Route::post('/notify', [AbonnementController::class, 'handleCinetPayNotificationAgence'])->name('cinetpay.notify.agence');
 });
 
+// routes/web.php
+Route::get('/test-paiement', function () {
+    return view('test-paiement');
+});
 
 
 
