@@ -1,9 +1,7 @@
 <?php
-// app/Services/CinetPayService.php
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class CinetPayService
@@ -11,16 +9,12 @@ class CinetPayService
     private $apiKey;
     private $siteId;
     private $baseUrl;
-    private $notifyUrl;
-    private $returnUrl;
 
     public function __construct()
     {
         $this->apiKey = config('services.cinetpay.api_key');
         $this->siteId = config('services.cinetpay.site_id');
         $this->baseUrl = config('services.cinetpay.base_url', 'https://api-checkout.cinetpay.com/v2/payment');
-        $this->notifyUrl = route('api.cinetpay.notify');
-        $this->returnUrl = route('api.cinetpay.return');
     }
 
     public function initializePayment(array $paymentData)
@@ -34,7 +28,6 @@ class CinetPayService
                 "transaction_id" => $paymentData['transaction_id'],
                 "amount" => $paymentData['amount'],
                 "currency" => "XOF",
-                "alternative_currency" => "",
                 "description" => $paymentData['description'],
                 "customer_id" => $paymentData['customer_id'],
                 "customer_name" => $paymentData['customer_name'],
@@ -44,27 +37,16 @@ class CinetPayService
                 "customer_address" => $paymentData['customer_address'] ?? "",
                 "customer_city" => $paymentData['customer_city'] ?? "",
                 "customer_country" => $paymentData['customer_country'] ?? "CI",
-                "customer_state" => $paymentData['customer_state'] ?? "",
-                "customer_zip_code" => $paymentData['customer_zip_code'] ?? "",
-                "notify_url" => $this->notifyUrl,
-                "return_url" => $this->returnUrl,
+                "notify_url" => route('api.cinetpay.notify'),
+                "return_url" => route('api.cinetpay.return'),
                 "channels" => "ALL",
                 "metadata" => $paymentData['metadata'] ?? "",
                 "lang" => "FR",
-                "invoice_data" => [
-                    "Donnee1" => "",
-                    "Donnee2" => "",
-                    "Donnee3" => ""
-                ]
             ];
 
-            Log::info('Payload CinetPay', $payload);
-
-            // SOLUTION: Désactiver la vérification SSL
             $client = new \GuzzleHttp\Client([
-                'verify' => false, // Désactive la vérification SSL
+                'verify' => false,
                 'timeout' => 30,
-                'connect_timeout' => 10,
             ]);
 
             $response = $client->post($this->baseUrl, [
@@ -75,8 +57,6 @@ class CinetPayService
             ]);
 
             $responseData = json_decode($response->getBody(), true);
-
-            Log::info('Réponse CinetPay', $responseData);
 
             if ($response->getStatusCode() === 200) {
                 if ($responseData['code'] === '201') {
@@ -94,26 +74,12 @@ class CinetPayService
                     ];
                 }
             } else {
-                Log::error('Erreur HTTP CinetPay: ' . $response->getStatusCode());
                 return [
                     'success' => false,
-                    'error' => 'Erreur de connexion à CinetPay: ' . $response->getStatusCode()
+                    'error' => 'Erreur HTTP: ' . $response->getStatusCode()
                 ];
             }
 
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-            Log::error('Erreur Guzzle CinetPay: ' . $e->getMessage());
-            
-            if ($e->hasResponse()) {
-                $errorResponse = $e->getResponse();
-                $errorBody = $errorResponse->getBody()->getContents();
-                Log::error('Response body: ' . $errorBody);
-            }
-            
-            return [
-                'success' => false,
-                'error' => 'Erreur de connexion: ' . $e->getMessage()
-            ];
         } catch (\Exception $e) {
             Log::error('Exception CinetPay: ' . $e->getMessage());
             return [
@@ -126,6 +92,8 @@ class CinetPayService
     public function checkPaymentStatus($transactionId)
     {
         try {
+            Log::info('Vérification statut CinetPay', ['transaction_id' => $transactionId]);
+
             $payload = [
                 "apikey" => $this->apiKey,
                 "site_id" => $this->siteId,
@@ -133,7 +101,7 @@ class CinetPayService
             ];
 
             $client = new \GuzzleHttp\Client([
-                'verify' => false, // Désactive aussi la vérification SSL pour les checks
+                'verify' => false,
                 'timeout' => 30,
             ]);
 
@@ -144,11 +112,30 @@ class CinetPayService
                 'json' => $payload
             ]);
 
-            return json_decode($response->getBody(), true);
+            $responseData = json_decode($response->getBody(), true);
+
+            Log::info('Réponse vérification statut CinetPay', $responseData);
+
+            return $responseData;
 
         } catch (\Exception $e) {
             Log::error('Erreur vérification statut CinetPay: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Vérifier la signature CinetPay pour sécurité
+     */
+    public function verifySignature($data, $signature)
+    {
+        $apiKey = $this->apiKey;
+        $siteId = $this->siteId;
+        
+        // Construction de la chaîne pour la signature
+        $signatureData = $data['cpm_trans_id'] . $siteId . $apiKey;
+        $computedSignature = hash('sha256', $signatureData);
+        
+        return hash_equals($computedSignature, $signature);
     }
 }
