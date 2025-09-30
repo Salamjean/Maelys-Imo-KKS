@@ -14,9 +14,18 @@ use App\Http\Controllers\Api\Visite\ApiVisiteController;
 use Illuminate\Support\Facades\Route;
 
 
-    Route::post('/cinetpay/notify', [PaiementController::class, 'handleCinetPayNotification'])->name('api.cinetpay.notify');
-    Route::get('/cinetpay/return', [Paiementcontroller::class, 'handleCinetPayReturn'])->name('api.cinetpay.return');
-    Route::get('/paiement/check-status/{transactionId}', [Paiementcontroller::class, 'checkPaymentStatus'])->name('api.paiement.check-status');
+Route::get('/cinetpay/check-availability', [PaiementController::class, 'checkCinetPayAvailability']);
+Route::get('/cinetpay/debug-session/{transactionId}', [PaiementController::class, 'debugSession']);
+
+// Webhook CinetPay (doit être accessible publiquement)
+Route::post('/cinetpay/notify', [PaiementController::class, 'handleCinetPayNotification'])
+    ->name('api.cinetpay.notify')
+    ->withoutMiddleware(['auth:sanctum']); // Important: webhook doit être public
+
+// URL de retour (peut nécessiter une authentification)
+Route::get('/cinetpay/return', [PaiementController::class, 'handleCinetPayReturn'])
+    ->name('api.cinetpay.return')
+    ->withoutMiddleware(['auth:sanctum']); // Ou avec auth selon votre besoin
 
 //Les routes de gestion des locataires
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('tenant')->group(function(){
