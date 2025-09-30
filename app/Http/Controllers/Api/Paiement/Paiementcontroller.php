@@ -217,74 +217,40 @@ private function formatPhoneNumber($phone)
 
 public function handleCinetPayNotification(Request $request)
 {
-    Log::info('=== NOTIFICATION CINETPAY PRODUCTION (FORM URLENCODED) ===');
+    Log::info('=== NOTIFICATION CINETPAY REÇUE ===');
     Log::info('Données reçues:', $request->all());
 
     try {
-        // CinetPay envoie les données en x-www-form-urlencoded, pas en JSON
+        // CinetPay envoie les données en x-www-form-urlencoded
         $transactionId = $request->input('cpm_trans_id');
         $siteId = $request->input('cpm_site_id');
         $amount = $request->input('cpm_amount');
-        $currency = $request->input('cpm_currency');
-        $status = $request->input('cpm_result');
-        $transDate = $request->input('cpm_trans_date');
         $phoneNumber = $request->input('cel_phone_num');
         $paymentMethod = $request->input('payment_method');
         $errorMessage = $request->input('cpm_error_message', '');
-        $signature = $request->input('signature');
 
         // Vérification des données obligatoires
         if (!$transactionId || !$siteId) {
-            Log::error('Données obligatoires manquantes', [
-                'cpm_trans_id' => $transactionId,
-                'cpm_site_id' => $siteId
-            ]);
+            Log::error('Données obligatoires manquantes');
             return response()->json(['status' => 'error', 'message' => 'Données manquantes'], 400);
         }
 
         // Vérifier que le site_id correspond
         $configSiteId = config('services.cinetpay.site_id');
         if ($siteId !== $configSiteId) {
-            Log::error('Site ID mismatch', [
-                'received' => $siteId,
-                'expected' => $configSiteId
-            ]);
+            Log::error('Site ID mismatch');
             return response()->json(['status' => 'error', 'message' => 'Site ID invalide'], 400);
         }
 
-        // Vérifier la signature en production
-        if (config('services.cinetpay.mode') === 'PRODUCTION') {
-            if (!$this->verifyCinetPaySignature($request)) {
-                Log::error('Signature CinetPay invalide', [
-                    'transaction_id' => $transactionId,
-                    'received_signature' => $signature
-                ]);
-                return response()->json(['status' => 'error', 'message' => 'Signature invalide'], 400);
-            }
-        }
+        // ✅ SUPPRIMÉ : Plus de vérification de signature
 
-        // Étape 2: Vérifier l'état de la transaction via l'API CinetPay
-        $verificationResult = $this->verifyTransactionWithCinetPay($transactionId);
-        
-        if (!$verificationResult['success']) {
-            Log::error('Échec vérification transaction CinetPay', [
-                'transaction_id' => $transactionId,
-                'error' => $verificationResult['error']
-            ]);
-            return response()->json(['status' => 'error', 'message' => 'Échec vérification transaction'], 400);
-        }
+        // Déterminer le statut basé sur cpm_error_message
+        $statutFinal = ($errorMessage === 'SUCCES') ? 'payé' : 'échoué';
 
-        $transactionData = $verificationResult['data'];
-        
-        // Utiliser le statut de l'API de vérification, pas celui de la notification
-        $realStatus = $transactionData['data']['status'] ?? $status;
-        $realAmount = $transactionData['data']['amount'] ?? $amount;
-
-        Log::info('Statut réel de la transaction', [
-            'transaction_id' => $transactionId,
-            'status_notification' => $status,
-            'status_verification' => $realStatus,
-            'data' => $transactionData
+        Log::info('Traitement notification', [
+            'transaction' => $transactionId,
+            'error_message' => $errorMessage,
+            'statut_final' => $statutFinal
         ]);
 
         // Récupérer la session de paiement
@@ -293,7 +259,7 @@ public function handleCinetPayNotification(Request $request)
             ->first();
 
         if (!$paiementSession) {
-            Log::error('Session de paiement non trouvée', ['transaction_id' => $transactionId]);
+            Log::error('Session de paiement non trouvée');
             return response()->json(['status' => 'error', 'message' => 'Session de paiement invalide'], 400);
         }
 
@@ -301,115 +267,73 @@ public function handleCinetPayNotification(Request $request)
         $existingPayment = Paiement::where('transaction_id', $transactionId)->first();
         
         if ($existingPayment) {
-            // Ne mettre à jour que si le statut a changé
-            $nouveauStatut = $this->mapCinetPayStatus($realStatus);
-            if ($existingPayment->statut !== $nouveauStatut) {
-                $existingPayment->update([
-                    'statut' => $nouveauStatut,
-                    'date_paiement' => $realStatus === 'ACCEPTED' ? now() : $existingPayment->date_paiement,
-                    'phone_number' => $phoneNumber ?? $existingPayment->phone_number,
-                    'metadata' => array_merge($existingPayment->metadata ?? [], [
-                        'payment_method' => $paymentMethod ?? 'MOBILE_MONEY',
-                        'operator' => $request->input('cel_operator'),
-                        'error_message' => $errorMessage,
-                        'trans_date' => $transDate ?? now(),
-                        'notify_data' => $request->all(),
-                        'verification_data' => $transactionData,
-                        'status_updated_at' => now(),
-                        'mode' => 'PRODUCTION'
-                    ])
-                ]);
+            // Mettre à jour le paiement existant
+            $existingPayment->update([
+                'statut' => $statutFinal,
+                'date_paiement' => $statutFinal === 'payé' ? now() : null,
+                'phone_number' => $phoneNumber,
+                'metadata' => array_merge($existingPayment->metadata ?? [], [
+                    'updated_at' => now(),
+                    'payment_method' => $paymentMethod,
+                    'error_message' => $errorMessage,
+                    'notify_data' => $request->all()
+                ])
+            ]);
 
-                Log::info('Statut paiement mis à jour via notification', [
-                    'transaction_id' => $transactionId,
-                    'ancien_statut' => $existingPayment->getOriginal('statut'),
-                    'nouveau_statut' => $nouveauStatut,
-                    'statut_cinetpay' => $realStatus
-                ]);
-            }
+            Log::info('Paiement mis à jour', [
+                'transaction' => $transactionId,
+                'statut' => $statutFinal
+            ]);
 
-            return response()->json(['status' => 'success', 'message' => 'Statut traité']);
+        } else {
+            // Créer un nouveau paiement
+            do {
+                $reference = 'PAY-' . str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            } while (Paiement::where('reference', $reference)->exists());
+
+            Paiement::create([
+                'montant' => $amount,
+                'date_paiement' => $statutFinal === 'payé' ? now() : null,
+                'mois_couvert' => $paiementSession->mois_couvert,
+                'methode_paiement' => 'Mobile Money',
+                'statut' => $statutFinal,
+                'reference' => $reference,
+                'locataire_id' => $paiementSession->locataire_id,
+                'bien_id' => $paiementSession->bien_id,
+                'transaction_id' => $transactionId,
+                'phone_number' => $phoneNumber,
+                'metadata' => [
+                    'payment_method' => $paymentMethod,
+                    'error_message' => $errorMessage,
+                    'notify_data' => $request->all()
+                ]
+            ]);
+
+            Log::info('Nouveau paiement créé', [
+                'transaction' => $transactionId,
+                'statut' => $statutFinal
+            ]);
         }
 
-        // Vérifier si le mois n'a pas déjà été payé (uniquement pour les succès)
-        if ($realStatus === 'ACCEPTED') {
-            $paiementExistant = Paiement::where('locataire_id', $paiementSession->locataire_id)
-                ->where('mois_couvert', $paiementSession->mois_couvert)
-                ->where('statut', 'payé')
-                ->exists();
-
-            if ($paiementExistant) {
-                Log::warning('Mois déjà payé - transaction rejetée', [
-                    'locataire_id' => $paiementSession->locataire_id,
-                    'mois_couvert' => $paiementSession->mois_couvert
-                ]);
-                return response()->json(['status' => 'error', 'message' => 'Mois déjà payé'], 409);
+        // Si paiement réussi, réinitialiser montant majoré
+        if ($statutFinal === 'payé') {
+            $locataire = Locataire::with('bien')->find($paiementSession->locataire_id);
+            if ($locataire && $locataire->bien->montant_majore) {
+                $locataire->bien->update(['montant_majore' => null]);
+                Log::info('Montant majoré réinitialisé');
             }
         }
-
-        // Générer une référence unique
-        do {
-            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-            $numeroId = 'PAY-' . $randomNumber;
-        } while (Paiement::where('reference', $numeroId)->exists());
-
-        // Enregistrer le paiement
-        $paiement = Paiement::create([
-            'montant' => $realAmount,
-            'date_paiement' => $realStatus === 'ACCEPTED' ? now() : null,
-            'mois_couvert' => $paiementSession->mois_couvert,
-            'methode_paiement' => 'Mobile Money',
-            'statut' => $this->mapCinetPayStatus($realStatus),
-            'reference' => $numeroId,
-            'locataire_id' => $paiementSession->locataire_id,
-            'bien_id' => $paiementSession->bien_id,
-            'transaction_id' => $transactionId,
-            'proof_path' => null,
-            'phone_number' => $phoneNumber,
-            'metadata' => [
-                'payment_method' => $paymentMethod ?? 'MOBILE_MONEY',
-                'operator' => $request->input('cel_operator'),
-                'error_message' => $errorMessage,
-                'error_code' => $realStatus,
-                'trans_date' => $transDate ?? now(),
-                'notify_data' => $request->all(),
-                'verification_data' => $transactionData,
-                'mode' => 'PRODUCTION',
-                'status_message' => $this->getStatusMessage($realStatus, $errorMessage),
-                'failure_reason' => $this->getFailureReason($realStatus, $errorMessage)
-            ]
-        ]);
 
         // Marquer la session comme utilisée
         $paiementSession->update(['used_at' => now()]);
 
-        // Si le paiement est réussi
-        if ($realStatus === 'ACCEPTED') {
-            $locataire = Locataire::with('bien')->find($paiementSession->locataire_id);
-            if ($locataire && $locataire->bien->montant_majore) {
-                $locataire->bien->update(['montant_majore' => null]);
-            }
-
-            Log::info('✅ Paiement PRODUCTION réussi traité', [
-                'paiement_id' => $paiement->id,
-                'transaction_id' => $transactionId,
-                'montant' => $realAmount
-            ]);
-        } else {
-            Log::warning('❌ Paiement PRODUCTION échoué', [
-                'paiement_id' => $paiement->id,
-                'transaction_id' => $transactionId,
-                'statut' => $realStatus,
-                'error_message' => $errorMessage
-            ]);
-        }
+        Log::info('✅ Notification traitée avec succès');
 
         return response()->json(['status' => 'success', 'message' => 'Paiement traité']);
 
     } catch (\Exception $e) {
-        Log::error('💥 Erreur notification CinetPay: ' . $e->getMessage());
-        Log::error('Stack trace: ' . $e->getTraceAsString());
-        return response()->json(['status' => 'error', 'message' => 'Erreur interne du serveur'], 500);
+        Log::error('❌ Erreur traitement notification: ' . $e->getMessage());
+        return response()->json(['status' => 'error', 'message' => 'Erreur serveur'], 500);
     }
 }
 
@@ -578,46 +502,9 @@ public function checkPaymentStatus($transactionId)
             ], 404);
         }
 
-        // Si le statut est déjà connu, retourner directement
-        if (in_array($paiement->statut, ['payé', 'échoué', 'annulé', 'expiré'])) {
-            return response()->json([
-                'success' => true,
-                'statut' => $paiement->statut,
-                'message' => $paiement->metadata['status_message'] ?? 'Statut déterminé',
-                'paiement' => $paiement
-            ]);
-        }
-
-        // Sinon, interroger CinetPay
-        $apiKey = config('services.cinetpay.api_key');
-        $siteId = config('services.cinetpay.site_id');
-        
-        $data = [
-            'apikey' => $apiKey,
-            'site_id' => $siteId,
-            'transaction_id' => $transactionId
-        ];
-
-        $client = new \GuzzleHttp\Client();
-        $response = $client->post('https://api-checkout.cinetpay.com/v2/payment/check', [
-            'headers' => [
-                'Content-Type' => 'application/json',
-            ],
-            'json' => $data
-        ]);
-
-        $responseData = json_decode($response->getBody(), true);
-
-        // Mettre à jour le statut si nécessaire
-        if (isset($responseData['data']['status'])) {
-            $nouveauStatut = $this->mapCinetPayStatus($responseData['data']['status']);
-            $paiement->update(['statut' => $nouveauStatut]);
-        }
-
         return response()->json([
             'success' => true,
             'statut' => $paiement->statut,
-            'data' => $responseData,
             'paiement' => $paiement
         ]);
 
