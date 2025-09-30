@@ -215,7 +215,7 @@ private function formatPhoneNumber($phone)
     return $phone;
 }
 
-   public function handleCinetPayNotification(Request $request)
+public function handleCinetPayNotification(Request $request)
 {
     Log::info('=== NOTIFICATION CINETPAY PRODUCTION ===');
     Log::info('Données reçues:', $request->all());
@@ -233,6 +233,7 @@ private function formatPhoneNumber($phone)
 
         $transactionId = $request->cpm_trans_id;
         $status = $request->cpm_result;
+        $errorMessage = $request->cpm_error_message ?? 'Raison non spécifiée';
 
         if (!$transactionId) {
             Log::error('Transaction ID manquant');
@@ -253,33 +254,59 @@ private function formatPhoneNumber($phone)
         $existingPayment = Paiement::where('transaction_id', $transactionId)->first();
         
         if ($existingPayment) {
+            $ancienStatut = $existingPayment->statut;
+            $nouveauStatut = $this->mapCinetPayStatus($status);
+            
             Log::info('Paiement existe déjà, mise à jour du statut', [
                 'transaction_id' => $transactionId,
-                'ancien_statut' => $existingPayment->statut,
-                'nouveau_statut' => $this->mapCinetPayStatus($status)
+                'ancien_statut' => $ancienStatut,
+                'nouveau_statut' => $nouveauStatut,
+                'status_cinetpay' => $status,
+                'error_message' => $errorMessage
             ]);
 
             $existingPayment->update([
-                'statut' => $this->mapCinetPayStatus($status),
+                'statut' => $nouveauStatut,
                 'date_paiement' => $status === '00' ? now() : $existingPayment->date_paiement,
                 'phone_number' => $request->cel_phone_num ?? $existingPayment->phone_number,
+                'metadata' => array_merge($existingPayment->metadata ?? [], [
+                    'payment_method' => $request->payment_method ?? 'MOBILE_MONEY',
+                    'operator' => $request->cel_operator ?? null,
+                    'error_message' => $errorMessage,
+                    'trans_date' => $request->cpm_trans_date ?? now(),
+                    'notify_data' => $request->all(),
+                    'mode' => 'PRODUCTION',
+                    'status_updated_at' => now()
+                ])
             ]);
+
+            // Log spécifique pour les échecs
+            if ($status !== '00') {
+                Log::warning('Paiement mis à jour avec statut d\'échec', [
+                    'transaction_id' => $transactionId,
+                    'statut' => $nouveauStatut,
+                    'raison' => $this->getFailureReason($status, $errorMessage)
+                ]);
+            }
 
             return response()->json(['status' => 'success', 'message' => 'Statut mis à jour']);
         }
 
-        // Vérifier si le mois n'a pas déjà été payé
-        $paiementExistant = Paiement::where('locataire_id', $paiementSession->locataire_id)
-            ->where('mois_couvert', $paiementSession->mois_couvert)
-            ->where('statut', 'payé')
-            ->exists();
+        // Vérifier si le mois n'a pas déjà été payé (uniquement pour les succès)
+        if ($status === '00') {
+            $paiementExistant = Paiement::where('locataire_id', $paiementSession->locataire_id)
+                ->where('mois_couvert', $paiementSession->mois_couvert)
+                ->where('statut', 'payé')
+                ->exists();
 
-        if ($paiementExistant && $status === '00') {
-            Log::warning('Mois déjà payé', [
-                'locataire_id' => $paiementSession->locataire_id,
-                'mois_couvert' => $paiementSession->mois_couvert
-            ]);
-            return response()->json(['status' => 'error', 'message' => 'Mois déjà payé'], 409);
+            if ($paiementExistant) {
+                Log::warning('Mois déjà payé - transaction rejetée', [
+                    'locataire_id' => $paiementSession->locataire_id,
+                    'mois_couvert' => $paiementSession->mois_couvert,
+                    'transaction_id' => $transactionId
+                ]);
+                return response()->json(['status' => 'error', 'message' => 'Mois déjà payé'], 409);
+            }
         }
 
         // Générer une référence unique
@@ -288,7 +315,10 @@ private function formatPhoneNumber($phone)
             $numeroId = 'PAY-' . $randomNumber;
         } while (Paiement::where('reference', $numeroId)->exists());
 
-        // Enregistrer le paiement
+        // Déterminer le message basé sur le statut
+        $statutMessage = $this->getStatusMessage($status, $errorMessage);
+
+        // Enregistrer le paiement avec le statut approprié
         $paiement = Paiement::create([
             'montant' => $paiementSession->montant,
             'date_paiement' => $status === '00' ? now() : null,
@@ -304,40 +334,48 @@ private function formatPhoneNumber($phone)
             'metadata' => [
                 'payment_method' => $request->payment_method ?? 'MOBILE_MONEY',
                 'operator' => $request->cel_operator ?? null,
-                'error_message' => $request->cpm_error_message ?? null,
+                'error_message' => $errorMessage,
+                'error_code' => $status,
                 'trans_date' => $request->cpm_trans_date ?? now(),
                 'notify_data' => $request->all(),
-                'mode' => 'PRODUCTION'
+                'mode' => 'PRODUCTION',
+                'status_message' => $statutMessage,
+                'failure_reason' => $this->getFailureReason($status, $errorMessage)
             ]
         ]);
 
-        Log::info('Paiement PRODUCTION enregistré avec succès', [
-            'paiement_id' => $paiement->id,
-            'transaction_id' => $transactionId,
-            'statut' => $paiement->statut
-        ]);
-
-        // Si le paiement est réussi
+        // Log approprié selon le statut
         if ($status === '00') {
+            Log::info('✅ Paiement PRODUCTION réussi', [
+                'paiement_id' => $paiement->id,
+                'transaction_id' => $transactionId,
+                'montant' => $paiementSession->montant,
+                'locataire' => $paiementSession->locataire_id
+            ]);
+
+            // Si le paiement est réussi
             $locataire = Locataire::with('bien')->find($paiementSession->locataire_id);
             if ($locataire && $locataire->bien->montant_majore) {
                 $locataire->bien->update(['montant_majore' => null]);
             }
-            
-            // Marquer la session comme utilisée
-            $paiementSession->update(['used_at' => now()]);
-
-            Log::info('Paiement PRODUCTION réussi traité', [
-                'locataire_id' => $paiementSession->locataire_id,
-                'mois_couvert' => $paiementSession->mois_couvert,
-                'montant' => $paiementSession->montant
+        } else {
+            Log::warning('❌ Paiement PRODUCTION échoué', [
+                'paiement_id' => $paiement->id,
+                'transaction_id' => $transactionId,
+                'statut' => $paiement->statut,
+                'error_code' => $status,
+                'error_message' => $errorMessage,
+                'raison' => $this->getFailureReason($status, $errorMessage)
             ]);
         }
+
+        // Marquer la session comme utilisée (même en cas d'échec)
+        $paiementSession->update(['used_at' => now()]);
 
         return response()->json(['status' => 'success', 'message' => 'Paiement traité']);
 
     } catch (\Exception $e) {
-        Log::error('Erreur notification CinetPay PRODUCTION: ' . $e->getMessage());
+        Log::error('💥 Erreur notification CinetPay PRODUCTION: ' . $e->getMessage());
         Log::error('Stack trace: ' . $e->getTraceAsString());
         return response()->json(['status' => 'error', 'message' => 'Erreur interne du serveur'], 500);
     }
@@ -355,22 +393,95 @@ private function verifySignature($request)
     return hash_equals($computedSignature, $request->signature);
 }
 
-    private function mapCinetPayStatus($cinetPayStatus)
-    {
-        $statusMap = [
-            '00' => 'payé',           // Paiement réussi
-            '01' => 'échoué',         // Paiement refusé
-            '02' => 'en_attente',     // Paiement en attente
-            '03' => 'annulé',         // Paiement annulé
-            '04' => 'en_attente',     // Paiement en cours
-        ];
+  /**
+ * Obtenir la raison de l'échec en français
+ */
+private function getFailureReason($status, $errorMessage)
+{
+    $reasons = [
+        '01' => 'Paiement refusé',
+        '02' => 'Paiement en attente de confirmation',
+        '03' => 'Paiement annulé par l\'utilisateur',
+        '04' => 'Paiement en cours de traitement',
+        '05' => 'Transaction expirée',
+        '06' => 'Solde insuffisant',
+        '07' => 'Numéro de téléphone invalide',
+        '08' => 'Opérateur non disponible',
+        '09' => 'Erreur technique',
+        '10' => 'Compte marchand suspendu',
+        '11' => 'Montant invalide',
+        '12' => 'Devise non supportée',
+        '13' => 'Doublon de transaction',
+        '14' => 'Timeout de traitement',
+        '15' => 'Signature invalide'
+    ];
 
-        return $statusMap[$cinetPayStatus] ?? 'en_attente';
-    }
+    $defaultReason = $errorMessage ?: 'Raison non spécifiée';
+    
+    return $reasons[$status] ?? $defaultReason;
+}
+
+/**
+ * Obtenir un message de statut détaillé
+ */
+private function getStatusMessage($status, $errorMessage)
+{
+    $messages = [
+        '00' => 'Paiement effectué avec succès',
+        '01' => 'Paiement refusé : ' . $errorMessage,
+        '02' => 'Paiement en attente de confirmation',
+        '03' => 'Paiement annulé par l\'utilisateur',
+        '04' => 'Paiement en cours de traitement',
+        '05' => 'Transaction expirée',
+    ];
+
+    return $messages[$status] ?? 'Statut inconnu : ' . $status;
+}
+
+/**
+ * Mapper les statuts CinetPay (amélioré)
+ */
+private function mapCinetPayStatus($cinetPayStatus)
+{
+    $statusMap = [
+        '00' => 'payé',           // Paiement réussi
+        '01' => 'échoué',         // Paiement refusé
+        '02' => 'en_attente',     // Paiement en attente
+        '03' => 'annulé',         // Paiement annulé
+        '04' => 'en_attente',     // Paiement en cours
+        '05' => 'expiré',         // Transaction expirée
+        '06' => 'échoué',         // Solde insuffisant
+        '07' => 'échoué',         // Numéro invalide
+        '08' => 'échoué',         // Opérateur non disponible
+        '09' => 'échoué',         // Erreur technique
+    ];
+
+    return $statusMap[$cinetPayStatus] ?? 'en_attente';
+}
 
 public function checkPaymentStatus($transactionId)
 {
     try {
+        $paiement = Paiement::where('transaction_id', $transactionId)->first();
+        
+        if (!$paiement) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Paiement non trouvé'
+            ], 404);
+        }
+
+        // Si le statut est déjà connu, retourner directement
+        if (in_array($paiement->statut, ['payé', 'échoué', 'annulé', 'expiré'])) {
+            return response()->json([
+                'success' => true,
+                'statut' => $paiement->statut,
+                'message' => $paiement->metadata['status_message'] ?? 'Statut déterminé',
+                'paiement' => $paiement
+            ]);
+        }
+
+        // Sinon, interroger CinetPay
         $apiKey = config('services.cinetpay.api_key');
         $siteId = config('services.cinetpay.site_id');
         
@@ -390,9 +501,17 @@ public function checkPaymentStatus($transactionId)
 
         $responseData = json_decode($response->getBody(), true);
 
+        // Mettre à jour le statut si nécessaire
+        if (isset($responseData['data']['status'])) {
+            $nouveauStatut = $this->mapCinetPayStatus($responseData['data']['status']);
+            $paiement->update(['statut' => $nouveauStatut]);
+        }
+
         return response()->json([
             'success' => true,
-            'data' => $responseData
+            'statut' => $paiement->statut,
+            'data' => $responseData,
+            'paiement' => $paiement
         ]);
 
     } catch (\Exception $e) {
