@@ -620,7 +620,7 @@ public function paymentSuccess(Request $request)
 
     if (!$transactionId) {
         // Page d'erreur stylisée
-        return view('locataire.paiement.error', [
+        return view('locataire.paiements.error', [
             'message' => 'Transaction ID manquant'
         ]);
     }
@@ -629,7 +629,7 @@ public function paymentSuccess(Request $request)
     $paiement = Paiement::where('transaction_id', $transactionId)->first();
     
     if ($paiement) {
-        return view('locataire.paiement.success', [
+        return view('locataire.paiements.success', [
             'paiement' => [
                 'id' => $paiement->id,
                 'reference' => $paiement->reference,
@@ -642,7 +642,7 @@ public function paymentSuccess(Request $request)
         ]);
     }
     
-    return view('locataire.paiement.error', [
+    return view('locataire.paiements.error', [
         'message' => 'Paiement non trouvé pour la transaction: ' . $transactionId
     ]);
 }
