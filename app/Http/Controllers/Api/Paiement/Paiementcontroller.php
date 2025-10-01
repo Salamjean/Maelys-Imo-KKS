@@ -71,7 +71,7 @@ public function store(Request $request, $locataireId)
 
         // Si méthode de paiement est mobile_money
         if ($request->methode_paiement === 'mobile_money') {
-            $transactionId = $request->transaction_id ?? 'PAY_' . time() . '_' . mt_rand(100000, 999999);
+            $transactionId = $request->transaction_id ?? 'PAY_' . time();
 
             // Stocker les données dans la table de session
             PaiementSession::create([
