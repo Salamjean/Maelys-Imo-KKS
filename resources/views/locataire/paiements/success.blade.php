@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paiement Réussi - Confirmation</title>
+     <link rel="icon" type="image/png" href="{{ asset('assets/images/mae-imo.png') }}">
     <style>
         * {
             margin: 0;
