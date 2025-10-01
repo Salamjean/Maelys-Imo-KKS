@@ -253,7 +253,6 @@
 
         <div class="actions">
             <a href="/" class="btn btn-primary">Retour à l'accueil</a>
-            <a href="/historique-paiements" class="btn btn-secondary">Voir l'historique</a>
         </div>
 
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
