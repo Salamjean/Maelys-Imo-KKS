@@ -615,12 +615,15 @@ public function paymentSuccess(Request $request)
     Log::info('=== RETOUR SUCCESS CINETPAY ===');
     Log::info('Données reçues:', $request->all());
 
-    $transactionId = $request->input('cpm_trans_id');
-    
+    // CinetPay envoie "transaction_id" dans la redirection, pas "cpm_trans_id"
+    $transactionId = $request->input('transaction_id');
+
+    Log::info('Transaction ID trouvé:', ['transaction_id' => $transactionId]);
+
     if (!$transactionId) {
         return response()->json([
             'success' => false,
-            'message' => 'Transaction ID manquant'
+            'message' => 'Transaction ID manquant dans la redirection'
         ], 400);
     }
     
@@ -630,8 +633,17 @@ public function paymentSuccess(Request $request)
     if ($paiement) {
         return response()->json([
             'success' => true,
-            'message' => 'Paiement effectué avec succès',
-            'paiement' => $paiement
+            'message' => 'Paiement effectué avec succès !',
+            'statut' => $paiement->statut,
+            'paiement' => [
+                'id' => $paiement->id,
+                'reference' => $paiement->reference,
+                'montant' => $paiement->montant,
+                'date_paiement' => $paiement->date_paiement,
+                'mois_couvert' => $paiement->mois_couvert,
+                'methode_paiement' => $paiement->methode_paiement,
+                'statut' => $paiement->statut
+            ]
         ]);
     }
     
