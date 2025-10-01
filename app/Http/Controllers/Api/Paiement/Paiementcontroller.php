@@ -15,9 +15,92 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+
+
 class Paiementcontroller extends Controller
 {
  
+/**
+     * @OA\Post(
+     *     path="/api/tenant/{locataireId}/paiements",
+     *     summary="Créer un nouveau paiement pour un locataire",
+     *     description="Initie un paiement de loyer avec deux méthodes supportées : mobile_money (CinetPay) et virement bancaire",
+     *     tags={"Paiements"},
+     *     @OA\Parameter(
+     *         name="locataireId",
+     *         in="path",
+     *         required=true,
+     *         description="ID du locataire",
+     *         @OA\Schema(type="integer", example=123)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"methode_paiement"},
+     *                 @OA\Property(
+     *                     property="methode_paiement",
+     *                     type="string",
+     *                     enum={"mobile_money", "virement"},
+     *                     description="Méthode de paiement choisie",
+     *                     example="mobile_money"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="proof_file",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Fichier de preuve de virement (requis pour virement) - Formats: jpg, jpeg, png, pdf (max 2MB)"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="transaction_id",
+     *                     type="string",
+     *                     description="ID de transaction optionnel",
+     *                     example="PAY_1700000000"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Paiement mobile money initié avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Paiement initié avec succès. Redirection vers CinetPay..."),
+     *             @OA\Property(property="payment_url", type="string", example="https://checkout.cinetpay.com/payment/abc123"),
+     *             @OA\Property(property="payment_token", type="string", example="cp_token_xyz789"),
+     *             @OA\Property(property="transaction_id", type="string", example="PAY_1700000000"),
+     *             @OA\Property(property="mode", type="string", example="PRODUCTION")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Paiement par virement enregistré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Paiement enregistré avec succès pour le mois de Janvier 2024"),
+     *             @OA\Property(property="paiement", ref="#/components/schemas/Paiement")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation ou de traitement",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur interne",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Erreur lors de l'enregistrement du paiement"),
+     *             @OA\Property(property="error", type="string")
+     *         )
+     *     )
+     * )
+     */
 public function store(Request $request, $locataireId)
 {
     $request->validate([
@@ -215,6 +298,53 @@ private function formatPhoneNumber($phone)
     return $phone;
 }
 
+
+/**
+     * @OA\Post(
+     *     path="/api/paiement/cinetpay/notify",
+     *     summary="Webhook de notification CinetPay",
+     *     description="Endpoint de callback pour les notifications de paiement CinetPay",
+     *     tags={"Paiements - Webhooks"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/x-www-form-urlencoded",
+     *             @OA\Schema(
+     *                 @OA\Property(property="cpm_trans_id", type="string", description="ID de transaction CinetPay"),
+     *                 @OA\Property(property="cpm_site_id", type="string", description="ID du site CinetPay"),
+     *                 @OA\Property(property="cpm_amount", type="string", description="Montant de la transaction"),
+     *                 @OA\Property(property="cel_phone_num", type="string", description="Numéro de téléphone du payeur"),
+     *                 @OA\Property(property="payment_method", type="string", description="Méthode de paiement"),
+     *                 @OA\Property(property="cpm_error_message", type="string", description="Message d'erreur (SUCCES en cas de succès)")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Notification traitée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Paiement traité")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Données invalides ou manquantes",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur interne",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
+     */
 public function handleCinetPayNotification(Request $request)
 {
     Log::info('=== NOTIFICATION CINETPAY REÇUE ===');
@@ -489,7 +619,47 @@ private function getStatusMessage($status, $errorMessage)
     return $messages[$status] ?? 'Statut inconnu : ' . $status;
 }
 
-
+/**
+     * @OA\Get(
+     *     path="/api/paiement/check/{transactionId}",
+     *     summary="Vérifier le statut d'un paiement",
+     *     description="Retourne le statut actuel d'un paiement via son ID de transaction",
+     *     tags={"Paiements"},
+     *     @OA\Parameter(
+     *         name="transactionId",
+     *         in="path",
+     *         required=true,
+     *         description="ID de la transaction",
+     *         @OA\Schema(type="string", example="PAY_1700000000")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Statut récupéré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="statut", type="string", example="payé"),
+     *             @OA\Property(property="paiement", ref="#/components/schemas/Paiement")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Paiement non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Paiement non trouvé")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur interne",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="error", type="string")
+     *         )
+     *     )
+     * )
+     */
 public function checkPaymentStatus($transactionId)
 {
     try {
@@ -517,6 +687,39 @@ public function checkPaymentStatus($transactionId)
     }
 }
 
+
+/**
+     * @OA\Get(
+     *     path="/api/tenant/{locataireId}/paiements",
+     *     summary="Lister les paiements d'un locataire",
+     *     description="Retourne tous les paiements d'un locataire spécifique avec les détails du bien",
+     *     tags={"Paiements"},
+     *     @OA\Parameter(
+     *         name="locataireId",
+     *         in="path",
+     *         required=true,
+     *         description="ID du locataire",
+     *         @OA\Schema(type="integer", example=123)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Paiements récupérés avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="locataire", ref="#/components/schemas/Locataire"),
+     *                 @OA\Property(property="message", type="string", example="Paiements récupérés avec succès")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Locataire non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Locataire non trouvé")
+     *         )
+     *     )
+     * )
+     */
     public function index($locataireId)
     {
         try {
@@ -543,6 +746,39 @@ public function checkPaymentStatus($transactionId)
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/tenant/paiements/{id}",
+     *     summary="Afficher les détails d'un paiement",
+     *     description="Retourne les détails complets d'un paiement spécifique",
+     *     tags={"Paiements"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du paiement",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Détails du paiement récupérés avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/Paiement"),
+     *             @OA\Property(property="message", type="string", example="Détails du paiement récupérés avec succès")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Paiement non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Paiement non trouvé")
+     *         )
+     *     )
+     * )
+     */
+
     public function show($id)
     {
         try {
@@ -564,6 +800,49 @@ public function checkPaymentStatus($transactionId)
             ], 404);
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/tenant/paiement/mon-qr-code",
+     *     summary="Obtenir le QR code de paiement du locataire",
+     *     description="Retourne le QR code actif du locataire authentifié pour le paiement en espèces",
+     *     tags={"Paiements - QR Code"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="QR code récupéré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="code", type="string", example="ABC123"),
+     *                 @OA\Property(property="expires_at", type="string", format="date-time"),
+     *                 @OA\Property(property="expires_in", type="string", example="23 heures"),
+     *                 @OA\Property(property="montant_total", type="number", format="float", example=150000),
+     *                 @OA\Property(property="nombre_mois", type="integer", example=3),
+     *                 @OA\Property(property="mois_couverts", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="qr_code_url", type="string", format="uri"),
+     *                 @OA\Property(property="is_valid", type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Accès non autorisé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Accès réservé aux locataires")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Aucun code QR actif trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Aucun code QR actif trouvé")
+     *         )
+     *     )
+     * )
+     */
 
     public function getMyQrCode(Request $request)
     {
@@ -608,7 +887,25 @@ public function checkPaymentStatus($transactionId)
         ]);
     }
 
-
+ /**
+     * @OA\Get(
+     *     path="/api/paiement/success",
+     *     summary="Page de succès après paiement",
+     *     description="Page de redirection après un paiement réussi via CinetPay",
+     *     tags={"Paiements - Redirections"},
+     *     @OA\Parameter(
+     *         name="transaction_id",
+     *         in="query",
+     *         required=false,
+     *         description="ID de transaction CinetPay",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Page HTML de succès"
+     *     )
+     * )
+     */
 
 public function paymentSuccess(Request $request)
 {
@@ -647,6 +944,30 @@ public function paymentSuccess(Request $request)
     ]);
 }
 
+/**
+     * @OA\Get(
+     *     path="/api/paiement/cancel",
+     *     summary="Annulation de paiement",
+     *     description="Endpoint appelé lorsque l'utilisateur annule un paiement CinetPay",
+     *     tags={"Paiements - Redirections"},
+     *     @OA\Parameter(
+     *         name="cpm_trans_id",
+     *         in="query",
+     *         required=false,
+     *         description="ID de transaction CinetPay",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Paiement annulé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Paiement annulé par l'utilisateur"),
+     *             @OA\Property(property="transaction_id", type="string")
+     *         )
+     *     )
+     * )
+     */
 public function paymentCancel(Request $request)
 {
     Log::info('=== RETOUR CANCEL CINETPAY ===');
