@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/paiement/cinetpay/notify', [PaiementController::class, 'handleCinetPayNotification'])->name('api.cinetpay.notify');
 Route::get('/paiement/check/{transactionId}', [PaiementController::class, 'checkPaymentStatus']);
-Route::get('/paiement/success', [PaiementController::class, 'paymentSuccess']);
-Route::get('/paiement/cancel', [PaiementController::class, 'paymentCancel']);
+Route::match(['get', 'post'], '/paiement/success', [PaiementController::class, 'paymentSuccess']);
+Route::match(['get', 'post'], '/paiement/cancel', [PaiementController::class, 'paymentCancel']);
 //Les routes de gestion des locataires
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('tenant')->group(function(){
     Route::get('/dashboard', [ApiLocataireController::class, 'dashboard']);

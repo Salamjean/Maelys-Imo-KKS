@@ -612,7 +612,17 @@ public function checkPaymentStatus($transactionId)
 
 public function paymentSuccess(Request $request)
 {
+    Log::info('=== RETOUR SUCCESS CINETPAY ===');
+    Log::info('Données reçues:', $request->all());
+
     $transactionId = $request->input('cpm_trans_id');
+    
+    if (!$transactionId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Transaction ID manquant'
+        ], 400);
+    }
     
     // Récupérer le paiement
     $paiement = Paiement::where('transaction_id', $transactionId)->first();
@@ -627,12 +637,15 @@ public function paymentSuccess(Request $request)
     
     return response()->json([
         'success' => false,
-        'message' => 'Paiement non trouvé'
+        'message' => 'Paiement non trouvé pour la transaction: ' . $transactionId
     ], 404);
 }
 
 public function paymentCancel(Request $request)
 {
+    Log::info('=== RETOUR CANCEL CINETPAY ===');
+    Log::info('Données reçues:', $request->all());
+
     $transactionId = $request->input('cpm_trans_id');
     
     return response()->json([
