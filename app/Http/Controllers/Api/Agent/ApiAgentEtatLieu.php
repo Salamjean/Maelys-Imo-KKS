@@ -167,14 +167,30 @@ class ApiAgentEtatLieu extends Controller
  *                     @OA\Property(property="surface", type="number", format="float"),
  *                     @OA\Property(property="loyer", type="number", format="float")
  *                 ),
- *                 @OA\Property(property="etats_lieu", type="array",
- *                     @OA\Items(
+ *                 @OA\Property(property="etats_lieu", type="object",
+ *                     @OA\Property(property="etat_entree", type="object", nullable=true,
  *                         @OA\Property(property="id", type="integer"),
- *                         @OA\Property(property="type_etat", type="string", enum={"entrée", "sortie"}),
- *                         @OA\Property(property="status_etat_entre", type="string", enum={"Oui", "Non", "En attente"}),
- *                         @OA\Property(property="status_etat_sortie", type="string", enum={"Oui", "Non", "En attente"}),
- *                         @OA\Property(property="date_etat", type="string", format="date-time"),
- *                         @OA\Property(property="remarques", type="string", nullable=true),
+ *                         @OA\Property(property="type_bien", type="string"),
+ *                         @OA\Property(property="commune_bien", type="string"),
+ *                         @OA\Property(property="presence_partie", type="string"),
+ *                         @OA\Property(property="status_etat_entre", type="string"),
+ *                         @OA\Property(property="status_sorti", type="string"),
+ *                         @OA\Property(property="parties_communes", type="object"),
+ *                         @OA\Property(property="chambres", type="object"),
+ *                         @OA\Property(property="nombre_cle", type="string"),
+ *                         @OA\Property(property="created_at", type="string", format="date-time"),
+ *                         @OA\Property(property="updated_at", type="string", format="date-time")
+ *                     ),
+ *                     @OA\Property(property="etat_sortie", type="object", nullable=true,
+ *                         @OA\Property(property="id", type="integer"),
+ *                         @OA\Property(property="type_bien", type="string"),
+ *                         @OA\Property(property="commune_bien", type="string"),
+ *                         @OA\Property(property="presence_partie", type="string"),
+ *                         @OA\Property(property="status_etat_entre", type="string"),
+ *                         @OA\Property(property="status_sorti", type="string"),
+ *                         @OA\Property(property="parties_communes", type="object"),
+ *                         @OA\Property(property="chambres", type="object"),
+ *                         @OA\Property(property="nombre_cle", type="string"),
  *                         @OA\Property(property="created_at", type="string", format="date-time"),
  *                         @OA\Property(property="updated_at", type="string", format="date-time")
  *                     )
@@ -250,7 +266,10 @@ public function getLocataireAvecBienEtEtatsLieu($locataireId)
                 'comptable_id' => $locataire->comptable_id
             ],
             'bien' => null,
-            'etats_lieu' => []
+            'etats_lieu' => [
+                'etat_entree' => null,
+                'etat_sortie' => null
+            ]
         ];
 
         // Ajouter les informations du bien si exists
@@ -267,20 +286,30 @@ public function getLocataireAvecBienEtEtatsLieu($locataireId)
             ];
         }
 
-        // Ajouter les états des lieux
+        // Séparer les états des lieux par type
         if ($locataire->etatLieu->isNotEmpty()) {
-            $data['etats_lieu'] = $locataire->etatLieu->map(function($etatLieu) {
-                return [
+            foreach ($locataire->etatLieu as $etatLieu) {
+                $etatData = [
                     'id' => $etatLieu->id,
-                    'type_etat' => $etatLieu->type_etat,
+                    'type_bien' => $etatLieu->type_bien,
+                    'commune_bien' => $etatLieu->commune_bien,
+                    'presence_partie' => $etatLieu->presence_partie,
                     'status_etat_entre' => $etatLieu->status_etat_entre,
-                    'status_etat_sortie' => $etatLieu->status_etat_sortie,
-                    'date_etat' => $etatLieu->date_etat ? $etatLieu->date_etat->format('Y-m-d H:i:s') : null,
-                    'remarques' => $etatLieu->remarques,
+                    'status_sorti' => $etatLieu->status_sorti,
+                    'parties_communes' => $etatLieu->parties_communes ? json_decode($etatLieu->parties_communes, true) : null,
+                    'chambres' => $etatLieu->chambres ? json_decode($etatLieu->chambres, true) : null,
+                    'nombre_cle' => $etatLieu->nombre_cle,
                     'created_at' => $etatLieu->created_at->format('Y-m-d H:i:s'),
                     'updated_at' => $etatLieu->updated_at->format('Y-m-d H:i:s')
                 ];
-            });
+
+                // Déterminer le type d'état basé sur le status
+                if ($etatLieu->status_etat_entre === 'Oui' || $etatLieu->status_etat_entre === 'En attente') {
+                    $data['etats_lieu']['etat_entree'] = $etatData;
+                } elseif ($etatLieu->status_sorti === 'Oui' || $etatLieu->status_sorti === 'En attente') {
+                    $data['etats_lieu']['etat_sortie'] = $etatData;
+                }
+            }
         }
 
         return response()->json([
