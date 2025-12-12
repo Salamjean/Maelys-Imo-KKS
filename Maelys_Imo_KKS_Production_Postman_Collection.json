@@ -1,0 +1,1992 @@
+{
+    "info": {
+        "_postman_id": "maelys-imo-kks-prod-2025",
+        "name": "Maelys-Imo-KKS Production API",
+        "description": "Collection complète des API Maelys-Imo-KKS pour l'environnement de production",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const jsonData = pm.response.json();",
+                                    "    if (jsonData.token) {",
+                                    "        pm.environment.set('auth_token', jsonData.token);",
+                                    "        console.log('Token saved:', jsonData.token);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code_id\": \"votre_code_id\",\n    \"password\": \"votre_mot_de_passe\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "login"
+                            ]
+                        },
+                        "description": "Connexion utilisateur (Locataire ou Agent)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Forgot Password - Send OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code_id\": \"votre_code_id\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/password/forgot",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "password",
+                                "forgot"
+                            ]
+                        },
+                        "description": "Envoyer un OTP pour la réinitialisation du mot de passe"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reset Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code_id\": \"votre_code_id\",\n    \"otp\": \"123456\",\n    \"password\": \"nouveau_mot_de_passe\",\n    \"password_confirmation\": \"nouveau_mot_de_passe\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/password/reset",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "password",
+                                "reset"
+                            ]
+                        },
+                        "description": "Réinitialiser le mot de passe avec l'OTP"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Locataire (Tenant)",
+            "item": [
+                {
+                    "name": "Dashboard",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/tenant/dashboard",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "tenant",
+                                "dashboard"
+                            ]
+                        },
+                        "description": "Récupérer les données du tableau de bord du locataire"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Contact Agency",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"subject\": \"Objet du message\",\n    \"message\": \"Contenu du message\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/tenant/contact/agency",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "tenant",
+                                "contact",
+                                "agency"
+                            ]
+                        },
+                        "description": "Envoyer un email à l'agence"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Profile",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/tenant/profil/edit",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "tenant",
+                                "profil",
+                                "edit"
+                            ]
+                        },
+                        "description": "Récupérer les informations du profil"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Profile Photo",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "photo",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/tenant/profile/photo",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "tenant",
+                                "profile",
+                                "photo"
+                            ]
+                        },
+                        "description": "Mettre à jour la photo de profil"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Password",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"current_password\": \"ancien_mot_de_passe\",\n    \"password\": \"nouveau_mot_de_passe\",\n    \"password_confirmation\": \"nouveau_mot_de_passe\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/tenant/profile/update-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "tenant",
+                                "profile",
+                                "update-password"
+                            ]
+                        },
+                        "description": "Mettre à jour le mot de passe"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Email",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"nouvel_email@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/tenant/profile/update-email",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "tenant",
+                                "profile",
+                                "update-email"
+                            ]
+                        },
+                        "description": "Mettre à jour l'email"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Contract Link",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/tenant/contrat",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "tenant",
+                                "contrat"
+                            ]
+                        },
+                        "description": "Obtenir le lien du contrat"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Download Contract",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/tenant/:locataire_id/contrat",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "tenant",
+                                ":locataire_id",
+                                "contrat"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "locataire_id",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Télécharger le contrat d'un locataire"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Paiements",
+                    "item": [
+                        {
+                            "name": "Create Payment",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"montant\": 50000,\n    \"methode_paiement\": \"mobile_money\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/tenant/:locataire_id/paiements",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tenant",
+                                        ":locataire_id",
+                                        "paiements"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "locataire_id",
+                                            "value": "1"
+                                        }
+                                    ]
+                                },
+                                "description": "Créer un nouveau paiement"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Payments",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tenant/:locataire_id/paiements",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tenant",
+                                        ":locataire_id",
+                                        "paiements"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "locataire_id",
+                                            "value": "1"
+                                        }
+                                    ]
+                                },
+                                "description": "Récupérer tous les paiements d'un locataire"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Payment Details",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tenant/paiements/:payment_id",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tenant",
+                                        "paiements",
+                                        ":payment_id"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "payment_id",
+                                            "value": "1"
+                                        }
+                                    ]
+                                },
+                                "description": "Récupérer les détails d'un paiement spécifique"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get My QR Code",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tenant/paiement/mon-qr-code",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tenant",
+                                        "paiement",
+                                        "mon-qr-code"
+                                    ]
+                                },
+                                "description": "Obtenir mon QR code pour les paiements"
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Etat des Lieux",
+                    "item": [
+                        {
+                            "name": "Get Etats Lieu Entree",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tenant/etat-lieu/entree",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tenant",
+                                        "etat-lieu",
+                                        "entree"
+                                    ]
+                                },
+                                "description": "Récupérer les états des lieux d'entrée"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Etats Lieu Sortie",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tenant/etat-lieu/sortie",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tenant",
+                                        "etat-lieu",
+                                        "sortie"
+                                    ]
+                                },
+                                "description": "Récupérer les états des lieux de sortie"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get All Etats Lieu",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tenant/etat-lieu/all",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tenant",
+                                        "etat-lieu",
+                                        "all"
+                                    ]
+                                },
+                                "description": "Récupérer tous les états des lieux"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Etat Lieu Entree By ID",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tenant/etat-lieu/entree/:id",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tenant",
+                                        "etat-lieu",
+                                        "entree",
+                                        ":id"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "1"
+                                        }
+                                    ]
+                                },
+                                "description": "Récupérer un état des lieux d'entrée par ID"
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Agent",
+            "item": [
+                {
+                    "name": "Dashboard",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/agent/dashboard",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "agent",
+                                "dashboard"
+                            ]
+                        },
+                        "description": "Récupérer les données du tableau de bord de l'agent"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Etat des Lieux",
+                    "item": [
+                        {
+                            "name": "Get Warning Etats Lieu",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/etats-lieu/warning",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "etats-lieu",
+                                        "warning"
+                                    ]
+                                },
+                                "description": "Récupérer les locataires avec états des lieux en attente"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Locataire Details",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/etats-lieu/:locataire_id/details",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "etats-lieu",
+                                        ":locataire_id",
+                                        "details"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "locataire_id",
+                                            "value": "1"
+                                        }
+                                    ]
+                                },
+                                "description": "Récupérer les détails d'un locataire avec bien et états des lieux"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get All Etats Lieu Effectues",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/etats-lieu/effectues",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "etats-lieu",
+                                        "effectues"
+                                    ]
+                                },
+                                "description": "Récupérer tous les états des lieux effectués"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Etats Lieu Fin",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/etats/end",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "etats",
+                                        "end"
+                                    ]
+                                },
+                                "description": "Récupérer les états des lieux de fin"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create Etat Lieu",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"locataire_id\": 1,\n    \"type\": \"entree\",\n    \"description\": \"Description de l'état des lieux\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/etat-lieux",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "etat-lieux"
+                                    ]
+                                },
+                                "description": "Créer un nouvel état des lieux"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Download Etat Lieu",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/etat-lieux/:id/download",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "etat-lieux",
+                                        ":id",
+                                        "download"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "1"
+                                        }
+                                    ]
+                                },
+                                "description": "Télécharger un état des lieux"
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Codes de Verification",
+                    "item": [
+                        {
+                            "name": "Generate Code",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"locataire_id\": 1\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/generate",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "generate"
+                                    ]
+                                },
+                                "description": "Générer un code de vérification"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Verify Code",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"code\": \"ABC123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/verify",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "verify"
+                                    ]
+                                },
+                                "description": "Vérifier un code"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Generate Verification Code",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"locataire_id\": 1\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/verification/generate",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "verification",
+                                        "generate"
+                                    ]
+                                },
+                                "description": "Générer un code de vérification (alternative)"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Verify Verification Code",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"code\": \"ABC123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/verification/verify",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "verification",
+                                        "verify"
+                                    ]
+                                },
+                                "description": "Vérifier un code de vérification (alternative)"
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Paiements",
+                    "item": [
+                        {
+                            "name": "Get Payment History",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/paiements/history",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "paiements",
+                                        "history"
+                                    ]
+                                },
+                                "description": "Récupérer l'historique des paiements"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Locataires en Retard",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/locataires/retard",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "locataires",
+                                        "retard"
+                                    ]
+                                },
+                                "description": "Récupérer les locataires en retard de paiement"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Locataires à Jour",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/locataires/a-jour",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "locataires",
+                                        "a-jour"
+                                    ]
+                                },
+                                "description": "Récupérer les locataires à jour dans leurs paiements"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Locataires en Attente",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/locataires/en-attente",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "locataires",
+                                        "en-attente"
+                                    ]
+                                },
+                                "description": "Récupérer les locataires avec paiements en attente"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Locataire Payment Details",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/locataire/:id/details",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "locataire",
+                                        ":id",
+                                        "details"
+                                    ],
+                                    "variable": [
+                                        {
+                                            "key": "id",
+                                            "value": "1"
+                                        }
+                                    ]
+                                },
+                                "description": "Récupérer les détails de paiement d'un locataire"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Generate Cash Code",
+                            "request": {
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}",
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"locataire_id\": 1,\n    \"montant\": 50000\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/agent/paiement/generer-code-especes",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "agent",
+                                        "paiement",
+                                        "generer-code-especes"
+                                    ]
+                                },
+                                "description": "Générer un code pour un paiement en espèces"
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Verify Cash Code",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"code\": \"CASH123456\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/paiement/verifier-code-especes",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "paiement",
+                                        "verifier-code-especes"
+                                    ]
+                                },
+                                "description": "Vérifier un code de paiement en espèces"
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Get QR Code",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/tenant/qr-code",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "tenant",
+                                "qr-code"
+                            ]
+                        },
+                        "description": "Récupérer le QR code d'un tenant"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Paiement",
+            "item": [
+                {
+                    "name": "CinetPay Notification",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"transaction_id\": \"1234567890\",\n    \"status\": \"completed\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/paiement/cinetpay/notify",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "paiement",
+                                "cinetpay",
+                                "notify"
+                            ]
+                        },
+                        "description": "Webhook de notification CinetPay"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Check Payment Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/paiement/check/:transaction_id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "paiement",
+                                "check",
+                                ":transaction_id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "transaction_id",
+                                    "value": "1234567890"
+                                }
+                            ]
+                        },
+                        "description": "Vérifier le statut d'un paiement"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Payment Success",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/paiement/success",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "paiement",
+                                "success"
+                            ]
+                        },
+                        "description": "Page de succès de paiement"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Payment Cancel",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/paiement/cancel",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "paiement",
+                                "cancel"
+                            ]
+                        },
+                        "description": "Page d'annulation de paiement"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Home & Biens",
+            "item": [
+                {
+                    "name": "Get Home",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                ""
+                            ]
+                        },
+                        "description": "Page d'accueil de l'API"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Appartements",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/biens/appartements",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "biens",
+                                "appartements"
+                            ]
+                        },
+                        "description": "Récupérer tous les appartements"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Available Biens",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/biens/available",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "biens",
+                                "available"
+                            ]
+                        },
+                        "description": "Récupérer tous les biens disponibles"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Biens",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/biens/all",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "biens",
+                                "all"
+                            ]
+                        },
+                        "description": "Récupérer tous les types de biens"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Maisons",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/biens/maisons",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "biens",
+                                "maisons"
+                            ]
+                        },
+                        "description": "Récupérer toutes les maisons"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Bureaux/Terrains",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/biens/bureaux",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "biens",
+                                "bureaux"
+                            ]
+                        },
+                        "description": "Récupérer tous les bureaux/terrains"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Bien by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/biens/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "biens",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1"
+                                }
+                            ]
+                        },
+                        "description": "Récupérer un bien par son ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Contact",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"phone\": \"+225 0123456789\",\n    \"message\": \"Message de contact\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/contact",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "contact"
+                            ]
+                        },
+                        "description": "Envoyer un message de contact"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Visites",
+            "item": [
+                {
+                    "name": "Create Visit",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"bien_id\": 1,\n    \"date\": \"2025-12-20\",\n    \"heure\": \"14:00\",\n    \"nom\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"telephone\": \"+225 0123456789\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/visit/store",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "visit",
+                                "store"
+                            ]
+                        },
+                        "description": "Créer une demande de visite"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "https://maelysimo.com",
+            "type": "string"
+        },
+        {
+            "key": "auth_token",
+            "value": "",
+            "type": "string"
+        }
+    ]
+}
