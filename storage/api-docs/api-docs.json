@@ -598,54 +598,91 @@
                                                     "type": "object"
                                                 },
                                                 "etats_lieu": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer"
+                                                    "properties": {
+                                                        "etat_entree": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "type_bien": {
+                                                                    "type": "string"
+                                                                },
+                                                                "commune_bien": {
+                                                                    "type": "string"
+                                                                },
+                                                                "presence_partie": {
+                                                                    "type": "string"
+                                                                },
+                                                                "status_etat_entre": {
+                                                                    "type": "string"
+                                                                },
+                                                                "status_sorti": {
+                                                                    "type": "string"
+                                                                },
+                                                                "parties_communes": {
+                                                                    "type": "object"
+                                                                },
+                                                                "chambres": {
+                                                                    "type": "object"
+                                                                },
+                                                                "nombre_cle": {
+                                                                    "type": "string"
+                                                                },
+                                                                "created_at": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                },
+                                                                "updated_at": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                }
                                                             },
-                                                            "type_etat": {
-                                                                "type": "string",
-                                                                "enum": [
-                                                                    "entrée",
-                                                                    "sortie"
-                                                                ]
-                                                            },
-                                                            "status_etat_entre": {
-                                                                "type": "string",
-                                                                "enum": [
-                                                                    "Oui",
-                                                                    "Non",
-                                                                    "En attente"
-                                                                ]
-                                                            },
-                                                            "status_etat_sortie": {
-                                                                "type": "string",
-                                                                "enum": [
-                                                                    "Oui",
-                                                                    "Non",
-                                                                    "En attente"
-                                                                ]
-                                                            },
-                                                            "date_etat": {
-                                                                "type": "string",
-                                                                "format": "date-time"
-                                                            },
-                                                            "remarques": {
-                                                                "type": "string",
-                                                                "nullable": true
-                                                            },
-                                                            "created_at": {
-                                                                "type": "string",
-                                                                "format": "date-time"
-                                                            },
-                                                            "updated_at": {
-                                                                "type": "string",
-                                                                "format": "date-time"
-                                                            }
+                                                            "type": "object",
+                                                            "nullable": true
                                                         },
-                                                        "type": "object"
-                                                    }
+                                                        "etat_sortie": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "type_bien": {
+                                                                    "type": "string"
+                                                                },
+                                                                "commune_bien": {
+                                                                    "type": "string"
+                                                                },
+                                                                "presence_partie": {
+                                                                    "type": "string"
+                                                                },
+                                                                "status_etat_entre": {
+                                                                    "type": "string"
+                                                                },
+                                                                "status_sorti": {
+                                                                    "type": "string"
+                                                                },
+                                                                "parties_communes": {
+                                                                    "type": "object"
+                                                                },
+                                                                "chambres": {
+                                                                    "type": "object"
+                                                                },
+                                                                "nombre_cle": {
+                                                                    "type": "string"
+                                                                },
+                                                                "created_at": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                },
+                                                                "updated_at": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                }
+                                                            },
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 }
                                             },
                                             "type": "object"

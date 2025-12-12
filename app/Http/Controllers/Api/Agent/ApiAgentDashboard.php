@@ -143,6 +143,7 @@ class ApiAgentDashboard extends Controller
                         $query->orWhere('comptable_id', $comptable->id);
                     })
                     ->where('status', 'Actif')
+                    ->where('comptable_id', $comptable->id)
                     ->whereDoesntHave('etatLieu', function($query) {
                         $query->where('status_etat_entre', 'Oui');
                     })
