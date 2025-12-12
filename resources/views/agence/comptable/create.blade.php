@@ -15,8 +15,8 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label>Nom du comptable</label>
-                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Nom du comptable" name="name">
+                            <label>Nom du personnel</label>
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Nom du personnel" name="name">
                             @error('name')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -24,8 +24,8 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label>Prénom du comptable</label>
-                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Prénom du comptable" name="prenom">
+                            <label>Prénom du personnel</label>
+                            <input type="text" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Prénom du personnel" name="prenom">
                             @error('prenom')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -55,8 +55,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>Contact du comptable</label>
-                            <input type="number" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Contact du comptable" name="contact">
+                            <label>Contact du personnel</label>
+                            <input type="number" style="border: 1px solid black; border-radius: 5px;" class="form-control" placeholder="Contact du personnel" name="contact">
                             @error('contact')
                                 <div class="alert alert-danger mt-2">{{ $message }}</div>
                             @enderror

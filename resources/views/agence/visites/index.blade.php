@@ -76,70 +76,95 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($visites as $visite)
-                    @php
-                        $rowClass = '';
-                        $statusClass = '';
-                        
-                        if ($visite->statut === 'confirmée') {
-                            $statusClass = 'badge-primary';
-                        } elseif ($visite->statut === 'en attente') {
-                            $statusClass = 'badge-warning';
-                        } elseif ($visite->statut === 'annulée') {
-                            $statusClass = 'badge-danger';
-                        } elseif ($visite->statut === 'effectuée') {
-                            $statusClass = 'badge-success';
-                            
-                        }
-                    @endphp
+    @forelse($visites as $visite)
+        @php
+            $rowClass = '';
+            $statusClass = '';
+            
+            if ($visite->statut === 'confirmée') {
+                $statusClass = 'badge-primary'; // Bleu/Violet
+            } elseif ($visite->statut === 'en attente') {
+                $statusClass = 'badge-warning'; // Jaune
+            } elseif ($visite->statut === 'annulée') {
+                $statusClass = 'badge-danger'; // Rouge
+            } elseif ($visite->statut === 'effectuée') {
+                $statusClass = 'badge-success'; // Vert
+            }
+        @endphp
+        
+        <tr class="text-center">
+            <td>{{ $visite->nom }}</td>
+            <td>{{ $visite->telephone }}</td>
+            <td>{{ $visite->email }}</td>
+            <td>{{ $visite->bien->type }} à {{ $visite->bien->commune }}
+            <td>{{ $visite->bien->type }}</td>
+            <td>{{ \Carbon\Carbon::parse($visite->date_visite)->format('d/m/Y') }}</td>
+            <td>{{ $visite->heure_visite }}</td>
+            <td>{{ Str::limit($visite->message, 30) }}</td>
+            <td>
+                <span class="badge {{ $statusClass }}">{{ ucfirst($visite->statut) }}</span>
+            </td>
+            
+            <!-- MODIFICATION ICI : Gestion logique des boutons -->
+            <td class="text-center">
+                <div class="btn-group" role="group">
                     
-                    <tr class="text-center">
-                        <td>{{ $visite->nom }}</td>
-                        <td>{{ $visite->telephone }}</td>
-                        <td>{{ $visite->email }}</td>
-                        <td>{{ $visite->bien->type }} à {{ $visite->bien->commune }}
-                        <td>{{ $visite->bien->type }}</td>
-                        <td>{{ \Carbon\Carbon::parse($visite->date_visite)->format('d/m/Y') }}</td>
-                        <td>{{ $visite->heure_visite }}</td>
-                        <td>{{ Str::limit($visite->message, 30) }}</td>
-                        <td>
-                            <span class="badge {{ $statusClass }}">{{ $visite->statut }}</span>
-                        </td>
-                        <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-sm btn-primary confirm-visite-btn" 
-                                        data-visite-id="{{ $visite->id }}"
-                                        title="Confirmer">
-                                    <i class="mdi mdi-check"></i>
-                                </button>
-                                <button class="btn btn-sm btn-success done-visite-btn" 
-                                        data-visite-id="{{ $visite->id }}"
-                                        title="Marquer comme effectuée">
-                                    <i class="mdi mdi-checkbox-multiple-marked-circle"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger cancel-visite-btn" 
-                                        data-visite-id="{{ $visite->id }}"
-                                        title="Annuler">
-                                    <i class="mdi mdi-close"></i>
-                                </button>
-                                <button class="btn btn-sm btn-info view-visite-btn" 
-                                        data-visite-id="{{ $visite->id }}"
-                                        title="Détails">
-                                    <i class="mdi mdi-eye"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="10" class="text-center py-4">
-                            <div class="alert alert-info">
-                                Aucune visite programmée pour le moment.
-                            </div>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
+                    {{-- 1. BOUTON CONFIRMER : Uniquement si 'en attente' --}}
+                    @if($visite->statut === 'en attente')
+                        <button class="btn btn-sm btn-primary confirm-visite-btn" 
+                                data-visite-id="{{ $visite->id }}"
+                                title="Confirmer la visite">
+                            <i class="mdi mdi-check"></i>
+                        </button>
+                    @endif
+
+                    {{-- 2. BOUTON EFFECTUÉE : Logique active/grisée --}}
+                    @if($visite->statut === 'confirmée')
+                        {{-- Cas : Visite confirmée => Bouton vert actif --}}
+                        <button class="btn btn-sm btn-success done-visite-btn" 
+                                data-visite-id="{{ $visite->id }}"
+                                title="Marquer comme effectuée">
+                            <i class="mdi mdi-checkbox-multiple-marked-circle"></i>
+                        </button>
+                    @elseif($visite->statut === 'en attente')
+                        {{-- Cas : Visite en attente => Bouton gris désactivé --}}
+                        <button class="btn btn-sm btn-secondary" 
+                                disabled 
+                                style="cursor: not-allowed; opacity: 0.6;"
+                                title="Veuillez d'abord confirmer la visite">
+                            <i class="mdi mdi-checkbox-multiple-marked-circle"></i>
+                        </button>
+                    @endif
+
+                    {{-- 3. BOUTON ANNULER : Visible tant que ce n'est pas fini --}}
+                    @if($visite->statut !== 'annulée' && $visite->statut !== 'effectuée')
+                        <button class="btn btn-sm btn-danger cancel-visite-btn" 
+                                data-visite-id="{{ $visite->id }}"
+                                title="Annuler la visite">
+                            <i class="mdi mdi-close"></i>
+                        </button>
+                    @endif
+
+                    {{-- 4. BOUTON DETAILS : Toujours visible --}}
+                    <button class="btn btn-sm btn-info view-visite-btn" 
+                            data-visite-id="{{ $visite->id }}"
+                            title="Voir les détails">
+                        <i class="mdi mdi-eye"></i>
+                    </button>
+
+                </div>
+            </td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="10" class="text-center py-4">
+                <div class="alert alert-info">
+                    Aucune visite programmée pour le moment.
+                </div>
+            </td>
+        </tr>
+    @endforelse
+</tbody>
           </table>
           
           @if($visites->hasPages())

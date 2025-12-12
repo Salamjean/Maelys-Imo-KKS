@@ -105,7 +105,7 @@
           <ul class="nav flex-column sub-menu">
             <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.create') }}">Faire un reversement</a></li>
             <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.index') }}">Historique reversement</a></li>
-            <li class="nav-item"> <a class="nav-link" href="{{ route('rib.create') }}">R.I.B</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('rib.create') }}">IBAN</a></li>
           </ul>
         </div>
       </li>

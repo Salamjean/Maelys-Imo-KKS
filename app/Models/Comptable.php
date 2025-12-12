@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 class Comptable extends Authenticatable
 {
     use HasApiTokens, Notifiable;
+
     protected $fillable = [
         'name',
         'prenom',
@@ -18,10 +19,11 @@ class Comptable extends Authenticatable
         'commune',
         'password',
         'contact',
-        'date_naisance',
+        'date_naissance', // Correction de la faute de frappe ici
         'user_type',
         'profile_image',
-        // ... autres champs
+        'agence_id', // Ajouté car utilisé dans le controller
+        'proprietaire_id', // Ajouté si nécessaire
         'password_reset_token',
         'password_reset_expires',
         'password_reset_otp',
@@ -30,6 +32,7 @@ class Comptable extends Authenticatable
         'reset_access_expires',
         'otp_verified_at'
     ];
+
     public function agence()
     {
         return $this->belongsTo(Agence::class,'agence_id', 'code_id');
@@ -40,25 +43,21 @@ class Comptable extends Authenticatable
         return $this->hasMany(Paiement::class);
     }
 
-    // Relation : Versements effectués par un agent (pour dashboard agent)
     public function versementsEnvoyes()
     {
         return $this->hasMany(Versement::class, 'agent_id');
     }
 
-    // Relation : Versements reçus par un comptable (pour dashboard comptable)
     public function versementsRecus()
     {
         return $this->hasMany(Versement::class, 'comptable_id');
     }
 
-    // Vérifie si l'utilisateur est un comptable
     public function isComptable()
     {
         return $this->user_type === 'Comptable';
     }
 
-    // Vérifie si l'utilisateur est un agent
     public function isAgent()
     {
         return $this->user_type === 'Agent de recouvrement';

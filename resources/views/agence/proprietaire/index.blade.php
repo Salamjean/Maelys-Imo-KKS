@@ -1,4 +1,5 @@
 @extends('agence.layouts.template')
+
 @section('content')
 <style>
     .owner-card {
@@ -80,6 +81,18 @@
         background-color: #dc3545;
         color: white;
     }
+    #searchInput {
+        padding: 10px 15px;
+        border-radius: 20px;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+    #searchInput:focus {
+        border-color: #4b7bec;
+        box-shadow: 0 2px 10px rgba(75, 123, 236, 0.3);
+        outline: none;
+    }
 </style>
 
 <div class="container-fluid">
@@ -87,8 +100,8 @@
         <h1 class="h3 mt-4 text-gray-800" style="text-align: center">Gestion des Propriétaires</h1>
     </div>
      <div class="mb-3">
-                <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
-            </div>
+        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
+    </div>
 
     @if($proprietaires->isEmpty())
         <div class="no-owners">
@@ -99,7 +112,6 @@
     @else
         <div class="row">
             @foreach($proprietaires as $proprietaire)
-                <!-- Modal pour les informations du propriétaire -->
                 <div class="modal fade" id="ownerInfoModal{{ $proprietaire->id }}" tabindex="-1" role="dialog" aria-labelledby="ownerInfoModalLabel{{ $proprietaire->id }}" aria-hidden="true">
                     <div class="modal-dialog modal-lg" role="document">
                         <div class="modal-content">
@@ -175,7 +187,6 @@
                     </div>
                 </div>
 
-                <!-- Modal pour la liste des biens du propriétaire -->
                 <div class="modal fade" id="ownerPropertiesModal{{ $proprietaire->id }}" tabindex="-1" role="dialog" aria-labelledby="ownerPropertiesModalLabel{{ $proprietaire->id }}" aria-hidden="true">
                     <div class="modal-dialog modal-lg" role="document">
                         <div class="modal-content">
@@ -239,7 +250,6 @@
                     </div>
                 </div>
 
-                <!-- Carte du propriétaire -->
                 <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
                     <div class="card owner-card">
                         <div class="owner-header">
@@ -275,7 +285,6 @@
                                 <p class="property-count">{{ $proprietaire->biens->count() }} biens</p>
                             </div>
                             
-                            <!-- Boutons d'action -->
                             <div class="owner-actions d-flex justify-content-between">
                                 <div>
                                     <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#ownerInfoModal{{ $proprietaire->id }}">
@@ -292,10 +301,26 @@
                                         <i class="fas fa-edit"></i> Modifier
                                     </a>
                                     
-                                    <form action="{{ route('owner.destroy', $proprietaire->id) }}" method="POST" style="display: inline-block;">
+                                    {{-- FORMULAIRE DE SUPPRESSION AMELIORÉ --}}
+                                    <form action="{{ route('owner.destroy', $proprietaire->id) }}" method="POST" id="delete-form-{{ $proprietaire->id }}" style="display:inline-block;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm ml-2" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce propriétaire ?')">
+                                        
+                                        {{-- Input caché pour le code agence --}}
+                                        <input type="hidden" name="validation_code" id="validation-code-{{ $proprietaire->id }}">
+                                        
+                                        {{-- 
+                                            On compte s'il y a des locataires liés à ce propriétaire.
+                                            S'il y en a (> 0), le JS déclenchera le popup de sécurité.
+                                        --}}
+                                        @php
+                                            $tenantCount = \App\Models\Locataire::where('proprietaire_id', $proprietaire->code_id)->count();
+                                        @endphp
+    
+                                        {{-- Bouton sans type="submit" pour laisser le JS gérer --}}
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm ml-2" 
+                                                onclick="confirmDelete('{{ $proprietaire->id }}', {{ $tenantCount > 0 ? 1 : 0 }})">
                                             <i class="fas fa-trash"></i> Supprimer
                                         </button>
                                     </form>
@@ -312,15 +337,10 @@
                     <nav aria-label="Page navigation">
                         <ul class="pagination pagination-rounded">
                             @if ($proprietaires->onFirstPage())
-                                <li class="page-item disabled">
-                                    <span class="page-link" aria-hidden="true">«</span>
-                                </li>
+                                <li class="page-item disabled"><span class="page-link">«</span></li>
                             @else
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ $proprietaires->previousPageUrl() }}" rel="prev" aria-label="Previous">«</a>
-                                </li>
+                                <li class="page-item"><a class="page-link" href="{{ $proprietaires->previousPageUrl() }}" rel="prev">«</a></li>
                             @endif
-
                             @foreach ($proprietaires->getUrlRange(1, $proprietaires->lastPage()) as $page => $url)
                                 @if ($page == $proprietaires->currentPage())
                                     <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
@@ -328,103 +348,151 @@
                                     <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
                                 @endif
                             @endforeach
-
                             @if ($proprietaires->hasMorePages())
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ $proprietaires->nextPageUrl() }}" rel="next" aria-label="Next">»</a>
-                                </li>
+                                <li class="page-item"><a class="page-link" href="{{ $proprietaires->nextPageUrl() }}" rel="next">»</a></li>
                             @else
-                                <li class="page-item disabled">
-                                    <span class="page-link" aria-hidden="true">»</span>
-                                </li>
+                                <li class="page-item disabled"><span class="page-link">»</span></li>
                             @endif
                         </ul>
                     </nav>
                 </div>
-                @endif
+        @endif
     @endif
 </div>
+
+{{-- Scripts nécessaires --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Script pour gérer les modales -->
+{{-- AJOUT IMPORTANT POUR LE POPUP : SweetAlert2 --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     $(document).ready(function() {
         // Initialisation des modales Bootstrap
-        $('.modal').modal({
-            show: false
-        });
-    });
-</script>
+        $('.modal').modal({ show: false });
 
-<script>
-$(document).ready(function() {
-    // Système de recherche en temps réel
-    $('#searchInput').on('keyup', function() {
-        const searchText = $(this).val().toLowerCase();
-        let hasResults = false;
-        
-        // Masquer d'abord le message "Aucun propriétaire" s'il est visible
-        $('.no-owners').hide();
-        
-        // Parcourir toutes les cartes de propriétaire
-        $('.col-lg-4.col-md-6.col-sm-12').each(function() {
-            const cardText = $(this).text().toLowerCase();
-            if (cardText.includes(searchText)) {
-                $(this).show();
-                hasResults = true;
-            } else {
-                $(this).hide();
-            }
-        });
-        
-        // Gérer le message "Aucun résultat"
-        const noResultsMessage = $('.no-results-message');
-        if (!hasResults && searchText.length > 0) {
-            if (noResultsMessage.length === 0) {
-                $('.row').append(`
-                    <div class="col-12 no-results-message">
-                        <div class="card shadow border-0 text-center py-5">
-                            <div class="card-body">
-                                <i class="fas fa-search fa-4x text-muted mb-4"></i>
-                                <h5>Aucun résultat trouvé</h5>
-                                <p class="text-muted mb-4">Aucun propriétaire ne correspond à votre recherche.</p>
+        // Système de recherche en temps réel
+        $('#searchInput').on('keyup', function() {
+            const searchText = $(this).val().toLowerCase();
+            let hasResults = false;
+            
+            // Masquer d'abord le message "Aucun propriétaire" s'il est visible
+            $('.no-owners').hide();
+            
+            // Parcourir toutes les cartes de propriétaire
+            $('.col-lg-4.col-md-6.col-sm-12').each(function() {
+                const cardText = $(this).text().toLowerCase();
+                if (cardText.includes(searchText)) {
+                    $(this).show();
+                    hasResults = true;
+                } else {
+                    $(this).hide();
+                }
+            });
+            
+            // Gérer le message "Aucun résultat"
+            const noResultsMessage = $('.no-results-message');
+            if (!hasResults && searchText.length > 0) {
+                if (noResultsMessage.length === 0) {
+                    $('.row').append(`
+                        <div class="col-12 no-results-message">
+                            <div class="card shadow border-0 text-center py-5">
+                                <div class="card-body">
+                                    <i class="fas fa-search fa-4x text-muted mb-4"></i>
+                                    <h5>Aucun résultat trouvé</h5>
+                                    <p class="text-muted mb-4">Aucun propriétaire ne correspond à votre recherche.</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `);
-            }
-        } else {
-            noResultsMessage.remove();
-            // Si la recherche est vide, on montre tout
-            if (searchText.length === 0) {
-                $('.col-lg-4.col-md-6.col-sm-12').show();
-                // On réaffiche le message "Aucun propriétaire" si c'est le cas
-                if ($('.col-lg-4.col-md-6.col-sm-12:visible').length === 0) {
-                    $('.no-owners').show();
+                    `);
+                }
+            } else {
+                noResultsMessage.remove();
+                // Si la recherche est vide, on montre tout
+                if (searchText.length === 0) {
+                    $('.col-lg-4.col-md-6.col-sm-12').show();
+                    // On réaffiche le message "Aucun propriétaire" si c'est le cas
+                    if ($('.col-lg-4.col-md-6.col-sm-12:visible').length === 0) {
+                        $('.no-owners').show();
+                    }
                 }
             }
-        }
+        });
     });
-});
+
+    // --- FONCTION DE SUPPRESSION ---
+    // Cette fonction est en DEHORS de $(document).ready pour être accessible par le onclick
+    function confirmDelete(proprietaireId, hasTenants) {
+        const form = document.getElementById('delete-form-' + proprietaireId);
+        const codeInput = document.getElementById('validation-code-' + proprietaireId);
+
+        console.log("Delete triggered. ID:", proprietaireId, "Has Tenants:", hasTenants);
+
+        if (hasTenants == 1) {
+            // SCÉNARIO 1 : Locataire présent -> Procédure Haute Sécurité
+            Swal.fire({
+                title: '⚠️ Locataire détecté !',
+                text: "Ce propriétaire a des biens occupés par des locataires. Voulez-vous vraiment le supprimer ? Cette action archivera les données.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Oui, continuer',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Étape 2 : Demande du code Agence
+                    Swal.fire({
+                        title: '🔒 Code de sécurité requis',
+                        text: "Entrez le Code ID de votre agence pour valider cette action critique.",
+                        input: 'text',
+                        inputPlaceholder: 'Ex: AGC...',
+                        showCancelButton: true,
+                        confirmButtonText: 'Vérifier',
+                        showLoaderOnConfirm: true,
+                        preConfirm: (code) => {
+                            if (!code) {
+                                Swal.showValidationMessage('Le code est obligatoire');
+                            }
+                            return code;
+                        }
+                    }).then((codeResult) => {
+                        if (codeResult.isConfirmed) {
+                            // On remplit l'input caché avec le code saisi
+                            codeInput.value = codeResult.value;
+
+                            // Étape 3 : Confirmation finale Irréversible
+                            Swal.fire({
+                                title: '⛔ ACTION IRRÉVERSIBLE',
+                                html: "Le propriétaire, ses biens et ses locataires seront <b>supprimés définitivement</b> de la liste active et archivés.<br>Confirmez-vous ?",
+                                icon: 'error',
+                                showCancelButton: true,
+                                confirmButtonColor: '#d33',
+                                confirmButtonText: 'OUI, TOUT SUPPRIMER'
+                            }).then((finalResult) => {
+                                if (finalResult.isConfirmed) {
+                                    form.submit(); // Soumission du formulaire
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        } else {
+            // SCÉNARIO 2 : Pas de locataire -> Suppression simple
+            Swal.fire({
+                title: 'Supprimer ce propriétaire ?',
+                text: "Cette action est irréversible.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Oui, supprimer'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+    }
 </script>
-<style>
-#searchInput {
-    padding: 10px 15px;
-    border-radius: 20px;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: all 0.3s;
-}
-
-#searchInput:focus {
-    border-color: #4b7bec;
-    box-shadow: 0 2px 10px rgba(75, 123, 236, 0.3);
-    outline: none;
-}
-
-.empty-state .empty-icon {
-    font-size: 3rem;
-    color: #a5b1c2;
-    margin-bottom: 1rem;
-}
-</style> 
 @endsection

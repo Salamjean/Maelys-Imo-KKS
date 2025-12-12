@@ -69,7 +69,7 @@
         </div>
       </li>
       <li class="nav-item sidebar-category">
-        <p>Comptabilité</p>
+        <p>Personnel</p>
         <span></span>
       </li>
       <li class="nav-item">
@@ -122,7 +122,7 @@
           <ul class="nav flex-column sub-menu">
             <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.create.agence') }}">Faire un reversement</a></li>
             <li class="nav-item"> <a class="nav-link" href="{{ route('reversement.index.agence') }}">Historique reversement</a></li>
-            <li class="nav-item"> <a class="nav-link" href="{{ route('rib.create.agence') }}">R.I.B</a></li>
+            <li class="nav-item"> <a class="nav-link" href="{{ route('rib.create.agence') }}">IBAN</a></li>
           </ul>
         </div>
       </li>

@@ -203,7 +203,7 @@ class LocataireController extends Controller
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|unique:locataires,email',
-            'contact' => 'required|string|min:10|unique:locataires,contact',
+           'contact' => 'required|string|min:10|unique:locataires,contact', 
             'piece' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'adresse' => 'required|string|max:255',
             'profession' => 'required|string|max:255',
@@ -220,10 +220,10 @@ class LocataireController extends Controller
             'prenom.required' => 'Le prénom est obligatoire.',
             'email.required' => 'L\'email est obligatoire.',
             'email.email' => 'L\'email doit être une adresse email valide.',
-            'email.unique' => 'Cet email est déjà utilisé.',
+           'email.unique' => 'Cette adresse email est déjà utilisée.',
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
-            'contact.unique' => 'Ce numéro de contact est déjà utilisé.',
+             'contact.unique' => 'Ce numéro de téléphone est déjà associé à un autre locataire.',
             'piece.required' => 'La pièce d\'identité est obligatoire.',
             'piece.image' => 'La pièce d\'identité doit être une image.',
             'piece.mimes' => 'La pièce d\'identité doit être de type: jpeg, png, jpg ou gif.',
@@ -1071,25 +1071,40 @@ public function submitDefineAccess(Request $request)
         return view('agence.locataire.auth.login');
      }
 
-     public function authenticate(Request $request)
+    public function authenticate(Request $request)
     {
-        // Validation des champs du formulaire
+        // 1. Validation générique (plus de 'exists:locataires,email')
         $request->validate([
-            'email' => 'required|exists:locataires,email',
+            'email' => 'required', // On garde le name="email" du formulaire HTML
             'password' => 'required|min:8',
         ], [
-            'email.required' => 'Le mail est obligatoire.',
-            'email.exists' => 'Cette adresse mail n\'existe pas.',
+            'email.required' => 'L\'identifiant (Email, Téléphone ou Code) est obligatoire.',
             'password.required' => 'Le mot de passe est obligatoire.',
-            'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
         ]);
 
-        try {
-            
-            // Récupérer le locataire avant tentative de connexion
-            $locataire = Locataire::where('email', $request->email)->first();
+        $loginInput = $request->input('email');
+        $password = $request->input('password');
 
-            // Vérifier le statut du locataire
+        // 2. Détection du type d'identifiant
+        $field = 'contact'; // Par défaut, on suppose que c'est un contact
+
+        if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
+            $field = 'email';
+        } elseif (preg_match('/^MA[0-9]+$/i', $loginInput)) { 
+            // Vérifie si ça ressemble à MA123456 (insensible à la casse avec 'i')
+            $field = 'code_id';
+            $loginInput = strtoupper($loginInput); // Normalise le code en majuscule
+        } else {
+            // C'est probablement un numéro de téléphone
+            $field = 'contact';
+        }
+
+        try {
+            // 3. Récupération du locataire pour vérifier le statut AVANT connexion
+            // On cherche par le champ détecté ($field)
+            $locataire = Locataire::where($field, $loginInput)->first();
+
+            // Vérifier si le compte existe et son statut
             if ($locataire && in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
                 return back()->withInput()->with('account_error', [
                     'title' => 'Compte désactivé',
@@ -1098,19 +1113,24 @@ public function submitDefineAccess(Request $request)
                 ]);
             }
 
-            // Tentative d'authentification
-            if(auth('locataire')->attempt($request->only('email', 'password'))) {
+            // 4. Tentative d'authentification
+            $credentials = [
+                $field => $loginInput,
+                'password' => $password
+            ];
+
+            if(auth('locataire')->attempt($credentials)) {
                 return redirect()->route('locataire.dashboard')->with('success', 'Bienvenue sur votre page');
             } else {
                 return redirect()->back()
                     ->withInput($request->only('email'))
-                    ->with('error', 'Mot de passe incorrect.');
+                    ->with('error', 'Identifiant ou mot de passe incorrect.');
             }
         } catch (Exception $e) {
-            // En production, vous devriez logger l'erreur plutôt que de la dd()
+            Log::error('Erreur login locataire: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput($request->only('email'))
-                ->with('error', 'Une erreur est survenue lors de la connexion.');
+                ->with('error', 'Une erreur technique est survenue lors de la connexion.');
         }
     }
 

@@ -54,7 +54,7 @@ class ApiAgentDashboard extends Controller
      *     )
      * )
      */
-    public function dashboard(Request $request)
+   public function dashboard(Request $request)
     {
         try {
             $comptable = Auth::guard('sanctum')->user();
@@ -127,6 +127,25 @@ class ApiAgentDashboard extends Controller
                 ->whereYear('created_at', now()->year)
                 ->count();
 
+            // 6. Nombre d'états des lieux en attente
+            // Logique basée sur ApiAgentEtatLieu : Locataires actifs sans état des lieux d'entrée à "Oui"
+            $etatsLieuEnAttente = Locataire::where(function($query) use ($comptable) {
+                    if ($comptable->agence_id) {
+                        $query->orWhere('agence_id', $comptable->agence_id);
+                    }
+                    if ($comptable->proprietaire_id) {
+                        $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                    }
+                    // On inclut aussi explicitement les locataires du comptable (comme dans ApiAgentEtatLieu)
+                    // si les conditions ci-dessus ne sont pas exclusives
+                    $query->orWhere('comptable_id', $comptable->id);
+                })
+                ->where('status', 'Actif')
+                ->whereDoesntHave('etatLieu', function($query) {
+                    $query->where('status_etat_entre', 'Oui');
+                })
+                ->count();
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -135,6 +154,7 @@ class ApiAgentDashboard extends Controller
                     'locataires_en_retard' => $locatairesEnRetard,
                     'paiements_en_attente' => $paiementsEnAttente,
                     'etats_lieu_effectues' => $etatsLieuEffectues,
+                    'etats_lieu_en_attente' => $etatsLieuEnAttente,
                     'mois_courant' => $currentMonth
                 ]
             ], 200);
@@ -147,5 +167,4 @@ class ApiAgentDashboard extends Controller
             ], 500);
         }
     }
-
 }

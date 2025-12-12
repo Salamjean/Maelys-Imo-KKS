@@ -84,7 +84,7 @@
             <thead style="background-color: #02245b; color: white;">
                 <tr class="text-center">
                     <th>ID de l'agent</th>
-                    <th>Nom du comptable</th>
+                    <th>Nom de l'agent</th>
                     <th>Email</th>
                     <th>Lieu de résidence</th>
                     <th>Contact</th>

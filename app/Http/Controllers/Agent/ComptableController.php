@@ -391,7 +391,7 @@ for ($i = 11; $i >= 0; $i--) {
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|unique:comptables,email',
-            'contact' => 'required|string|min:10',
+            'contact' => 'required|string|min:10|unique:comptables,contact', 
             'commune' => 'required|string|max:255',
             'user_type' =>'required',
             'date_naissance' => 'required|max:255',
@@ -401,9 +401,9 @@ for ($i = 11; $i >= 0; $i--) {
             'email.required' => 'L\'adresse e-mail est obligatoire.',
             'email.email' => 'L\'adresse e-mail n\'est pas valide.',
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-            'contact.required' => 'Le contact est obligatoire.',
+             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
-            'commune.required' => 'Lieu de residence est obligatoire.',
+            'contact.unique' => 'Ce numéro de téléphone est déjà associé à un autre agent.',
             'date_naissance.required' => 'La date de naissance est obligatoire.',
             'user_type.required' => 'Le type d\'agent est obligatoire'
         ]);
@@ -482,7 +482,7 @@ for ($i = 11; $i >= 0; $i--) {
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|unique:comptables,email,'.$comptable->id,
-            'contact' => 'required|string|min:10',
+            'contact' => 'required|string|min:10|unique:comptables,contact,'.$comptable->id,
             'commune' => 'required|string|max:255',
             'date_naissance' => 'required|date',
             'user_type' => 'required',
@@ -495,6 +495,7 @@ for ($i = 11; $i >= 0; $i--) {
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
+            'contact.unique' => 'Ce numéro de téléphone est déjà utilisé par un autre agent.',
             'commune.required' => 'La commune est obligatoire.',
             'date_naissance.required' => 'La date de naissance est obligatoire.',
             'date_naissance.date' => 'La date de naissance doit être une date valide.',
@@ -594,23 +595,50 @@ for ($i = 11; $i >= 0; $i--) {
         return view('comptable.auth.login');
      }
 
-     public function authenticate(Request $request)
-     {
-         // Validation des champs du formulaire
-         $request->validate([
-             'email' => 'required|exists:comptables,email',
-             'password' => 'required|min:8',
-         ], [
-             'email.required' => 'Le mail est obligatoire.',
-             'email.exists' => 'Cette adresse mail n\'existe pas.',
-             'password.required' => 'Le mot de passe est obligatoire.',
-             'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
-         ]);
-     
-         try {
-            if (auth('comptable')->attempt($request->only('email', 'password'))) {
+       public function authenticate(Request $request)
+    {
+        // 1. Validation simplifiée : on accepte n'importe quelle chaîne, pas forcément un email
+        // On suppose que le champ input dans la vue s'appelle toujours 'email' pour ne pas casser le front
+        $request->validate([
+            'email' => 'required', // Le champ s'appelle 'email' dans le formulaire HTML
+            'password' => 'required|min:8',
+        ], [
+            'email.required' => 'L\'identifiant (Email, ID ou Contact) est obligatoire.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+        ]);
+
+        $loginInput = $request->input('email');
+        $password = $request->input('password');
+
+        // 2. Détermination du type de connexion (Champ de la base de données à vérifier)
+        $field = 'email'; // Par défaut
+
+        if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
+            // C'est un format Email valide
+            $field = 'email';
+        } elseif (preg_match('/^AGT[0-9]+$/', strtoupper($loginInput))) {
+            // Ça ressemble à un Code ID (ex: AGT001234)
+            // On s'assure de chercher en majuscule si le code_id est stocké en maj
+            $field = 'code_id';
+            $loginInput = strtoupper($loginInput); // Normalisation (optionnel selon votre stockage)
+        } else {
+            // Si ce n'est ni un email ni un code AGT, on suppose que c'est un numéro de téléphone
+            // On peut aussi ajouter un nettoyage du numéro ici si nécessaire
+            $field = 'contact';
+        }
+
+        try {
+            // 3. Tentative de connexion dynamique
+            // On construit le tableau des identifiants : ['email' => $val] ou ['contact' => $val] ou ['code_id' => $val]
+            $credentials = [
+                $field => $loginInput,
+                'password' => $password
+            ];
+
+            if (auth('comptable')->attempt($credentials)) {
                 $user = auth('comptable')->user();
                 
+                // Redirection selon le rôle
                 if ($user->user_type === 'Agent de recouvrement') {
                     return redirect()->route('accounting.agent.dashboard')->with('success', 'Bienvenue sur votre page Agent');
                 } elseif ($user->user_type === 'Comptable') {
@@ -619,14 +647,17 @@ for ($i = 11; $i >= 0; $i--) {
                     return redirect()->back()->with('error', 'Type d\'utilisateur inconnu.');
                 }
             } else {
-                return redirect()->back()->with('error', 'Mot de passe incorrect.');
+                // Message d'erreur générique pour la sécurité (ou spécifique si besoin)
+                return redirect()->back()
+                    ->with('error', 'Identifiant ou mot de passe incorrect.')
+                    ->withInput($request->except('password'));
             }
 
         } catch (Exception $e) {
-            dd($e);
+            Log::error('Erreur login comptable: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Une erreur technique est survenue.');
         }
-     }
-
+    }
       public function logout(){
         auth('comptable')->logout();
         return redirect()->route('comptable.login')->with('success', 'Déconnexion réussie.');
@@ -752,7 +783,7 @@ for ($i = 11; $i >= 0; $i--) {
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|unique:comptables,email',
-            'contact' => 'required|string|min:10',
+            'contact' => 'required|string|min:10|unique:comptables,contact',
             'commune' => 'required|string|max:255',
             'user_type' =>'required',
             'date_naissance' => 'required|max:255',
@@ -764,6 +795,7 @@ for ($i = 11; $i >= 0; $i--) {
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
+            'contact.unique' => 'Ce numéro de téléphone est déjà utilisé.',
             'commune.required' => 'Lieu de residence est obligatoire.',
             'date_naissance.required' => 'La date de naissance est obligatoire.',
             'user_type.required' => 'Le type d\'agent est obligatoire'
@@ -836,7 +868,7 @@ for ($i = 11; $i >= 0; $i--) {
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|unique:comptables,email,'.$comptable->id,
-            'contact' => 'required|string|min:10',
+            'contact' => 'required|string|min:10|unique:comptables,contact,'.$comptable->id,
             'commune' => 'required|string|max:255',
             'date_naissance' => 'required|date',
             'user_type' => 'required',
@@ -849,6 +881,7 @@ for ($i = 11; $i >= 0; $i--) {
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
+            'contact.unique' => 'Ce numéro de téléphone est déjà utilisé.',
             'commune.required' => 'La commune est obligatoire.',
             'date_naissance.required' => 'La date de naissance est obligatoire.',
             'date_naissance.date' => 'La date de naissance doit être une date valide.',

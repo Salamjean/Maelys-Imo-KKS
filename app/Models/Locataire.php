@@ -7,39 +7,12 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-
-/**
- * @OA\Schema(
- *     schema="Locataire",
- *     type="object",
- *     title="Locataire",
- *     description="Modèle de locataire",
- *     required={"name", "email", "password", "contact"},
- *     @OA\Property(property="id", type="integer", format="int64", description="ID du locataire"),
- *     @OA\Property(property="name", type="string", description="Nom du locataire"),
- *     @OA\Property(property="prenom", type="string", description="Prénom du locataire"),
- *     @OA\Property(property="email", type="string", format="email", description="Email du locataire"),
- *     @OA\Property(property="contact", type="string", description="Contact du locataire"),
- *     @OA\Property(property="piece", type="string", description="Type de pièce d'identité"),
- *     @OA\Property(property="adresse", type="string", description="Adresse du locataire"),
- *     @OA\Property(property="profession", type="string", description="Profession du locataire"),
- *     @OA\Property(property="status", type="string", enum={"Actif", "Inactif"}, description="Statut du locataire"),
- *     @OA\Property(property="agence_id", type="integer", description="ID de l'agence associée"),
- *     @OA\Property(property="proprietaire_id", type="integer", description="ID du propriétaire associé"),
- *     @OA\Property(property="contrat_id", type="integer", description="ID du contrat associé"),
- *     @OA\Property(property="bien_id", type="integer", description="ID du bien associé"),
- *     @OA\Property(property="image1", type="string", format="binary", description="Image 1 du locataire"),
- *     @OA\Property(property="image2", type="string", format="binary", description="Image 2 du locataire"),
- *     @OA\Property(property="image3", type="string", format="binary", description="Image 3 du locataire"),
- *     @OA\Property(property="image4", type="string", format="binary", description="Image 4 du locataire"),
- *     @OA\Property(property="created_at", type="string", format="date-time", description="Date de création"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", description="Date de mise à jour")
- * )
- */
 class Locataire extends Authenticatable
 {
     use HasApiTokens, Notifiable;
+
     protected $fillable = [
+        'code_id', // AJOUTÉ ICI
         'name',
         'prenom',
         'email',
@@ -61,7 +34,6 @@ class Locataire extends Authenticatable
         'image2',
         'image3',
         'image4',
-        // ... autres champs
         'password_reset_token',
         'password_reset_expires',
         'password_reset_otp',
@@ -126,6 +98,4 @@ class Locataire extends Authenticatable
     {
         return $this->hasMany(VerificationCode::class);
     }
-    
-
 }

@@ -6,6 +6,7 @@ use App\Models\Abonnement;
 use App\Models\Bien;
 use App\Models\Paiement;
 use App\Models\Proprietaire;
+use App\Models\HistoriqueBien;
 use App\Models\ResetCodePasswordProprietaire;
 use App\Models\Reversement;
 use App\Models\Visite;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Models\Locataire;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Twilio\Exceptions\TwilioException;
@@ -130,12 +132,15 @@ class ProprietaireController extends Controller
             'email' => 'required|email|unique:proprietaires,email',
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
-            'pourcentage' => 'nullable|max:255',
-            'choix_paiement' => 'required|max:255',
-            'rib' => 'nullable|max:255',
-            'contrat' => 'required',
+            'pourcentage' => 'required|integer|between:1,15', // Corrigé: requis et entier
+            'choix_paiement' => 'required|in:Virement Bancaire,Chèques',
+            // Le RIB est requis SEULEMENT si virement bancaire
+            'rib' => 'required_if:choix_paiement,Virement Bancaire|nullable|string|max:255',
+            // On accepte PDF et Images pour le contrat
+            'contrat' => 'required|file|mimes:pdf,jpeg,png,jpg|max:5120', // Max 5MB
             'profil_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'cni' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            // On accepte PDF et Images pour la CNI
+            'cni' => 'required|file|mimes:pdf,jpeg,png,jpg|max:5120',
         ],[
             'name.required' => 'Le nom du proprietaire est obligatoire.',
             'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
@@ -144,63 +149,73 @@ class ProprietaireController extends Controller
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
+            'pourcentage.required' => 'Le pourcentage est obligatoire.',
+            'rib.required_if' => 'Le RIB est obligatoire pour les virements bancaires.',
             'commune.required' => 'Lieu de residence est obligatoire.',
             'contrat.required' => 'Le contrat est obligatoire.',
             'cni.required' => 'La pièce d\'identité est obligatoire.',
+            'contrat.mimes' => 'Le contrat doit être un fichier PDF ou une Image (JPG, PNG).',
+            'contrat.max' => 'Le fichier du contrat est trop lourd (Max 5Mo).',
+            'cni.mimes' => 'La CNI doit être un fichier PDF ou une Image.',
+            'cni.max' => 'Le fichier de la CNI est trop lourd (Max 5Mo).',
         ]);
 
        
-    try {
-        $agence = Auth::guard('agence')->user();
-        $agenceId = $agence->code_id;
-        
-        // Génération du code PRO unique
-        do {
-            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-            $codeId = 'PRO' . $randomNumber;
-        } while (Proprietaire::where('code_id', $codeId)->exists());
+   try {
+            $agence = Auth::guard('agence')->user();
+            $agenceId = $agence->code_id;
+            
+            // Génération du code PRO unique
+            do {
+                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $codeId = 'PRO' . $randomNumber;
+            } while (Proprietaire::where('code_id', $codeId)->exists());
 
-        // Traitement des fichiers (inchangé)
-        $profileImagePath = $request->hasFile('profil_image') 
-            ? $request->file('profil_image')->store('profil_images', 'public')
-            : null;
+            // Traitement des fichiers
+            $profileImagePath = $request->hasFile('profil_image') 
+                ? $request->file('profil_image')->store('profil_images', 'public')
+                : null;
 
-        $cniImagePath = $request->hasFile('cni')
-            ? $request->file('cni')->store('cnis', 'public')
-            : null;
+            $cniPath = $request->hasFile('cni')
+                ? $request->file('cni')->store('cnis', 'public')
+                : null;
 
-        $contratPath = $request->hasFile('contrat')
-            ? $request->file('contrat')->store('contrats', 'public')
-            : null;
+            $contratPath = $request->hasFile('contrat')
+                ? $request->file('contrat')->store('contrats', 'public')
+                : null;
 
-        // Création du propriétaire
-        $owner = Proprietaire::create([
-            'code_id' => $codeId,
-            'name' => $validatedData['name'],
-            'prenom' => $validatedData['prenom'],
-            'email' => $validatedData['email'],
-            'contact' => $validatedData['contact'],
-            'commune' => $validatedData['commune'],
-            'pourcentage' => $validatedData['pourcentage'],
-            'choix_paiement' => $validatedData['choix_paiement'],
-            'rib' => $validatedData['rib'],
-            'contrat' => $contratPath,
-            'password' => Hash::make('password'),
-            'profil_image' => $profileImagePath,
-            'cni' => $cniImagePath,
-            'agence_id' => $agenceId
-        ]);
+            // Logique pour le RIB : Si chèque, on met "Non applicable" ou null
+            $ribValue = ($request->choix_paiement === 'Chèques') ? null : $request->rib;
 
-        // Envoi SMS de bienvenue
-        $this->sendOwnerWelcomeSms($owner, $agence);
+            // Création du propriétaire
+            $owner = Proprietaire::create([
+                'code_id' => $codeId,
+                'name' => $validatedData['name'],
+                'prenom' => $validatedData['prenom'],
+                'email' => $validatedData['email'],
+                'contact' => $validatedData['contact'],
+                'commune' => $validatedData['commune'],
+                'pourcentage' => $validatedData['pourcentage'],
+                'choix_paiement' => $validatedData['choix_paiement'],
+                'rib' => $ribValue,
+                'contrat' => $contratPath,
+                'password' => Hash::make('password'),
+                'profil_image' => $profileImagePath,
+                'cni' => $cniPath, // Attention: bien utiliser $cniPath (nom variable corrigé)
+                'agence_id' => $agenceId
+            ]);
 
-        return redirect()->route('owner.index')->with('success', 'Propriétaire enregistré avec succès.');
+            // Envoi SMS de bienvenue
+            $this->sendOwnerWelcomeSms($owner, $agence);
 
-    } catch (\Exception $e) {
-        Log::error('Erreur création propriétaire: ' . $e->getMessage());
-        return back()->withErrors(['error' => 'Une erreur est survenue'])->withInput();
+            return redirect()->route('owner.index')->with('success', 'Propriétaire enregistré avec succès.');
+
+        } catch (\Exception $e) {
+            Log::error('Erreur création propriétaire: ' . $e->getMessage());
+            // Retourner l'erreur exacte pour le débogage (à retirer en prod si besoin)
+            return back()->withErrors(['error' => 'Erreur système : ' . $e->getMessage()])->withInput();
+        }
     }
-}
 
 /**
  * Envoi SMS de bienvenue au propriétaire
@@ -386,24 +401,74 @@ private function formatPhoneNumberForSms(string $phone): string
                 ->with('error', 'Erreur lors de la suppression : '.$e->getMessage());
         }
     }
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         try {
-            $proprietaire = Proprietaire::findOrFail($id);
+            DB::beginTransaction();
             
-            // Supprimer le RIB si existant
-            if ($proprietaire->rib) {
-                Storage::delete('public/' . $proprietaire->rib);
+            $proprietaire = Proprietaire::findOrFail($id);
+            $agence = Auth::guard('agence')->user();
+
+            // 1. Récupération LARGE des locataires (Sans filtrer le statut pour être sûr)
+            // Cela garantit que si la Vue a vu des locataires, le Contrôleur les voit aussi.
+            $locatairesActifs = Locataire::where('proprietaire_id', $proprietaire->code_id)->get();
+
+            // 2. Si des locataires existent, on déclenche la sécurité et l'archivage
+            if ($locatairesActifs->isNotEmpty()) {
+                
+                // A. Vérification du code
+                if (!$request->filled('validation_code')) {
+                    return redirect()->back()->with('error', 'Sécurité : Code manquant alors que des locataires existent.');
+                }
+
+                // On nettoie le code (trim) et on compare
+                if (trim($request->input('validation_code')) !== $agence->code_id) {
+                    return redirect()->back()->with('error', 'Code de sécurité incorrect. Suppression annulée.');
+                }
+
+                // B. Archivage dans HistoriqueBien
+                foreach ($locatairesActifs as $locataire) {
+                    $bien = $locataire->bien; 
+                    
+                    HistoriqueBien::create([
+                        'agence_code' => $agence->code_id,
+                        'proprietaire_code' => $proprietaire->code_id,
+                        // Utilisation d'opérateurs null safe au cas où des données manquent
+                        'proprietaire_nom_complet' => ($proprietaire->name ?? '') . ' ' . ($proprietaire->prenom ?? ''),
+                        'bien_type' => $bien ? $bien->type : 'Inconnu',
+                        'bien_commune' => $bien ? $bien->commune : 'Inconnue',
+                        'bien_prix' => $bien ? $bien->prix : 0,
+                        'locataire_nom_complet' => ($locataire->name ?? '') . ' ' . ($locataire->prenom ?? ''),
+                        'locataire_contact' => $locataire->contact ?? 'N/A',
+                        'date_suppression' => now(),
+                    ]);
+                }
             }
+
+            // 3. Suppression des fichiers physiques
+            if ($proprietaire->rib) {
+                Storage::disk('public')->delete($proprietaire->rib);
+            }
+            if ($proprietaire->contrat) {
+                Storage::disk('public')->delete($proprietaire->contrat);
+            }
+            
+            // 4. Suppression finale (Cascading delete gérera les locataires/biens si configuré en BDD)
+            // Sinon décommenter : 
+            // Locataire::where('proprietaire_id', $proprietaire->code_id)->delete();
+            // Bien::where('proprietaire_id', $proprietaire->code_id)->delete();
             
             $proprietaire->delete();
             
-            return redirect()->back()->with('success', 'Propriétaire supprimé avec succès.');
+            DB::commit();
+            return redirect()->back()->with('success', 'Propriétaire supprimé (Historique archivé si nécessaire).');
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erreur lors de la suppression du propriétaire.');
+            DB::rollBack();
+            Log::error('Erreur suppression propriétaire : ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur technique : ' . $e->getMessage());
         }
     }
-
     public function defineAccess($email){
         //Vérification si le sous-admin existe déjà
         $checkSousadminExiste = Proprietaire::where('email', $email)->first();

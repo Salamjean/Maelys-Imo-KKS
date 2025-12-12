@@ -80,7 +80,7 @@ body::before {
                                    class="form-control" 
                                    name="email" 
                                    value="{{ old('email') }}" 
-                                   placeholder="Email"
+                                   placeholder="Email, Contact ou Code Agent"
                                    required
                                    autofocus>
                         </div>
