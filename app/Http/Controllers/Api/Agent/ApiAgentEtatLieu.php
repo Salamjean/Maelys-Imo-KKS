@@ -727,114 +727,71 @@ public function getLocataireAvecBienEtEtatsLieu($locataireId)
      *     )
      * )
      */
-      public function store(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        // 1. Validation (Même règles que le Web Controller + structure JSON)
+        // 1. Validation
         $validated = $request->validate([
             'locataire_id' => 'required|exists:locataires,id',
             'bien_id' => 'required|exists:biens,id',
-            
-            // Champs plats (Web Controller)
-            'adresse_bien' => 'nullable|string',
             'type_bien' => 'nullable|string',
-            'lot' => 'nullable|string',
-            'date_etat' => 'nullable|date',
-            'nature_etat' => 'nullable|string',
-            'nom_locataire' => 'nullable|string',
-            'nom_proprietaire' => 'nullable|string',
-            'presence_partie' => 'required|string', // 'oui' ou 'non'
-            'remarque' => 'nullable|string',
-            
-            // Compteurs (Web Controller)
-            'type_compteur' => 'nullable|string',
-            'numero_compteur' => 'nullable|string',
-            'releve_entre' => 'nullable|string',
-            'releve_sorti' => 'nullable|string',
-            
-            // Parties communes (Transformé depuis JSON vers colonnes plates)
-            'parties_communes' => 'nullable|array',
-            'parties_communes.sol' => 'nullable|string',
-            'parties_communes.murs' => 'nullable|string',
-            'parties_communes.plafond' => 'nullable|string',
-            'parties_communes.porte_entre' => 'nullable|string',
-            'parties_communes.interrupteur' => 'nullable|string',
-            'parties_communes.eclairage' => 'nullable|string',
-
-            // Chambres (Stocké en JSON car le web controller utilise une boucle dynamique)
-            'chambres' => 'nullable|array',
-            
+            'commune_bien' => 'nullable|string', // On valide commune_bien, pas adresse_bien
+            'presence_partie' => 'required|string',
             'nombre_cle' => 'required|integer',
+            
+            // Validation du contenu JSON
+            'parties_communes' => 'nullable|array',
+            'chambres' => 'nullable|array',
         ]);
 
         try {
-            // Récupération du locataire pour les relations
-            $locataire = Locataire::with(['bien', 'proprietaire'])->findOrFail($validated['locataire_id']);
+            // Récupération du locataire avec son bien
+            $locataire = Locataire::with(['bien'])->findOrFail($validated['locataire_id']);
 
             $etatLieu = new EtatLieu();
 
-            // --- 1. Informations générales (Copie du Web Controller) ---
-            // On utilise les données de la requête ou celles du locataire/bien par défaut
-            $etatLieu->adresse_bien = $request->adresse_bien ?? ($locataire->bien ? $locataire->bien->adresse : null);
-            $etatLieu->type_bien = $request->type_bien ?? ($locataire->bien ? $locataire->bien->type : null);
-            $etatLieu->lot = $request->lot;
-            $etatLieu->date_etat = $request->date_etat ?? now();
-            $etatLieu->nature_etat = $request->nature_etat ?? 'Entrée'; // Par défaut Entrée pour ce endpoint
+            // --- 1. Clés Étrangères ---
+            $etatLieu->locataire_id = $locataire->id;
+            $etatLieu->bien_id = $validated['bien_id']; // Ou $locataire->bien_id si c'est lié
             
-            $etatLieu->nom_locataire = $request->nom_locataire ?? $locataire->nom_complet ?? ($locataire->name . ' ' . $locataire->prenom);
-            // Logique propriétaire
-            $propName = null;
-            if($locataire->proprietaire) {
-                $propName = $locataire->proprietaire->nom . ' ' . $locataire->proprietaire->prenom;
-            }
-            $etatLieu->nom_proprietaire = $request->nom_proprietaire ?? $propName;
+            // Si ta table a une colonne agence_id, décommente la ligne suivante :
+            // $etatLieu->agence_id = $locataire->agence_id; 
+
+            // --- 2. Informations Générales (Correspondance exacte BDD) ---
+            
+            // Type de bien
+            $etatLieu->type_bien = $request->type_bien ?? ($locataire->bien ? $locataire->bien->type : null);
+            
+            // Commune (Remplace adresse_bien qui n'existe pas)
+            $etatLieu->commune_bien = $request->commune_bien ?? ($locataire->bien ? $locataire->bien->commune : null);
             
             $etatLieu->presence_partie = $request->presence_partie;
-            $etatLieu->remarque = $request->remarque;
             $etatLieu->nombre_cle = $request->nombre_cle;
 
-            // Statuts (Logique métier)
-            $etatLieu->status_etat_entre = 'En attente'; // Ou 'Oui' selon votre logique immédiate
+            // --- 3. Statuts par défaut ---
+            $etatLieu->status_etat_entre = 'En attente'; // Valeur par défaut
+            $etatLieu->status_sorti = 'Non';            // Valeur par défaut
 
-            // --- 2. Relevés des compteurs (Copie du Web Controller) ---
-            $etatLieu->type_compteur = $request->type_compteur;
-            $etatLieu->numero_compteur = $request->numero_compteur;
-            $etatLieu->releve_entre = $request->releve_entre;
-            $etatLieu->releve_sorti = $request->releve_sorti;
+            // --- 4. Gestion des colonnes JSON ---
 
-            // --- 3. État des lieux par pièce (MAPPING JSON -> COLONNES BDD) ---
-            // Le Web Controller enregistre directement dans les colonnes sol, murs, etc.
-            // L'API reçoit un objet "parties_communes", on extrait les valeurs.
-            $partiesCommunes = $request->input('parties_communes', []);
-            
-            $etatLieu->sol = $partiesCommunes['sol'] ?? null;
-            $etatLieu->murs = $partiesCommunes['murs'] ?? null;
-            $etatLieu->plafond = $partiesCommunes['plafond'] ?? null;
-            $etatLieu->porte_entre = $partiesCommunes['porte_entre'] ?? null;
-            $etatLieu->interrupteur = $partiesCommunes['interrupteur'] ?? null;
-            $etatLieu->eclairage = $partiesCommunes['eclairage'] ?? null;
+            // Parties Communes : On encode le tableau reçu en JSON
+            // Cela va contenir sol, murs, plafond, remarques, etc. tout ce qui est envoyé dans l'objet "parties_communes"
+            $partiesCommunesData = $request->input('parties_communes', []);
+            $etatLieu->parties_communes = json_encode($partiesCommunesData);
 
-            // --- 4. Gestion des champs JSON supplémentaires ---
-            // Si vous avez une colonne 'parties_communes' de type JSON en plus des colonnes plates
-            if (isset($validated['parties_communes'])) {
-                $etatLieu->parties_communes = json_encode($validated['parties_communes']);
-            }
-            
-            // Chambres (Stockage JSON car nombre variable)
+            // Chambres : On encode le tableau reçu en JSON
             if ($request->has('chambres')) {
                 $etatLieu->chambres = json_encode($request->chambres);
+            } else {
+                $etatLieu->chambres = json_encode([]); // Tableau vide par défaut si null
             }
 
-            // --- 5. Clés étrangères ---
-            $etatLieu->locataire_id = $locataire->id; // Attention: Web controller utilise code_id parfois, verifiez votre BDD. Ici on prend ID standard.
-            $etatLieu->proprietaire_id = $locataire->proprietaire_id;
-            $etatLieu->agence_id = $locataire->agence_id;
-
+            // Enregistrement
             $etatLieu->save();
 
-            // Préparation réponse
+            // Préparation de la réponse (on décode le JSON pour l'affichage)
             $response = $etatLieu->toArray();
+            $response['parties_communes'] = json_decode($etatLieu->parties_communes);
             $response['chambres'] = json_decode($etatLieu->chambres);
-            $response['parties_communes_json'] = json_decode($etatLieu->parties_communes);
 
             return response()->json([
                 'success' => true,
@@ -846,7 +803,7 @@ public function getLocataireAvecBienEtEtatsLieu($locataireId)
             return response()->json([
                 'success' => false,
                 'message' => "Erreur lors de l'enregistrement",
-                'error' => $e->getMessage()
+                'error' => $e->getMessage() // Utile pour le debug, à masquer en prod si besoin
             ], 500);
         }
     }
