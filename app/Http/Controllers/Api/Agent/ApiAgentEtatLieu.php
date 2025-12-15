@@ -282,7 +282,10 @@ public function getLocataireAvecBienEtEtatsLieu($locataireId)
                 'ville' => $locataire->bien->ville,
                 'code_postal' => $locataire->bien->code_postal,
                 'surface' => $locataire->bien->surface,
-                'loyer' => $locataire->bien->loyer
+                'loyer' => $locataire->bien->loyer,
+                // --- AJOUTS ICI ---
+                'nombre_de_chambres' => $locataire->bien->nombre_de_chambres, 
+                'nombre_de_toilettes' => $locataire->bien->nombre_de_toilettes
             ];
         }
 
@@ -325,7 +328,6 @@ public function getLocataireAvecBienEtEtatsLieu($locataireId)
         ], 500);
     }
 }
-
 
     /**
      * @OA\Get(
