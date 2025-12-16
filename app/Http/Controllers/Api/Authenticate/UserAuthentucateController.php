@@ -77,88 +77,73 @@ class UserAuthentucateController extends Controller
      *      )
      * )
      */
-    public function login(Request $request)
+ public function login(Request $request)
     {
-        Log::info('Tentative de connexion API', [
-            'code_id' => $request->code_id,
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'origin' => $request->header('origin'),
-            'timestamp' => now()
-        ]);
+        Log::info('--- DÉBUT LOGIN ---');
+        // Log::info('Données reçues:', $request->all()); 
 
         $request->validate([
             'code_id' => 'required|string',
             'password' => 'required|string|min:8',
-        ], [
-            'code_id.required' => 'Le code ID est obligatoire.',
-            'password.required' => 'Le mot de passe est obligatoire.',
-            'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
+            'fcm_token' => 'nullable|string',
         ]);
 
         try {
-            Log::debug('Recherche utilisateur', ['code_id' => $request->code_id]);
-
-            // Essayer d'abord comme locataire
+            // ---------------------------------------------------------
+            // 2. LOGIQUE LOCATAIRE
+            // ---------------------------------------------------------
             $locataire = Locataire::where('code_id', $request->code_id)->first();
             
             if ($locataire) {
-                Log::debug('Locataire trouvé', ['id' => $locataire->id, 'status' => $locataire->status]);
-
-                // Vérifier le statut du locataire
                 if (in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
-                    Log::warning('Compte locataire désactivé', [
-                        'code_id' => $request->code_id,
-                        'status' => $locataire->status
-                    ]);
-
-                    return response()->json([
-                        'error' => 'Compte désactivé',
-                        'message' => 'Votre compte est désactivé. Veuillez contacter votre propriétaire/agence pour plus d\'informations.',
-                        'status' => $locataire->status
-                    ], 403);
+                    return response()->json(['error' => 'Compte désactivé', 'message' => 'Votre compte est désactivé.'], 403);
                 }
 
                 if (Auth::guard('locataire')->attempt(['code_id' => $request->code_id, 'password' => $request->password])) {
                     $user = Auth::guard('locataire')->user();
+
+                    // <--- MISE A JOUR + REFRESH --->
+                    if ($request->filled('fcm_token')) {
+                        $user->fcm_token = $request->fcm_token;
+                        $user->save();
+                        $user->refresh(); // Recharge les données depuis la BDD pour renvoyer le token
+                    }
+                    // <------------------------------>
+
                     $token = $user->createToken('LocataireAuthToken')->plainTextToken;
                     
-                    Log::info('Connexion locataire réussie', [
-                        'user_id' => $user->id,
-                        'code_id' => $user->code_id
-                    ]);
-
                     return response()->json([
-                        'user' => $user,
+                        'user' => $user, 
                         'token' => $token,
                         'user_type' => 'locataire',
                         'redirect' => route('locataire.dashboard')
                     ]);
-                } else {
-                    Log::warning('Mot de passe locataire incorrect', ['code_id' => $request->code_id]);
                 }
             }
 
-            // Essayer comme comptable si pas trouvé comme locataire
+            // ---------------------------------------------------------
+            // 3. LOGIQUE COMPTABLE
+            // ---------------------------------------------------------
             $comptable = Comptable::where('code_id', $request->code_id)->first();
             
             if ($comptable) {
-                Log::debug('Comptable trouvé', ['id' => $comptable->id, 'user_type' => $comptable->user_type]);
-
                 if (Auth::guard('comptable')->attempt(['code_id' => $request->code_id, 'password' => $request->password])) {
                     $user = Auth::guard('comptable')->user();
+
+                    // <--- MISE A JOUR + REFRESH --->
+                    if ($request->filled('fcm_token')) {
+                        $user->fcm_token = $request->fcm_token;
+                        $user->save();
+                        $user->refresh();
+                    }
+                    // <------------------------------>
+
                     $token = $user->createToken('ComptableAuthToken')->plainTextToken;
                     
                     $redirect = $user->user_type === 'Agent de recouvrement' 
                         ? route('accounting.agent.dashboard') 
                         : route('accounting.dashboard');
                     
-                    Log::info('Connexion comptable réussie', [
-                        'user_id' => $user->id,
-                        'code_id' => $user->code_id,
-                        'role' => $user->user_type
-                    ]);
-
                     return response()->json([
                         'user' => $user,
                         'token' => $token,
@@ -166,13 +151,8 @@ class UserAuthentucateController extends Controller
                         'role' => $user->user_type,
                         'redirect' => $redirect
                     ]);
-                } else {
-                    Log::warning('Mot de passe comptable incorrect', ['code_id' => $request->code_id]);
                 }
             }
-
-            // Si aucun des deux
-            Log::warning('Aucun utilisateur trouvé avec ce code_id', ['code_id' => $request->code_id]);
 
             return response()->json([
                 'error' => 'Identifiants incorrects',
@@ -180,23 +160,31 @@ class UserAuthentucateController extends Controller
             ], 401);
 
         } catch (Exception $e) {
-            Log::error('ERREUR CONNEXION:', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-                'code_id' => $request->code_id ?? 'null'
-            ]);
-
-            return response()->json([
-                'error' => 'Erreur de connexion',
-                'message' => 'Une erreur est survenue lors de la connexion.',
-                'debug' => env('APP_DEBUG') ? $e->getMessage() : null
-            ], 500);
+            Log::error('ERREUR CONNEXION: ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur de connexion'], 500);
         }
     }
+    public function logout(Request $request)
+    {
+        // 1. Récupérer l'utilisateur connecté (Locataire ou Comptable)
+        $user = auth()->user();
 
+        if ($user) {
+            // 2. Supprimer le token FCM (Important : pour ne plus recevoir de notifs sur ce téléphone)
+            $user->fcm_token = null;
+            $user->save();
 
+            // 3. Supprimer le token d'authentification actuel (Sanctum)
+            $request->user()->currentAccessToken()->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Déconnexion réussie'
+            ]);
+        }
+
+        return response()->json(['message' => 'Utilisateur non authentifié'], 401);
+    }
     /**
  * @OA\Post(
  *      path="/api/password/forgot",
@@ -373,5 +361,24 @@ public function resetPassword(Request $request)
     $user->save();
 
     return response()->json(['success' => true, 'message' => 'Mot de passe réinitialisé avec succès']);
+
+}
+public function updateFcmToken(Request $request)
+{
+    $request->validate([
+        'fcm_token' => 'required|string',
+    ]);
+
+    // Récupère l'utilisateur connecté (Locataire ou Comptable)
+    $user = auth()->user(); 
+
+    if ($user) {
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
+
+        return response()->json(['message' => 'Token mis à jour avec succès']);
+    }
+
+    return response()->json(['message' => 'Utilisateur non trouvé'], 404);
 }
 }

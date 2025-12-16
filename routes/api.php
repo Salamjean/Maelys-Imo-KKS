@@ -99,3 +99,14 @@ Route::post('/contact', [HomeController::class, 'send'])->name('api.contact.send
 Route::prefix('visit')->group(function(){
     Route::post('store',[ApiVisiteController::class,'store'])->name('api.visite.store');
 });
+// Dans routes/api.php
+// CORRECTION : Utilise le bon nom de contrôleur
+// AJOUTER ICI DANS LE GROUPE AUTHENTIFIÉ
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // Route de déconnexion
+    Route::post('/logout', [UserAuthentucateController::class, 'logout']);
+
+    // ... tes autres routes existantes (update-fcm-token, etc) ...
+    Route::post('/update-fcm-token', [UserAuthentucateController::class, 'updateFcmToken']);
+});
