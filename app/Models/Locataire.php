@@ -35,6 +35,7 @@ class Locataire extends Authenticatable
         'image3',
         'image4',
         'password_reset_token',
+        'fcm_token',
         'password_reset_expires',
         'password_reset_otp',
         'otp_attempts',

@@ -27,6 +27,7 @@ class Comptable extends Authenticatable
         'password_reset_token',
         'password_reset_expires',
         'password_reset_otp',
+        'fcm_token',
         'otp_attempts',
         'reset_access_token',
         'reset_access_expires',
