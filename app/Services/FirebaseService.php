@@ -14,11 +14,24 @@ class FirebaseService
 
     public function __construct()
     {
-        $credentialsPath = base_path(env('FIREBASE_CREDENTIALS'));
+        $credentialsFile = env('FIREBASE_CREDENTIALS');
+
+        if (!$credentialsFile) {
+            Log::error('Firebase: FIREBASE_CREDENTIALS non défini dans .env');
+            return; // Ou lancer une exception
+        }
+
+        $credentialsPath = base_path($credentialsFile);
+
+        // Options HTTP (SSL) SEULEMENT si le certificat local existe (utile en local, pas forcément en prod)
+        $certPath = storage_path('app/certs/cacert.pem');
+        $options = HttpClientOptions::default();
         
-        $options = HttpClientOptions::default()->withGuzzleConfigOptions([
-            'verify' => storage_path('app/certs/cacert.pem'),
-        ]);
+        if (file_exists($certPath)) {
+            $options = $options->withGuzzleConfigOptions([
+                'verify' => $certPath,
+            ]);
+        }
 
         $factory = (new Factory)
             ->withServiceAccount($credentialsPath)
