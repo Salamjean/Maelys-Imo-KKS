@@ -95,18 +95,24 @@ class UserAuthentucateController extends Controller
             $locataire = Locataire::where('code_id', $request->code_id)->first();
             
             if ($locataire) {
+                Log::info('Login: Locataire trouvé. ID: ' . $locataire->id . ' Status: ' . $locataire->status);
                 if (in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
                     return response()->json(['error' => 'Compte désactivé', 'message' => 'Votre compte est désactivé.'], 403);
                 }
 
                 if (Auth::guard('locataire')->attempt(['code_id' => $request->code_id, 'password' => $request->password])) {
+                    Log::info('Login: Auth Locataire RÉUSSIE');
                     $user = Auth::guard('locataire')->user();
 
                     // <--- MISE A JOUR + REFRESH --->
                     if ($request->filled('fcm_token')) {
+                        Log::info('Login Locataire: FCM Token reçu', ['token' => $request->fcm_token]);
                         $user->fcm_token = $request->fcm_token;
                         $user->save();
+                        Log::info('Login Locataire: FCM Token sauvegardé pour ID ' . $user->id);
                         $user->refresh(); // Recharge les données depuis la BDD pour renvoyer le token
+                    } else {
+                        Log::warning('Login Locataire: Pas de FCM Token reçu dans la requête');
                     }
                     // <------------------------------>
 
@@ -127,14 +133,19 @@ class UserAuthentucateController extends Controller
             $comptable = Comptable::where('code_id', $request->code_id)->first();
             
             if ($comptable) {
+                Log::info('Login: Comptable trouvé. ID: ' . $comptable->id);
                 if (Auth::guard('comptable')->attempt(['code_id' => $request->code_id, 'password' => $request->password])) {
+                    Log::info('Login: Auth Comptable RÉUSSIE');
                     $user = Auth::guard('comptable')->user();
 
                     // <--- MISE A JOUR + REFRESH --->
                     if ($request->filled('fcm_token')) {
+                        Log::info('Login Comptable: FCM Token reçu', ['token' => $request->fcm_token]);
                         $user->fcm_token = $request->fcm_token;
                         $user->save();
                         $user->refresh();
+                    } else {
+                        Log::warning('Login Comptable: Pas de FCM Token');
                     }
                     // <------------------------------>
 
