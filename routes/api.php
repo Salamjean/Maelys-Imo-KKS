@@ -89,7 +89,7 @@ Route::prefix('password')->group(function(){
 Route::get('/', [HomeController::class, 'index'])->name('api.home');
 Route::get('/biens/appartements', [HomeController::class, 'appartementsApi'])->name('api.bien.appartements');
 Route::get('/biens/available', [HomeController::class, 'availableApi'])->name('api.bien.available');
-Route::get('/biens/all', [HomeController::class, 'typesDeBiensApi'])->name('api.bien.available');
+Route::get('/biens/all', [HomeController::class, 'typesDeBiensApi']);
 Route::get('/biens/maisons', [HomeController::class, 'maisonsApi'])->name('api.bien.maisons');
 Route::get('/biens/bureaux', [HomeController::class, 'terrainsApi'])->name('api.bien.terrains');
 Route::get('/biens/{id}', [HomeController::class, 'show']);
