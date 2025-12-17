@@ -103,97 +103,102 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                @forelse($biens as $bien)
-                    @php
-                        $rowClass = '';
-                        if ($bien->type === 'Appartement') {
-                            $rowClass = 'table-primary';
-                        } elseif ($bien->type === 'Maison') {
-                            $rowClass = 'table-danger';
-                        } elseif ($bien->type === 'Bureau') {
-                            $rowClass = 'table-success';
-                        }
-                    @endphp
-                    
-                    <tr class="{{ $rowClass }} text-center pt-3" style="height: 30px">
-                        <td>
-                            <strong>
-                                @if($bien->proprietaire)
-                                    {{ $bien->proprietaire->name }} {{ $bien->proprietaire->prenom }}
-                                @elseif($bien->agence)
-                                    {{ $bien->agence->name }}
-                                @else
-                                    Maelys-Imo
-                                @endif
-                            </strong>
-                        </td>
-                        <td ><strong>{{ $bien->numero_bien }}</strong></td>
-                        <td ><strong>{{ $bien->type }}</strong></td>
-                        <td>{{ $bien->superficie }}</td>
-                        <td>{{ $bien->commune }}</td>
-                        <td class="text-center">{{ $bien->nombre_de_chambres ?? 'N/A' }}</td>
-                        <td class="text-center">{{ $bien->nombre_de_toilettes ?? 'N/A' }}</td>
-                        <td class="text-center">{{ $bien->garage ?? 'N/A' }}</td>
-                        <td class="text-center">{{ $bien->utilisation ?? 'N/A' }}</td>
-                        <td>{{ $bien->avance ? number_format($bien->avance, 0, ',', ' ').' Mois' : 'N/A' }}</td>
-                        <td>{{ $bien->caution ? number_format($bien->caution, 0, ',', ' ').' Mois' : 'N/A' }}</td>
-                        <td class="font-weight-bold">{{ number_format($bien->prix, 0, ',', ' ').' FCFA' }}</td>
-                        <td class="font-weight-bold">{{ number_format($bien->montant_total, 0, ',', ' ').' FCFA' }}</td>
-                        <td><strong>{{ $bien->date_fixe }}</strong> de chaque mois</td>
-                        <td class="text-center">
-                            @if($bien->status == 'Disponible')
-                                <span class="badge badge-success">Disponible</span>
-                            @else
-                                <span class="badge badge-danger">Loué</span>
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            @if($bien->image)
-                                <img src="{{ asset('storage/'.$bien->image) }}" 
-                                     class="img-thumbnail preview-image"
-                                     data-image="{{ asset('storage/'.$bien->image) }}"
-                                     style="width: 60px; height: 60px; cursor: zoom-in; object-fit: cover;">
-                            @else
-                                <span class="text-muted">Aucune</span>
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            @if($bien->image1)
-                                <img src="{{ asset('storage/'.$bien->image1) }}" 
-                                     class="img-thumbnail preview-image"
-                                     data-image="{{ asset('storage/'.$bien->image1) }}"
-                                     style="width: 60px; height: 60px; cursor: zoom-in; object-fit: cover;">
-                            @else
-                                <span class="text-muted">Aucune</span>
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <a href="{{ route('bien.edit.agence', $bien->id) }}" class="btn btn-sm btn-warning" title="Modifier">
-                                    <i class="mdi mdi-pencil"></i>
-                                </a>
-                                <button class="btn btn-danger btn-sm delete-bien" 
-                                        data-id="{{ $bien->id }}" 
-                                        data-name="{{ $bien->type }} - {{ $bien->description }}">
-                                    <i class="mdi mdi-delete"></i> 
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="18" class="text-center py-4">
-                            <div class="alert alert-info">
-                                Aucun bien immobilier enregistré pour le moment.
-                            </div>
-                            <a href="{{ route('bien.create.agence') }}" class="btn btn-primary mt-2">
-                                <i class="mdi mdi-plus-circle"></i> Ajouter un nouveau bien
-                            </a>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
+             <tbody>
+        @forelse($biens as $bien)
+            @php
+                $rowClass = '';
+                if ($bien->type === 'Appartement') {
+                    $rowClass = 'table-primary';
+                } elseif ($bien->type === 'Maison') {
+                    $rowClass = 'table-danger';
+                } elseif ($bien->type === 'Bureau') {
+                    $rowClass = 'table-success';
+                }
+            @endphp
+            
+            <tr class="{{ $rowClass }} text-center pt-3" style="height: 30px">
+                <td>
+                    <strong>
+                        @if($bien->proprietaire)
+                            {{ $bien->proprietaire->name }} {{ $bien->proprietaire->prenom }}
+                        @elseif($bien->agence)
+                            {{ $bien->agence->name }}
+                        @else
+                            Maelys-Imo
+                        @endif
+                    </strong>
+                </td>
+                <td><strong>{{ $bien->numero_bien }}</strong></td>
+                <td><strong>{{ $bien->type }}</strong></td>
+                <td>{{ $bien->superficie }}</td>
+                <td>{{ $bien->commune }}</td>
+                <td class="text-center">{{ $bien->nombre_de_chambres ?? 'N/A' }}</td>
+                <td class="text-center">{{ $bien->nombre_de_toilettes ?? 'N/A' }}</td>
+                <td class="text-center">{{ $bien->garage ?? 'N/A' }}</td>
+                <td class="text-center">{{ $bien->utilisation ?? 'N/A' }}</td>
+                
+                {{-- CORRECTION ICI : Ajout de (float) --}}
+                <td>{{ $bien->avance ? number_format((float)$bien->avance, 0, ',', ' ').' Mois' : 'N/A' }}</td>
+                <td>{{ $bien->caution ? number_format((float)$bien->caution, 0, ',', ' ').' Mois' : 'N/A' }}</td>
+                <td class="font-weight-bold">{{ number_format((float)$bien->prix, 0, ',', ' ').' FCFA' }}</td>
+                <td class="font-weight-bold">{{ number_format((float)$bien->montant_total, 0, ',', ' ').' FCFA' }}</td>
+                
+                <td><strong>{{ $bien->date_fixe }}</strong> de chaque mois</td>
+                <td class="text-center">
+                    @if($bien->status == 'Disponible')
+                        <span class="badge badge-success">Disponible</span>
+                    @else
+                        <span class="badge badge-danger">Loué</span>
+                    @endif
+                </td>
+                
+                <!-- ... Le reste des colonnes (images, actions) reste inchangé ... -->
+                <td class="text-center">
+                    @if($bien->image)
+                        <img src="{{ asset('storage/'.$bien->image) }}" 
+                             class="img-thumbnail preview-image"
+                             data-image="{{ asset('storage/'.$bien->image) }}"
+                             style="width: 60px; height: 60px; cursor: zoom-in; object-fit: cover;">
+                    @else
+                        <span class="text-muted">Aucune</span>
+                    @endif
+                </td>
+                <td class="text-center">
+                    @if($bien->image1)
+                        <img src="{{ asset('storage/'.$bien->image1) }}" 
+                             class="img-thumbnail preview-image"
+                             data-image="{{ asset('storage/'.$bien->image1) }}"
+                             style="width: 60px; height: 60px; cursor: zoom-in; object-fit: cover;">
+                    @else
+                        <span class="text-muted">Aucune</span>
+                    @endif
+                </td>
+                <td class="text-center">
+                    <div class="btn-group" role="group">
+                        <a href="{{ route('bien.edit.agence', $bien->id) }}" class="btn btn-sm btn-warning" title="Modifier">
+                            <i class="mdi mdi-pencil"></i>
+                        </a>
+                        <button class="btn btn-danger btn-sm delete-bien" 
+                                data-id="{{ $bien->id }}" 
+                                data-name="{{ $bien->type }} - {{ $bien->description }}">
+                            <i class="mdi mdi-delete"></i> 
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="18" class="text-center py-4">
+                    <div class="alert alert-info">
+                        Aucun bien immobilier enregistré pour le moment.
+                    </div>
+                    <a href="{{ route('bien.create.agence') }}" class="btn btn-primary mt-2">
+                        <i class="mdi mdi-plus-circle"></i> Ajouter un nouveau bien
+                    </a>
+                </td>
+            </tr>
+        @endforelse
+    </tbody>
           </table>
           
           @if($biens->hasPages())
