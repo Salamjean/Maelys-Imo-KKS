@@ -51,7 +51,7 @@
     <div class="container px-lg-5">
         <div class="section-title position-relative text-center mb-5 pb-2 wow fadeInUp" data-wow-delay="0.1s">
             <h6 class="position-relative d-inline text-primary ps-4">Nos Biens Disponibles</h6>
-            <h2 class="mt-2">Découvrez Notre Sélection</h2>
+            <h2 class="mt-2"></h2>
         </div>
 
         <div class="row g-4 justify-content-center">
