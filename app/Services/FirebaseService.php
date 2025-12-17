@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use Kreait\Firebase\Factory;
+use Kreait\Firebase\Http\HttpClientOptions;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
+use Illuminate\Support\Facades\Log;
 
 class FirebaseService
 {
@@ -12,29 +14,32 @@ class FirebaseService
 
     public function __construct()
     {
-        // On initialise Firebase avec le fichier JSON défini dans le .env
         $credentialsPath = base_path(env('FIREBASE_CREDENTIALS'));
         
-        $factory = (new Factory)->withServiceAccount($credentialsPath);
+        $options = HttpClientOptions::default()->withGuzzleConfigOptions([
+            'verify' => storage_path('app/certs/cacert.pem'),
+        ]);
+
+        $factory = (new Factory)
+            ->withServiceAccount($credentialsPath)
+            ->withHttpClientOptions($options);
+            
         $this->messaging = $factory->createMessaging();
     }
 
     public function sendNotification($fcmToken, $title, $body, $data = [])
     {
-        if (!$fcmToken) {
-            return false;
-        }
+        if (!$fcmToken) return false;
 
         try {
             $message = CloudMessage::withTarget('token', $fcmToken)
                 ->withNotification(Notification::create($title, $body))
-                ->withData($data); // Données sup (ex: ID du bien, type de notif)
+                ->withData($data);
 
             $this->messaging->send($message);
             return true;
         } catch (\Throwable $e) {
-            // Log l'erreur pour le débogage
-            \Log::error("Erreur Firebase: " . $e->getMessage());
+            Log::error("Erreur Firebase: " . $e->getMessage());
             return false;
         }
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Abonnement;
 use App\Models\Bien;
+use App\Services\FirebaseService;
 use App\Models\Locataire;
 use App\Models\Proprietaire;
 use App\Models\Visite;
@@ -384,7 +385,46 @@ public function storeAgence(Request $request)
 
     $bien->agence_id = Auth::guard('agence')->user()->code_id;
     $bien->save();
+// --- DEBUT BLOC NOTIFICATION (DEBUG VERBEUX) ---
+    Log::info("=== DÉBUT PROCESSUS NOTIFICATION (Création Bien) ===");
+    try {
+        // 1. Vérifier si on trouve des locataires
+        $locataires = Locataire::whereNotNull('fcm_token')->where('fcm_token', '!=', '')->get();
+        Log::info("Nombre de locataires avec token trouvés : " . $locataires->count());
 
+        if ($locataires->count() > 0) {
+            $firebaseService = new FirebaseService();
+
+            $titre = "Nouveau " . $bien->type . " disponible ! 🏠";
+            $message = "Un bien vient d'être ajouté à " . $bien->commune . " pour " . $bien->prix . " FCFA.";
+
+            foreach ($locataires as $locataire) {
+                Log::info("Tentative d'envoi au Locataire ID: " . $locataire->id);
+                Log::info("Token utilisé: " . substr($locataire->fcm_token, 0, 20) . "..."); // On affiche juste le début pour pas polluer
+
+                $result = $firebaseService->sendNotification(
+                    $locataire->fcm_token,
+                    $titre,
+                    $message,
+                    ['type' => 'new_bien', 'bien_id' => $bien->id]
+                );
+
+                if ($result) {
+                    Log::info("✅ Succès : Notification envoyée à " . $locataire->email);
+                } else {
+                    Log::error("❌ Échec : Le service Firebase a retourné FALSE pour " . $locataire->email);
+                }
+            }
+        } else {
+            Log::warning("⚠️ Aucun locataire n'a de token FCM enregistré.");
+        }
+
+    } catch (\Exception $e) {
+        Log::error("🔥 EXCEPTION CRITIQUE Notification : " . $e->getMessage());
+        Log::error("Trace : " . $e->getTraceAsString());
+    }
+    Log::info("=== FIN PROCESSUS NOTIFICATION ===");
+    // --- FIN BLOC NOTIFICATION ---
     return redirect()->route('bien.index.agence')->with('success', 'Le bien a été enregistré avec succès!');
 }
 
@@ -590,7 +630,39 @@ public function updateAgence(Request $request, $id)
         }
 
         $bien->save();
+// --- DEBUT BLOC NOTIFICATION (DEBUG VERBEUX) ---
+        Log::info("=== DÉBUT PROCESSUS NOTIFICATION (Update Bien) ===");
+        try {
+            if($bien->status === 'Disponible') {
+                $locataires = Locataire::whereNotNull('fcm_token')->where('fcm_token', '!=', '')->get();
+                Log::info("Nombre de locataires à notifier : " . $locataires->count());
 
+                $firebaseService = new FirebaseService();
+                $titre = "Mise à jour d'un bien 🔔";
+                $message = "Les informations du " . $bien->type . " à " . $bien->commune . " ont été mises à jour.";
+
+                foreach ($locataires as $locataire) {
+                    $result = $firebaseService->sendNotification(
+                        $locataire->fcm_token,
+                        $titre,
+                        $message,
+                        ['type' => 'update_bien', 'bien_id' => $bien->id]
+                    );
+                    
+                    if ($result) {
+                        Log::info("✅ Notif Update envoyée à ID: " . $locataire->id);
+                    } else {
+                        Log::error("❌ Echec Notif Update pour ID: " . $locataire->id);
+                    }
+                }
+            } else {
+                Log::info("Pas de notification car le bien n'est pas 'Disponible' (Status: " . $bien->status . ")");
+            }
+        } catch (\Exception $e) {
+            Log::error("🔥 Erreur notification updateAgence : " . $e->getMessage());
+        }
+        Log::info("=== FIN PROCESSUS NOTIFICATION ===");
+        // --- FIN BLOC NOTIFICATION ---
         return redirect()->route('bien.index.agence')->with('success', 'Le bien a été mis à jour avec succès!');
 
     } catch (\Exception $e) {
