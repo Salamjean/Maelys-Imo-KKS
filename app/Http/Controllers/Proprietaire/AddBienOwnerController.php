@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Abonnement;
 use App\Models\Bien;
 use App\Models\Locataire;
+use App\Services\FirebaseService;
 use App\Models\Visite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -177,7 +178,35 @@ class AddBienOwnerController extends Controller
     }
     $bien->proprietaire_id = $proprietaire->code_id;
     $bien->save();
+// --- DEBUT BLOC NOTIFICATION (NOUVEAU BIEN - PROPRIETAIRE) ---
+        try {
+            $locataires = Locataire::whereNotNull('fcm_token')->where('fcm_token', '!=', '')->get();
+            
+            if ($locataires->count() > 0) {
+                $firebaseService = new FirebaseService();
+                $titre = "Nouveau " . $bien->type . " disponible ! 🏠";
+                $message = "Un propriétaire vient d'ajouter un bien à " . $bien->commune . " pour " . $bien->prix . " FCFA.";
 
+                foreach ($locataires as $locataire) {
+                    $dataRedirection = [
+                        'type' => 'new_bien',
+                        'bien_id' => (string) $bien->id,
+                        'route' => '/portal',
+                        'sound' => 'default'
+                    ];
+
+                    $firebaseService->sendNotification(
+                        $locataire->fcm_token,
+                        $titre,
+                        $message,
+                        $dataRedirection
+                    );
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("🔥 Erreur notification AddBienOwner store : " . $e->getMessage());
+        }
+        // --- FIN BLOC NOTIFICATION ---
     return redirect()->route('owner.bienList')->with('success', 'Le bien a été enregistré avec succès!');
 }
 
@@ -355,7 +384,34 @@ class AddBienOwnerController extends Controller
     }
 
     $bien->save();
+// --- DEBUT BLOC NOTIFICATION (UPDATE BIEN - PROPRIETAIRE) ---
+        try {
+            if ($bien->status === 'Disponible') {
+                $locataires = Locataire::whereNotNull('fcm_token')->where('fcm_token', '!=', '')->get();
+                $firebaseService = new FirebaseService();
+                $titre = "Mise à jour d'un bien 🔔";
+                $message = "Les informations du " . $bien->type . " à " . $bien->commune . " ont été mises à jour par le propriétaire.";
 
+                foreach ($locataires as $locataire) {
+                    $dataRedirection = [
+                        'type' => 'update_bien',
+                        'bien_id' => (string) $bien->id,
+                        'route' => '/portal',
+                        'sound' => 'default'
+                    ];
+
+                    $firebaseService->sendNotification(
+                        $locataire->fcm_token,
+                        $titre,
+                        $message,
+                        $dataRedirection
+                    );
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("🔥 Erreur notification AddBienOwner update : " . $e->getMessage());
+        }
+        // --- FIN BLOC NOTIFICATION ---
     return redirect()->route('owner.bienList')->with('success', 'Le bien a été mis à jour avec succès!');
 }
 

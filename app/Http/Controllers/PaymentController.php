@@ -7,6 +7,7 @@ use App\Mail\PaymentReminderMail;
 use App\Models\Bien;
 use App\Models\CashVerificationCode;
 use App\Models\Locataire;
+use App\Services\FirebaseService;
 use App\Models\Paiement;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -23,91 +24,105 @@ use Twilio\Rest\Client;
 
 class PaymentController extends Controller
 {
-      public function sendPaymentReminder(Request $request)
-        {
-            $request->validate([
-                'locataire_id' => 'required|exists:locataires,id',
-                'email' => 'required|email',
-                'taux_majoration' => 'nullable|numeric|min:0|max:100'
-            ]);
+    public function sendPaymentReminder(Request $request)
+    {
+        $request->validate([
+            'locataire_id' => 'required|exists:locataires,id',
+            'email' => 'required|email',
+            'taux_majoration' => 'nullable|numeric|min:0|max:100'
+        ]);
 
-            $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-            
-            // Calcul du nouveau montant avec majoration
-            $montantLoyer = $locataire->bien->prix ?? 0;
-            $tauxMajoration = $request->taux_majoration ?? 0;
-            $nouveauMontant = $montantLoyer * (1 + $tauxMajoration / 100);
-            
-            // Mise à jour du montant majoré
-            $bien = $locataire->bien->fresh();
-            $bien->montant_majore = $nouveauMontant;
-            $bien->save();
-            
-            // Log de l'action
-            Log::info('Envoi email à: '.$request->email, [
-                'locataire' => $locataire->id,
-                'montant' => $nouveauMontant
-            ]);
+        $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+        
+        // Calcul des montants
+        $montantLoyer = $locataire->bien->prix ?? 0;
+        $tauxMajoration = $request->taux_majoration ?? 0;
+        $nouveauMontant = $montantLoyer * (1 + $tauxMajoration / 100);
+        
+        // Mise à jour BDD
+        $bien = $locataire->bien->fresh();
+        $bien->montant_majore = $nouveauMontant;
+        $bien->save();
+        
+        Log::info('Envoi rappel à: '.$request->email, ['montant' => $nouveauMontant]);
 
-            // Envoi de l'email (code existant)
+        // 1. ENVOI EMAIL
+        try {
             Mail::to($request->email)->send(new PaymentReminderMail($locataire, $nouveauMontant, $tauxMajoration));
-            
-            /**********************************************************************
-             * ENVOI DU RAPPEL PAR SMS (NOUVEAU CODE)
-             **********************************************************************/
-            try {
-                $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-                
-                $httpClient = new \Twilio\Http\CurlClient([
-                    CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
-                    CURLOPT_SSL_VERIFYPEER => true,
-                    CURLOPT_SSL_VERIFYHOST => 2,
-                ]);
-                $twilio->setHttpClient($httpClient);
-
-                $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
-
-                // Construction du message SMS
-                $smsContent = "Bonjour {$locataire->prenom},\n\n"
-                            . "Rappel: Paiement du loyer du {$bien->type}\n"
-                            . "Montant: " . number_format($nouveauMontant, 0, ',', ' ') . " FCFA\n";
-                
-                if ($tauxMajoration > 0) {
-                    $smsContent .= "Majoration: {$tauxMajoration}%\n";
-                }
-                
-                $smsContent .= "\nMerci de régler avant le {$bien->date_fixe} de ce mois.";
-
-                $message = $twilio->messages->create(
-                    $phoneNumber,
-                    [
-                        'from' => env('TWILIO_PHONE_NUMBER'),
-                        'body' => $smsContent,
-                    ]
-                );
-
-                Log::channel('sms')->info('SMS rappel envoyé', [
-                    'locataire_id' => $locataire->id,
-                    'montant' => $nouveauMontant,
-                    'message_sid' => $message->sid
-                ]);
-
-            } catch (\Exception $e) {
-                Log::channel('sms')->error('Erreur envoi SMS rappel', [
-                    'locataire_id' => $locataire->id,
-                    'error' => $e->getMessage()
-                ]);
-            }
-            /**********************************************************************
-             * FIN DU NOUVEAU CODE
-             **********************************************************************/
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Le rappel de paiement a été envoyé par email et SMS avec succès',
-                'nouveau_montant' => $nouveauMontant
-            ]);
+        } catch (\Exception $e) {
+            Log::error("Erreur Mail: " . $e->getMessage());
         }
+        
+        // 2. ENVOI SMS
+        try {
+            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+            // Configuration SSL Twilio pour local (Optionnel si prod)
+            /* $httpClient = new \Twilio\Http\CurlClient([
+                CURLOPT_CAINFO => storage_path('app/certs/cacert.pem'), // Adapter le chemin si besoin
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+            $twilio->setHttpClient($httpClient); */
+
+            $phoneNumber = $locataire->contact; // Pense à formater le numéro si nécessaire (+225...)
+            
+            $smsContent = "Bonjour {$locataire->prenom},\n"
+                        . "Rappel Loyer {$bien->type}: " . number_format($nouveauMontant, 0, ',', ' ') . " FCFA\n"
+                        . "Date limite: {$bien->date_fixe} du mois.\n"
+                        . "Merci de régulariser votre situation.";
+
+            $twilio->messages->create(
+                $phoneNumber,
+                [
+                    'from' => env('TWILIO_PHONE_NUMBER'),
+                    'body' => $smsContent,
+                ]
+            );
+            Log::info("SMS envoyé à $phoneNumber");
+        } catch (\Exception $e) {
+            Log::error('Erreur SMS: ' . $e->getMessage());
+        }
+
+        // 3. ENVOI PUSH NOTIFICATION (NOUVEAU)
+        try {
+            if ($locataire->fcm_token) {
+                $firebaseService = new FirebaseService();
+
+                $titre = "Rappel de Paiement 📅";
+                $message = "Votre loyer de " . number_format($nouveauMontant, 0, ',', ' ') . " FCFA est en attente.";
+                
+                // URL de ton image publique
+                $imageUrl = "https://maelysimo.com/assets/images/mae-imo.png";
+
+                // Données pour la redirection (Flutter)
+                $dataRedirection = [
+                    'type' => 'payment_reminder',
+                    'montant' => (string) $nouveauMontant,
+                    'route' => '/paiements', // La page des paiements dans ton appli Flutter
+                    'sound' => 'default'
+                ];
+
+                $firebaseService->sendNotification(
+                    $locataire->fcm_token,
+                    $titre,
+                    $message,
+                    $dataRedirection,
+                    $imageUrl // On passe l'image ici
+                );
+                
+                Log::info("Notification Push envoyée au locataire ID: " . $locataire->id);
+            } else {
+                Log::warning("Pas de fcm_token pour le locataire ID: " . $locataire->id);
+            }
+        } catch (\Exception $e) {
+            Log::error("Erreur Push Notification: " . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rappels envoyés (Email, SMS, Push)',
+            'nouveau_montant' => $nouveauMontant
+        ]);
+    }
 
     public function index($locataireId)
     {
