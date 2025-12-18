@@ -26,13 +26,22 @@ class FirebaseService
 
         // Correction SSL pour WAMP/Local (Force le certificat)
         $certPath = storage_path('app/certs/cacert.pem');
+        $options = HttpClientOptions::default();
+        
         if (file_exists($certPath)) {
-             putenv("CURL_CA_BUNDLE=$certPath");
-             putenv("SSL_CERT_FILE=$certPath");
+            $options = $options->withGuzzleConfigOptions([
+                'verify' => $certPath,
+            ]);
+            // On garde putenv en complément pour d'autres libs si besoin
+            putenv("CURL_CA_BUNDLE=$certPath");
+            putenv("SSL_CERT_FILE=$certPath");
         }
 
-        // Initialisation standard
-        $factory = (new Factory)->withServiceAccount($credentialsPath);
+        // Initialisation avec options SSL
+        $factory = (new Factory)
+            ->withServiceAccount($credentialsPath)
+            ->withHttpClientOptions($options);
+            
         $this->messaging = $factory->createMessaging();
     }
 
