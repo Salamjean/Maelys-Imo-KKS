@@ -6,8 +6,9 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Http\HttpClientOptions;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
-use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Messaging\AndroidConfig;
+use Illuminate\Support\Facades\Log;
+
 class FirebaseService
 {
     protected $messaging;
@@ -18,52 +19,50 @@ class FirebaseService
 
         if (!$credentialsFile) {
             Log::error('Firebase: FIREBASE_CREDENTIALS non défini dans .env');
-            return; // Ou lancer une exception
+            return;
         }
 
         $credentialsPath = base_path($credentialsFile);
 
-        // Options HTTP (SSL) SEULEMENT si le certificat local existe (utile en local, pas forcément en prod)
+        // Correction SSL pour WAMP/Local (Force le certificat)
         $certPath = storage_path('app/certs/cacert.pem');
-        $options = HttpClientOptions::default();
-        
         if (file_exists($certPath)) {
-            $options = $options->withGuzzleConfigOptions([
-                'verify' => $certPath,
-            ]);
+             putenv("CURL_CA_BUNDLE=$certPath");
+             putenv("SSL_CERT_FILE=$certPath");
         }
 
-        $factory = (new Factory)
-            ->withServiceAccount($credentialsPath)
-            ->withHttpClientOptions($options);
-            
+        // Initialisation standard
+        $factory = (new Factory)->withServiceAccount($credentialsPath);
         $this->messaging = $factory->createMessaging();
     }
 
-  // Modification : Ajout du paramètre $imageUrl
-    public function sendNotification($fcmToken, $title, $body, $data = [], $imageUrl = null)
+    // On a retiré $imageUrl et simplifié la logique pour le Heads-up
+    public function sendNotification($fcmToken, $title, $body, $data = [])
     {
         if (!$fcmToken) return false;
 
         try {
-            // Configuration Android (Son + Priorité + Icône par défaut)
+            // Configuration stricte pour Android "Heads-up" Notification
             $androidConfig = AndroidConfig::fromArray([
-                'priority' => 'high',
+                'priority' => 'high', // CRUCIAL pour flotter sur l'écran
                 'notification' => [
+                    'title' => $title,
+                    'body'  => $body,
                     'sound' => 'default',
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'channel_id' => 'channel_id_maelys_v2',
-                    'icon' => '@mipmap/ic_launcher' // Icône locale (petite)
+                    'channel_id' => 'channel_id_maelys_v3', // Doit matcher ton code Flutter
+                    'default_sound' => true,
+                    'default_vibrate_timings' => true,
+                    'visibility' => 'public' // Affiche le contenu même sur l'écran de verrouillage
                 ],
             ]);
 
-            // Création de la notification (Titre, Corps, Image URL)
-            $notification = Notification::create($title, $body, $imageUrl);
-
+            // Construction du message
+            // Note : On n'utilise PAS 'Notification::create' ici pour éviter les conflits
+            // On met tout dans AndroidConfig pour un contrôle total sur Android
             $message = CloudMessage::withTarget('token', $fcmToken)
-                ->withNotification($notification)
                 ->withAndroidConfig($androidConfig)
-                ->withData($data);
+                ->withData($data); // Les données cachées pour la redirection
 
             $this->messaging->send($message);
             return true;
@@ -72,5 +71,4 @@ class FirebaseService
             return false;
         }
     }
-
 }
