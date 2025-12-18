@@ -37,32 +37,33 @@ class FirebaseService
     }
 
     // On a retiré $imageUrl et simplifié la logique pour le Heads-up
-    public function sendNotification($fcmToken, $title, $body, $data = [])
+   public function sendNotification($fcmToken, $title, $body, $data = [])
     {
         if (!$fcmToken) return false;
 
+        // 1. On s'assure que les data sont des Strings (Firebase n'aime pas les entiers)
+        $cleanData = array_map('strval', $data);
+
         try {
-            // Configuration stricte pour Android "Heads-up" Notification
             $androidConfig = AndroidConfig::fromArray([
-                'priority' => 'high', // CRUCIAL pour flotter sur l'écran
+                'priority' => 'high',
                 'notification' => [
                     'title' => $title,
                     'body'  => $body,
                     'sound' => 'default',
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'channel_id' => 'channel_id_maelys_v3', // Doit matcher ton code Flutter
+                    // CORRECTION 1 : On passe à v4 pour réinitialiser les réglages du téléphone
+                    'channel_id' => 'channel_id_maelys_v4', 
+                    // CORRECTION 2 : On force le nom de ton icône (sans l'extension)
+                    'icon' => 'ic_notification', 
                     'default_sound' => true,
                     'default_vibrate_timings' => true,
-                    'visibility' => 'public' // Affiche le contenu même sur l'écran de verrouillage
+                    'visibility' => 'public',
                 ],
             ]);
 
-            // Construction du message
-            // Note : On n'utilise PAS 'Notification::create' ici pour éviter les conflits
-            // On met tout dans AndroidConfig pour un contrôle total sur Android
             $message = CloudMessage::withTarget('token', $fcmToken)
                 ->withAndroidConfig($androidConfig)
-                ->withData($data); // Les données cachées pour la redirection
+                ->withData($cleanData); // Données pour la redirection
 
             $this->messaging->send($message);
             return true;
