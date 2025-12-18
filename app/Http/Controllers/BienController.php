@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Abonnement;
 use App\Models\Bien;
 use App\Services\FirebaseService;
+use App\Models\Agence;
 use App\Models\Locataire;
 use App\Models\Proprietaire;
 use App\Models\Visite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Kreait\Firebase\Messaging\AndroidConfig;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -395,25 +397,24 @@ public function storeAgence(Request $request)
         if ($locataires->count() > 0) {
             $firebaseService = new FirebaseService();
 
-            $titre = "Nouveau " . $bien->type . " disponible ! 🏠";
+            $titre = "Nouvelle " . "$bien->type" . " disponible ! 🏠";
             $message = "Un bien vient d'être ajouté à " . $bien->commune . " pour " . $bien->prix . " FCFA.";
 
-            foreach ($locataires as $locataire) {
-                Log::info("Tentative d'envoi au Locataire ID: " . $locataire->id);
-                Log::info("Token utilisé: " . substr($locataire->fcm_token, 0, 20) . "..."); // On affiche juste le début pour pas polluer
+           foreach ($locataires as $locataire) {
+                // On prépare les données pour la redirection
+                $dataRedirection = [
+                    'type' => 'new_bien',
+                    'bien_id' => (string) $bien->id, // Toujours convertir les ID en string pour Firebase
+                    'route' => '/portal', // <--- TA REDIRECTION ICI
+                    'sound' => 'default'
+                ];
 
-                $result = $firebaseService->sendNotification(
+                $firebaseService->sendNotification(
                     $locataire->fcm_token,
                     $titre,
                     $message,
-                    ['type' => 'new_bien', 'bien_id' => $bien->id]
+                    $dataRedirection
                 );
-
-                if ($result) {
-                    Log::info("✅ Succès : Notification envoyée à " . $locataire->email);
-                } else {
-                    Log::error("❌ Échec : Le service Firebase a retourné FALSE pour " . $locataire->email);
-                }
             }
         } else {
             Log::warning("⚠️ Aucun locataire n'a de token FCM enregistré.");
@@ -641,19 +642,20 @@ public function updateAgence(Request $request, $id)
                 $titre = "Mise à jour d'un bien 🔔";
                 $message = "Les informations du " . $bien->type . " à " . $bien->commune . " ont été mises à jour.";
 
-                foreach ($locataires as $locataire) {
-                    $result = $firebaseService->sendNotification(
+              foreach ($locataires as $locataire) {
+                    $dataRedirection = [
+                        'type' => 'update_bien',
+                        'bien_id' => (string) $bien->id,
+                        'route' => '/portal', // Ou peut-être '/details_bien'
+                        'sound' => 'default'
+                    ];
+
+                    $firebaseService->sendNotification(
                         $locataire->fcm_token,
                         $titre,
                         $message,
-                        ['type' => 'update_bien', 'bien_id' => $bien->id]
+                        $dataRedirection
                     );
-                    
-                    if ($result) {
-                        Log::info("✅ Notif Update envoyée à ID: " . $locataire->id);
-                    } else {
-                        Log::error("❌ Echec Notif Update pour ID: " . $locataire->id);
-                    }
                 }
             } else {
                 Log::info("Pas de notification car le bien n'est pas 'Disponible' (Status: " . $bien->status . ")");
