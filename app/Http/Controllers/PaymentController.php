@@ -83,30 +83,29 @@ class PaymentController extends Controller
         }
 
         // 3. ENVOI PUSH NOTIFICATION (NOUVEAU)
-        try {
+       try {
             if ($locataire->fcm_token) {
                 $firebaseService = new FirebaseService();
 
                 $titre = "Rappel de Paiement 📅";
                 $message = "Votre loyer de " . number_format($nouveauMontant, 0, ',', ' ') . " FCFA est en attente.";
                 
-                // URL de ton image publique
-                $imageUrl = "https://maelysimo.com/assets/images/mae-imo.png";
-
-                // Données pour la redirection (Flutter)
+                // On retire $imageUrl car ton service ne l'utilise plus
+                
                 $dataRedirection = [
                     'type' => 'payment_reminder',
-                    'montant' => (string) $nouveauMontant,
-                    'route' => '/paiements', // La page des paiements dans ton appli Flutter
-                    'sound' => 'default'
+                    'montant' => (string) $nouveauMontant, // Converti en string, c'est bien
+                    'route' => '/notifications',
+                    // On peut ajouter d'autres infos utiles pour l'affichage mobile
+                    'locataire_nom' => $locataire->name
                 ];
 
+                // Appel correct avec 4 arguments
                 $firebaseService->sendNotification(
                     $locataire->fcm_token,
                     $titre,
                     $message,
-                    $dataRedirection,
-                    $imageUrl // On passe l'image ici
+                    $dataRedirection
                 );
                 
                 Log::info("Notification Push envoyée au locataire ID: " . $locataire->id);
