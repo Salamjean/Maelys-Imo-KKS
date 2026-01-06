@@ -60,9 +60,9 @@
                 <div class="property-item rounded overflow-hidden" style="background-color: #f8f9fae4;">
                     <div class="position-relative overflow-hidden">
                         @if($bien->image)
-                        <img class="img-fluid" src="{{ asset('storage/'.$bien->image) }}" alt="{{ $bien->type }}" style="height: 250px; width: 100%; object-fit: cover;">
+                        <img class="img-fluid" src="{{ asset('storage/'.$bien->image) }}" alt="{{ $bien->type }}" style="height: 250px; width: 100%; object-fit: cover; object-position: center;">
                         @else
-                        <img class="img-fluid" src="{{ asset('home/img/default-property.jpg') }}" alt="Image par défaut" style="height: 250px; width: 100%; object-fit: cover;">
+                        <img class="img-fluid" src="{{ asset('home/img/default-property.jpg') }}" alt="Image par défaut" style="height: 250px; width: 100%; object-fit: cover; object-position: center;">
                         @endif
                         <div class="bg-primary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">
                             {{ $bien->type }}
