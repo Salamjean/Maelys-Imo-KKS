@@ -2,7 +2,7 @@
     <div id="header-carousel" class="carousel slide" data-bs-ride="carousel">
         <div class="carousel-inner">
             @forelse($biens->take(4) as $index => $bien)
-                <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" style="height: 600px;">
+                <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" style="height: 700px;">
                     @if($bien->image)
                         <img class="w-100 h-100" src="{{ asset('storage/' . $bien->image) }}" alt="{{ $bien->type }}" style="object-fit: cover;">
                     @else
@@ -33,7 +33,7 @@
                     </div>
                 </div>
             @empty
-                <div class="carousel-item active" style="height: 600px;">
+                <div class="carousel-item active" style="height: 700px;">
                     <img class="w-100 h-100" src="{{ asset('assets/images/appart.jpg') }}" alt="Bien immobilier par défaut" style="object-fit: cover;">
                     <div class="carousel-caption">
                         <div class="container">
