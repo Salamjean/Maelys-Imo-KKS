@@ -62,44 +62,43 @@
 </style>
 
 <div class="container-xxl py-5">
-    <div class="container px-lg-5">
-        <div class="section-title position-relative text-center mb-5 pb-2 wow fadeInUp" data-wow-delay="0.1s">
-            <h2 class="position-relative d-inline text-primary ps-4">Tous les bureaux disponibles</h2>
-            <h6 class="mt-2">Effectuer une visite en un clic !</h6>
+    <div class="container">
+        <div class="text-center mb-5">
+            <h6 class="text-primary text-uppercase">Bureaux Disponibles</h6>
+            <h2>Tous les bureaux disponibles</h2>
         </div>
 
-        <div class="row g-4 justify-content-center">
+        <div class="row g-4">
             @forelse($biens as $bien)
-            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="property-item rounded overflow-hidden" style="background-color: #f8f9fae4;">
+            <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="property-item rounded overflow-hidden shadow-sm" style="background-color: #fff;">
                     <div class="position-relative overflow-hidden">
                         @if($bien->image)
-                        <img class="img-fluid" src="{{ asset('storage/'.$bien->image) }}" alt="{{ $bien->type }}" style="height: 250px; width: 100%; object-fit: cover;">
+                        <img class="img-fluid" src="{{ asset('storage/'.$bien->image) }}" alt="{{ $bien->type }}" style="height: 220px; width: 100%; object-fit: cover;">
                         @else
-                        <img class="img-fluid" src="{{ asset('home/img/default-property.jpg') }}" alt="Image par défaut" style="height: 250px; width: 100%; object-fit: cover;">
+                        <img class="img-fluid" src="{{ asset('home/img/default-property.jpg') }}" alt="Image par défaut" style="height: 220px; width: 100%; object-fit: cover;">
                         @endif
-                        <div class="bg-primary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">
+                        <div class="bg-primary rounded text-white position-absolute start-0 top-0 m-3 py-1 px-3">
                             {{ $bien->type }}
                         </div>
-                        <div class="bg-white rounded-top position-absolute start-0 bottom-0 mx-4 pt-1 px-3" style="color: #02245b; font-size: 20px;">
+                        <div class="bg-white rounded-top position-absolute start-0 bottom-0 mx-3 pt-1 px-3" style="color: #02245b; font-weight: bold;">
                             {{ number_format($bien->prix, 0, ',', ' ') }} FCFA
                         </div>
                     </div>
-                    <div class="p-4 pb-0">
-                        <h5 class="text-primary mb-3">{{ $bien->commune }}</h5>
-                        <p class="d-block h5 mb-2">{{ $bien->type }}</p>
-                        <p><i class="fa fa-map-marker-alt text-primary me-2"></i>{{ Str::limit($bien->commune, 100) }}</p>
-                        <p>
+                    <div class="p-4">
+                        <h5 class="text-primary mb-2">{{ Str::limit($bien->commune, 15) }}</h5>
+                        <p class="mb-2">{{ $bien->type }}</p>
+                        <p class="text-muted small mb-3" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             @if($bien->agence_id)
-                                <i class="fa fa-home text-primary me-2"></i> Agence : {{ $bien->agence->name ?? 'ecole' }}
+                                <i class="fa fa-building me-1"></i> {{ Str::limit($bien->agence->name ?? 'Maelys-Imo', 18) }}
                             @elseif($bien->proprietaire_id)
                                 @if($bien->proprietaire->gestion == 'agence')
-                                    <i class="fa fa-home text-primary me-2"></i>Agence : Maelys-imo 
+                                    <i class="fa fa-building me-1"></i> Maelys-imo 
                                 @else
-                                    <i class="fa fa-user text-primary me-2"></i>Propriétaire : {{ $bien->proprietaire->name.' '.$bien->proprietaire->prenom ?? 'Maelys-imo' }}
+                                    <i class="fa fa-user me-1"></i> {{ Str::limit($bien->proprietaire->name.' '.$bien->proprietaire->prenom, 18) ?? 'Maelys-imo' }}
                                 @endif
                             @else
-                                <i class="fa fa-home text-primary me-2"></i>Agence : Maelys-imo
+                                <i class="fa fa-building me-1"></i> Maelys-imo
                             @endif
                         </p>
                     </div>
