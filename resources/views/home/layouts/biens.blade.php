@@ -59,16 +59,16 @@
                         </div>
                     </div>
                     <div class="p-4 bg-white">
-                        <h5 class="text-primary mb-2">{{ $bien->commune }}</h5>
+                        <h5 class="text-primary mb-2">{{ Str::limit($bien->commune, 15) }}</h5>
                         <p class="mb-2">{{ $bien->type }}</p>
-                        <p class="text-muted small mb-3">
+                        <p class="text-muted small mb-3" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             @if($bien->agence_id)
-                                <i class="fa fa-building me-1"></i> {{ $bien->agence->name ?? 'Maelys-Imo' }}
+                                <i class="fa fa-building me-1"></i> {{ Str::limit($bien->agence->name ?? 'Maelys-Imo', 18) }}
                             @elseif($bien->proprietaire_id && $bien->proprietaire)
                                 @if(optional($bien->proprietaire)->gestion == 'agence')
                                     <i class="fa fa-building me-1"></i> Maelys-imo
                                 @else
-                                    <i class="fa fa-user me-1"></i> {{ optional($bien->proprietaire)->name.' '.optional($bien->proprietaire)->prenom ?? 'Maelys-imo' }}
+                                    <i class="fa fa-user me-1"></i> {{ Str::limit(optional($bien->proprietaire)->name.' '.optional($bien->proprietaire)->prenom, 18) ?? 'Maelys-imo' }}
                                 @endif
                             @else
                                 <i class="fa fa-building me-1"></i> Maelys-imo
