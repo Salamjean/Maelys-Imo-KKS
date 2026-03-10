@@ -7,16 +7,19 @@
                     <div class="col-md-4">
                         <select class="form-select py-3 rounded-pill border-0 shadow-sm" name="type">
                             <option value="">Tous les types</option>
-                            <option value="Appartement" {{ request('type') == 'Appartement' ? 'selected' : '' }}>Appartement</option>
+                            <option value="Appartement" {{ request('type') == 'Appartement' ? 'selected' : '' }}>
+                                Appartement</option>
                             <option value="Maison" {{ request('type') == 'Maison' ? 'selected' : '' }}>Maison</option>
                             <option value="Bureau" {{ request('type') == 'Bureau' ? 'selected' : '' }}>Bureau</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <input type="text" class="form-control py-3 rounded-pill border-0 shadow-sm" placeholder="Commune..." name="commune" value="{{ request('commune') }}">
+                        <input type="text" class="form-control py-3 rounded-pill border-0 shadow-sm"
+                            placeholder="Commune..." name="commune" value="{{ request('commune') }}">
                     </div>
                     <div class="col-md-3">
-                        <input type="number" class="form-control py-3 rounded-pill border-0 shadow-sm" placeholder="Prix max (FCFA)" name="prix_max" value="{{ request('prix_max') }}">
+                        <input type="number" class="form-control py-3 rounded-pill border-0 shadow-sm"
+                            placeholder="Prix max (FCFA)" name="prix_max" value="{{ request('prix_max') }}">
                     </div>
                     <div class="col-md-1 d-flex justify-content-center">
                         <button type="submit" class="btn btn-primary rounded-circle" style="width: 50px; height: 50px;">
@@ -26,11 +29,11 @@
                 </div>
             </form>
             @if(request()->hasAny(['type', 'commune', 'prix_max']))
-            <div class="text-center mt-3">
-                <a href="/" class="btn btn-outline-primary btn-sm rounded-pill">
-                    <i class="fa fa-times me-1"></i> Réinitialiser les filtres
-                </a>
-            </div>
+                <div class="text-center mt-3">
+                    <a href="/" class="btn btn-outline-primary btn-sm rounded-pill">
+                        <i class="fa fa-times me-1"></i> Réinitialiser les filtres
+                    </a>
+                </div>
             @endif
         </div>
 
@@ -43,79 +46,98 @@
         <!-- Liste des biens -->
         <div class="row g-4">
             @forelse($biens as $bien)
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="property-item rounded overflow-hidden shadow-sm">
-                    <div class="position-relative">
-                        @if($bien->image)
-                        <img class="img-fluid w-100" src="{{ asset('storage/'.$bien->image) }}" alt="{{ $bien->type }}" style="height: 220px; object-fit: cover;">
-                        @else
-                        <img class="img-fluid w-100" src="{{ asset('home/img/default-property.jpg') }}" alt="Image par défaut" style="height: 220px; object-fit: cover;">
-                        @endif
-                        <div class="bg-primary text-white position-absolute start-0 top-0 m-3 py-1 px-3 rounded">
-                            {{ $bien->type }}
-                        </div>
-                        <div class="bg-white position-absolute start-0 bottom-0 mx-3 mb-3 py-1 px-3 rounded" style="color: #02245b; font-weight: bold;">
-                            {{ number_format($bien->prix, 0, ',', ' ') }} FCFA
-                        </div>
-                    </div>
-                    <div class="p-4 bg-white">
-                        <h5 class="text-primary mb-2">{{ Str::limit($bien->commune, 15) }}</h5>
-                        <p class="mb-2">{{ $bien->type }}</p>
-                        <p class="text-muted small mb-3" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            @if($bien->agence_id)
-                                <i class="fa fa-building me-1"></i> {{ Str::limit($bien->agence->name ?? 'Maelys-Imo', 18) }}
-                            @elseif($bien->proprietaire_id && $bien->proprietaire)
-                                @if(optional($bien->proprietaire)->gestion == 'agence')
-                                    <i class="fa fa-building me-1"></i> Maelys-imo
+                    <div class="col-xl-3 col-lg-4 col-md-6">
+                        <div class="property-item rounded overflow-hidden shadow-sm">
+                            <div class="position-relative">
+                                @if($bien->video_3d)
+                                    <div class="video-3d-wrapper" style="height: 220px; background: #000; overflow: hidden;">
+                                        @php $embedUrl = $bien->getVideo3dEmbedUrl(); @endphp
+                                        @if(str_contains($embedUrl, '<iframe'))
+                                            {!! $embedUrl !!}
+                                        @else
+                                            <iframe src="{{ $embedUrl }}" style="width: 100%; height: 100%; border: 0;"
+                                                allowfullscreen></iframe>
+                                        @endif
+                                        <style>
+                                            .video-3d-wrapper iframe {
+                                                width: 100%;
+                                                height: 100% !important;
+                                            }
+                                        </style>
+                                    </div>
+                                @elseif($bien->image)
+                                    <img class="img-fluid w-100" src="{{ asset('storage/' . $bien->image) }}" alt="{{ $bien->type }}"
+                                        style="height: 220px; object-fit: cover;">
                                 @else
-                                    <i class="fa fa-user me-1"></i> {{ Str::limit(optional($bien->proprietaire)->name.' '.optional($bien->proprietaire)->prenom, 18) ?? 'Maelys-imo' }}
+                                    <img class="img-fluid w-100" src="{{ asset('home/img/default-property.jpg') }}"
+                                        alt="Image par défaut" style="height: 220px; object-fit: cover;">
                                 @endif
-                            @else
-                                <i class="fa fa-building me-1"></i> Maelys-imo
-                            @endif
-                        </p>
-                        <div class="d-flex justify-content-between border-top pt-3">
-                            <small><i class="fa fa-ruler-combined text-primary me-1"></i>{{ $bien->superficie }} m²</small>
-                            <small><i class="fa fa-bed text-primary me-1"></i>{{ $bien->nombre_de_chambres }} Ch.</small>
-                            <small><i class="fa fa-bath text-primary me-1"></i>{{ $bien->nombre_de_toilettes }} SdB</small>
+                                <div class="bg-primary text-white position-absolute start-0 top-0 m-3 py-1 px-3 rounded">
+                                    {{ $bien->type }}
+                                </div>
+                                <div class="bg-white position-absolute start-0 bottom-0 mx-3 mb-3 py-1 px-3 rounded"
+                                    style="color: #02245b; font-weight: bold;">
+                                    {{ number_format($bien->prix, 0, ',', ' ') }} FCFA
+                                </div>
+                            </div>
+                            <div class="p-4 bg-white">
+                                <h5 class="text-primary mb-2">{{ Str::limit($bien->commune, 15) }}</h5>
+                                <p class="mb-2">{{ $bien->type }}</p>
+                                <p class="text-muted small mb-3"
+                                    style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @if($bien->agence_id)
+                                        <i class="fa fa-building me-1"></i>
+                                        {{ Str::limit($bien->agence->name ?? 'Maelys-Imo', 18) }}
+                                    @elseif($bien->proprietaire_id && $bien->proprietaire)
+                                        @if(optional($bien->proprietaire)->gestion == 'agence')
+                                            <i class="fa fa-building me-1"></i> Maelys-imo
+                                        @else
+                                            <i class="fa fa-user me-1"></i>
+                                            {{ Str::limit(optional($bien->proprietaire)->name . ' ' . optional($bien->proprietaire)->prenom, 18) ?? 'Maelys-imo' }}
+                                        @endif
+                                    @else
+                                        <i class="fa fa-building me-1"></i> Maelys-imo
+                                    @endif
+                                </p>
+                                <div class="d-flex justify-content-between border-top pt-3">
+                                    <small><i class="fa fa-ruler-combined text-primary me-1"></i>{{ $bien->superficie }}
+                                        m²</small>
+                                    <small><i class="fa fa-bed text-primary me-1"></i>{{ $bien->nombre_de_chambres }}
+                                        Ch.</small>
+                                    <small><i class="fa fa-bath text-primary me-1"></i>{{ $bien->nombre_de_toilettes }}
+                                        SdB</small>
+                                </div>
+                                <button class="btn btn-primary w-100 mt-3 view-details-btn" data-bien-id="{{ $bien->id }}"
+                                    data-bien-type="{{ $bien->type }}" data-bien-commune="{{ $bien->commune }}"
+                                    data-bien-description="{{ $bien->description }}"
+                                    data-bien-superficie="{{ $bien->superficie }}"
+                                    data-bien-chambres="{{ $bien->nombre_de_chambres }}"
+                                    data-bien-toilettes="{{ $bien->nombre_de_toilettes }}"
+                                    data-bien-garage="{{ $bien->garage }}" data-bien-prix="{{ $bien->prix }}"
+                                    data-bien-avance="{{ $bien->avance }}" data-bien-caution="{{ $bien->caution }}"
+                                    data-bien-frais="{{ $bien->frais }}" data-bien-agence="{{ 
+                                            $bien->agence_id
+                ? ($bien->agence->name ?? 'Maelys-imo')
+                : ($bien->proprietaire_id
+                    ? ($bien->proprietaire->gestion == 'agence'
+                        ? 'Maelys-imo'
+                        : ($bien->proprietaire->name . ' ' . $bien->proprietaire->prenom ?? 'Maelys-imo'))
+                    : 'Maelys-imo')
+                                        }}" data-bien-contact="{{ $bien->agence->contact ?? '+225 0798278981' }}"
+                                    data-bien-date="{{ $bien->date_fixe }}"
+                                    data-bien-image="{{ $bien->image ? asset('storage/' . $bien->image) : asset('home/img/default-property.jpg') }}"
+                                    data-bien-image1="{{ $bien->image1 ? asset('storage/' . $bien->image1) : asset('home/img/default-property-2.jpg') }}">
+                                    Voir détails
+                                </button>
+                            </div>
                         </div>
-                        <button class="btn btn-primary w-100 mt-3 view-details-btn"
-                                data-bien-id="{{ $bien->id }}"
-                                data-bien-type="{{ $bien->type }}"
-                                data-bien-commune="{{ $bien->commune }}"
-                                data-bien-description="{{ $bien->description }}"
-                                data-bien-superficie="{{ $bien->superficie }}"
-                                data-bien-chambres="{{ $bien->nombre_de_chambres }}"
-                                data-bien-toilettes="{{ $bien->nombre_de_toilettes }}"
-                                data-bien-garage="{{ $bien->garage }}"
-                                data-bien-prix="{{ $bien->prix }}"
-                                data-bien-avance="{{ $bien->avance }}"
-                                data-bien-caution="{{ $bien->caution }}"
-                                data-bien-frais="{{ $bien->frais }}"
-                                data-bien-agence="{{ 
-                                    $bien->agence_id 
-                                        ? ($bien->agence->name ?? 'Maelys-imo') 
-                                        : ($bien->proprietaire_id 
-                                            ? ($bien->proprietaire->gestion == 'agence' 
-                                                ? 'Maelys-imo' 
-                                                : ($bien->proprietaire->name.' '.$bien->proprietaire->prenom ?? 'Maelys-imo'))
-                                            : 'Maelys-imo')
-                                }}"
-                                data-bien-contact="{{ $bien->agence->contact ?? '+225 0798278981' }}"
-                                data-bien-date="{{ $bien->date_fixe }}"
-                                data-bien-image="{{ $bien->image ? asset('storage/'.$bien->image) : asset('home/img/default-property.jpg') }}"
-                                data-bien-image1="{{ $bien->image1 ? asset('storage/'.$bien->image1) : asset('home/img/default-property-2.jpg') }}">
-                            Voir détails
-                        </button>
+                    </div>
+            @empty
+                <div class="col-12 text-center py-5">
+                    <div class="alert alert-info">
+                        Aucun bien immobilier disponible pour le moment.
                     </div>
                 </div>
-            </div>
-            @empty
-            <div class="col-12 text-center py-5">
-                <div class="alert alert-info">
-                    Aucun bien immobilier disponible pour le moment.
-                </div>
-            </div>
             @endforelse
         </div>
     </div>
@@ -137,14 +159,14 @@
 </div>
 
 <style>
-.property-item {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
+    .property-item {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
 
-.property-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
-}
+    .property-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    }
 </style>
 
 <!-- Scripts -->
@@ -154,48 +176,48 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 
 <script>
-new WOW().init();
-document.addEventListener('DOMContentLoaded', function() {
-    const images = document.querySelectorAll('.property-item img');
-    images.forEach(img => {
-        img.addEventListener('click', function() {
-            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
-            document.getElementById('modalImage').src = this.src;
-            modal.show();
+    new WOW().init();
+    document.addEventListener('DOMContentLoaded', function () {
+        const images = document.querySelectorAll('.property-item img');
+        images.forEach(img => {
+            img.addEventListener('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+                document.getElementById('modalImage').src = this.src;
+                modal.show();
+            });
         });
     });
-});
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-$(document).ready(function() {
-    $(document).on('click', '.view-details-btn', function() {
-        const bien = {
-            id: $(this).data('bien-id'),
-            type: $(this).data('bien-type'),
-            commune: $(this).data('bien-commune'),
-            description: $(this).data('bien-description'),
-            superficie: $(this).data('bien-superficie'),
-            chambres: $(this).data('bien-chambres'),
-            toilettes: $(this).data('bien-toilettes'),
-            garage: $(this).data('bien-garage'),
-            prix: $(this).data('bien-prix'),
-            avance: $(this).data('bien-avance'),
-            caution: $(this).data('bien-caution'),
-            frais: $(this).data('bien-frais'),
-            agence: $(this).data('bien-agence'),
-            contact: $(this).data('bien-contact'),
-            date: $(this).data('bien-date'),
-            image: $(this).data('bien-image'),
-            image1: $(this).data('bien-image1')
-        };
+    $(document).ready(function () {
+        $(document).on('click', '.view-details-btn', function () {
+            const bien = {
+                id: $(this).data('bien-id'),
+                type: $(this).data('bien-type'),
+                commune: $(this).data('bien-commune'),
+                description: $(this).data('bien-description'),
+                superficie: $(this).data('bien-superficie'),
+                chambres: $(this).data('bien-chambres'),
+                toilettes: $(this).data('bien-toilettes'),
+                garage: $(this).data('bien-garage'),
+                prix: $(this).data('bien-prix'),
+                avance: $(this).data('bien-avance'),
+                caution: $(this).data('bien-caution'),
+                frais: $(this).data('bien-frais'),
+                agence: $(this).data('bien-agence'),
+                contact: $(this).data('bien-contact'),
+                date: $(this).data('bien-date'),
+                image: $(this).data('bien-image'),
+                image1: $(this).data('bien-image1')
+            };
 
-        const formatPrix = (prix) => {
-            return new Intl.NumberFormat('fr-FR').format(prix) + ' FCFA';
-        };
+            const formatPrix = (prix) => {
+                return new Intl.NumberFormat('fr-FR').format(prix) + ' FCFA';
+            };
 
-        const htmlContent = `
+            const htmlContent = `
             <div class="text-start">
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -243,24 +265,26 @@ $(document).ready(function() {
                 ` : ''}
             </div>
         `;
-        
-        Swal.fire({
-            title: 'Détails du bien',
-            html: htmlContent,
-            width: '750px',
-            showCloseButton: true,
-            showConfirmButton: true,
-            confirmButtonText: 'Fermer',
-            confirmButtonColor: '#02245b',
-            showDenyButton: true,
-            denyButtonText: 'Visiter',
-            denyButtonColor: '#28a745',
-            buttonsStyling: true
-        }).then((result) => {
-            if (result.isDenied) {
-                window.location.href = `/visiter-bien/${bien.id}`;
-            }
+
+            Swal.fire({
+                title: 'Détails du bien',
+                html: htmlContent,
+                width: '750px',
+                showCloseButton: true,
+                showConfirmButton: true,
+                confirmButtonText: 'Voir plus',
+                confirmButtonColor: '#02245b',
+                showDenyButton: true,
+                denyButtonText: 'Visiter',
+                denyButtonColor: '#28a745',
+                buttonsStyling: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `/details-bien/${bien.id}`;
+                } else if (result.isDenied) {
+                    window.location.href = `/visiter-bien/${bien.id}`;
+                }
+            });
         });
     });
-});
 </script>

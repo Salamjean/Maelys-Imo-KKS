@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nouveau mot de passe</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('assets/images/mae-imo.png') }}">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ asset('login/assets/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('login/assets/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('login/assets/css/uf-style.css') }}">
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+</head>
+<style>
+    body {
+        display: flex;
+        align-items: center;
+        background-image: url("{{ asset('assets/images/proprio.png') }}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        position: relative;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+    }
+</style>
+
+<body>
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-12 col-lg-5">
+                <div class="uf-form-signin p-4 rounded shadow">
+                    <!-- Logo et Titre -->
+                    <div class="text-center mb-4">
+                        <a href="{{ url('/') }}">
+                            <img src="{{ asset('assets/images/mae-imo.png') }}" alt="" style="border-radius: 30px"
+                                width="100" height="100">
+                        </a>
+                        <h1 class="text-white h3 mb-0">Nouveau mot de passe</h1>
+                        <p class="text-white-50 small mt-2">Réinitialisation pour le Code ID :
+                            <strong>{{ $code_id }}</strong></p>
+                    </div>
+
+                    <!-- Formulaire -->
+                    <form action="{{ route('unified.password.update') }}" method="POST" novalidate>
+                        @csrf
+                        <input type="hidden" name="token" value="{{ $token }}">
+                        <input type="hidden" name="code_id" value="{{ $code_id }}">
+
+                        <!-- Champ Nouveau Mot de passe -->
+                        <div class="input-group uf-input-group input-group-lg mb-3">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" class="form-control" name="password"
+                                placeholder="Nouveau mot de passe" required autofocus>
+                        </div>
+
+                        <!-- Champ Signature Mot de passe -->
+                        <div class="input-group uf-input-group input-group-lg mb-4">
+                            <span class="input-group-text"><i class="fas fa-check-circle"></i></span>
+                            <input type="password" class="form-control" name="password_confirmation"
+                                placeholder="Confirmez le mot de passe" required>
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn uf-btn-primary btn-lg py-3">
+                                <i class="fas fa-save me-2"></i> Enregistrer le mot de passe
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ asset('login/assets/js/popper.min.js') }}"></script>
+    <script src="{{ asset('login/assets/js/bootstrap.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Gestion des erreurs -->
+    @if($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    html: `{!! implode('<br>', $errors->all()) !!}`,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6'
+                });
+            });
+        </script>
+    @endif
+</body>
+
+</html>

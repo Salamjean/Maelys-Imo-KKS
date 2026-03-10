@@ -31,8 +31,8 @@ class ComptableController extends Controller
         $currentMonth = now()->format('Y-m');
 
         // 1. Statistiques de base
-        if($comptable->agence_id || $comptable->proprietaire_id){
-            $totalLocataires = Locataire::where(function($query) use ($comptable) {
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
+            $totalLocataires = Locataire::where(function ($query) use ($comptable) {
                 if ($comptable->agence_id) {
                     $query->orWhere('agence_id', $comptable->agence_id);
                 }
@@ -40,39 +40,17 @@ class ComptableController extends Controller
                     $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
                 }
             })->count();
-        }else{
+        } else {
             $totalLocataires = Locataire::whereNull('agence_id')
-                                        ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                            ->orWhereHas('proprietaire', function($q) {
-                                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                            })
-                                        ->count();
+                ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                })
+                ->count();
         }
 
-        if($comptable->agence_id || $comptable->proprietaire_id){
-            $locatairesActifs = Locataire::where(function($query) use ($comptable) {
-                                            if ($comptable->agence_id) {
-                                                $query->orWhere('agence_id', $comptable->agence_id);
-                                            }
-                                            if ($comptable->proprietaire_id) {
-                                                $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                                            }
-                                        })
-                                        ->where('status', 'Actif')->
-                                        count();
-        }else{
-            $locatairesActifs = Locataire::whereNull('agence_id')
-                                            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                            ->orWhereHas('proprietaire', function($q) {
-                                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                            })
-                                            ->where('status', 'Actif')
-                                            ->count();
-        }
-        
-        // 2. Statistiques des biens (optimisé en une seule requête)
-        if($comptable->agence_id || $comptable->proprietaire_id){
-            $biensStats = Bien::where(function($query) use ($comptable) {
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
+            $locatairesActifs = Locataire::where(function ($query) use ($comptable) {
                 if ($comptable->agence_id) {
                     $query->orWhere('agence_id', $comptable->agence_id);
                 }
@@ -80,38 +58,60 @@ class ComptableController extends Controller
                     $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
                 }
             })
-                            ->selectRaw("COUNT(*) as total, 
+                ->where('status', 'Actif')->
+                count();
+        } else {
+            $locatairesActifs = Locataire::whereNull('agence_id')
+                ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                })
+                ->where('status', 'Actif')
+                ->count();
+        }
+
+        // 2. Statistiques des biens (optimisé en une seule requête)
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
+            $biensStats = Bien::where(function ($query) use ($comptable) {
+                if ($comptable->agence_id) {
+                    $query->orWhere('agence_id', $comptable->agence_id);
+                }
+                if ($comptable->proprietaire_id) {
+                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                }
+            })
+                ->selectRaw("COUNT(*) as total, 
                                 SUM(CASE WHEN status = 'Loué' THEN 1 ELSE 0 END) as Loué, 
                                 SUM(CASE WHEN status = 'Disponible' THEN 1 ELSE 0 END) as Disponible")
-                            ->first();
-        }else{
+                ->first();
+        } else {
             $biensStats = Bien::whereNull('agence_id')
-                             ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                            ->orWhereHas('proprietaire', function($q) {
-                                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                            })
-                            ->selectRaw("COUNT(*) as total, 
+                ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                })
+                ->selectRaw("COUNT(*) as total, 
                                 SUM(CASE WHEN status = 'Loué' THEN 1 ELSE 0 END) as Loué, 
                                 SUM(CASE WHEN status = 'Disponible' THEN 1 ELSE 0 END) as Disponible")
-                            ->first();
+                ->first();
         }
         $biensLoues = $biensStats['Loué'] ?? 0;
         $biensDisponibles = $biensStats['Disponible'] ?? 0;
-        
+
         // 3. Statistiques financières
-    if($comptable->agence_id || $comptable->proprietaire_id){
-         // Récupération des paiements{
-        $paiementsStats = Paiement::whereHas('bien', function($query) use ($comptable) {
-                $query->where(function($query) use ($comptable) {
-                if ($comptable->agence_id) {
-                    $query->orWhere('agence_id', $comptable->agence_id);
-                }
-                if ($comptable->proprietaire_id) {
-                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                }
-            });
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
+            // Récupération des paiements{
+            $paiementsStats = Paiement::whereHas('bien', function ($query) use ($comptable) {
+                $query->where(function ($query) use ($comptable) {
+                    if ($comptable->agence_id) {
+                        $query->orWhere('agence_id', $comptable->agence_id);
+                    }
+                    if ($comptable->proprietaire_id) {
+                        $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                    }
+                });
             })
-            ->selectRaw("
+                ->selectRaw("
                 COUNT(*) as total,
                 SUM(CASE WHEN statut = 'payé' THEN 1 ELSE 0 END) as count_paye,
                 SUM(CASE WHEN statut = 'En attente' THEN 1 ELSE 0 END) as count_attente,
@@ -119,18 +119,18 @@ class ComptableController extends Controller
                 SUM(CASE WHEN statut = 'En attente' THEN montant ELSE 0 END) as total_attente,
                 SUM(CASE WHEN mois_couvert = ? AND statut = 'payé' THEN montant ELSE 0 END) as mois_courant,
                 SUM(CASE WHEN mois_couvert LIKE ? AND statut = 'payé' THEN montant ELSE 0 END) as annee_courante",
-                [now()->format('Y-m'), now()->year.'-%']
-            )
-            ->first();
-    } else {
-        $paiementsStats = Paiement::whereHas('bien', function($query) {
+                    [now()->format('Y-m'), now()->year . '-%']
+                )
+                ->first();
+        } else {
+            $paiementsStats = Paiement::whereHas('bien', function ($query) {
                 $query->whereNull('agence_id')
                     ->whereNull('proprietaire_id')
-                    ->orWhereHas('proprietaire', function($q) {
+                    ->orWhereHas('proprietaire', function ($q) {
                         $q->where('gestion', 'agence');
                     });
             })
-            ->selectRaw("
+                ->selectRaw("
                 COUNT(*) as total,
                 SUM(CASE WHEN statut = 'payé' THEN 1 ELSE 0 END) as count_paye,
                 SUM(CASE WHEN statut = 'En attente' THEN 1 ELSE 0 END) as count_attente,
@@ -138,104 +138,104 @@ class ComptableController extends Controller
                 SUM(CASE WHEN statut = 'En attente' THEN montant ELSE 0 END) as total_attente,
                 SUM(CASE WHEN mois_couvert = ? AND statut = 'payé' THEN montant ELSE 0 END) as mois_courant,
                 SUM(CASE WHEN mois_couvert LIKE ? AND statut = 'payé' THEN montant ELSE 0 END) as annee_courante",
-                [now()->format('Y-m'), now()->year.'-%']
-            )
-            ->first();
-    }
-
-    // Extraction des valeurs
-    $loyersMoisCourant = $paiementsStats->mois_courant ?? 0;
-    $loyersAnneeCourante = $paiementsStats->annee_courante ?? 0;
-    $totalPaiementsPayes = $paiementsStats->total_paye ?? 0;
-    $paiementsEnAttente = $paiementsStats->count_attente ?? 0; // Correction ici
-
-// 2. Derniers paiements (pour l'activité récente)
-$recentPayments = Paiement::with(['locataire', 'bien.proprietaire', 'bien.agence'])
-    ->where('statut', 'payé')
-    ->when($comptable->agence_id || $comptable->proprietaire_id, function($query) use ($comptable) {
-        $query->whereHas('bien', function($q) use ($comptable) {
-            $q->where(function($subQuery) use ($comptable) {
-                if ($comptable->agence_id) {
-                    $subQuery->where('agence_id', $comptable->agence_id);
-                }
-                if ($comptable->proprietaire_id) {
-                    if ($comptable->agence_id) {
-                        $subQuery->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                    } else {
-                        $subQuery->where('proprietaire_id', $comptable->proprietaire_id);
-                    }
-                }
-            });
-        });
-    }, function($query) {
-        // Cas où le comptable n'a ni agence ni propriétaire
-        $query->whereHas('bien', function($q) {
-            $q->where(function($subQ) {
-                $subQ->whereNull('agence_id')
-                     ->whereNull('proprietaire_id')
-                     ->orWhereHas('proprietaire', function($subQuery) {
-                         $subQuery->where('gestion', 'agence');
-                     });
-            });
-        });
-    })
-    ->orderBy('date_paiement', 'desc')
-    ->take(2)
-    ->get();
-
-// 3. Données pour le graphique mensuel (12 derniers mois)
-$startDate = now()->subMonths(11)->startOfMonth();
-$endDate = now()->endOfMonth();
-
-$loyersParMois = Paiement::whereHas('bien', function($query) use ($comptable) {
-        if($comptable->agence_id || $comptable->proprietaire_id){
-            $query->where(function($query) use ($comptable) {
-                if ($comptable->agence_id) {
-                    $query->orWhere('agence_id', $comptable->agence_id);
-                }
-                if ($comptable->proprietaire_id) {
-                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                }
-            });
-        } else {
-            $query->whereNull('agence_id')
-                ->whereNull('proprietaire_id')
-                ->orWhereHas('proprietaire', function($q) {
-                    $q->where('gestion', 'agence');
-                });
+                    [now()->format('Y-m'), now()->year . '-%']
+                )
+                ->first();
         }
-    })
-    ->selectRaw("
+
+        // Extraction des valeurs
+        $loyersMoisCourant = $paiementsStats->mois_courant ?? 0;
+        $loyersAnneeCourante = $paiementsStats->annee_courante ?? 0;
+        $totalPaiementsPayes = $paiementsStats->total_paye ?? 0;
+        $paiementsEnAttente = $paiementsStats->count_attente ?? 0; // Correction ici
+
+        // 2. Derniers paiements (pour l'activité récente)
+        $recentPayments = Paiement::with(['locataire', 'bien.proprietaire', 'bien.agence'])
+            ->where('statut', 'payé')
+            ->when($comptable->agence_id || $comptable->proprietaire_id, function ($query) use ($comptable) {
+                $query->whereHas('bien', function ($q) use ($comptable) {
+                    $q->where(function ($subQuery) use ($comptable) {
+                        if ($comptable->agence_id) {
+                            $subQuery->where('agence_id', $comptable->agence_id);
+                        }
+                        if ($comptable->proprietaire_id) {
+                            if ($comptable->agence_id) {
+                                $subQuery->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                            } else {
+                                $subQuery->where('proprietaire_id', $comptable->proprietaire_id);
+                            }
+                        }
+                    });
+                });
+            }, function ($query) {
+                // Cas où le comptable n'a ni agence ni propriétaire
+                $query->whereHas('bien', function ($q) {
+                    $q->where(function ($subQ) {
+                        $subQ->whereNull('agence_id')
+                            ->whereNull('proprietaire_id')
+                            ->orWhereHas('proprietaire', function ($subQuery) {
+                                $subQuery->where('gestion', 'agence');
+                            });
+                    });
+                });
+            })
+            ->orderBy('date_paiement', 'desc')
+            ->take(2)
+            ->get();
+
+        // 3. Données pour le graphique mensuel (12 derniers mois)
+        $startDate = now()->subMonths(11)->startOfMonth();
+        $endDate = now()->endOfMonth();
+
+        $loyersParMois = Paiement::whereHas('bien', function ($query) use ($comptable) {
+            if ($comptable->agence_id || $comptable->proprietaire_id) {
+                $query->where(function ($query) use ($comptable) {
+                    if ($comptable->agence_id) {
+                        $query->orWhere('agence_id', $comptable->agence_id);
+                    }
+                    if ($comptable->proprietaire_id) {
+                        $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                    }
+                });
+            } else {
+                $query->whereNull('agence_id')
+                    ->whereNull('proprietaire_id')
+                    ->orWhereHas('proprietaire', function ($q) {
+                        $q->where('gestion', 'agence');
+                    });
+            }
+        })
+            ->selectRaw("
         DATE_FORMAT(mois_couvert, '%Y-%m') as mois, 
         SUM(montant) as total"
-    )
-    ->where('statut', 'payé')
-    ->whereBetween('mois_couvert', [
-        $startDate->format('Y-m'),
-        $endDate->format('Y-m')
-    ])
-    ->groupBy('mois')
-    ->orderBy('mois')
-    ->get()
-    ->keyBy('mois');
+            )
+            ->where('statut', 'payé')
+            ->whereBetween('mois_couvert', [
+                $startDate->format('Y-m'),
+                $endDate->format('Y-m')
+            ])
+            ->groupBy('mois')
+            ->orderBy('mois')
+            ->get()
+            ->keyBy('mois');
 
-// Formatage des données pour Chart.js
-$labels = [];
-$data = [];
+        // Formatage des données pour Chart.js
+        $labels = [];
+        $data = [];
 
-for ($i = 11; $i >= 0; $i--) {
-    $date = now()->subMonths($i);
-    $moisKey = $date->format('Y-m');
-    $label = $date->translatedFormat('M Y');
-    
-    $labels[] = $label;
-    $data[] = $loyersParMois->has($moisKey) ? (int)$loyersParMois[$moisKey]->total : 0;
-}
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $moisKey = $date->format('Y-m');
+            $label = $date->translatedFormat('M Y');
+
+            $labels[] = $label;
+            $data[] = $loyersParMois->has($moisKey) ? (int) $loyersParMois[$moisKey]->total : 0;
+        }
 
 
-// les locataires en retard
-    if($comptable->agence_id || $comptable->proprietaire_id){
-            $latePayersCount = Locataire::where(function($query) use ($comptable) {
+        // les locataires en retard
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
+            $latePayersCount = Locataire::where(function ($query) use ($comptable) {
                 if ($comptable->agence_id) {
                     $query->orWhere('agence_id', $comptable->agence_id);
                 }
@@ -243,74 +243,80 @@ for ($i = 11; $i >= 0; $i--) {
                     $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
                 }
             })
-            ->where('status', 'Actif')
-            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
-                $query->where('mois_couvert', $currentMonth)
-                    ->where('statut', 'payé');
-            })
-            ->count();
-        }else{
+                ->where('status', 'Actif')
+                ->whereDoesntHave('paiements', function ($query) use ($currentMonth) {
+                    $query->where('mois_couvert', $currentMonth)
+                        ->where('statut', 'payé');
+                })
+                ->count();
+        } else {
             $latePayersCount = Locataire::whereNull('agence_id')
-            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-            ->where('status', 'Actif')
-            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
-                $query->where('mois_couvert', $currentMonth)
-                    ->where('statut', 'payé');
-            })
-            ->count();
+                ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                ->where('status', 'Actif')
+                ->whereDoesntHave('paiements', function ($query) use ($currentMonth) {
+                    $query->where('mois_couvert', $currentMonth)
+                        ->where('statut', 'payé');
+                })
+                ->count();
         }
 
- // Locataires en retard avec détails
-         if($comptable->agence_id || $comptable->proprietaire_id){
-           $latePayers = Locataire::with(['bien', 'paiements' => function($query) {
-                $query->orderBy('created_at', 'desc')->limit(1);
-            }])
-            ->where(function($query) use ($comptable) {
-                if ($comptable->agence_id) {
-                    $query->orWhere('agence_id', $comptable->agence_id);
+        // Locataires en retard avec détails
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
+            $latePayers = Locataire::with([
+                'bien',
+                'paiements' => function ($query) {
+                    $query->orderBy('created_at', 'desc')->limit(1);
                 }
-                if ($comptable->proprietaire_id) {
-                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                }
-            })
-            ->where('status', 'Actif')
-            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
-                $query->where('mois_couvert', $currentMonth)
-                    ->where('statut', 'payé');
-            })
-            ->select('*')
-            ->selectRaw('DATEDIFF(NOW(), CASE WHEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) IS NOT NULL 
+            ])
+                ->where(function ($query) use ($comptable) {
+                    if ($comptable->agence_id) {
+                        $query->orWhere('agence_id', $comptable->agence_id);
+                    }
+                    if ($comptable->proprietaire_id) {
+                        $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                    }
+                })
+                ->where('status', 'Actif')
+                ->whereDoesntHave('paiements', function ($query) use ($currentMonth) {
+                    $query->where('mois_couvert', $currentMonth)
+                        ->where('statut', 'payé');
+                })
+                ->select('*')
+                ->selectRaw('DATEDIFF(NOW(), CASE WHEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) IS NOT NULL 
                         THEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) 
                         ELSE DATE_SUB(NOW(), INTERVAL 2 MONTH) END) as days_late')
-            ->selectRaw('(SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) as last_payment_date')
-            ->orderBy('days_late', 'desc')
-            ->limit(5)
-            ->get();
-        
-        }else{
-           $latePayers = Locataire::with(['bien', 'paiements' => function($query) {
-                $query->orderBy('created_at', 'desc')->limit(1);
-            }])
-            ->whereNull('agence_id')
-            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-            ->where('status', 'Actif')
-            ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
-                $query->where('mois_couvert', $currentMonth)
-                    ->where('statut', 'payé');
-            })
-            ->select('*')
-            ->selectRaw('DATEDIFF(NOW(), CASE WHEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) IS NOT NULL 
+                ->selectRaw('(SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) as last_payment_date')
+                ->orderBy('days_late', 'desc')
+                ->limit(5)
+                ->get();
+
+        } else {
+            $latePayers = Locataire::with([
+                'bien',
+                'paiements' => function ($query) {
+                    $query->orderBy('created_at', 'desc')->limit(1);
+                }
+            ])
+                ->whereNull('agence_id')
+                ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                ->where('status', 'Actif')
+                ->whereDoesntHave('paiements', function ($query) use ($currentMonth) {
+                    $query->where('mois_couvert', $currentMonth)
+                        ->where('statut', 'payé');
+                })
+                ->select('*')
+                ->selectRaw('DATEDIFF(NOW(), CASE WHEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) IS NOT NULL 
                         THEN (SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) 
                         ELSE DATE_SUB(NOW(), INTERVAL 2 MONTH) END) as days_late')
-            ->selectRaw('(SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) as last_payment_date')
-            ->orderBy('days_late', 'desc')
-            ->limit(5)
-            ->get();
-        
+                ->selectRaw('(SELECT MAX(created_at) FROM paiements WHERE locataire_id = locataires.id) as last_payment_date')
+                ->orderBy('days_late', 'desc')
+                ->limit(5)
+                ->get();
+
         }
 
 
-        
+
         return view('comptable.dashboard', compact(
             'totalLocataires',
             'locatairesActifs',
@@ -331,14 +337,14 @@ for ($i = 11; $i >= 0; $i--) {
     {
         try {
             $comptable = Comptable::findOrFail($id);
-            
+
             // Supprimer le RIB si existant
             if ($comptable->rib) {
                 Storage::delete('public/' . $comptable->rib);
             }
-            
+
             $comptable->delete();
-            
+
             return redirect()->back()->with('success', 'Comptable supprimé avec succès.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur lors de la suppression du comptable.');
@@ -348,39 +354,41 @@ for ($i = 11; $i >= 0; $i--) {
     {
         try {
             $comptable = Comptable::findOrFail($id);
-            
+
             // Supprimer le RIB si existant
             if ($comptable->rib) {
                 Storage::delete('public/' . $comptable->rib);
             }
-            
+
             $comptable->delete();
-            
+
             return redirect()->back()->with('success', 'Agent supprimé avec succès.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur lors de la suppression du comptable.');
         }
     }
-    public function index(){
-       $agenceId = Auth::guard('agence')->user()->code_id;
-        // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
-        $comptables = Comptable::where('agence_id', $agenceId)->paginate(6);
-        return view('agence.comptable.index', compact('comptables' , 'pendingVisits'));
-    }
-
-    public function create(){
+    public function index()
+    {
         $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
+        $comptables = Comptable::where('agence_id', $agenceId)->paginate(6);
+        return view('agence.comptable.index', compact('comptables', 'pendingVisits'));
+    }
+
+    public function create()
+    {
+        $agenceId = Auth::guard('agence')->user()->code_id;
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         return view('agence.comptable.create', compact('pendingVisits'));
     }
 
@@ -391,23 +399,23 @@ for ($i = 11; $i >= 0; $i--) {
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|unique:comptables,email',
-            'contact' => 'required|string|min:10|unique:comptables,contact', 
+            'contact' => 'required|string|min:10|unique:comptables,contact',
             'commune' => 'required|string|max:255',
-            'user_type' =>'required',
+            'user_type' => 'required',
             'date_naissance' => 'required|max:255',
-        ],[
+        ], [
             'name.required' => 'Le nom du comptable est obligatoire.',
             'prenom.required' => 'Le prénom du comptable est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
             'email.email' => 'L\'adresse e-mail n\'est pas valide.',
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-             'contact.required' => 'Le contact est obligatoire.',
+            'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
             'contact.unique' => 'Ce numéro de téléphone est déjà associé à un autre agent.',
             'date_naissance.required' => 'La date de naissance est obligatoire.',
             'user_type.required' => 'Le type d\'agent est obligatoire'
         ]);
-    
+
         try {
             $agenceId = Auth::guard('agence')->user()->code_id;
             // Traitement de l'image de profil
@@ -415,7 +423,7 @@ for ($i = 11; $i >= 0; $i--) {
             if ($request->hasFile('profile_image')) {
                 $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
             }
-    
+
             // Création de l'agence
             $comptable = new Comptable();
             $comptable->name = $request->name;
@@ -430,7 +438,7 @@ for ($i = 11; $i >= 0; $i--) {
             $comptable->profile_image = $profileImagePath;
             $comptable->agence_id = $agenceId;
             $comptable->save();
-    
+
             // Envoi de l'e-mail de vérification
             ResetCodePasswordComptable::where('email', $comptable->email)->delete();
             $code = rand(1000, 4000);
@@ -441,17 +449,17 @@ for ($i = 11; $i >= 0; $i--) {
 
             Notification::route('mail', $comptable->email)
                 ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email));
-        
+
             return redirect()->route('accounting.index')
                 ->with('success', 'Agent enregistrée avec succès.');
-    
+
         } catch (\Exception $e) {
             Log::error('Error creating Agent: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
     }
 
-        private function generateUniqueCodeId()
+    private function generateUniqueCodeId()
     {
         do {
             $code = 'AGT' . str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -464,16 +472,16 @@ for ($i = 11; $i >= 0; $i--) {
     {
         $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         $comptable = Comptable::findOrFail($id);
         return view('agence.comptable.edit', compact('comptable', 'pendingVisits'));
     }
 
-     public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         $comptable = Comptable::findOrFail($id);
 
@@ -481,13 +489,13 @@ for ($i = 11; $i >= 0; $i--) {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:comptables,email,'.$comptable->id,
-            'contact' => 'required|string|min:10|unique:comptables,contact,'.$comptable->id,
+            'email' => 'required|email|unique:comptables,email,' . $comptable->id,
+            'contact' => 'required|string|min:10|unique:comptables,contact,' . $comptable->id,
             'commune' => 'required|string|max:255',
             'date_naissance' => 'required|date',
             'user_type' => 'required',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ],[
+        ], [
             'name.required' => 'Le nom du comptable est obligatoire.',
             'prenom.required' => 'Le prénom du comptable est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
@@ -539,14 +547,16 @@ for ($i = 11; $i >= 0; $i--) {
         }
     }
 
-    public function defineAccess($email){
+    public function defineAccess($email)
+    {
         //Vérification si le sous-admin existe déjà
         $checkSousadminExiste = Comptable::where('email', $email)->first();
-        if($checkSousadminExiste){
+        if ($checkSousadminExiste) {
             return view('comptable.auth.validate', compact('email'));
-        }else{
+        } else {
             return redirect()->route('comptable.login')->with('error', 'Email inconnu');
-        };
+        }
+        ;
     }
 
     public function submitDefineAccess(Request $request)
@@ -564,23 +574,23 @@ for ($i = 11; $i >= 0; $i--) {
             'password_confirm.same' => 'Les mots de passe doivent être identiques.',
             'password_confirm.required' => 'Le mot de passe de confirmation est obligatoire.',
         ]);
-    
+
         try {
             $comptable = Comptable::where('email', $request->email)->first();
-    
+
             if ($comptable) {
                 // Mise à jour du mot de passe
                 $comptable->password = Hash::make($request->password);
                 $comptable->update();
-    
+
                 if ($comptable) {
                     $existingcodecomptable = ResetCodePasswordComptable::where('email', $comptable->email)->count();
-    
+
                     if ($existingcodecomptable > 1) {
                         ResetCodePasswordComptable::where('email', $comptable->email)->delete();
                     }
                 }
-    
+
                 return redirect()->route('comptable.login')->with('success', 'Compte mis à jour avec succès');
             } else {
                 return redirect()->route('comptable.login')->with('error', 'Email inconnu');
@@ -591,11 +601,12 @@ for ($i = 11; $i >= 0; $i--) {
         }
     }
 
-     public function login(){
+    public function login()
+    {
         return view('comptable.auth.login');
-     }
+    }
 
-       public function authenticate(Request $request)
+    public function authenticate(Request $request)
     {
         // 1. Validation simplifiée : on accepte n'importe quelle chaîne, pas forcément un email
         // On suppose que le champ input dans la vue s'appelle toujours 'email' pour ne pas casser le front
@@ -637,7 +648,7 @@ for ($i = 11; $i >= 0; $i--) {
 
             if (auth('comptable')->attempt($credentials)) {
                 $user = auth('comptable')->user();
-                
+
                 // Redirection selon le rôle
                 if ($user->user_type === 'Agent de recouvrement') {
                     return redirect()->route('accounting.agent.dashboard')->with('success', 'Bienvenue sur votre page Agent');
@@ -658,41 +669,45 @@ for ($i = 11; $i >= 0; $i--) {
             return redirect()->back()->with('error', 'Une erreur technique est survenue.');
         }
     }
-      public function logout(){
+    public function logout()
+    {
         auth('comptable')->logout();
-        return redirect()->route('comptable.login')->with('success', 'Déconnexion réussie.');
+        return redirect()->route('login')->with('success', 'Déconnexion réussie.');
     }
 
-    public function tenant() {
+    public function tenant()
+    {
         // Récupérer le comptable connecté
         $comptable = Auth::guard('comptable')->user();
-        
+
         // Vérifier si le comptable a une agence ou un proprietaire associée 
         if ($comptable->agence_id || $comptable->proprietaire_id) {
             // Récupérer les locataires avec leurs relations
             $locataires = Locataire::with(['bien', 'paiements', 'agence'])
-            ->where(function($query) use ($comptable) {
-                if ($comptable->agence_id) {
-                    $query->orWhere('agence_id', $comptable->agence_id);
-                }
-                if ($comptable->proprietaire_id) {
-                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                }
-            })
-            ->get();
+                ->where(function ($query) use ($comptable) {
+                    if ($comptable->agence_id) {
+                        $query->orWhere('agence_id', $comptable->agence_id);
+                    }
+                    if ($comptable->proprietaire_id) {
+                        $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                    }
+                })
+                ->get();
         } else {
             // Si le comptable n'a pas d'agence, retourner une collection vide
             $locataires = Locataire::with(['bien', 'paiements', 'agence'])
                 ->whereNull('agence_id')
                 ->whereNull('proprietaire_id')
-                ->get();;
+                ->get();
+            ;
         }
-        
+
         return view('comptable.locataire.index', compact('locataires'));
     }
 
-    public function payment(){
-         // Récupérer le comptable connecté
+    public function payment()
+    {
+        // Récupérer le comptable connecté
         $comptable = Auth::guard('comptable')->user();
 
         // Récupérer l'agence du comptable
@@ -702,41 +717,47 @@ for ($i = 11; $i >= 0; $i--) {
 
         // Vérifier si le comptable a une agence associée
         if ($comptable->agence_id || $comptable->proprietaire_id) {
-             $locataires = Locataire::with(['bien', 'paiements' => function($query) {
-                        $query->whereMonth('created_at', now()->month)
-                            ->whereYear('created_at', now()->year);
-                        }])
-                        ->where('status', '!=', 'Pas sérieux')
-                        ->where(function($query) use ($comptable) {
-                            if ($comptable->agence_id) {
-                                $query->orWhere('agence_id', $comptable->agence_id);
-                            }
-                            if ($comptable->proprietaire_id) {
-                                $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                            }
-                        })
-                        ->paginate(6);
+            $locataires = Locataire::with([
+                'bien',
+                'paiements' => function ($query) {
+                    $query->whereMonth('created_at', now()->month)
+                        ->whereYear('created_at', now()->year);
+                }
+            ])
+                ->where('status', '!=', 'Pas sérieux')
+                ->where(function ($query) use ($comptable) {
+                    if ($comptable->agence_id) {
+                        $query->orWhere('agence_id', $comptable->agence_id);
+                    }
+                    if ($comptable->proprietaire_id) {
+                        $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                    }
+                })
+                ->paginate(6);
         } else {
             // Si le comptable n'a pas d'agence, retourner une collection vide
-            $locataires = Locataire::with(['bien', 'paiements' => function($query) {
-                        $query->whereMonth('created_at', now()->month)
-                            ->whereYear('created_at', now()->year);
-                        }])
-                        ->where('status', '!=', 'Pas sérieux')
-                        ->whereNull('agence_id')
-                        ->whereNull('proprietaire_id')
-                        ->paginate(6);
+            $locataires = Locataire::with([
+                'bien',
+                'paiements' => function ($query) {
+                    $query->whereMonth('created_at', now()->month)
+                        ->whereYear('created_at', now()->year);
+                }
+            ])
+                ->where('status', '!=', 'Pas sérieux')
+                ->whereNull('agence_id')
+                ->whereNull('proprietaire_id')
+                ->paginate(6);
         }
-       
+
 
         // Ajout d'une propriété à chaque locataire pour afficher ou non le bouton
-        $locataires->getCollection()->transform(function($locataire) {
+        $locataires->getCollection()->transform(function ($locataire) {
             $today = now()->format('d');
             $currentMonthPaid = $locataire->paiements->isNotEmpty();
             $locataire->show_reminder_button = ($locataire->bien->date_fixe == $today) && !$currentMonthPaid;
             return $locataire;
         });
-        return view('comptable.locataire.paiement',compact('locataires'));
+        return view('comptable.locataire.paiement', compact('locataires'));
     }
 
 
@@ -744,35 +765,37 @@ for ($i = 11; $i >= 0; $i--) {
 
     // les fonctions de gestions des comptables par l'administrateur 
 
-    public function indexAdmin(){
-           // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+    public function indexAdmin()
+    {
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         $agenceId = Auth::guard('admin')->user()->id;
         $comptables = Comptable::whereNull('agence_id')
-                    ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                    ->paginate(6);
+            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+            ->paginate(6);
         return view('admin.comptable.index', compact('comptables', 'pendingVisits'));
     }
 
-    public function createAdmin(){
-           // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+    public function createAdmin()
+    {
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         return view('admin.comptable.create', compact('pendingVisits'));
     }
 
@@ -785,9 +808,9 @@ for ($i = 11; $i >= 0; $i--) {
             'email' => 'required|email|unique:comptables,email',
             'contact' => 'required|string|min:10|unique:comptables,contact',
             'commune' => 'required|string|max:255',
-            'user_type' =>'required',
+            'user_type' => 'required',
             'date_naissance' => 'required|max:255',
-        ],[
+        ], [
             'name.required' => 'Le nom du comptable est obligatoire.',
             'prenom.required' => 'Le prénom du comptable est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
@@ -800,7 +823,7 @@ for ($i = 11; $i >= 0; $i--) {
             'date_naissance.required' => 'La date de naissance est obligatoire.',
             'user_type.required' => 'Le type d\'agent est obligatoire'
         ]);
-    
+
         try {
             $agenceId = Auth::guard('admin')->user()->id;
             // Traitement de l'image de profil
@@ -808,7 +831,7 @@ for ($i = 11; $i >= 0; $i--) {
             if ($request->hasFile('profile_image')) {
                 $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
             }
-    
+
             // Création de l'agence
             $comptable = new Comptable();
             $comptable->name = $request->name;
@@ -822,7 +845,7 @@ for ($i = 11; $i >= 0; $i--) {
             $comptable->user_type = $request->user_type;
             $comptable->profile_image = $profileImagePath;
             $comptable->save();
-    
+
             // Envoi de l'e-mail de vérification
             ResetCodePasswordComptable::where('email', $comptable->email)->delete();
             $code = rand(1000, 4000);
@@ -833,10 +856,10 @@ for ($i = 11; $i >= 0; $i--) {
 
             Notification::route('mail', $comptable->email)
                 ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email));
-        
+
             return redirect()->route('accounting.index.admin')
                 ->with('success', 'Agent enregistrée avec succès.');
-    
+
         } catch (\Exception $e) {
             Log::error('Error creating Agent: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -845,21 +868,21 @@ for ($i = 11; $i >= 0; $i--) {
 
     public function editAdmin($id)
     {
-           // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         $comptable = Comptable::findOrFail($id);
         return view('admin.comptable.edit', compact('comptable', 'pendingVisits'));
     }
 
-     public function updateAdmin(Request $request, $id)
+    public function updateAdmin(Request $request, $id)
     {
         $comptable = Comptable::findOrFail($id);
 
@@ -867,13 +890,13 @@ for ($i = 11; $i >= 0; $i--) {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:comptables,email,'.$comptable->id,
-            'contact' => 'required|string|min:10|unique:comptables,contact,'.$comptable->id,
+            'email' => 'required|email|unique:comptables,email,' . $comptable->id,
+            'contact' => 'required|string|min:10|unique:comptables,contact,' . $comptable->id,
             'commune' => 'required|string|max:255',
             'date_naissance' => 'required|date',
             'user_type' => 'required',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ],[
+        ], [
             'name.required' => 'Le nom du comptable est obligatoire.',
             'prenom.required' => 'Le prénom du comptable est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',

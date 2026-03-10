@@ -21,45 +21,45 @@ use Illuminate\Support\Facades\Storage;
 
 class AgenceController extends Controller
 {
-     private function calculerSoldeDisponible($agenceId)
-        {
-            $totalPaiements = Paiement::where('methode_paiement', 'Mobile Money')
-                ->whereHas('bien', function($query) use ($agenceId) {
-                    $query->where('agence_id', $agenceId);
-                })
-                ->where('statut', 'payé')
-                ->sum('montant');
-            
-            $totalReversements = Reversement::where('agence_id', $agenceId)
-                ->sum('montant');
-            
-            return $totalPaiements - $totalReversements;
-        }
+    private function calculerSoldeDisponible($agenceId)
+    {
+        $totalPaiements = Paiement::where('methode_paiement', 'Mobile Money')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);
+            })
+            ->where('statut', 'payé')
+            ->sum('montant');
+
+        $totalReversements = Reversement::where('agence_id', $agenceId)
+            ->sum('montant');
+
+        return $totalPaiements - $totalReversements;
+    }
     public function dashboard()
     {
-       if (!auth('agence')->check()) {
+        if (!auth('agence')->check()) {
             return redirect()->route('agence.login');
-       }
-       $agenceId = Auth::guard('agence')->user()->code_id;
+        }
+        $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         // Récupération de l'agence connectée
         $agence = auth('agence')->user();
         // Totaux généraux
         $totalAppartements = Bien::where('type', 'Appartement')
-                            ->where('agence_id', $agence->code_id)
-                            ->count();
+            ->where('agence_id', $agence->code_id)
+            ->count();
         $totalMaisons = Bien::where('type', 'Maison')
-                        ->where('agence_id', $agence->code_id)
-                        ->count();
+            ->where('agence_id', $agence->code_id)
+            ->count();
         $totalMagasins = Bien::where('type', 'Bureau')
-                        ->where('agence_id', $agence->code_id)   
-                        ->count();
-        
+            ->where('agence_id', $agence->code_id)
+            ->count();
+
         // Statistiques par période
         $stats = [
             'day' => [
@@ -78,15 +78,15 @@ class AgenceController extends Controller
                 'magasins' => Bien::where('type', 'Bureau')->where('agence_id', $agence->code_id)->whereMonth('created_at', now()->month)->count()
             ]
         ];
-    
+
         $soldeDisponible = $this->calculerSoldeDisponible($agenceId);
         // Biens récents
         $recentBiens = Bien::with('agence')
-                          ->where('agence_id', $agence->code_id)
-                          ->orderBy('created_at', 'desc')
-                          ->take(5)
-                          ->get();
-    
+            ->where('agence_id', $agence->code_id)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
         return view('agence.dashboard', [
             'totalAppartements' => $totalAppartements,
             'totalMaisons' => $totalMaisons,
@@ -99,16 +99,16 @@ class AgenceController extends Controller
     }
     public function index()
     {
-          // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         // Récupération de toutes les agences
         $agences = Agence::paginate(6);
         return view('admin.agence.index', compact('agences', 'pendingVisits'));
@@ -116,16 +116,16 @@ class AgenceController extends Controller
 
     public function create()
     {
-          // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         return view('admin.agence.create', compact('pendingVisits'));
     }
 
@@ -143,7 +143,7 @@ class AgenceController extends Controller
             'rccm_file' => 'required|file|mimes:pdf|max:2048',
             'dfe' => 'required|string|max:255',
             'dfe_file' => 'required|file|mimes:pdf|max:2048',
-        ],[
+        ], [
             'name.required' => 'Le nom de l\'agence est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
             'email.email' => 'L\'adresse e-mail n\'est pas valide.',
@@ -155,9 +155,9 @@ class AgenceController extends Controller
             'rib.required' => 'Le RIB est obligatoire.',
             'rib.max' => 'Le RIB ne doit pas dépasser 2048 caractères.',
             'rib.mines' => 'le fichier doit etre un pdf',
-            
+
         ]);
-    
+
         try {
             // Génération du code PRO unique
             do {
@@ -183,7 +183,7 @@ class AgenceController extends Controller
             if ($request->hasFile('dfe_file')) {
                 $dfe_filePath = $request->file('dfe_file')->store('dfe_files', 'public');
             }
-    
+
             // Création de l'agence
             $agence = new Agence();
             $agence->code_id = $codeId;
@@ -201,31 +201,31 @@ class AgenceController extends Controller
             $agence->profile_image = $profileImagePath;
             $agence->save();
 
-        /************************************************
-           CRÉATION AUTOMATIQUE DE L'ABONNEMENT
-         ************************************************/
-        $today = now();
-        $dateDebut = $today->format('Y-m-d');
-        $dateFin = $today->copy()->addMonth(3)->format('Y-m-d'); // Abonnement d'3 mois offert lors de l'inscription
-        
-        $abonnementData = [
-            'agence_id' => $agence->code_id,
-            'date_abonnement' => $today,
-            'date_debut' => $dateDebut,
-            'date_fin' => $dateFin,
-            'mois_abonne' => $today->format('m-Y'),
-            'montant' => 0, // À ajuster selon votre logique métier
-            'montant_actuel' => 0, // À ajuster selon votre logique métier
-            'statut' => 'actif',
-            'type' => 'standard',
-            'mode_paiement' => 'offert', // Ou autre valeur par défaut
-            'reference_paiement' => 'CREA-' . $agence->code_id,
-            'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
-        ];
+            /************************************************
+               CRÉATION AUTOMATIQUE DE L'ABONNEMENT
+             ************************************************/
+            $today = now();
+            $dateDebut = $today->format('Y-m-d');
+            $dateFin = $today->copy()->addMonth(3)->format('Y-m-d'); // Abonnement d'3 mois offert lors de l'inscription
 
-        Abonnement::create($abonnementData);
-        Log::info('Abonnement créé', ['agence_id' => $agence->code_id]);
-    
+            $abonnementData = [
+                'agence_id' => $agence->code_id,
+                'date_abonnement' => $today,
+                'date_debut' => $dateDebut,
+                'date_fin' => $dateFin,
+                'mois_abonne' => $today->format('m-Y'),
+                'montant' => 0, // À ajuster selon votre logique métier
+                'montant_actuel' => 0, // À ajuster selon votre logique métier
+                'statut' => 'actif',
+                'type' => 'standard',
+                'mode_paiement' => 'offert', // Ou autre valeur par défaut
+                'reference_paiement' => 'CREA-' . $agence->code_id,
+                'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
+            ];
+
+            Abonnement::create($abonnementData);
+            Log::info('Abonnement créé', ['agence_id' => $agence->code_id]);
+
             // Envoi de l'e-mail de vérification
             ResetCodePasswordAgence::where('email', $agence->email)->delete();
             $code = rand(1000, 4000);
@@ -236,10 +236,10 @@ class AgenceController extends Controller
 
             Notification::route('mail', $agence->email)
                 ->notify(new SendEmailToAgenceAfterRegistrationNotification($code, $agence->email));
-        
+
             return redirect()->route('agence.index')
                 ->with('success', 'Agence enregistrée avec succès.');
-    
+
         } catch (\Exception $e) {
             Log::error('Error creating agence: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -248,16 +248,16 @@ class AgenceController extends Controller
 
     public function edit($id)
     {
-          // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         $agence = Agence::findOrFail($id);
         return view('admin.agence.edit', compact('agence', 'pendingVisits'));
     }
@@ -269,7 +269,7 @@ class AgenceController extends Controller
         // Validation des données
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:agences,email,'.$agence->id,
+            'email' => 'required|email|unique:agences,email,' . $agence->id,
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
             'adresse' => 'required|string|max:255',
@@ -279,7 +279,7 @@ class AgenceController extends Controller
             'dfe' => 'required|string|max:255',
             'dfe_file' => 'nullable|file|mimes:pdf,jpeg,png,jpg|max:2048',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ],[
+        ], [
             'name.required' => 'Le nom de l\'agence est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
             'email.email' => 'L\'adresse e-mail n\'est pas valide.',
@@ -357,14 +357,16 @@ class AgenceController extends Controller
     }
 
     // Function to define access for the agence
-    public function defineAccess($email){
+    public function defineAccess($email)
+    {
         //Vérification si le sous-admin existe déjà
         $checkSousadminExiste = Agence::where('email', $email)->first();
-        if($checkSousadminExiste){
+        if ($checkSousadminExiste) {
             return view('agence.auth.validate', compact('email'));
-        }else{
+        } else {
             return redirect()->route('agence.login')->with('error', 'Email inconnu');
-        };
+        }
+        ;
     }
 
     public function submitDefineAccess(Request $request)
@@ -382,23 +384,23 @@ class AgenceController extends Controller
             'password_confirm.same' => 'Les mots de passe doivent être identiques.',
             'password_confirm.required' => 'Le mot de passe de confirmation est obligatoire.',
         ]);
-    
+
         try {
             $agence = Agence::where('email', $request->email)->first();
-    
+
             if ($agence) {
                 // Mise à jour du mot de passe
                 $agence->password = Hash::make($request->password);
                 $agence->update();
-    
+
                 if ($agence) {
                     $existingcodeagence = ResetCodePasswordAgence::where('email', $agence->email)->count();
-    
+
                     if ($existingcodeagence > 1) {
                         ResetCodePasswordAgence::where('email', $agence->email)->delete();
                     }
                 }
-    
+
                 return redirect()->route('agence.login')->with('success', 'Compte mis à jour avec succès');
             } else {
                 return redirect()->route('agence.login')->with('error', 'Email inconnu');
@@ -409,33 +411,34 @@ class AgenceController extends Controller
         }
     }
 
-    public function login(){
+    public function login()
+    {
         // Vérifier si l'utilisateur est déjà authentifié
         if (auth('agence')->check()) {
             return redirect()->route('agence.dashboard');
         }
         return view('agence.auth.login');
-     }
-    
-     public function authenticate(Request $request)
-     {
-         // Validation des champs du formulaire
-         $request->validate([
-             'email' => 'required|exists:agences,email',
-             'password' => 'required|min:8',
-         ], [
-             'email.required' => 'Le mail est obligatoire.',
-             'email.exists' => 'Cette adresse mail n\'existe pas.',
-             'password.required' => 'Le mot de passe est obligatoire.',
-             'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
-         ]);
-     
-          try {
+    }
+
+    public function authenticate(Request $request)
+    {
+        // Validation des champs du formulaire
+        $request->validate([
+            'email' => 'required|exists:agences,email',
+            'password' => 'required|min:8',
+        ], [
+            'email.required' => 'Le mail est obligatoire.',
+            'email.exists' => 'Cette adresse mail n\'existe pas.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit avoir au moins 8 caractères.',
+        ]);
+
+        try {
             // 1. Authentification
             if (!auth('agence')->attempt($request->only('email', 'password'))) {
                 return redirect()->back()
-                            ->with('error', 'Email ou mot de passe incorrect.')
-                            ->withInput($request->only('email'));
+                    ->with('error', 'Email ou mot de passe incorrect.')
+                    ->withInput($request->only('email'));
             }
 
             // 2. Récupérer l'utilisateur connecté
@@ -443,8 +446,8 @@ class AgenceController extends Controller
 
             // 3. Vérifier l'abonnement
             $abonnement = Abonnement::where('agence_id', $agence->code_id)
-                                ->latest('date_fin')
-                                ->first();
+                ->latest('date_fin')
+                ->first();
 
             // 4. Conditions pour accéder au dashboard :
             // - Abonnement existe
@@ -452,23 +455,23 @@ class AgenceController extends Controller
             // - Date de fin non dépassée
             if ($abonnement && $abonnement->statut === 'actif' && $abonnement->date_fin >= now()) {
                 return redirect()->route('agence.dashboard')
-                            ->with('success', 'Bienvenue sur votre tableau de bord');
+                    ->with('success', 'Bienvenue sur votre tableau de bord');
             }
 
             // 5. Tous les autres cas -> page abonnement
             return redirect()->route('page.abonnement.agence')
-                        ->with('error', $this->getAbonnementMessage($abonnement));
+                ->with('error', $this->getAbonnementMessage($abonnement));
 
         } catch (Exception $e) {
-            Log::error('Connexion échouée : '.$e->getMessage());
+            Log::error('Connexion échouée : ' . $e->getMessage());
             auth('agence')->logout();
-            
-            return back()->with('error', 'Erreur technique - Veuillez réessayer')
-                        ->withInput($request->only('email'));
-        }
-     }
 
-     private function getAbonnementMessage($abonnement): string
+            return back()->with('error', 'Erreur technique - Veuillez réessayer')
+                ->withInput($request->only('email'));
+        }
+    }
+
+    private function getAbonnementMessage($abonnement): string
     {
         if (!$abonnement) {
             return 'Aucun abonnement actif trouvé';
@@ -476,29 +479,30 @@ class AgenceController extends Controller
 
         return match ($abonnement->statut) {
             'en_attente' => 'Votre paiement est en cours de validation',
-            'suspendu'   => 'Votre compte est suspendu',
-            'actif'     => $abonnement->date_fin < now() 
-                            ? 'Votre abonnement a expiré' 
-                            : 'Abonnement requis',
-            default      => 'Statut d\'abonnement non reconnu',
+            'suspendu' => 'Votre compte est suspendu',
+            'actif' => $abonnement->date_fin < now()
+            ? 'Votre abonnement a expiré'
+            : 'Abonnement requis',
+            default => 'Statut d\'abonnement non reconnu',
         };
     }
 
 
-    public function logout(){
+    public function logout()
+    {
         auth('agence')->logout();
-        return redirect()->route('agence.login')->with('success', 'Déconnexion réussie.');
+        return redirect()->route('login')->with('success', 'Déconnexion réussie.');
     }
 
     public function editProfile()
     {
         $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         $agence = Auth::guard('agence')->user();
         return view('agence.auth.profile', compact('agence', 'pendingVisits'));
     }
@@ -506,27 +510,27 @@ class AgenceController extends Controller
     public function updateProfile(Request $request)
     {
         $agence = Auth::guard('agence')->user();
-    
+
         $rules = [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:agences,email,'.$agence->id,
+            'email' => 'required|email|unique:agences,email,' . $agence->id,
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
             'adresse' => 'required|string|max:255',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
-    
+
         // Ajoute les règles de validation pour le mot de passe seulement si un nouveau mot de passe est fourni
         if ($request->filled('password')) {
             $rules['password'] = 'string|min:8|same:password_confirm';
             $rules['password_confirm'] = 'string|min:8|same:password';
         }
-    
+
         $request->validate($rules, [
             'password.same' => 'Les mots de passe ne correspondent pas',
             'password_confirm.same' => 'Les mots de passe ne correspondent pas',
         ]);
-    
+
         try {
             // Mise à jour de l'image de profil
             if ($request->hasFile('profile_image')) {
@@ -535,39 +539,39 @@ class AgenceController extends Controller
                 }
                 $agence->profile_image = $request->file('profile_image')->store('profile_images', 'public');
             }
-    
+
             // Mise à jour des informations de base
             $agence->name = $request->name;
             $agence->email = $request->email;
             $agence->contact = $request->contact;
             $agence->commune = $request->commune;
             $agence->adresse = $request->adresse;
-    
+
             // Mise à jour du mot de passe seulement si fourni
             if ($request->filled('password')) {
                 $agence->password = Hash::make($request->password);
             }
-    
+
             $agence->save();
-    
+
             return redirect()->route('agence.dashboard')->with('success', 'Vos informations on bien été mis à jour!');
-    
+
         } catch (\Exception $e) {
-            Log::error('Erreur mise à jour profil agence: '.$e->getMessage());
+            Log::error('Erreur mise à jour profil agence: ' . $e->getMessage());
             return back()->with('error', 'Une erreur est survenue lors de la mise à jour');
         }
     }
 
-   public function destroy($id)
+    public function destroy($id)
     {
         try {
             DB::beginTransaction(); // Début de la transaction
 
             $agence = Agence::findOrFail($id);
-            
+
             // 1. Supprimer tous les abonnements associés
             Abonnement::where('agence_id', $agence->code_id)->delete();
-            
+
             // 2. Supprimer les fichiers associés (RIB + image de profil)
             if ($agence->rib) {
                 Storage::delete('public/' . $agence->rib);
@@ -575,10 +579,10 @@ class AgenceController extends Controller
             if ($agence->profile_image) {
                 Storage::delete('public/' . $agence->profile_image);
             }
-            
+
             // 3. Supprimer l'agence
             $agence->delete();
-            
+
             DB::commit(); // Validation de la transaction
 
             return redirect()->back()
@@ -586,9 +590,9 @@ class AgenceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack(); // Annulation en cas d'erreur
-            Log::error('Erreur suppression agence: '.$e->getMessage());
+            Log::error('Erreur suppression agence: ' . $e->getMessage());
             return redirect()->back()
-                ->with('error', 'Erreur lors de la suppression : '.$e->getMessage());
+                ->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
         }
     }
 }

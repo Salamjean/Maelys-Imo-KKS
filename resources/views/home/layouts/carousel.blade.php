@@ -3,17 +3,29 @@
         <div class="carousel-inner">
             @forelse($biens->take(4) as $index => $bien)
                 <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" style="height: 700px;">
-                    @if($bien->image)
-                        <img class="w-100 h-100" src="{{ asset('storage/' . $bien->image) }}" alt="{{ $bien->type }}" style="object-fit: cover;">
+                    @if($bien->video_3d)
+                        <div class="w-100 h-100 bg-dark overflow-hidden">
+                            @php $embedUrl = $bien->getVideo3dEmbedUrl(); @endphp
+                            @if(str_contains($embedUrl, '<iframe'))
+                                {!! $embedUrl !!}
+                            @else
+                                <iframe src="{{ $embedUrl }}" class="w-100 h-100" style="border: 0;" allowfullscreen></iframe>
+                            @endif
+                        </div>
+                    @elseif($bien->image)
+                        <img class="w-100 h-100" src="{{ asset('storage/' . $bien->image) }}" alt="{{ $bien->type }}"
+                            style="object-fit: cover;">
                     @else
-                        <img class="w-100 h-100" src="{{ asset('assets/images/appart.jpg') }}" alt="Bien immobilier" style="object-fit: cover;">
+                        <img class="w-100 h-100" src="{{ asset('assets/images/appart.jpg') }}" alt="Bien immobilier"
+                            style="object-fit: cover;">
                     @endif
                     <div class="carousel-caption">
                         <div class="container">
                             <div class="row justify-content-start">
                                 <div class="col-lg-7 text-start">
                                     <p class="fs-4 text-primary animated slideInRight">{{ $bien->type }}</p>
-                                    <h1 class="display-4 text-white mb-5 animated slideInRight">{{ Str::limit($bien->description, 25) ?? 'Bienvenue' }}</h1>
+                                    <h1 class="display-4 text-white mb-5 animated slideInRight">
+                                        {{ Str::limit($bien->description, 25) ?? 'Bienvenue' }}</h1>
                                     @php
                                         $route = '#';
                                         if ($bien->type === 'Bureau') {
@@ -34,13 +46,15 @@
                 </div>
             @empty
                 <div class="carousel-item active" style="height: 700px;">
-                    <img class="w-100 h-100" src="{{ asset('assets/images/appart.jpg') }}" alt="Bien immobilier par défaut" style="object-fit: cover;">
+                    <img class="w-100 h-100" src="{{ asset('assets/images/appart.jpg') }}" alt="Bien immobilier par défaut"
+                        style="object-fit: cover;">
                     <div class="carousel-caption">
                         <div class="container">
                             <div class="row justify-content-center">
                                 <div class="col-lg-8 text-center">
                                     <p class="fs-4 text-primary animated slideInRight">Bienvenue</p>
-                                    <h1 class="display-1 text-white mb-5 animated slideInRight">Maelys-Imo, votre partenaire immobilier</h1>
+                                    <h1 class="display-1 text-white mb-5 animated slideInRight">Maelys-Imo, votre partenaire
+                                        immobilier</h1>
                                     <a class="btn btn-primary py-3 px-5 animated slideInRight" href="/contact">
                                         Contactez-nous
                                     </a>

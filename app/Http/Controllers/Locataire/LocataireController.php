@@ -31,39 +31,42 @@ class LocataireController extends Controller
     {
         // Récupérer le locataire avec son bien associé
         $locataire = Locataire::with(['bien', 'agence'])
-                    ->findOrFail(Auth::guard('locataire')->user()->id);
-        
+            ->findOrFail(Auth::guard('locataire')->user()->id);
+
         // Récupérer le dernier code de vérification non utilisé et non expiré
         $qrCode = CashVerificationCode::where('locataire_id', $locataire->id)
-                    ->whereNull('used_at')
-                    ->where('expires_at', '>', now())
-                    ->where('is_archived', false)
-                    ->latest()
-                    ->first();
+            ->whereNull('used_at')
+            ->where('expires_at', '>', now())
+            ->where('is_archived', false)
+            ->latest()
+            ->first();
 
         return view('locataire.dashboard', compact('locataire', 'qrCode'));
     }
-        public function index()
+    public function index()
     {
         $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         // Récupération des locataires avec les relations nécessaires
-        $locataires = Locataire::with(['bien', 'paiements' => function($query) {
-            $query->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year);
-        }])
-        ->where('status', '!=', 'Pas sérieux')
-        ->whereNotNull('bien_id')
-        ->where('agence_id', Auth::guard('agence')->user()->code_id)
-        ->paginate(6);
+        $locataires = Locataire::with([
+            'bien',
+            'paiements' => function ($query) {
+                $query->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+            }
+        ])
+            ->where('status', '!=', 'Pas sérieux')
+            ->whereNotNull('bien_id')
+            ->where('agence_id', Auth::guard('agence')->user()->code_id)
+            ->paginate(6);
 
         // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
-        $locataires->getCollection()->transform(function($locataire) {
+        $locataires->getCollection()->transform(function ($locataire) {
             $today = now()->format('d');
             $currentMonthPaid = $locataire->paiements->isNotEmpty();
             $locataire->show_reminder_button = ($locataire->bien->date_fixe ?? '10' == $today) && !$currentMonthPaid;
@@ -72,120 +75,127 @@ class LocataireController extends Controller
 
         return view('agence.locataire.index', compact('locataires', 'pendingVisits'));
     }
-    public function indexAdmin(){
-           // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+    public function indexAdmin()
+    {
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         // Récupération de tous les locataires
         $locataires = Locataire::where('status', '!=', 'Pas sérieux')
-                    ->whereNull('agence_id')
-                    ->whereNull('proprietaire_id')
-                    ->whereNotNull('bien_id')
-                    ->paginate(6);
+            ->whereNull('agence_id')
+            ->whereNull('proprietaire_id')
+            ->whereNotNull('bien_id')
+            ->paginate(6);
 
-        
-         // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
-        $locataires->getCollection()->transform(function($locataire) {
+
+        // Ajout d'une propriété à chaque locataire pour déterminer si le bouton doit être affiché
+        $locataires->getCollection()->transform(function ($locataire) {
             $today = now()->format('d');
             $currentMonthPaid = $locataire->paiements->isNotEmpty();
             $locataire->show_reminder_button = ($locataire->bien->date_fixe ?? '10' == $today) && !$currentMonthPaid;
             return $locataire;
         });
-        return view('admin.locataire.index',compact('locataires', 'pendingVisits'));
+        return view('admin.locataire.index', compact('locataires', 'pendingVisits'));
     }
-    public function indexSerieux(){
+    public function indexSerieux()
+    {
         $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         // Récupération de tous les locataires
         $locataires = Locataire::where('status', 'Pas sérieux')
-                    ->paginate(6);
-        return view('agence.locataire.indexSerieux',compact('locataires', 'pendingVisits'));
+            ->paginate(6);
+        return view('agence.locataire.indexSerieux', compact('locataires', 'pendingVisits'));
     }
-    public function indexSerieuxAdmin(){
-           // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+    public function indexSerieuxAdmin()
+    {
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         // Récupération de tous les locataires
         $locataires = Locataire::where('status', 'Pas sérieux')
-                    ->paginate(6);
-        return view('admin.locataire.indexSerieux',compact('locataires', 'pendingVisits'));
+            ->paginate(6);
+        return view('admin.locataire.indexSerieux', compact('locataires', 'pendingVisits'));
     }
     public function create()
     {
         $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         // Récupérer les biens disponibles de l'agence
         $agenceId = Auth::guard('agence')->user()->code_id;
         $biens = Bien::where('agence_id', $agenceId)
-                    ->where('status', 'Disponible')
-                    ->get();
-        
+            ->where('status', 'Disponible')
+            ->get();
+
         return view('agence.locataire.create', compact('biens', 'pendingVisits'));
     }
     public function createAdmin()
     {
-           // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         $biens = Bien::whereNull('agence_id')
-                ->where('status', 'Disponible')
-                ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                            ->orWhereHas('proprietaire', function($q) {
-                                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                            })->get();
-        
+            ->where('status', 'Disponible')
+            ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+            ->orWhereHas('proprietaire', function ($q) {
+                $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+            })->get();
+
         return view('admin.locataire.create', compact('biens', 'pendingVisits'));
     }
-    
+
     public function store(Request $request)
     {
         // Vérification des doublons potentiels
-        $existingLocataires = Locataire::where(function($query) use ($request) {
+        $existingLocataires = Locataire::where(function ($query) use ($request) {
             $query->where('name', 'like', $request->name)
-                  ->orWhere('prenom', 'like', $request->prenom)
-                  ->orWhere('email', $request->email)
-                  ->orWhere('contact', $request->contact);
+                ->orWhere('prenom', 'like', $request->prenom)
+                ->orWhere('email', $request->email)
+                ->orWhere('contact', $request->contact);
         })->get();
 
         $isDuplicate = false;
         foreach ($existingLocataires as $locataire) {
             $matchCount = 0;
-            if (strtolower($locataire->name) === strtolower($request->name)) $matchCount++;
-            if (strtolower($locataire->prenom) === strtolower($request->prenom)) $matchCount++;
-            if ($locataire->email === $request->email) $matchCount++;
-            if ($locataire->contact === $request->contact) $matchCount++;
-            
+            if (strtolower($locataire->name) === strtolower($request->name))
+                $matchCount++;
+            if (strtolower($locataire->prenom) === strtolower($request->prenom))
+                $matchCount++;
+            if ($locataire->email === $request->email)
+                $matchCount++;
+            if ($locataire->contact === $request->contact)
+                $matchCount++;
+
             if ($matchCount >= 2) {
                 $isDuplicate = true;
                 break;
@@ -203,7 +213,7 @@ class LocataireController extends Controller
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|unique:locataires,email',
-           'contact' => 'required|string|min:10|unique:locataires,contact', 
+            'contact' => 'required|string|min:10|unique:locataires,contact',
             'piece' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'adresse' => 'required|string|max:255',
             'profession' => 'required|string|max:255',
@@ -220,10 +230,10 @@ class LocataireController extends Controller
             'prenom.required' => 'Le prénom est obligatoire.',
             'email.required' => 'L\'email est obligatoire.',
             'email.email' => 'L\'email doit être une adresse email valide.',
-           'email.unique' => 'Cette adresse email est déjà utilisée.',
+            'email.unique' => 'Cette adresse email est déjà utilisée.',
             'contact.required' => 'Le contact est obligatoire.',
             'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
-             'contact.unique' => 'Ce numéro de téléphone est déjà associé à un autre locataire.',
+            'contact.unique' => 'Ce numéro de téléphone est déjà associé à un autre locataire.',
             'piece.required' => 'La pièce d\'identité est obligatoire.',
             'piece.image' => 'La pièce d\'identité doit être une image.',
             'piece.mimes' => 'La pièce d\'identité doit être de type: jpeg, png, jpg ou gif.',
@@ -274,9 +284,9 @@ class LocataireController extends Controller
                 $image4Path = $request->file('image4')->store('locataires_images', 'public');
             }
 
-           
 
-             // Récupération du bien associé
+
+            // Récupération du bien associé
             $bien = Bien::findOrFail($request->bien_id);
             $avance = $bien->avance;
             $loyer = $bien->prix;
@@ -307,7 +317,7 @@ class LocataireController extends Controller
             if (in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
                 $locataire->motif = $request->motif;
             }
-            
+
             $locataire->save();
 
             // Mettre à jour le statut du bien
@@ -320,7 +330,7 @@ class LocataireController extends Controller
                 for ($i = 0; $i < $avance; $i++) {
                     $moisCourant = Carbon::now()->addMonths($i);
                     $moisCouvert = $moisCourant->format('Y-m');
-                    
+
                     Paiement::create([
                         'montant' => $loyer,
                         'date_paiement' => $datePaiement,
@@ -351,45 +361,45 @@ class LocataireController extends Controller
              * INTÉGRATION DU SYSTÈME D'ENVOI DE SMS AVEC TWILIO (NOUVEAU CODE)
              **********************************************************************/
             try {
-                    $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-                    
-                    // Configuration SSL
-                    $httpClient = new \Twilio\Http\CurlClient([
-                        CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
-                        CURLOPT_SSL_VERIFYPEER => true,
-                        CURLOPT_SSL_VERIFYHOST => 2,
-                    ]);
-                    $twilio->setHttpClient($httpClient);
+                $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
 
-                    // Formater le numéro
-                    $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
+                // Configuration SSL
+                $httpClient = new \Twilio\Http\CurlClient([
+                    CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                    CURLOPT_SSL_VERIFYPEER => true,
+                    CURLOPT_SSL_VERIFYHOST => 2,
+                ]);
+                $twilio->setHttpClient($httpClient);
 
-                    // Construire le message SMS avec code et lien
-                    $validationUrl = url('/validate-locataire-account/' . $locataire->email);
-                    $smsContent = "Bonjour {$locataire->prenom},\n\n"
-                                . "Votre code de validation: {$code}\n\n"
-                                . "Validez votre compte ici: {$validationUrl}\n\n"
-                                . "Agence: {$agence->name}";
+                // Formater le numéro
+                $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
 
-                    $message = $twilio->messages->create(
-                        $phoneNumber,
-                        [
-                            'from' => env('TWILIO_PHONE_NUMBER'),
-                            'body' => $smsContent,
-                        ]
-                    );
+                // Construire le message SMS avec code et lien
+                $validationUrl = url('/validate-locataire-account/' . $locataire->email);
+                $smsContent = "Bonjour {$locataire->prenom},\n\n"
+                    . "Votre code de validation: {$code}\n\n"
+                    . "Validez votre compte ici: {$validationUrl}\n\n"
+                    . "Agence: {$agence->name}";
 
-                    Log::channel('sms')->info('SMS validation envoyé', [
-                        'locataire_id' => $locataire->id,
-                        'to' => $phoneNumber,
-                        'message_sid' => $message->sid
-                    ]);
+                $message = $twilio->messages->create(
+                    $phoneNumber,
+                    [
+                        'from' => env('TWILIO_PHONE_NUMBER'),
+                        'body' => $smsContent,
+                    ]
+                );
 
-                } catch (TwilioException $e) {
-                    Log::channel('sms')->error('Erreur SMS validation', [
-                        'locataire_id' => $locataire->id,
-                        'error' => $e->getMessage()
-                    ]);
+                Log::channel('sms')->info('SMS validation envoyé', [
+                    'locataire_id' => $locataire->id,
+                    'to' => $phoneNumber,
+                    'message_sid' => $message->sid
+                ]);
+
+            } catch (TwilioException $e) {
+                Log::channel('sms')->error('Erreur SMS validation', [
+                    'locataire_id' => $locataire->id,
+                    'error' => $e->getMessage()
+                ]);
             }
             /**********************************************************************
              * FIN DE L'INTÉGRATION SMS
@@ -409,28 +419,28 @@ class LocataireController extends Controller
     private function formatPhoneNumberForSms(string $phone): string
     {
         $cleaned = preg_replace('/[^0-9+]/', '', $phone);
-        
+
         // Si déjà au format +225...
         if (str_starts_with($cleaned, '+225') && strlen($cleaned) === 12) {
             return $cleaned;
         }
-        
+
         // Suppression du + ou 00
         $cleaned = ltrim($cleaned, '+');
         $cleaned = preg_replace('/^00/', '', $cleaned);
-        
+
         // Extraction des derniers 8 chiffres
         $baseNumber = substr($cleaned, -8);
-        
+
         // Vérification du numéro
         if (!preg_match('/^[0-9]{8,15}$/', $baseNumber)) {
             throw new \Exception('Numéro de téléphone invalide');
         }
-        
+
         return '+225' . $baseNumber;
     }
 
-        private function generateUniqueCodeId()
+    private function generateUniqueCodeId()
     {
         do {
             $code = 'MA' . str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -443,50 +453,50 @@ class LocataireController extends Controller
     {
         $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         $locataire = Locataire::findOrFail($id);
         // Récupérer les biens disponibles de l'agence
         $agenceId = Auth::guard('agence')->user()->id;
         $biens = Bien::where('status', '!=', 'Loué')
-                ->where('agence_id', $agenceId)
-                ->orWhere('id', $locataire->bien_id)
-                ->get();
-        
+            ->where('agence_id', $agenceId)
+            ->orWhere('id', $locataire->bien_id)
+            ->get();
+
         return view('agence.locataire.edit', compact('locataire', 'biens', 'pendingVisits'));
     }
 
     public function editAdmin($id)
     {
-           // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                });
+            })
+            ->count();
         $locataire = Locataire::findOrFail($id);
         $biens = Bien::where('status', '!=', 'Loué')
-                ->whereNull('agence_id')
-                ->orWhere('id', $locataire->bien_id)
-                ->get();
-        
+            ->whereNull('agence_id')
+            ->orWhere('id', $locataire->bien_id)
+            ->get();
+
         return view('admin.locataire.edit', compact('locataire', 'biens', 'pendingVisits'));
     }
-    
+
     public function update(Request $request, $id)
     {
         $locataire = Locataire::findOrFail($id);
 
         // Vérification des doublons potentiels (en excluant le locataire actuel)
         $existingLocataires = Locataire::where('id', '!=', $id)
-            ->where(function($query) use ($request) {
+            ->where(function ($query) use ($request) {
                 $query->where('name', 'like', $request->name)
                     ->orWhere('prenom', 'like', $request->prenom)
                     ->orWhere('email', $request->email)
@@ -496,11 +506,15 @@ class LocataireController extends Controller
         $isDuplicate = false;
         foreach ($existingLocataires as $existing) {
             $matchCount = 0;
-            if (strtolower($existing->name) === strtolower($request->name)) $matchCount++;
-            if (strtolower($existing->prenom) === strtolower($request->prenom)) $matchCount++;
-            if ($existing->email === $request->email) $matchCount++;
-            if ($existing->contact === $request->contact) $matchCount++;
-            
+            if (strtolower($existing->name) === strtolower($request->name))
+                $matchCount++;
+            if (strtolower($existing->prenom) === strtolower($request->prenom))
+                $matchCount++;
+            if ($existing->email === $request->email)
+                $matchCount++;
+            if ($existing->contact === $request->contact)
+                $matchCount++;
+
             if ($matchCount >= 2) {
                 $isDuplicate = true;
                 break;
@@ -517,8 +531,8 @@ class LocataireController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:locataires,email,'.$locataire->id,
-            'contact' => 'required|string|min:10|unique:locataires,contact,'.$locataire->id,
+            'email' => 'required|email|unique:locataires,email,' . $locataire->id,
+            'contact' => 'required|string|min:10|unique:locataires,contact,' . $locataire->id,
             'piece' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'adresse' => 'required|string|max:255',
             'profession' => 'required|string|max:255',
@@ -598,110 +612,114 @@ class LocataireController extends Controller
     }
     public function updateAdmin(Request $request, $id)
     {
-       $locataire = Locataire::findOrFail($id);
+        $locataire = Locataire::findOrFail($id);
 
-    // Vérification des doublons potentiels (en excluant le locataire actuel)
-    $existingLocataires = Locataire::where('id', '!=', $id)
-        ->where(function($query) use ($request) {
-            $query->where('name', 'like', $request->name)
-                  ->orWhere('prenom', 'like', $request->prenom)
-                  ->orWhere('email', $request->email)
-                  ->orWhere('contact', $request->contact);
-        })->get();
+        // Vérification des doublons potentiels (en excluant le locataire actuel)
+        $existingLocataires = Locataire::where('id', '!=', $id)
+            ->where(function ($query) use ($request) {
+                $query->where('name', 'like', $request->name)
+                    ->orWhere('prenom', 'like', $request->prenom)
+                    ->orWhere('email', $request->email)
+                    ->orWhere('contact', $request->contact);
+            })->get();
 
-    $isDuplicate = false;
-    foreach ($existingLocataires as $existing) {
-        $matchCount = 0;
-        if (strtolower($existing->name) === strtolower($request->name)) $matchCount++;
-        if (strtolower($existing->prenom) === strtolower($request->prenom)) $matchCount++;
-        if ($existing->email === $request->email) $matchCount++;
-        if ($existing->contact === $request->contact) $matchCount++;
-        
-        if ($matchCount >= 2) {
-            $isDuplicate = true;
-            break;
-        }
-    }
+        $isDuplicate = false;
+        foreach ($existingLocataires as $existing) {
+            $matchCount = 0;
+            if (strtolower($existing->name) === strtolower($request->name))
+                $matchCount++;
+            if (strtolower($existing->prenom) === strtolower($request->prenom))
+                $matchCount++;
+            if ($existing->email === $request->email)
+                $matchCount++;
+            if ($existing->contact === $request->contact)
+                $matchCount++;
 
-    if ($isDuplicate) {
-        return back()->withErrors([
-            'duplicate' => 'Un locataire avec des informations similaires existe déjà. Veuillez vérifier dans la liste des locataires.'
-        ])->withInput();
-    }
-
-    // Validation des données
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'prenom' => 'required|string|max:255',
-        'email' => 'required|email|unique:locataires,email,'.$locataire->id,
-        'contact' => 'required|string|min:10|unique:locataires,contact,'.$locataire->id,
-        'piece' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'adresse' => 'required|string|max:255',
-        'profession' => 'required|string|max:255',
-        'attestation' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'image3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'image4' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'contrat' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
-        'status' => 'sometimes|in:Actif,Inactif,Pas sérieux',
-        'motif' => 'required_if:status,Inactif,Pas sérieux|nullable|string|max:255',
-        'bien_id' => 'required|exists:biens,id',
-    ]);
-
-    try {
-        // Mise à jour des informations de base
-        $locataire->name = $request->name;
-        $locataire->prenom = $request->prenom;
-        $locataire->email = $request->email;
-        $locataire->contact = $request->contact;
-        $locataire->adresse = $request->adresse;
-        $locataire->profession = $request->profession;
-        $locataire->status = $request->input('status', 'Actif');
-
-        if (in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
-            $locataire->motif = $request->motif;
-        } else {
-            $locataire->motif = null;
+            if ($matchCount >= 2) {
+                $isDuplicate = true;
+                break;
+            }
         }
 
-        // Gestion des fichiers
-        $fileFields = [
-            'piece' => 'pieces_identite',
-            'attestation' => 'attestations',
-            'image1' => 'locataires_images',
-            'image2' => 'locataires_images',
-            'image3' => 'locataires_images',
-            'image4' => 'locataires_images',
-            'contrat' => 'contrats'
-        ];
+        if ($isDuplicate) {
+            return back()->withErrors([
+                'duplicate' => 'Un locataire avec des informations similaires existe déjà. Veuillez vérifier dans la liste des locataires.'
+            ])->withInput();
+        }
 
-        foreach ($fileFields as $field => $folder) {
-            if ($request->hasFile($field)) {
-                // Supprimer l'ancien fichier si existe
-                if ($locataire->$field) {
-                    Storage::disk('public')->delete($locataire->$field);
+        // Validation des données
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'email' => 'required|email|unique:locataires,email,' . $locataire->id,
+            'contact' => 'required|string|min:10|unique:locataires,contact,' . $locataire->id,
+            'piece' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'adresse' => 'required|string|max:255',
+            'profession' => 'required|string|max:255',
+            'attestation' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image4' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'contrat' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
+            'status' => 'sometimes|in:Actif,Inactif,Pas sérieux',
+            'motif' => 'required_if:status,Inactif,Pas sérieux|nullable|string|max:255',
+            'bien_id' => 'required|exists:biens,id',
+        ]);
+
+        try {
+            // Mise à jour des informations de base
+            $locataire->name = $request->name;
+            $locataire->prenom = $request->prenom;
+            $locataire->email = $request->email;
+            $locataire->contact = $request->contact;
+            $locataire->adresse = $request->adresse;
+            $locataire->profession = $request->profession;
+            $locataire->status = $request->input('status', 'Actif');
+
+            if (in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
+                $locataire->motif = $request->motif;
+            } else {
+                $locataire->motif = null;
+            }
+
+            // Gestion des fichiers
+            $fileFields = [
+                'piece' => 'pieces_identite',
+                'attestation' => 'attestations',
+                'image1' => 'locataires_images',
+                'image2' => 'locataires_images',
+                'image3' => 'locataires_images',
+                'image4' => 'locataires_images',
+                'contrat' => 'contrats'
+            ];
+
+            foreach ($fileFields as $field => $folder) {
+                if ($request->hasFile($field)) {
+                    // Supprimer l'ancien fichier si existe
+                    if ($locataire->$field) {
+                        Storage::disk('public')->delete($locataire->$field);
+                    }
+                    $filePath = $request->file($field)->store($folder, 'public');
+                    $locataire->$field = $filePath;
                 }
-                $filePath = $request->file($field)->store($folder, 'public');
-                $locataire->$field = $filePath;
-            }
-        }
-
-        // Mise à jour du bien si changé
-        if ($locataire->bien_id != $request->bien_id) {
-            // Libérer l'ancien bien
-            $ancienBien = Bien::find($locataire->bien_id);
-            if ($ancienBien) {
-                $ancienBien->status = 'Disponible';
-                $ancienBien->save();
             }
 
-            // Attribuer le nouveau bien
-            $locataire->bien_id = $request->bien_id;
-            $nouveauBien = Bien::find($request->bien_id);
-            $nouveauBien->status = 'Loué';
-            $nouveauBien->save();
-        }
+            // Mise à jour du bien si changé
+            if ($locataire->bien_id != $request->bien_id) {
+                // Libérer l'ancien bien
+                $ancienBien = Bien::find($locataire->bien_id);
+                if ($ancienBien) {
+                    $ancienBien->status = 'Disponible';
+                    $ancienBien->save();
+                }
+
+                // Attribuer le nouveau bien
+                $locataire->bien_id = $request->bien_id;
+                $nouveauBien = Bien::find($request->bien_id);
+                $nouveauBien->status = 'Loué';
+                $nouveauBien->save();
+            }
 
             $locataire->save();
 
@@ -714,22 +732,26 @@ class LocataireController extends Controller
     }
     public function storeAdmin(Request $request)
     {
-      // Vérification des doublons potentiels
-        $existingLocataires = Locataire::where(function($query) use ($request) {
+        // Vérification des doublons potentiels
+        $existingLocataires = Locataire::where(function ($query) use ($request) {
             $query->where('name', 'like', $request->name)
-                  ->orWhere('prenom', 'like', $request->prenom)
-                  ->orWhere('email', $request->email)
-                  ->orWhere('contact', $request->contact);
+                ->orWhere('prenom', 'like', $request->prenom)
+                ->orWhere('email', $request->email)
+                ->orWhere('contact', $request->contact);
         })->get();
 
         $isDuplicate = false;
         foreach ($existingLocataires as $locataire) {
             $matchCount = 0;
-            if (strtolower($locataire->name) === strtolower($request->name)) $matchCount++;
-            if (strtolower($locataire->prenom) === strtolower($request->prenom)) $matchCount++;
-            if ($locataire->email === $request->email) $matchCount++;
-            if ($locataire->contact === $request->contact) $matchCount++;
-            
+            if (strtolower($locataire->name) === strtolower($request->name))
+                $matchCount++;
+            if (strtolower($locataire->prenom) === strtolower($request->prenom))
+                $matchCount++;
+            if ($locataire->email === $request->email)
+                $matchCount++;
+            if ($locataire->contact === $request->contact)
+                $matchCount++;
+
             if ($matchCount >= 2) {
                 $isDuplicate = true;
                 break;
@@ -821,7 +843,7 @@ class LocataireController extends Controller
                 $image4Path = $request->file('image4')->store('locataires_images', 'public');
             }
 
-             // Récupération du bien associé
+            // Récupération du bien associé
             $bien = Bien::findOrFail($request->bien_id);
             $avance = $bien->avance;
             $loyer = $bien->prix;
@@ -850,7 +872,7 @@ class LocataireController extends Controller
             if (in_array($locataire->status, ['Inactif', 'Pas sérieux'])) {
                 $locataire->motif = $request->motif;
             }
-            
+
             $locataire->save();
 
             // Mettre à jour le statut du bien
@@ -863,7 +885,7 @@ class LocataireController extends Controller
                 for ($i = 0; $i < $avance; $i++) {
                     $moisCourant = Carbon::now()->addMonths($i);
                     $moisCouvert = $moisCourant->format('Y-m');
-                    
+
                     Paiement::create([
                         'montant' => $loyer,
                         'date_paiement' => $datePaiement,
@@ -890,56 +912,56 @@ class LocataireController extends Controller
             Notification::route('mail', $locataire->email)
                 ->notify(new SendEmailToLocataireAfterRegistrationNotification($code, $locataire->email, $agence->name));
 
-             /**********************************************************************
+            /**********************************************************************
              * INTÉGRATION DU SYSTÈME D'ENVOI DE SMS AVEC TWILIO (NOUVEAU CODE)
              **********************************************************************/
             try {
-                    $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-                    
-                    // Configuration SSL
-                    $httpClient = new \Twilio\Http\CurlClient([
-                        CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
-                        CURLOPT_SSL_VERIFYPEER => true,
-                        CURLOPT_SSL_VERIFYHOST => 2,
-                    ]);
-                    $twilio->setHttpClient($httpClient);
+                $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
 
-                    // Formater le numéro
-                    $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
+                // Configuration SSL
+                $httpClient = new \Twilio\Http\CurlClient([
+                    CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
+                    CURLOPT_SSL_VERIFYPEER => true,
+                    CURLOPT_SSL_VERIFYHOST => 2,
+                ]);
+                $twilio->setHttpClient($httpClient);
 
-                    // Construire le message SMS avec code et lien
-                    $validationUrl = url('/validate-locataire-account/' . $locataire->email);
-                    $smsContent = "Bonjour {$locataire->prenom},\n\n"
-                                . "Votre code de validation: {$code}\n\n"
-                                . "Validez votre compte ici: {$validationUrl}\n\n"
-                                . "Agence: {$agence->name}";
+                // Formater le numéro
+                $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
 
-                    $message = $twilio->messages->create(
-                        $phoneNumber,
-                        [
-                            'from' => env('TWILIO_PHONE_NUMBER'),
-                            'body' => $smsContent,
-                        ]
-                    );
+                // Construire le message SMS avec code et lien
+                $validationUrl = url('/validate-locataire-account/' . $locataire->email);
+                $smsContent = "Bonjour {$locataire->prenom},\n\n"
+                    . "Votre code de validation: {$code}\n\n"
+                    . "Validez votre compte ici: {$validationUrl}\n\n"
+                    . "Agence: {$agence->name}";
 
-                    Log::channel('sms')->info('SMS validation envoyé', [
-                        'locataire_id' => $locataire->id,
-                        'to' => $phoneNumber,
-                        'message_sid' => $message->sid
-                    ]);
+                $message = $twilio->messages->create(
+                    $phoneNumber,
+                    [
+                        'from' => env('TWILIO_PHONE_NUMBER'),
+                        'body' => $smsContent,
+                    ]
+                );
 
-                } catch (TwilioException $e) {
-                    Log::channel('sms')->error('Erreur SMS validation', [
-                        'locataire_id' => $locataire->id,
-                        'error' => $e->getMessage()
-                    ]);
+                Log::channel('sms')->info('SMS validation envoyé', [
+                    'locataire_id' => $locataire->id,
+                    'to' => $phoneNumber,
+                    'message_sid' => $message->sid
+                ]);
+
+            } catch (TwilioException $e) {
+                Log::channel('sms')->error('Erreur SMS validation', [
+                    'locataire_id' => $locataire->id,
+                    'error' => $e->getMessage()
+                ]);
             }
             /**********************************************************************
              * FIN DE L'INTÉGRATION SMS
              **********************************************************************/
-                
+
             return redirect()->route('locataire.admin.index')->with('success', 'Locataire créé avec succès!');
-    
+
         } catch (\Exception $e) {
             Log::error('Error creating locataire: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -959,12 +981,12 @@ class LocataireController extends Controller
 
             $locataire->status = $request->status;
             $locataire->motif = in_array($request->status, ['Inactif', 'Pas sérieux']) ? $request->motif : null;
-            
+
             // Si le statut est "Pas sérieux", on libère le bien
             if ($request->status === 'Pas sérieux') {
                 $locataire->bien_id = null;
             }
-            
+
             $locataire->save();
 
             // Mettre à jour le statut du bien si nécessaire
@@ -980,9 +1002,9 @@ class LocataireController extends Controller
             return back()->withErrors(['error' => 'Une erreur est survenue lors de la mise à jour du statut']);
         }
     }
-public function updateStatusAdmin(Request $request, Locataire $locataire)
-{
-    $request->validate([
+    public function updateStatusAdmin(Request $request, Locataire $locataire)
+    {
+        $request->validate([
             'status' => 'required|in:Actif,Inactif,Pas sérieux',
             'motif' => 'required_if:status,Inactif,Pas sérieux|nullable|string|max:255'
         ]);
@@ -993,12 +1015,12 @@ public function updateStatusAdmin(Request $request, Locataire $locataire)
 
             $locataire->status = $request->status;
             $locataire->motif = in_array($request->status, ['Inactif', 'Pas sérieux']) ? $request->motif : null;
-            
+
             // Si le statut est "Pas sérieux", on libère le bien
             if ($request->status === 'Pas sérieux') {
                 $locataire->bien_id = null;
             }
-            
+
             $locataire->save();
 
             // Mettre à jour le statut du bien si nécessaire
@@ -1013,19 +1035,21 @@ public function updateStatusAdmin(Request $request, Locataire $locataire)
             Log::error('Error updating locataire status: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue lors de la mise à jour du statut']);
         }
-}
+    }
 
-public function defineAccess($email){
-    //Vérification si le sous-admin existe déjà
-    $checkSousadminExiste = Locataire::where('email', $email)->first();
-    if($checkSousadminExiste){
-        return view('agence.locataire.auth.validate', compact('email'));
-    }else{
-        return redirect()->route('locataire.login')->with('error', 'Email inconnu');
-    };
-}
+    public function defineAccess($email)
+    {
+        //Vérification si le sous-admin existe déjà
+        $checkSousadminExiste = Locataire::where('email', $email)->first();
+        if ($checkSousadminExiste) {
+            return view('agence.locataire.auth.validate', compact('email'));
+        } else {
+            return redirect()->route('locataire.login')->with('error', 'Email inconnu');
+        }
+        ;
+    }
 
-public function submitDefineAccess(Request $request)
+    public function submitDefineAccess(Request $request)
     {
         // Validation des données
         $request->validate([
@@ -1040,23 +1064,23 @@ public function submitDefineAccess(Request $request)
             'password_confirm.same' => 'Les mots de passe doivent être identiques.',
             'password_confirm.required' => 'Le mot de passe de confirmation est obligatoire.',
         ]);
-    
+
         try {
             $locataire = Locataire::where('email', $request->email)->first();
-    
+
             if ($locataire) {
                 // Mise à jour du mot de passe
                 $locataire->password = Hash::make($request->password);
                 $locataire->update();
-    
+
                 if ($locataire) {
                     $existingcodelocataire = ResetCodePasswordLocataire::where('email', $locataire->email)->count();
-    
+
                     if ($existingcodelocataire > 1) {
                         ResetCodePasswordLocataire::where('email', $locataire->email)->delete();
                     }
                 }
-    
+
                 return redirect()->route('locataire.login')->with('success', 'Compte mis à jour avec succès');
             } else {
                 return redirect()->route('locataire.login')->with('error', 'Email inconnu');
@@ -1067,9 +1091,10 @@ public function submitDefineAccess(Request $request)
         }
     }
 
-    public function login(){
+    public function login()
+    {
         return view('agence.locataire.auth.login');
-     }
+    }
 
     public function authenticate(Request $request)
     {
@@ -1090,7 +1115,7 @@ public function submitDefineAccess(Request $request)
 
         if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
             $field = 'email';
-        } elseif (preg_match('/^MA[0-9]+$/i', $loginInput)) { 
+        } elseif (preg_match('/^MA[0-9]+$/i', $loginInput)) {
             // Vérifie si ça ressemble à MA123456 (insensible à la casse avec 'i')
             $field = 'code_id';
             $loginInput = strtoupper($loginInput); // Normalise le code en majuscule
@@ -1119,7 +1144,7 @@ public function submitDefineAccess(Request $request)
                 'password' => $password
             ];
 
-            if(auth('locataire')->attempt($credentials)) {
+            if (auth('locataire')->attempt($credentials)) {
                 return redirect()->route('locataire.dashboard')->with('success', 'Bienvenue sur votre page');
             } else {
                 return redirect()->back()
@@ -1134,21 +1159,22 @@ public function submitDefineAccess(Request $request)
         }
     }
 
-     public function logout(){
+    public function logout()
+    {
         auth('locataire')->logout();
-        return redirect()->route('locataire.login')->with('success', 'Déconnexion réussie.');
+        return redirect()->route('login')->with('success', 'Déconnexion réussie.');
     }
 
     public function show($id)
     {
         // Récupérer le locataire avec son bien associé
-        $locataire = Locataire::with(['bien','agence'])->findOrFail($id);
-        
+        $locataire = Locataire::with(['bien', 'agence'])->findOrFail($id);
+
         // Vérifier si le bien existe
-        if(!$locataire->bien) {
+        if (!$locataire->bien) {
             return redirect()->back()->with('error', 'Aucun bien associé à ce locataire');
         }
-        
+
         return view('locataire.show', compact('locataire'));
     }
 
@@ -1163,26 +1189,26 @@ public function submitDefineAccess(Request $request)
     public function updateProfile(Request $request)
     {
         $locataire = Auth::guard('locataire')->user();
-    
+
         $rules = [
             'name' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:locataires,email,'.$locataire->id,
+            'email' => 'required|email|unique:locataires,email,' . $locataire->id,
             'contact' => 'required|string|min:10',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
-    
+
         // Ajoute les règles de validation pour le mot de passe seulement si un nouveau mot de passe est fourni
         if ($request->filled('password')) {
             $rules['password'] = 'string|min:8|same:password_confirm';
             $rules['password_confirm'] = 'string|min:8|same:password';
         }
-    
+
         $request->validate($rules, [
             'password.same' => 'Les mots de passe ne correspondent pas',
             'password_confirm.same' => 'Les mots de passe ne correspondent pas',
         ]);
-    
+
         try {
             // Mise à jour de l'image de profil
             if ($request->hasFile('profile_image')) {
@@ -1191,24 +1217,24 @@ public function submitDefineAccess(Request $request)
                 }
                 $locataire->profile_image = $request->file('profile_image')->store('profile_images', 'public');
             }
-    
+
             // Mise à jour des informations de base
             $locataire->name = $request->name;
             $locataire->prenom = $request->prenom;
             $locataire->email = $request->email;
             $locataire->contact = $request->contact;
-    
+
             // Mise à jour du mot de passe seulement si fourni
             if ($request->filled('password')) {
                 $locataire->password = Hash::make($request->password);
             }
-    
+
             $locataire->save();
-    
+
             return redirect()->route('locataire.dashboard')->with('success', 'Vos informations on bien été mis à jour!');
-    
+
         } catch (\Exception $e) {
-            Log::error('Erreur mise à jour profil agence: '.$e->getMessage());
+            Log::error('Erreur mise à jour profil agence: ' . $e->getMessage());
             return back()->with('error', 'Une erreur est survenue lors de la mise à jour');
         }
     }
@@ -1223,7 +1249,7 @@ public function submitDefineAccess(Request $request)
 
         try {
             $user = Auth::guard('locataire')->user();
-            
+
             if (!$user) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
@@ -1238,9 +1264,9 @@ public function submitDefineAccess(Request $request)
             ));
 
             return response()->json(['success' => true]);
-            
+
         } catch (Exception $e) {
-            Log::error('Email error: '.$e->getMessage()."\n".$e->getTraceAsString());
+            Log::error('Email error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'error' => 'Erreur lors de l\'envoi du message',
                 'debug' => config('app.debug') ? $e->getMessage() : null
