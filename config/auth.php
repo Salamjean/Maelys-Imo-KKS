@@ -78,6 +78,10 @@ return [
             'driver' => 'session',
             'provider' => 'owners',
         ],
+        'commercial' => [
+            'driver' => 'session',
+            'provider' => 'commercials',
+        ],
     ],
 
     /*
@@ -123,6 +127,10 @@ return [
         'owners' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\Proprietaire::class),
+        ],
+        'commercials' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Commercial::class),
         ],
 
         // 'users' => [

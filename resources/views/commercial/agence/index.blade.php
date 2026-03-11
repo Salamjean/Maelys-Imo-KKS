@@ -1,4 +1,4 @@
-@extends('admin.layouts.template')
+@extends('commercial.layouts.template')
 @section('content')
 <style>
     /* Style personnalisé pour la pagination */
@@ -94,7 +94,6 @@
                     <th>Fiche RCCM</th>
                     <th>DFE</th>
                     <th>Fiche DFE</th>
-                    <th>Ajouté par</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -181,19 +180,12 @@
                                             <p>Aucun RIB fournir</p>
                                     @endif
                             </td>
-                        <td>
-                            @if($agence->commercial)
-                                <span class="badge badge-info">{{ $agence->commercial->name }} {{ $agence->commercial->prenom }}</span>
-                            @else
-                                <span class="badge badge-secondary">Admin</span>
-                            @endif
-                        </td>
                         <td class="text-center">
                             <div class="btn-group " role="group" style="gap: 10px">
-                                <a href="{{ route('agence.edit',$agence->id) }}" class="btn btn-sm btn-warning" title="Modifier">
+                                <a href="{{ route('commercial.agences.edit',$agence->id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                     <i class="mdi mdi-pencil"></i>
                                 </a>
-                                <form action="{{ route('agence.destroy', $agence->id) }}" method="POST" class="d-inline">
+                                <form action="{{ route('commercial.agences.destroy', $agence->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="button" class="btn btn-sm btn-danger delete-btn" title="Supprimer">

@@ -79,7 +79,8 @@ class AddBienOwnerController extends Controller
             'additional_images2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'additional_images3' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'additional_images4' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'additional_images5' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'additional_images5' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'video_3d' => 'nullable|string'
         ], [
             'type.required' => 'Le champ type est obligatoire',
             'description.required' => 'Le champ description est obligatoire',

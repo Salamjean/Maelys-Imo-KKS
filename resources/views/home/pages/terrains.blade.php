@@ -167,3 +167,7 @@
         });
     </script>
 @endpush
+            new WOW().init();
+        });
+    </script>
+@endpush

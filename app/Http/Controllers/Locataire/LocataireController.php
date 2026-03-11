@@ -1044,7 +1044,7 @@ class LocataireController extends Controller
         if ($checkSousadminExiste) {
             return view('agence.locataire.auth.validate', compact('email'));
         } else {
-            return redirect()->route('locataire.login')->with('error', 'Email inconnu');
+            return redirect()->route('login')->with('error', 'Email inconnu');
         }
         ;
     }
@@ -1081,9 +1081,9 @@ class LocataireController extends Controller
                     }
                 }
 
-                return redirect()->route('locataire.login')->with('success', 'Compte mis à jour avec succès');
+                return redirect()->route('login')->with('success', 'Compte mis à jour avec succès');
             } else {
-                return redirect()->route('locataire.login')->with('error', 'Email inconnu');
+                return redirect()->route('login')->with('error', 'Email inconnu');
             }
         } catch (\Exception $e) {
             Log::error('Error updating admin profile: ' . $e->getMessage());

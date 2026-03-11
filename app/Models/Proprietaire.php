@@ -29,6 +29,7 @@ class Proprietaire extends Authenticatable
         'gestion',
         'agence_id',
         'solde',
+        'commercial_id',
     ];
     public function biens()
     {
@@ -80,5 +81,10 @@ class Proprietaire extends Authenticatable
         return $this->biens->sum(function($bien) {
             return (float) $bien->prix;
         });
+    }
+
+    public function commercial()
+    {
+        return $this->belongsTo(Commercial::class, 'commercial_id', 'code_id');
     }
 }

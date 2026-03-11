@@ -554,7 +554,7 @@ class ComptableController extends Controller
         if ($checkSousadminExiste) {
             return view('comptable.auth.validate', compact('email'));
         } else {
-            return redirect()->route('comptable.login')->with('error', 'Email inconnu');
+            return redirect()->route('login')->with('error', 'Email inconnu');
         }
         ;
     }
@@ -591,9 +591,9 @@ class ComptableController extends Controller
                     }
                 }
 
-                return redirect()->route('comptable.login')->with('success', 'Compte mis à jour avec succès');
+                return redirect()->route('login')->with('success', 'Compte mis à jour avec succès');
             } else {
-                return redirect()->route('comptable.login')->with('error', 'Email inconnu');
+                return redirect()->route('login')->with('error', 'Email inconnu');
             }
         } catch (\Exception $e) {
             Log::error('Error updating admin profile: ' . $e->getMessage());

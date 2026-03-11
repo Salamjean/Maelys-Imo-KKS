@@ -36,7 +36,7 @@ class Comptable extends Authenticatable
 
     public function agence()
     {
-        return $this->belongsTo(Agence::class,'agence_id', 'code_id');
+        return $this->belongsTo(Agence::class, 'agence_id', 'code_id');
     }
 
     public function paiements()

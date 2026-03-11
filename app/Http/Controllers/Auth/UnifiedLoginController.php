@@ -22,6 +22,8 @@ class UnifiedLoginController extends Controller
             return redirect()->route('owner.dashboard');
         if (Auth::guard('locataire')->check())
             return redirect()->route('locataire.dashboard');
+        if (Auth::guard('commercial')->check())
+            return redirect()->route('commercial.dashboard');
         if (Auth::guard('comptable')->check()) {
             $user = Auth::guard('comptable')->user();
             if ($user->user_type === 'Agent de recouvrement') {
@@ -64,7 +66,19 @@ class UnifiedLoginController extends Controller
                 return redirect()->route('locataire.dashboard')->with('success', 'Bienvenue sur votre espace.');
             }
 
-            // --- B. COMPTABLE / AGENT ---
+            // --- B. COMMERCIAL ---
+            if (Auth::guard('commercial')->attempt($credentials)) {
+                $commercial = Auth::guard('commercial')->user();
+                if (!$commercial->is_active) {
+                    Auth::guard('commercial')->logout();
+                    return redirect()->back()
+                        ->with('error', 'Votre compte est désactivé. Veuillez contacter l\'administrateur.')
+                        ->withInput($request->except('password'));
+                }
+                return redirect()->route('commercial.dashboard')->with('success', 'Bienvenue sur votre espace Commercial.');
+            }
+
+            // --- C. COMPTABLE / AGENT ---
             if (Auth::guard('comptable')->attempt($credentials)) {
                 $user = Auth::guard('comptable')->user();
                 if ($user->user_type === 'Agent de recouvrement') {
@@ -75,7 +89,7 @@ class UnifiedLoginController extends Controller
                 return redirect()->route('login')->with('error', 'Type d\'utilisateur inconnu.');
             }
 
-            // --- C. AGENCE ---
+            // --- D. AGENCE ---
             if (Auth::guard('agence')->attempt($credentials)) {
                 $agence = Auth::guard('agence')->user();
                 $abonnement = Abonnement::where('agence_id', $agence->code_id)

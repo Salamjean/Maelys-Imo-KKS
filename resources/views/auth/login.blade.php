@@ -80,7 +80,7 @@
                         <div class="input-group uf-input-group input-group-lg mb-3">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
                             <input type="text" class="form-control" name="identifiant" value="{{ old('identifiant') }}"
-                                placeholder="Code ID (ex: AGT123456)" required autofocus>
+                                placeholder="Code ID (ex: MA123456)" required autofocus>
                         </div>
 
                         <!-- Champ Mot de passe -->

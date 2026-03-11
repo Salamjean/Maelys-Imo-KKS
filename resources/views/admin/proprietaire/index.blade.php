@@ -90,6 +90,7 @@
                     <th>Lieu de résidence</th>
                     <th>Contact</th>
                     <th>RIB</th>
+                    <th>Ajouté par</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -126,6 +127,13 @@
                                             <p>Aucun RIB fournir</p>
                                     @endif
                             </td>
+                        <td>
+                            @if($proprietaire->commercial)
+                                <span class="badge badge-info">{{ $proprietaire->commercial->name }} {{ $proprietaire->commercial->prenom }}</span>
+                            @else
+                                <span class="badge badge-secondary">Admin</span>
+                            @endif
+                        </td>
                         <td class="text-center">
                             <div class="btn-group " role="group" style="gap: 10px">
                                 <a href="{{ route('owner.edit.admin', $proprietaire->id) }}" class="btn btn-sm btn-warning" title="Modifier">

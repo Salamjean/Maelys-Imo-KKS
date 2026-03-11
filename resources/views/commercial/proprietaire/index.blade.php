@@ -1,4 +1,4 @@
-@extends('admin.layouts.template')
+@extends('commercial.layouts.template')
 @section('content')
 <style>
     /* Style personnalisé pour la pagination */
@@ -52,9 +52,9 @@
 <div class="col-lg-12 stretch-card">
     <div class="card">
       <div class="card-body">
-        <h4 class="card-title text-center">Agence - partenaire</h4>
+        <h4 class="card-title text-center">Propriétaire de bien inscrire dans votre agence</h4>
         <p class="card-description text-center">
-          Listes des agences partenaires de la plateforme
+          Listes des propriétaire de votre agence
         </p>
 
         <!-- Modal pour afficher les images -->
@@ -77,40 +77,35 @@
             </div>
         </div>
         <div class="mb-3">
-                <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
-            </div>
+            <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
+        </div>
         <div class="table-responsive pt-3">
           <table class="table table-bordered table-hover">
             <thead style="background-color: #02245b; color: white;">
                 <tr class="text-center">
-                    <th>ID Agence</th>
-                    <th>Nom de l'agence</th>
+                    <th>ID Propriétaire</th>
+                    {{-- <th>Gestion des biens</th> --}}
+                    <th>Nom du propriétaire</th>
                     <th>Email</th>
-                    <th>Commune</th>
+                    <th>Lieu de résidence</th>
                     <th>Contact</th>
-                    <th>Adresse complète</th>
                     <th>RIB</th>
-                    <th>N° RCCM</th>
-                    <th>Fiche RCCM</th>
-                    <th>DFE</th>
-                    <th>Fiche DFE</th>
-                    <th>Ajouté par</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($agences as $agence)
+                @forelse($proprietaires as $proprietaire)
                     <tr class="text-center pt-3" style="height: 30px">
-                        <td ><strong>{{ $agence->code_id }}</strong></td>
-                        <td ><strong>{{ $agence->name }}</strong></td>
-                        <td>{{ $agence->email }}</td>
-                        <td>{{ $agence->commune }}</td>
-                        <td>{{ $agence->contact }}</td>
-                        <td>{{ $agence->adresse }}</td>
+                        <td><strong>{{ $proprietaire->code_id }}</strong></td>
+                        {{-- <td>{{ $proprietaire->gestion }}</td> --}}
+                        <td ><strong>{{ $proprietaire->name. ' '. $proprietaire->prenom }}</strong></td>
+                        <td>{{ $proprietaire->email }}</td>
+                        <td>{{ $proprietaire->commune }}</td>
+                        <td>{{ $proprietaire->contact }}</td>
                         <td>
-                            @if($agence->rib)
+                            @if($proprietaire->rib)
                                 @php
-                                    $ribPath = asset('storage/' . $agence->rib);
+                                    $ribPath = asset('storage/' . $proprietaire->rib);
                                     $ribPathPdf = strtolower(pathinfo($ribPath, PATHINFO_EXTENSION)) === 'pdf';
                                 @endphp
                                     @if ($ribPathPdf)
@@ -131,69 +126,12 @@
                                             <p>Aucun RIB fournir</p>
                                     @endif
                             </td>
-                        <td>{{ $agence->rccm }}</td>
-                        <td>
-                            @if($agence->rccm_file)
-                                @php
-                                    $rccmPath = asset('storage/' . $agence->rccm_file);
-                                    $rccmPathPdf = strtolower(pathinfo($rccmPath, PATHINFO_EXTENSION)) === 'pdf';
-                                @endphp
-                                    @if ($rccmPathPdf)
-                                        <a href="{{ $rccmPath }}" target="_blank">
-                                            <img src="{{ asset('assets/images/pdf.jpg') }}" alt="PDF" width="30" height="30">
-                                        </a>
-                                    @else
-                                        <img src="{{ $ribPath }}" 
-                                            alt="Pièce du parent" 
-                                            width="50" 
-                                            height=50
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#imageModal" 
-                                            onclick="showImage(this)" 
-                                            onerror="this.onerror=null; this.src='{{ asset('assets/images/profiles/bébé.jpg') }}'">
-                                    @endif
-                                        @else
-                                            <p>Aucun RIB fournir</p>
-                                    @endif
-                            </td>
-                        <td>{{ $agence->dfe }}</td>
-                        <td>
-                            @if($agence->dfe_file)
-                                @php
-                                    $dfe_filePath = asset('storage/' . $agence->dfe_file);
-                                    $dfe_filePathPdf = strtolower(pathinfo($dfe_filePath, PATHINFO_EXTENSION)) === 'pdf';
-                                @endphp
-                                    @if ($dfe_filePathPdf)
-                                        <a href="{{ $dfe_filePath }}" target="_blank">
-                                            <img src="{{ asset('assets/images/pdf.jpg') }}" alt="PDF" width="30" height="30">
-                                        </a>
-                                    @else
-                                        <img src="{{ $dfe_filePath }}" 
-                                            alt="Pièce du parent" 
-                                            width="50" 
-                                            height=50
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#imageModal" 
-                                            onclick="showImage(this)" 
-                                            onerror="this.onerror=null; this.src='{{ asset('assets/images/profiles/bébé.jpg') }}'">
-                                    @endif
-                                        @else
-                                            <p>Aucun RIB fournir</p>
-                                    @endif
-                            </td>
-                        <td>
-                            @if($agence->commercial)
-                                <span class="badge badge-info">{{ $agence->commercial->name }} {{ $agence->commercial->prenom }}</span>
-                            @else
-                                <span class="badge badge-secondary">Admin</span>
-                            @endif
-                        </td>
                         <td class="text-center">
                             <div class="btn-group " role="group" style="gap: 10px">
-                                <a href="{{ route('agence.edit',$agence->id) }}" class="btn btn-sm btn-warning" title="Modifier">
+                                <a href="{{ route('commercial.proprietaires.edit', $proprietaire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                     <i class="mdi mdi-pencil"></i>
                                 </a>
-                                <form action="{{ route('agence.destroy', $agence->id) }}" method="POST" class="d-inline">
+                                <form action="{{ route('commercial.proprietaires.destroy', $proprietaire->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="button" class="btn btn-sm btn-danger delete-btn" title="Supprimer">
@@ -205,7 +143,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="12" class="text-center py-4">
+                        <td colspan="7" class="text-center py-4">
                             <div class="alert alert-info">
                                 Aucune agence partenaire disponible pour le moment.
                             </div>
@@ -215,24 +153,24 @@
             </tbody>
           </table>
           
-          @if($agences->hasPages())
+          @if($proprietaires->hasPages())
 <div class="mt-4 d-flex justify-content-center">
     <nav aria-label="Page navigation">
         <ul class="pagination pagination-rounded">
             {{-- Previous Page Link --}}
-            @if ($agences->onFirstPage())
+            @if ($proprietaires->onFirstPage())
                 <li class="page-item disabled">
                     <span class="page-link" aria-hidden="true">&laquo;</span>
                 </li>
             @else
                 <li class="page-item">
-                    <a class="page-link" href="{{ $agences->previousPageUrl() }}" rel="prev" aria-label="Previous">&laquo;</a>
+                    <a class="page-link" href="{{ $proprietaires->previousPageUrl() }}" rel="prev" aria-label="Previous">&laquo;</a>
                 </li>
             @endif
 
             {{-- Pagination Elements --}}
-            @foreach ($agences->getUrlRange(1, $agences->lastPage()) as $page => $url)
-                @if ($page == $agences->currentPage())
+            @foreach ($proprietaires->getUrlRange(1, $proprietaires->lastPage()) as $page => $url)
+                @if ($page == $proprietaires->currentPage())
                     <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
                 @else
                     <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
@@ -240,9 +178,9 @@
             @endforeach
 
             {{-- Next Page Link --}}
-            @if ($agences->hasMorePages())
+            @if ($proprietaires->hasMorePages())
                 <li class="page-item">
-                    <a class="page-link" href="{{ $agences->nextPageUrl() }}" rel="next" aria-label="Next">&raquo;</a>
+                    <a class="page-link" href="{{ $proprietaires->nextPageUrl() }}" rel="next" aria-label="Next">&raquo;</a>
                 </li>
             @else
                 <li class="page-item disabled">
@@ -290,7 +228,7 @@
             
             Swal.fire({
                 title: 'Confirmer la suppression',
-                text: "Êtes-vous sûr de vouloir supprimer cette agence ?",
+                text: "Êtes-vous sûr de vouloir supprimer cet comptable ?",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',

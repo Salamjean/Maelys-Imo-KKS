@@ -22,6 +22,7 @@ class Agence extends Authenticatable
         'profile_image',
         'password_reset_token',
         'password_reset_expires',
+        'commercial_id',
     ];
 
     public function biens()
@@ -48,6 +49,11 @@ class Agence extends Authenticatable
     public function etatlieu()
     {
         return $this->hasMany(EtatLieu::class, 'agence_id', 'code_id');
+    }
+
+    public function commercial()
+    {
+        return $this->belongsTo(Commercial::class, 'commercial_id', 'code_id');
     }
     
 }

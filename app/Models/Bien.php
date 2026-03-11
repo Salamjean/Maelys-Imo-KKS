@@ -28,6 +28,7 @@ class Bien extends Model
         'agence_id',
         'montant_majore',
         'video_3d',
+        'commercial_id',
     ];
 
     public function agence()

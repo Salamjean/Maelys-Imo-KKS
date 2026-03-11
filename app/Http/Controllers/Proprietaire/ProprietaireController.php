@@ -477,7 +477,7 @@ class ProprietaireController extends Controller
         if ($checkSousadminExiste) {
             return view('proprietaire.auth.validate', compact('email'));
         } else {
-            return redirect()->route('owner.login')->with('error', 'Email inconnu');
+            return redirect()->route('login')->with('error', 'Email inconnu');
         }
         ;
     }
@@ -514,9 +514,9 @@ class ProprietaireController extends Controller
                     }
                 }
 
-                return redirect()->route('owner.login')->with('success', 'Compte mis à jour avec succès');
+                return redirect()->route('login')->with('success', 'Compte mis à jour avec succès');
             } else {
-                return redirect()->route('owner.login')->with('error', 'Email inconnu');
+                return redirect()->route('login')->with('error', 'Email inconnu');
             }
         } catch (\Exception $e) {
             Log::error('Error updating admin profile: ' . $e->getMessage());
@@ -617,7 +617,7 @@ class ProprietaireController extends Controller
             })
             ->count();
         $agenceId = Auth::guard('admin')->user()->id;
-        $proprietaires = Proprietaire::whereNull('agence_id')->paginate(6);
+        $proprietaires = Proprietaire::with('commercial')->whereNull('agence_id')->paginate(6);
         return view('admin.proprietaire.index', compact('proprietaires', 'pendingVisits'));
     }
 

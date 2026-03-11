@@ -3,11 +3,13 @@
 use App\Http\Controllers\AbonnementController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminCommercialController;
 use App\Http\Controllers\Agence\AgencePasswordResetController;
 use App\Http\Controllers\Agence\AgenceController;
 use App\Http\Controllers\Agence\AgenceReversementController;
 use App\Http\Controllers\Agent\AgentRecouvrementController;
 use App\Http\Controllers\BienController;
+use App\Http\Controllers\Agent\CommercialController;
 use App\Http\Controllers\Agent\ComptableController;
 use App\Http\Controllers\Agent\ComptablePasswordResetController;
 use App\Http\Controllers\ContratController;
@@ -196,6 +198,21 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     //Locataire qui a demenager 
     Route::get('/move/out', [AdminController::class, 'move'])->name('admin.tenant.move');
 
+    // Routes pour la gestion des commerciaux par l'admin
+    Route::prefix('commercials')->group(function () {
+        Route::get('/', [AdminCommercialController::class, 'index'])->name('admin.commercial.index');
+        Route::get('/create', [AdminCommercialController::class, 'create'])->name('admin.commercial.create');
+        Route::post('/store', [AdminCommercialController::class, 'store'])->name('admin.commercial.store');
+        Route::get('/{id}/edit', [AdminCommercialController::class, 'edit'])->name('admin.commercial.edit');
+        Route::put('/{id}', [AdminCommercialController::class, 'update'])->name('admin.commercial.update');
+        Route::patch('/{id}/toggle-status', [AdminCommercialController::class, 'toggleStatus'])->name('admin.commercial.toggle-status');
+        Route::delete('/{id}', [AdminCommercialController::class, 'destroy'])->name('admin.commercial.destroy');
+
+        // Statistiques des commerciaux pour l'admin
+        Route::get('/statistics', [AdminCommercialController::class, 'statistics'])->name('admin.commercial.statistics');
+        Route::get('/statistics/{id}', [AdminCommercialController::class, 'showStatistics'])->name('admin.commercial.statistics.show');
+        Route::get('/statistics/{id}/pdf', [AdminCommercialController::class, 'exportStatisticsPDF'])->name('admin.commercial.statistics.pdf');
+    });
 });
 
 Route::get('/abonnements/pdf/{id}', [AbonnementController::class, 'generatePDF'])->name('abonnements.pdf');
@@ -372,6 +389,47 @@ Route::middleware('auth:comptable')->prefix('accounting')->group(function () {
     Route::post('/etat-sortie', [EtatAgentLocataire::class, 'storeSortie'])->name('etat.sortie.store');
     Route::get('/etat-lieux/sortie/{id}/download', [EtatAgentLocataire::class, 'downloadSortie'])->name('etat-lieux.sortie.download');
 });
+
+// Routes pour les commerciaux
+Route::middleware(['auth:commercial', 'check.commercial.status'])->prefix('commercial')->group(function () {
+    Route::get('/dashboard', [CommercialController::class, 'dashboard'])->name('commercial.dashboard');
+    Route::get('/statistics', [CommercialController::class, 'statistics'])->name('commercial.statistics');
+    Route::get('/statistics/export', [CommercialController::class, 'exportStatisticsPDF'])->name('commercial.statistics.pdf');
+    Route::get('/logout', [CommercialController::class, 'logout'])->name('commercial.logout');
+
+    // Commercial Agences
+    Route::prefix('agences')->name('commercial.agences.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Agent\CommercialAgenceController::class, 'index'])->name('index');
+        Route::get('/crearte', [\App\Http\Controllers\Agent\CommercialAgenceController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Agent\CommercialAgenceController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Agent\CommercialAgenceController::class, 'edit'])->name('edit');
+        Route::put('/{agence}', [\App\Http\Controllers\Agent\CommercialAgenceController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\Agent\CommercialAgenceController::class, 'destroy'])->name('destroy');
+    });
+
+    // Commercial Proprietaires
+    Route::prefix('proprietaires')->name('commercial.proprietaires.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Agent\CommercialProprietaireController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Agent\CommercialProprietaireController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Agent\CommercialProprietaireController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Agent\CommercialProprietaireController::class, 'edit'])->name('edit');
+        Route::put('/{proprietaire}', [\App\Http\Controllers\Agent\CommercialProprietaireController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\Agent\CommercialProprietaireController::class, 'destroy'])->name('destroy');
+    });
+
+    // Commercial Biens
+    Route::prefix('biens')->name('commercial.biens.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Agent\CommercialBienController::class, 'index'])->name('index');
+        Route::get('/choice', [\App\Http\Controllers\Agent\CommercialBienController::class, 'choice'])->name('choice');
+        Route::get('/create', [\App\Http\Controllers\Agent\CommercialBienController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Agent\CommercialBienController::class, 'store'])->name('store');
+        Route::get('/{id}', [\App\Http\Controllers\Agent\CommercialBienController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Agent\CommercialBienController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\Agent\CommercialBienController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\Agent\CommercialBienController::class, 'destroy'])->name('destroy');
+    });
+});
+
 // Routes pour la gestion des propriétaires
 Route::middleware('auth:owner')->prefix('owner')->group(function () {
     Route::get('/dashboard', [ProprietaireController::class, 'dashboard'])->name('owner.dashboard');
@@ -459,6 +517,8 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
     });
 
     Route::get('/move/out', [LocataireOwnerController::class, 'move'])->name('owner.tenant.move');
+
+    Route::get('/move/out', [LocataireOwnerController::class, 'move'])->name('owner.tenant.move');
 });
 
 
@@ -528,6 +588,8 @@ Route::get('/validate-comptable-account/{email}', [ComptableController::class, '
 Route::post('/validate-comptable-account/{email}', [ComptableController::class, 'submitDefineAccess'])->name('accounting.validate');
 Route::get('/validate-owner-account/{email}', [ProprietaireController::class, 'defineAccess']);
 Route::post('/validate-owner-account/{email}', [ProprietaireController::class, 'submitDefineAccess'])->name('owner.validate');
+Route::get('/validate-commercial-account/{email}', [CommercialController::class, 'defineAccess']);
+Route::post('/validate-commercial-account/{email}', [CommercialController::class, 'submitDefineAccess'])->name('commercial.validate.submit');
 
 
 //routes de gestions des onglets du menus 
