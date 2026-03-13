@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\Agent\ApiAgentDashboard;
 use App\Http\Controllers\Api\Agent\ApiAgentEtatLieu;
 use App\Http\Controllers\Api\Agent\ApiAgentPaiement;
 use App\Http\Controllers\Api\Authenticate\UserAuthentucateController;
+use App\Http\Controllers\Api\Commercial\CommercialAgenceApiController;
+use App\Http\Controllers\Api\Commercial\CommercialProprietaireApiController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\Locataire\ApiLocataireController;
 use App\Http\Controllers\Api\Locataire\ContacterAgenceController;
@@ -109,4 +111,34 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ... tes autres routes existantes (update-fcm-token, etc) ...
     Route::post('/update-fcm-token', [UserAuthentucateController::class, 'updateFcmToken']);
+
+    // Routes pour le Commercial
+    Route::prefix('commercial')->group(function () {
+        Route::get('/agences', [CommercialAgenceApiController::class, 'index']);
+        Route::post('/agences', [CommercialAgenceApiController::class, 'store']);
+        
+        Route::get('/proprietaires', [CommercialProprietaireApiController::class, 'index']);
+        Route::post('/proprietaires', [CommercialProprietaireApiController::class, 'store']);
+
+        Route::get('/biens', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'index']);
+        Route::get('/biens/{id}', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'show']);
+        Route::post('/biens/{id}/update', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'update']);
+        Route::post('/agences/{agence_id}/biens', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'store']);
+        Route::post('/proprietaires/{proprietaire_id}/biens', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'storeForProprietaire']);
+
+        // Statistiques
+        Route::get('/statistics', [\App\Http\Controllers\Api\Commercial\CommercialStatsApiController::class, 'index']);
+
+        // Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\Api\Commercial\CommercialDashboardApiController::class, 'index']);
+
+        // Profil
+        Route::prefix('profil')->group(function () {
+            Route::get('/edit', [\App\Http\Controllers\Api\Commercial\CommercialProfilApiController::class, 'edit']);
+            Route::post('/update', [\App\Http\Controllers\Api\Commercial\CommercialProfilApiController::class, 'update']);
+            Route::post('/photo', [\App\Http\Controllers\Api\Commercial\CommercialProfilApiController::class, 'updatePhoto']);
+            Route::post('/update-password', [\App\Http\Controllers\Api\Commercial\CommercialProfilApiController::class, 'updatePassword']);
+            Route::post('/update-email', [\App\Http\Controllers\Api\Commercial\CommercialProfilApiController::class, 'updateEmail']);
+        });
+    });
 });

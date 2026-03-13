@@ -7,6 +7,35 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @OA\Schema(
+ *     schema="Locataire",
+ *     title="Locataire",
+ *     description="Modèle de locataire",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="code_id", type="string", example="LOC123"),
+ *     @OA\Property(property="name", type="string", example="John"),
+ *     @OA\Property(property="prenom", type="string", example="Doe"),
+ *     @OA\Property(property="email", type="string", example="john@example.com"),
+ *     @OA\Property(property="contact", type="string", example="0102030405"),
+ *     @OA\Property(property="adresse", type="string", example="Abidjan"),
+ *     @OA\Property(property="status", type="string", example="Actif")
+ * )
+ * 
+ * @OA\Schema(
+ *     schema="LocataireWithRelations",
+ *     title="Locataire avec Relations",
+ *     description="Modèle de locataire incluant ses relations",
+ *     allOf={
+ *         @OA\Schema(ref="#/components/schemas/Locataire"),
+ *         @OA\Schema(
+ *             @OA\Property(property="agence", type="object"),
+ *             @OA\Property(property="proprietaire", type="object"),
+ *             @OA\Property(property="bien", type="object")
+ *         )
+ *     }
+ * )
+ */
 class Locataire extends Authenticatable
 {
     use HasApiTokens, Notifiable;

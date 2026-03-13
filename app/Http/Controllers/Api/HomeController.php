@@ -56,49 +56,6 @@ use Illuminate\Support\Facades\Mail;
  * )
  * 
  * @OA\Schema(
- *     schema="BienPagination",
- *     type="object",
- *     @OA\Property(property="current_page", type="integer", example=1),
- *     @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Bien")),
- *     @OA\Property(property="per_page", type="integer", example=6),
- *     @OA\Property(property="total", type="integer", example=20)
- * )
- * 
- * @OA\Schema(
- *     schema="BienWithRelationsPagination",
- *     type="object",
- *     @OA\Property(property="current_page", type="integer", example=1),
- *     @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/BienWithRelations")),
- *     @OA\Property(property="per_page", type="integer", example=10),
- *     @OA\Property(property="total", type="integer", example=15)
- * )
- * 
- * @OA\Schema(
- *     schema="Bien",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="titre", type="string", example="Appartement spacieux"),
- *     @OA\Property(property="description", type="string"),
- *     @OA\Property(property="type", type="string", example="Appartement"),
- *     @OA\Property(property="prix", type="number", format="float", example=750.50),
- *     @OA\Property(property="surface", type="integer", example=80),
- *     @OA\Property(property="commune", type="string", example="Paris"),
- *     @OA\Property(property="status", type="string", example="Disponible")
- * )
- * 
- * @OA\Schema(
- *     schema="BienWithRelations",
- *     allOf={
- *         @OA\Schema(ref="#/components/schemas/Bien"),
- *         @OA\Schema(
- *             type="object",
- *             @OA\Property(property="proprietaire", ref="#/components/schemas/Proprietaire"),
- *             @OA\Property(property="agence", ref="#/components/schemas/Agence")
- *         )
- *     }
- * )
- * 
- * @OA\Schema(
  *     schema="Partenaire",
  *     type="object",
  *     @OA\Property(property="id", type="integer", example=1),
@@ -106,21 +63,6 @@ use Illuminate\Support\Facades\Mail;
  *     @OA\Property(property="prenom", type="string", example="Jean"),
  *     @OA\Property(property="email", type="string", format="email", example="jean.dupont@example.com"),
  *     @OA\Property(property="type", type="string", example="Propriétaire")
- * )
- * 
- * @OA\Schema(
- *     schema="Proprietaire",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="nom", type="string", example="Dupont"),
- *     @OA\Property(property="prenom", type="string", example="Jean")
- * )
- * 
- * @OA\Schema(
- *     schema="Agence",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="nom", type="string", example="Agence Immo Paris")
  * )
  * 
  * @OA\Schema(
@@ -133,30 +75,6 @@ use Illuminate\Support\Facades\Mail;
  *     @OA\Property(property="message", type="string", example="Bonjour, je souhaiterais plus d'informations sur...")
  * )
  * 
- * @OA\Schema(
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="code_id", type="string", example="LOC12345"),
- *     @OA\Property(property="name", type="string", example="Doe"),
- *     @OA\Property(property="prenom", type="string", example="John"),
- *     @OA\Property(property="email", type="string", format="email", example="john.doe@example.com"),
- *     @OA\Property(property="contact", type="string", example="0102030405"),
- *     @OA\Property(property="status", type="string", example="Actif"),
- *     @OA\Property(property="profile_image", type="string", nullable=true, example="profile_images/image.jpg")
- * )
- * 
- * @OA\Schema(
- *     schema="LocataireWithRelations",
- *     allOf={
- *         @OA\Schema(ref="#/components/schemas/Locataire"),
- *         @OA\Schema(
- *             type="object",
- *             @OA\Property(property="bien", ref="#/components/schemas/Bien"),
- *             @OA\Property(property="agence", ref="#/components/schemas/Agence")
- *         )
- *     }
- * )
- *
  * @OA\Schema(
  *     schema="LocataireWithPaiements",
  *     allOf={
@@ -171,55 +89,6 @@ use Illuminate\Support\Facades\Mail;
  *         )
  *     }
  * )
- *
- * @OA\Schema(
- *     schema="Paiement",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="reference", type="string", example="PAY-12345"),
- *     @OA\Property(property="montant", type="number", format="float", example=500.00),
- *     @OA\Property(property="date_paiement", type="string", format="date-time", example="2023-10-26T10:00:00Z"),
- *     @OA\Property(property="mois_couvert", type="string", example="2023-10"),
- *     @OA\Property(property="statut", type="string", enum={"payé", "En attente"}, example="payé")
- * )
- *
- * @OA\Schema(
- *     schema="PaiementDetails",
- *     allOf={
- *         @OA\Schema(ref="#/components/schemas/Paiement"),
- *         @OA\Schema(
- *             type="object",
- *             @OA\Property(property="locataire", type="object", 
- *                 @OA\Property(property="name", type="string"),
- *                 @OA\Property(property="prenom", type="string"),
- *                 @OA\Property(property="email", type="string"),
- *             ),
- *             @OA\Property(property="bien", type="object",
- *                 @OA\Property(property="commune", type="string"),
- *                 @OA\Property(property="type", type="string"),
- *             )
- *         )
- *     }
- * )
- *
- * @OA\Schema(
- *     schema="CashVerificationCode",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="code", type="string", example="ABC-123"),
- *     @OA\Property(property="expires_at", type="string", format="date-time", example="2023-10-26T11:00:00Z"),
- *     @OA\Property(property="used_at", type="string", format="date-time", nullable=true, example=null)
- * )
- *
- * @OA\Schema(
- *     schema="Visite",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="nom", type="string", example="John Doe"),
- *     @OA\Property(property="email", type="string", format="email", example="john.doe@example.com"),
- *     @OA\Property(property="date_visite", type="string", format="date", example="2023-11-15")
- * )
- *
  */
 class HomeController extends Controller
 {

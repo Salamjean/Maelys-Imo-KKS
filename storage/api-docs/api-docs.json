@@ -2101,8 +2101,8 @@
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Connecter un utilisateur (locataire ou comptable)",
-                "description": "Authentifie un utilisateur avec son code_id et mot de passe. Le système vérifie s'il s'agit d'un locataire ou d'un comptable et renvoie un token Sanctum en cas de succès.",
+                "summary": "Connecter un utilisateur (locataire, comptable ou commercial)",
+                "description": "Authentifie un utilisateur avec son code_id et mot de passe. Le système vérifie s'il s'agit d'un locataire, d'un comptable ou d'un commercial et renvoie un token Sanctum en cas de succès.",
                 "operationId": "loginUser",
                 "requestBody": {
                     "description": "Identifiants de l'utilisateur",
@@ -2348,6 +2348,1083 @@
                         "description": "Erreur de validation"
                     }
                 }
+            }
+        },
+        "/api/commercial/agences": {
+            "get": {
+                "tags": [
+                    "Commercial - Agences"
+                ],
+                "summary": "Liste des agences du commercial",
+                "description": "Renvoie la liste des agences enregistrées par le commercial connecté.",
+                "operationId": "getCommercialAgences",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "agences": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial - Agences"
+                ],
+                "summary": "Ajouter une nouvelle agence",
+                "description": "Permet à un commercial d'enregistrer une nouvelle agence. Un abonnement de 3 mois est créé automatiquement et un email est envoyé à l'agence.",
+                "operationId": "storeAgenceByCommercial",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "contact",
+                                    "commune",
+                                    "adresse",
+                                    "rib",
+                                    "rccm",
+                                    "rccm_file",
+                                    "dfe",
+                                    "dfe_file"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "contact": {
+                                        "type": "string"
+                                    },
+                                    "commune": {
+                                        "type": "string"
+                                    },
+                                    "adresse": {
+                                        "type": "string"
+                                    },
+                                    "rib": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "rccm": {
+                                        "type": "string"
+                                    },
+                                    "rccm_file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "dfe": {
+                                        "type": "string"
+                                    },
+                                    "dfe_file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "profile_image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Agence créée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "agence": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    },
+                    "403": {
+                        "description": "Accès non autorisé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/biens": {
+            "get": {
+                "tags": [
+                    "Commercial - Biens"
+                ],
+                "summary": "Liste des biens ajoutés par le commercial",
+                "description": "Renvoie la liste des biens enregistrés par le commercial connecté.",
+                "operationId": "getCommercialBiens",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "biens": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/agences/{agence_id}/biens": {
+            "post": {
+                "tags": [
+                    "Commercial - Biens"
+                ],
+                "summary": "Ajouter un bien pour une agence",
+                "description": "Permet à un commercial d'ajouter un bien à une agence spécifique.",
+                "operationId": "storeBienForAgenceByCommercial",
+                "parameters": [
+                    {
+                        "name": "agence_id",
+                        "in": "path",
+                        "description": "Code ID de l'agence",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "utilisation",
+                                    "description",
+                                    "superficie",
+                                    "avance",
+                                    "caution",
+                                    "prix",
+                                    "commune",
+                                    "disponibilite",
+                                    "main_image",
+                                    "additional_images1"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Appartement",
+                                            "Maison",
+                                            "Bureau"
+                                        ]
+                                    },
+                                    "utilisation": {
+                                        "type": "string"
+                                    },
+                                    "autre_utilisation": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "superficie": {
+                                        "type": "string"
+                                    },
+                                    "nombre_de_chambres": {
+                                        "type": "string"
+                                    },
+                                    "nombre_de_toilettes": {
+                                        "type": "string"
+                                    },
+                                    "garage": {
+                                        "type": "string"
+                                    },
+                                    "avance": {
+                                        "type": "integer"
+                                    },
+                                    "caution": {
+                                        "type": "integer"
+                                    },
+                                    "frais": {
+                                        "type": "string"
+                                    },
+                                    "montant_total": {
+                                        "type": "string"
+                                    },
+                                    "prix": {
+                                        "type": "string"
+                                    },
+                                    "commune": {
+                                        "type": "string"
+                                    },
+                                    "disponibilite": {
+                                        "type": "string"
+                                    },
+                                    "proprietaire_id": {
+                                        "type": "string"
+                                    },
+                                    "main_image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images1": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images2": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images3": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images4": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images5": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "video_3d": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Bien ajouté avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "bien": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/proprietaires/{proprietaire_id}/biens": {
+            "post": {
+                "tags": [
+                    "Commercial - Biens"
+                ],
+                "summary": "Ajouter un bien pour un propriétaire",
+                "description": "Permet à un commercial d'ajouter un bien à un propriétaire spécifique.",
+                "operationId": "storeBienForProprietaireByCommercial",
+                "parameters": [
+                    {
+                        "name": "proprietaire_id",
+                        "in": "path",
+                        "description": "Code ID du propriétaire",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "utilisation",
+                                    "description",
+                                    "superficie",
+                                    "avance",
+                                    "caution",
+                                    "prix",
+                                    "commune",
+                                    "disponibilite",
+                                    "main_image",
+                                    "additional_images1"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Appartement",
+                                            "Maison",
+                                            "Bureau"
+                                        ]
+                                    },
+                                    "utilisation": {
+                                        "type": "string"
+                                    },
+                                    "autre_utilisation": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "superficie": {
+                                        "type": "string"
+                                    },
+                                    "nombre_de_chambres": {
+                                        "type": "string"
+                                    },
+                                    "nombre_de_toilettes": {
+                                        "type": "string"
+                                    },
+                                    "garage": {
+                                        "type": "string"
+                                    },
+                                    "avance": {
+                                        "type": "integer"
+                                    },
+                                    "caution": {
+                                        "type": "integer"
+                                    },
+                                    "frais": {
+                                        "type": "string"
+                                    },
+                                    "montant_total": {
+                                        "type": "string"
+                                    },
+                                    "prix": {
+                                        "type": "string"
+                                    },
+                                    "commune": {
+                                        "type": "string"
+                                    },
+                                    "disponibilite": {
+                                        "type": "string"
+                                    },
+                                    "main_image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images1": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images2": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images3": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images4": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images5": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "video_3d": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Bien ajouté avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "bien": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/biens/{id}": {
+            "get": {
+                "tags": [
+                    "Commercial - Biens"
+                ],
+                "summary": "Détails d'un bien",
+                "description": "Renvoie les détails d'un bien spécifique géré par le commercial.",
+                "operationId": "getCommercialBienDetails",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du bien",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "bien": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/biens/{id}/update": {
+            "post": {
+                "tags": [
+                    "Commercial - Biens"
+                ],
+                "summary": "Modifier un bien",
+                "description": "Permet à un commercial de modifier les informations d'un bien qu'il a ajouté.",
+                "operationId": "updateBienByCommercial",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du bien",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Appartement",
+                                            "Maison",
+                                            "Bureau"
+                                        ]
+                                    },
+                                    "utilisation": {
+                                        "type": "string"
+                                    },
+                                    "autre_utilisation": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "superficie": {
+                                        "type": "string"
+                                    },
+                                    "nombre_de_chambres": {
+                                        "type": "string"
+                                    },
+                                    "nombre_de_toilettes": {
+                                        "type": "string"
+                                    },
+                                    "garage": {
+                                        "type": "string"
+                                    },
+                                    "avance": {
+                                        "type": "integer"
+                                    },
+                                    "caution": {
+                                        "type": "integer"
+                                    },
+                                    "prix": {
+                                        "type": "string"
+                                    },
+                                    "commune": {
+                                        "type": "string"
+                                    },
+                                    "disponibilite": {
+                                        "type": "string"
+                                    },
+                                    "main_image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images1": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images2": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images3": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images4": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "additional_images5": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "video_3d": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bien mis à jour avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/dashboard": {
+            "get": {
+                "tags": [
+                    "Commercial - Dashboard"
+                ],
+                "summary": "Données du tableau de bord",
+                "description": "Renvoie les compteurs globaux et les activités récentes (agences et propriétaires ajoutés).",
+                "operationId": "getCommercialDashboard",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "statistics": {
+                                                    "type": "object"
+                                                },
+                                                "recent_activities": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/profil/edit": {
+            "get": {
+                "tags": [
+                    "Commercial - Profil"
+                ],
+                "summary": "Récupérer les informations du profil",
+                "operationId": "getCommercialProfil",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "commercial": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/profil/update": {
+            "post": {
+                "tags": [
+                    "Commercial - Profil"
+                ],
+                "summary": "Mettre à jour les informations personnelles",
+                "operationId": "updateCommercialProfil",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "prenom": {
+                                        "type": "string"
+                                    },
+                                    "commune": {
+                                        "type": "string"
+                                    },
+                                    "contact": {
+                                        "type": "string"
+                                    },
+                                    "date_naissance": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profil mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/profil/photo": {
+            "post": {
+                "tags": [
+                    "Commercial - Profil"
+                ],
+                "summary": "Mettre à jour la photo de profil",
+                "operationId": "updateCommercialPhoto",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "profile_image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Photo mise à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/profil/update-password": {
+            "post": {
+                "tags": [
+                    "Commercial - Profil"
+                ],
+                "summary": "Mettre à jour le mot de passe",
+                "operationId": "updateCommercialPassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string"
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "minLength": 8
+                                    },
+                                    "new_password_confirmation": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/profil/update-email": {
+            "post": {
+                "tags": [
+                    "Commercial - Profil"
+                ],
+                "summary": "Mettre à jour l'email",
+                "operationId": "updateCommercialEmail",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "new_email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email mis à jour"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/proprietaires": {
+            "get": {
+                "tags": [
+                    "Commercial - Propriétaires"
+                ],
+                "summary": "Liste des propriétaires du commercial",
+                "description": "Renvoie la liste des propriétaires enregistrés par le commercial connecté.",
+                "operationId": "getCommercialProprietaires",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "proprietaires": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès non autorisé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commercial - Propriétaires"
+                ],
+                "summary": "Ajouter un nouveau propriétaire",
+                "description": "Permet à un commercial d'enregistrer un nouveau propriétaire.",
+                "operationId": "storeProprietaireByCommercial",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "prenom",
+                                    "email",
+                                    "contact",
+                                    "commune"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "prenom": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "contact": {
+                                        "type": "string"
+                                    },
+                                    "commune": {
+                                        "type": "string"
+                                    },
+                                    "diaspora": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Oui",
+                                            "Non"
+                                        ]
+                                    },
+                                    "gestion": {
+                                        "type": "string",
+                                        "enum": [
+                                            "agence",
+                                            "personnelle"
+                                        ]
+                                    },
+                                    "profil_image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Propriétaire créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "proprietaire": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/statistics": {
+            "get": {
+                "tags": [
+                    "Commercial - Statistiques"
+                ],
+                "summary": "Récupérer les statistiques du commercial",
+                "description": "Renvoie les statistiques quotidiennes, globales et l'historique des 7 derniers jours.",
+                "operationId": "getCommercialStatistics",
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "daily": {
+                                                    "type": "object"
+                                                },
+                                                "totals": {
+                                                    "type": "object"
+                                                },
+                                                "history": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "chart_data": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api": {
@@ -5045,6 +6122,158 @@
                 },
                 "type": "object"
             },
+            "Partenaire": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Dupont"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "example": "Jean"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "jean.dupont@example.com"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "Propriétaire"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactRequest": {
+                "required": [
+                    "name",
+                    "email",
+                    "subject",
+                    "message"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Jean Dupont"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "jean.dupont@example.com"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "example": "Demande d'information"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Bonjour, je souhaiterais plus d'informations sur..."
+                    }
+                },
+                "type": "object"
+            },
+            "LocataireWithPaiements": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Locataire"
+                    },
+                    {
+                        "properties": {
+                            "paiements": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Paiement"
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "Agence": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "code_id": {
+                        "type": "string",
+                        "example": "AG123"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Agence Immo Paris"
+                    }
+                },
+                "type": "object"
+            },
+            "Bien": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "numero_bien": {
+                        "type": "string",
+                        "example": "AP12345"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "Appartement",
+                            "Maison",
+                            "Bureau"
+                        ],
+                        "example": "Appartement"
+                    },
+                    "utilisation": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "superficie": {
+                        "type": "string"
+                    },
+                    "prix": {
+                        "type": "string"
+                    },
+                    "commune": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "Disponible"
+                    },
+                    "image": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "BienWithRelations": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Bien"
+                    },
+                    {
+                        "properties": {
+                            "proprietaire": {
+                                "$ref": "#/components/schemas/Proprietaire"
+                            },
+                            "agence": {
+                                "$ref": "#/components/schemas/Agence"
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
             "BienPagination": {
                 "properties": {
                     "current_page": {
@@ -5091,146 +6320,38 @@
                 },
                 "type": "object"
             },
-            "Bien": {
+            "CashVerificationCode": {
+                "title": "CashVerificationCode",
+                "description": "Modèle de code de vérification cash",
                 "properties": {
                     "id": {
                         "type": "integer",
                         "example": 1
                     },
-                    "titre": {
+                    "locataire_id": {
+                        "type": "integer"
+                    },
+                    "code": {
                         "type": "string",
-                        "example": "Appartement spacieux"
+                        "example": "123456"
                     },
-                    "description": {
-                        "type": "string"
-                    },
-                    "type": {
+                    "expires_at": {
                         "type": "string",
-                        "example": "Appartement"
+                        "format": "date-time"
                     },
-                    "prix": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 750.5
-                    },
-                    "surface": {
-                        "type": "integer",
-                        "example": 80
-                    },
-                    "commune": {
+                    "used_at": {
                         "type": "string",
-                        "example": "Paris"
+                        "format": "date-time"
                     },
-                    "status": {
-                        "type": "string",
-                        "example": "Disponible"
+                    "is_archived": {
+                        "type": "boolean"
                     }
                 },
                 "type": "object"
             },
-            "BienWithRelations": {
-                "allOf": [
-                    {
-                        "$ref": "#/components/schemas/Bien"
-                    },
-                    {
-                        "properties": {
-                            "proprietaire": {
-                                "$ref": "#/components/schemas/Proprietaire"
-                            },
-                            "agence": {
-                                "$ref": "#/components/schemas/Agence"
-                            }
-                        },
-                        "type": "object"
-                    }
-                ]
-            },
-            "Partenaire": {
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "nom": {
-                        "type": "string",
-                        "example": "Dupont"
-                    },
-                    "prenom": {
-                        "type": "string",
-                        "example": "Jean"
-                    },
-                    "email": {
-                        "type": "string",
-                        "format": "email",
-                        "example": "jean.dupont@example.com"
-                    },
-                    "type": {
-                        "type": "string",
-                        "example": "Propriétaire"
-                    }
-                },
-                "type": "object"
-            },
-            "Proprietaire": {
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "nom": {
-                        "type": "string",
-                        "example": "Dupont"
-                    },
-                    "prenom": {
-                        "type": "string",
-                        "example": "Jean"
-                    }
-                },
-                "type": "object"
-            },
-            "Agence": {
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "nom": {
-                        "type": "string",
-                        "example": "Agence Immo Paris"
-                    }
-                },
-                "type": "object"
-            },
-            "ContactRequest": {
-                "required": [
-                    "name",
-                    "email",
-                    "subject",
-                    "message"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "example": "Jean Dupont"
-                    },
-                    "email": {
-                        "type": "string",
-                        "format": "email",
-                        "example": "jean.dupont@example.com"
-                    },
-                    "subject": {
-                        "type": "string",
-                        "example": "Demande d'information"
-                    },
-                    "message": {
-                        "type": "string",
-                        "example": "Bonjour, je souhaiterais plus d'informations sur..."
-                    }
-                },
-                "type": "object"
-            },
-            "HomeController": {
+            "Locataire": {
+                "title": "Locataire",
+                "description": "Modèle de locataire",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -5238,67 +6359,52 @@
                     },
                     "code_id": {
                         "type": "string",
-                        "example": "LOC12345"
+                        "example": "LOC123"
                     },
                     "name": {
                         "type": "string",
-                        "example": "Doe"
+                        "example": "John"
                     },
                     "prenom": {
                         "type": "string",
-                        "example": "John"
+                        "example": "Doe"
                     },
                     "email": {
                         "type": "string",
-                        "format": "email",
-                        "example": "john.doe@example.com"
+                        "example": "john@example.com"
                     },
                     "contact": {
                         "type": "string",
                         "example": "0102030405"
                     },
+                    "adresse": {
+                        "type": "string",
+                        "example": "Abidjan"
+                    },
                     "status": {
                         "type": "string",
                         "example": "Actif"
-                    },
-                    "profile_image": {
-                        "type": "string",
-                        "example": "profile_images/image.jpg",
-                        "nullable": true
                     }
                 },
                 "type": "object"
             },
             "LocataireWithRelations": {
+                "title": "Locataire avec Relations",
+                "description": "Modèle de locataire incluant ses relations",
                 "allOf": [
                     {
                         "$ref": "#/components/schemas/Locataire"
                     },
                     {
                         "properties": {
-                            "bien": {
-                                "$ref": "#/components/schemas/Bien"
-                            },
                             "agence": {
-                                "$ref": "#/components/schemas/Agence"
-                            }
-                        },
-                        "type": "object"
-                    }
-                ]
-            },
-            "LocataireWithPaiements": {
-                "allOf": [
-                    {
-                        "$ref": "#/components/schemas/Locataire"
-                    },
-                    {
-                        "properties": {
-                            "paiements": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/components/schemas/Paiement"
-                                }
+                                "type": "object"
+                            },
+                            "proprietaire": {
+                                "type": "object"
+                            },
+                            "bien": {
+                                "type": "object"
                             }
                         },
                         "type": "object"
@@ -5377,26 +6483,31 @@
                     }
                 ]
             },
-            "CashVerificationCode": {
+            "Proprietaire": {
                 "properties": {
                     "id": {
                         "type": "integer",
                         "example": 1
                     },
-                    "code": {
+                    "code_id": {
                         "type": "string",
-                        "example": "ABC-123"
+                        "example": "PROP123"
                     },
-                    "expires_at": {
+                    "name": {
                         "type": "string",
-                        "format": "date-time",
-                        "example": "2023-10-26T11:00:00Z"
+                        "example": "Dupont"
                     },
-                    "used_at": {
+                    "prenom": {
                         "type": "string",
-                        "format": "date-time",
-                        "example": null,
-                        "nullable": true
+                        "example": "Jean"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "jean@example.com"
+                    },
+                    "contact": {
+                        "type": "string",
+                        "example": "0102030405"
                     }
                 },
                 "type": "object"
@@ -5423,107 +6534,6 @@
                     }
                 },
                 "type": "object"
-            },
-            "Locataire": {
-                "title": "Locataire",
-                "description": "Modèle de locataire",
-                "required": [
-                    "name",
-                    "email",
-                    "password",
-                    "contact"
-                ],
-                "properties": {
-                    "id": {
-                        "description": "ID du locataire",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "name": {
-                        "description": "Nom du locataire",
-                        "type": "string"
-                    },
-                    "prenom": {
-                        "description": "Prénom du locataire",
-                        "type": "string"
-                    },
-                    "email": {
-                        "description": "Email du locataire",
-                        "type": "string",
-                        "format": "email"
-                    },
-                    "contact": {
-                        "description": "Contact du locataire",
-                        "type": "string"
-                    },
-                    "piece": {
-                        "description": "Type de pièce d'identité",
-                        "type": "string"
-                    },
-                    "adresse": {
-                        "description": "Adresse du locataire",
-                        "type": "string"
-                    },
-                    "profession": {
-                        "description": "Profession du locataire",
-                        "type": "string"
-                    },
-                    "status": {
-                        "description": "Statut du locataire",
-                        "type": "string",
-                        "enum": [
-                            "Actif",
-                            "Inactif"
-                        ]
-                    },
-                    "agence_id": {
-                        "description": "ID de l'agence associée",
-                        "type": "integer"
-                    },
-                    "proprietaire_id": {
-                        "description": "ID du propriétaire associé",
-                        "type": "integer"
-                    },
-                    "contrat_id": {
-                        "description": "ID du contrat associé",
-                        "type": "integer"
-                    },
-                    "bien_id": {
-                        "description": "ID du bien associé",
-                        "type": "integer"
-                    },
-                    "image1": {
-                        "description": "Image 1 du locataire",
-                        "type": "string",
-                        "format": "binary"
-                    },
-                    "image2": {
-                        "description": "Image 2 du locataire",
-                        "type": "string",
-                        "format": "binary"
-                    },
-                    "image3": {
-                        "description": "Image 3 du locataire",
-                        "type": "string",
-                        "format": "binary"
-                    },
-                    "image4": {
-                        "description": "Image 4 du locataire",
-                        "type": "string",
-                        "format": "binary"
-                    },
-                    "created_at": {
-                        "description": "Date de création",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Date de mise à jour",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
             }
         }
     },
@@ -5535,6 +6545,30 @@
         {
             "name": "Authentification",
             "description": "Points de terminaison pour la connexion et la gestion des mots de passe"
+        },
+        {
+            "name": "Commercial - Agences",
+            "description": "Gestion des agences par le commercial"
+        },
+        {
+            "name": "Commercial - Biens",
+            "description": "Gestion des biens par le commercial"
+        },
+        {
+            "name": "Commercial - Dashboard",
+            "description": "Tableau de bord général pour le commercial"
+        },
+        {
+            "name": "Commercial - Profil",
+            "description": "Gestion du profil du commercial"
+        },
+        {
+            "name": "Commercial - Propriétaires",
+            "description": "Gestion des propriétaires par le commercial"
+        },
+        {
+            "name": "Commercial - Statistiques",
+            "description": "Statistiques d'activité pour le commercial"
         },
         {
             "name": "Accueil",

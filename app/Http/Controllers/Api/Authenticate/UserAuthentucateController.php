@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Authenticate;
 use App\Http\Controllers\Controller;
 use App\Mail\ComptablePasswordResetMail;
 use App\Mail\PasswordResetOTPMail;
+use App\Models\Commercial;
 use App\Models\Comptable;
 use App\Models\Locataire;
 use Exception;
@@ -28,8 +29,8 @@ class UserAuthentucateController extends Controller
      *      path="/api/login",
      *      operationId="loginUser",
      *      tags={"Authentification"},
-     *      summary="Connecter un utilisateur (locataire ou comptable)",
-     *      description="Authentifie un utilisateur avec son code_id et mot de passe. Le système vérifie s'il s'agit d'un locataire ou d'un comptable et renvoie un token Sanctum en cas de succès.",
+     *      summary="Connecter un utilisateur (locataire, comptable ou commercial)",
+     *      description="Authentifie un utilisateur avec son code_id et mot de passe. Le système vérifie s'il s'agit d'un locataire, d'un comptable ou d'un commercial et renvoie un token Sanctum en cas de succès.",
      *      @OA\RequestBody(
      *          required=true,
      *          description="Identifiants de l'utilisateur",
@@ -165,6 +166,43 @@ class UserAuthentucateController extends Controller
                 }
             }
 
+            // ---------------------------------------------------------
+            // 4. LOGIQUE COMMERCIAL
+            // ---------------------------------------------------------
+            $commercial = Commercial::where('code_id', $request->code_id)->first();
+            
+            if ($commercial) {
+                Log::info('Login: Commercial trouvé. ID: ' . $commercial->id . ' Status: ' . ($commercial->is_active ? 'Actif' : 'Inactif'));
+                if (!$commercial->is_active) {
+                    return response()->json(['error' => 'Compte désactivé', 'message' => 'Votre compte est désactivé.'], 403);
+                }
+
+                if (Auth::guard('commercial')->attempt(['code_id' => $request->code_id, 'password' => $request->password])) {
+                    Log::info('Login: Auth Commercial RÉUSSIE');
+                    $user = Auth::guard('commercial')->user();
+
+                    // <--- MISE A JOUR + REFRESH --->
+                    if ($request->filled('fcm_token')) {
+                        Log::info('Login Commercial: FCM Token reçu', ['token' => $request->fcm_token]);
+                        $user->fcm_token = $request->fcm_token;
+                        $user->save();
+                        $user->refresh();
+                    } else {
+                        Log::warning('Login Commercial: Pas de FCM Token');
+                    }
+                    // <------------------------------>
+
+                    $token = $user->createToken('CommercialAuthToken')->plainTextToken;
+                    
+                    return response()->json([
+                        'user' => $user,
+                        'token' => $token,
+                        'user_type' => 'commercial',
+                        'redirect' => route('commercial.dashboard')
+                    ]);
+                }
+            }
+
             return response()->json([
                 'error' => 'Identifiants incorrects',
                 'message' => 'Le code ID ou le mot de passe est incorrect.'
@@ -242,6 +280,11 @@ public function sendResetOTP(Request $request)
     $comptable = Comptable::where('code_id', $request->code_id)->first();
     if ($comptable) {
         return $this->handleUserOTP($comptable);
+    }
+
+    $commercial = Commercial::where('code_id', $request->code_id)->first();
+    if ($commercial) {
+        return $this->handleUserOTP($commercial);
     }
 
     return response()->json([
@@ -331,6 +374,10 @@ public function resetPassword(Request $request)
     
     if (!$user) {
         $user = Comptable::where('code_id', $request->code_id)->first();
+    }
+
+    if (!$user) {
+        $user = Commercial::where('code_id', $request->code_id)->first();
     }
 
     if (!$user) {

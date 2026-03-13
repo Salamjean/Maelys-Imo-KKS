@@ -4,6 +4,52 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @OA\Schema(
+ *     schema="Bien",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="numero_bien", type="string", example="AP12345"),
+ *     @OA\Property(property="type", type="string", enum={"Appartement", "Maison", "Bureau"}, example="Appartement"),
+ *     @OA\Property(property="utilisation", type="string"),
+ *     @OA\Property(property="description", type="string"),
+ *     @OA\Property(property="superficie", type="string"),
+ *     @OA\Property(property="prix", type="string"),
+ *     @OA\Property(property="commune", type="string"),
+ *     @OA\Property(property="status", type="string", example="Disponible"),
+ *     @OA\Property(property="image", type="string", nullable=true)
+ * )
+ * 
+ * @OA\Schema(
+ *     schema="BienWithRelations",
+ *     allOf={
+ *         @OA\Schema(ref="#/components/schemas/Bien"),
+ *         @OA\Schema(
+ *             type="object",
+ *             @OA\Property(property="proprietaire", ref="#/components/schemas/Proprietaire"),
+ *             @OA\Property(property="agence", ref="#/components/schemas/Agence")
+ *         )
+ *     }
+ * )
+ * 
+ * @OA\Schema(
+ *     schema="BienPagination",
+ *     type="object",
+ *     @OA\Property(property="current_page", type="integer", example=1),
+ *     @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Bien")),
+ *     @OA\Property(property="per_page", type="integer", example=6),
+ *     @OA\Property(property="total", type="integer", example=20)
+ * )
+ * 
+ * @OA\Schema(
+ *     schema="BienWithRelationsPagination",
+ *     type="object",
+ *     @OA\Property(property="current_page", type="integer", example=1),
+ *     @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/BienWithRelations")),
+ *     @OA\Property(property="per_page", type="integer", example=10),
+ *     @OA\Property(property="total", type="integer", example=15)
+ * )
+ */
 class Bien extends Model
 {
     protected $fillable = [

@@ -82,6 +82,11 @@ return [
             'driver' => 'session',
             'provider' => 'commercials',
         ],
+
+        'commercial-api' => [
+            'driver' => 'sanctum',
+            'provider' => 'commercials',
+        ],
     ],
 
     /*

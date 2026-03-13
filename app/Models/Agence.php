@@ -5,6 +5,15 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @OA\Schema(
+ *     schema="Agence",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="code_id", type="string", example="AG123"),
+ *     @OA\Property(property="name", type="string", example="Agence Immo Paris")
+ * )
+ */
 class Agence extends Authenticatable
 {
     use Notifiable;

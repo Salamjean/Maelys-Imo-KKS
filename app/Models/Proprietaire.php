@@ -5,10 +5,22 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
+/**
+ * @OA\Schema(
+ *     schema="Proprietaire",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="code_id", type="string", example="PROP123"),
+ *     @OA\Property(property="name", type="string", example="Dupont"),
+ *     @OA\Property(property="prenom", type="string", example="Jean"),
+ *     @OA\Property(property="email", type="string", example="jean@example.com"),
+ *     @OA\Property(property="contact", type="string", example="0102030405")
+ * )
+ */
 class Proprietaire extends Authenticatable
 {
     protected $casts = [
-    'last_balance_update' => 'datetime', // Convertit automatiquement en Carbon
+        'last_balance_update' => 'datetime', // Convertit automatiquement en Carbon
     ];
     protected $table = 'proprietaires';
     protected $fillable = [
@@ -45,7 +57,7 @@ class Proprietaire extends Authenticatable
     }
     public function locataire()
     {
-        return $this->hasMany(Locataire::class , 'proprietaire_id', 'code_id');
+        return $this->hasMany(Locataire::class, 'proprietaire_id', 'code_id');
     }
 
     public function reversements()
@@ -61,13 +73,13 @@ class Proprietaire extends Authenticatable
     {
         return $this->hasMany(EtatLieu::class, 'proprietaire_id', 'code_id');
     }
-  public function needsMonthlyRefresh()
+    public function needsMonthlyRefresh()
     {
-        $lastUpdate = $this->last_balance_update 
-            ? Carbon::parse($this->last_balance_update) 
+        $lastUpdate = $this->last_balance_update
+            ? Carbon::parse($this->last_balance_update)
             : null;
 
-        return now()->day >= 15 && 
+        return now()->day >= 15 &&
             (!$lastUpdate || $lastUpdate->format('Y-m') !== now()->format('Y-m'));
     }
 
@@ -78,7 +90,7 @@ class Proprietaire extends Authenticatable
 
     public function monthlyRevenue()
     {
-        return $this->biens->sum(function($bien) {
+        return $this->biens->sum(function ($bien) {
             return (float) $bien->prix;
         });
     }

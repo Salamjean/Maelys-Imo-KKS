@@ -5,6 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @OA\Schema(
+ *     schema="CashVerificationCode",
+ *     title="CashVerificationCode",
+ *     description="Modèle de code de vérification cash",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="locataire_id", type="integer"),
+ *     @OA\Property(property="code", type="string", example="123456"),
+ *     @OA\Property(property="expires_at", type="string", format="date-time"),
+ *     @OA\Property(property="used_at", type="string", format="date-time"),
+ *     @OA\Property(property="is_archived", type="boolean")
+ * )
+ */
 class CashVerificationCode extends Model
 {
     use HasFactory;
