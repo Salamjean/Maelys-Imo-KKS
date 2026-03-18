@@ -202,7 +202,7 @@ class CommercialBienController extends Controller
         }
 
         $bien = new Bien();
-        $bien->code_bien = $code;
+        $bien->numero_bien = $code;
         
         if ($type === 'agence') {
             $bien->agence_id = $request->target_id;
