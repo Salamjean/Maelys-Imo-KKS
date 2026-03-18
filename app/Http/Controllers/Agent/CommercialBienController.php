@@ -73,7 +73,6 @@ class CommercialBienController extends Controller
             'superficie' => 'required|string',
             'prix' => 'required|string',
             'commune' => 'required|string',
-            'disponibilite' => 'required|string',
             'status' => 'required|string'
         ]);
 
@@ -90,7 +89,6 @@ class CommercialBienController extends Controller
         $bien->montant_total = $request->montant_total;
         $bien->prix = $request->prix;
         $bien->commune = $request->commune;
-        $bien->disponibilite = $request->disponibilite;
         $bien->video_3d = $request->video_3d;
         $bien->status = $request->status;
 
@@ -98,6 +96,31 @@ class CommercialBienController extends Controller
         if ($request->hasFile('main_image')) {
             if ($bien->image) Storage::disk('public')->delete($bien->image);
             $bien->image = $request->file('main_image')->store('bien_images', 'public');
+        }
+
+        $bien->image1 = null;
+        if ($request->hasFile('additional_images1')) {
+            $bien->image1 = $request->file('additional_images1')->store('biens_images', 'public');
+        }
+
+        $bien->image2 = null;
+        if ($request->hasFile('additional_images2')) {
+            $bien->image2 = $request->file('additional_images2')->store('biens_images', 'public');
+        }
+
+        $bien->image3 = null;
+        if ($request->hasFile('additional_images3')) {
+            $bien->image3 = $request->file('additional_images3')->store('biens_images', 'public');
+        }
+
+        $bien->image4 = null;
+        if ($request->hasFile('additional_images4')) {
+            $bien->image4 = $request->file('additional_images4')->store('biens_images', 'public');
+        }
+
+        $bien->image5 = null;
+        if ($request->hasFile('additional_images5')) {
+            $bien->image5 = $request->file('additional_images5')->store('biens_images', 'public');
         }
 
         $bien->save();
@@ -165,7 +188,6 @@ class CommercialBienController extends Controller
             'montant_total' => 'nullable|string',
             'prix' => 'required|string',
             'commune' => 'required|string',
-            'disponibilite' => 'required|string',
             'main_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'additional_images1' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'additional_images2' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -225,7 +247,6 @@ class CommercialBienController extends Controller
         $bien->montant_total = $request->montant_total;
         $bien->prix = $request->prix;
         $bien->commune = $request->commune;
-        $bien->disponibilite = $request->disponibilite;
         $bien->image = $mainImagePath;
         $bien->image1 = $additionalImage1Path;
         $bien->image2 = $additionalImage2Path;
