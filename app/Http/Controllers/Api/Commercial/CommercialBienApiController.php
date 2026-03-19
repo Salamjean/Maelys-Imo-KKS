@@ -10,7 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
-use Exception;
+use Illuminate\Support\Facades\DB;
+ use Exception;
 
 /**
  * @OA\Tag(
@@ -557,16 +558,99 @@ class CommercialBienApiController extends Controller
             }
 
             $bien->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Le bien a été mis à jour avec succès',
-                'bien' => $bien
-            ]);
-
-        } catch (Exception $e) {
-            Log::error('API Error updating bien by commercial: ' . $e->getMessage());
-            return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour du bien.'], 500);
-        }
-    }
-}
+ 
+             return response()->json([
+                 'success' => true,
+                 'message' => 'Le bien a été mis à jour avec succès',
+                 'bien' => $bien
+             ]);
+ 
+         } catch (Exception $e) {
+             Log::error('API Error updating bien by commercial: ' . $e->getMessage());
+             return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour du bien.'], 500);
+         }
+     }
+ 
+     /**
+      * @OA\Delete(
+      *      path="/api/commercial/biens/{id}",
+      *      operationId="deleteBienByCommercial",
+      *      tags={"Commercial - Biens"},
+      *      summary="Supprimer un bien",
+      *      description="Permet à un commercial de supprimer un bien qu'il a ajouté, à condition que celui-ci ne soit pas loué.",
+      *      security={{"sanctum":{}}},
+      *      @OA\Parameter(
+      *          name="id",
+      *          in="path",
+      *          required=true,
+      *          description="ID du bien",
+      *          @OA\Schema(type="integer")
+      *      ),
+      *      @OA\Response(
+      *          response=200,
+      *          description="Bien supprimé avec succès",
+      *          @OA\JsonContent(
+      *              @OA\Property(property="success", type="boolean", example=true),
+      *              @OA\Property(property="message", type="string")
+      *          )
+      *      ),
+      *      @OA\Response(
+      *          response=403,
+      *          description="Accès refusé ou bien loué"
+      *      ),
+      *      @OA\Response(
+      *          response=404,
+      *          description="Bien introuvable"
+      *      )
+      * )
+      */
+     public function destroy($id)
+     {
+         $commercial = auth()->user();
+ 
+         if (!$commercial || !($commercial instanceof \App\Models\Commercial)) {
+             return response()->json(['error' => 'Accès non autorisé'], 403);
+         }
+ 
+         $bien = Bien::where('id', $id)
+             ->where('commercial_id', $commercial->code_id)
+             ->first();
+ 
+         if (!$bien) {
+             return response()->json(['error' => 'Bien introuvable ou vous n\'avez pas les droits'], 404);
+         }
+ 
+         // Vérifier si le bien est loué ou a des dépendances critiques
+         if ($bien->status === 'Loué' || $bien->locataire()->exists()) {
+             return response()->json(['error' => 'Impossible de supprimer un bien déjà loué ou ayant un locataire actif.'], 403);
+         }
+ 
+         try {
+             DB::beginTransaction();
+ 
+             // Suppression des images du storage
+             $images = $bien->getImages();
+             foreach ($images as $imagePath) {
+                 if ($imagePath && Storage::disk('public')->exists($imagePath)) {
+                     Storage::disk('public')->delete($imagePath);
+                 }
+             }
+ 
+             // Suppression du bien (les relations devraient être gérées par cascade si configuré, 
+             // sinon on vérifie les dépendances au préalable comme fait ci-dessus)
+             $bien->delete();
+ 
+             DB::commit();
+ 
+             return response()->json([
+                 'success' => true,
+                 'message' => 'Le bien a été supprimé avec succès.'
+             ]);
+ 
+         } catch (Exception $e) {
+             DB::rollBack();
+             Log::error('API Error deleting bien by commercial: ' . $e->getMessage());
+             return response()->json(['error' => 'Une erreur est survenue lors de la suppression du bien.'], 500);
+         }
+     }
+ }

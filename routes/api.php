@@ -115,15 +115,22 @@ Route::middleware('auth:sanctum')->group(function () {
     // Routes pour le Commercial
     Route::prefix('commercial')->group(function () {
         Route::get('/agences', [CommercialAgenceApiController::class, 'index']);
+        Route::get('/agences/{id}', [CommercialAgenceApiController::class, 'show']);
         Route::post('/agences', [CommercialAgenceApiController::class, 'store']);
-        
-        Route::get('/proprietaires', [CommercialProprietaireApiController::class, 'index']);
-        Route::post('/proprietaires', [CommercialProprietaireApiController::class, 'store']);
+        Route::post('/agences/{id}/update', [CommercialAgenceApiController::class, 'update']);
+         Route::delete('/agences/{id}', [CommercialAgenceApiController::class, 'destroy']);
+         
+         Route::get('/proprietaires', [CommercialProprietaireApiController::class, 'index']);
+         Route::get('/proprietaires/{id}', [CommercialProprietaireApiController::class, 'show']);
+         Route::post('/proprietaires', [CommercialProprietaireApiController::class, 'store']);
+         Route::post('/proprietaires/{id}/update', [CommercialProprietaireApiController::class, 'update']);
+         Route::delete('/proprietaires/{id}', [CommercialProprietaireApiController::class, 'destroy']);
 
         Route::get('/biens', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'index']);
         Route::get('/biens/{id}', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'show']);
         Route::post('/biens/{id}/update', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'update']);
-        Route::post('/agences/{agence_id}/biens', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'store']);
+         Route::delete('/biens/{id}', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'destroy']);
+         Route::post('/agences/{agence_id}/biens', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'store']);
         Route::post('/proprietaires/{proprietaire_id}/biens', [\App\Http\Controllers\Api\Commercial\CommercialBienApiController::class, 'storeForProprietaire']);
 
         // Statistiques
