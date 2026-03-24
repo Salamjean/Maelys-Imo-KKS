@@ -92,6 +92,8 @@ class CommercialBienApiController extends Controller
      *                  @OA\Property(property="frais", type="string"),
      *                  @OA\Property(property="montant_total", type="string"),
      *                  @OA\Property(property="prix", type="string"),
+     *                  @OA\Property(property="frais", type="integer"),
+     *                  @OA\Property(property="montant_total", type="number", format="float"),
      *                  @OA\Property(property="commune", type="string"),
      *                  @OA\Property(property="disponibilite", type="string"),
      *                  @OA\Property(property="proprietaire_id", type="string"),
@@ -145,8 +147,8 @@ class CommercialBienApiController extends Controller
             'garage' => 'nullable|string',
             'avance' => 'required|integer|min:1|max:99',
             'caution' => 'required|integer|min:1|max:99',
-            'frais' => 'nullable|string',
-            'montant_total' => 'nullable|string',
+            'frais' => 'nullable|integer|min:0',
+            'montant_total' => 'nullable|numeric',
             'prix' => 'required|string',
             'commune' => 'required|string',
             'disponibilite' => 'required|string',
@@ -191,8 +193,13 @@ class CommercialBienApiController extends Controller
             $bien->garage = $request->garage;
             $bien->avance = $request->avance;
             $bien->caution = $request->caution;
-            $bien->frais = $request->frais;
-            $bien->montant_total = $request->montant_total;
+            $bien->frais = $request->frais ?? 1;
+            $bien->montant_total = $this->calculateMontantTotal(
+                $request->prix,
+                $request->avance,
+                $request->caution,
+                $bien->frais
+            );
             $bien->prix = $request->prix;
             $bien->commune = $request->commune;
             $bien->date_fixe = $request->disponibilite;
@@ -260,6 +267,8 @@ class CommercialBienApiController extends Controller
      *                  @OA\Property(property="frais", type="string"),
      *                  @OA\Property(property="montant_total", type="string"),
      *                  @OA\Property(property="prix", type="string"),
+     *                  @OA\Property(property="frais", type="integer"),
+     *                  @OA\Property(property="montant_total", type="number", format="float"),
      *                  @OA\Property(property="commune", type="string"),
      *                  @OA\Property(property="disponibilite", type="string"),
      *                  @OA\Property(property="main_image", type="string", format="binary"),
@@ -311,8 +320,8 @@ class CommercialBienApiController extends Controller
             'garage' => 'nullable|string',
             'avance' => 'required|integer|min:1|max:99',
             'caution' => 'required|integer|min:1|max:99',
-            'frais' => 'nullable|string',
-            'montant_total' => 'nullable|string',
+            'frais' => 'nullable|integer|min:0',
+            'montant_total' => 'nullable|numeric',
             'prix' => 'required|string',
             'commune' => 'required|string',
             'disponibilite' => 'required|string',
@@ -357,8 +366,13 @@ class CommercialBienApiController extends Controller
             $bien->garage = $request->garage;
             $bien->avance = $request->avance;
             $bien->caution = $request->caution;
-            $bien->frais = $request->frais;
-            $bien->montant_total = $request->montant_total;
+            $bien->frais = $request->frais ?? 1;
+            $bien->montant_total = $this->calculateMontantTotal(
+                $request->prix,
+                $request->avance,
+                $request->caution,
+                $bien->frais
+            );
             $bien->prix = $request->prix;
             $bien->commune = $request->commune;
             $bien->date_fixe = $request->disponibilite;
@@ -467,6 +481,8 @@ class CommercialBienApiController extends Controller
      *                  @OA\Property(property="avance", type="integer"),
      *                  @OA\Property(property="caution", type="integer"),
      *                  @OA\Property(property="prix", type="string"),
+     *                  @OA\Property(property="frais", type="integer"),
+     *                  @OA\Property(property="montant_total", type="number", format="float"),
      *                  @OA\Property(property="commune", type="string"),
      *                  @OA\Property(property="disponibilite", type="string"),
      *                  @OA\Property(property="main_image", type="string", format="binary"),
@@ -509,6 +525,8 @@ class CommercialBienApiController extends Controller
             'avance' => 'nullable|integer|min:1|max:99',
             'caution' => 'nullable|integer|min:1|max:99',
             'prix' => 'nullable|string',
+            'frais' => 'nullable|integer|min:0',
+            'montant_total' => 'nullable|numeric',
             'commune' => 'nullable|string',
             'disponibilite' => 'nullable|string',
             'main_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -538,6 +556,17 @@ class CommercialBienApiController extends Controller
             if ($request->has('avance')) $bien->avance = $request->avance;
             if ($request->has('caution')) $bien->caution = $request->caution;
             if ($request->has('prix')) $bien->prix = $request->prix;
+            if ($request->has('frais')) $bien->frais = $request->frais;
+
+            // Recalculer le montant total si l'un des composants change
+            if ($request->hasAny(['prix', 'avance', 'caution', 'frais'])) {
+                $bien->montant_total = $this->calculateMontantTotal(
+                    $bien->prix,
+                    $bien->avance,
+                    $bien->caution,
+                    $bien->frais ?? 1
+                );
+            }
             if ($request->has('commune')) $bien->commune = $request->commune;
             if ($request->has('disponibilite')) $bien->date_fixe = $request->disponibilite;
             if ($request->has('video_3d')) $bien->video_3d = $request->video_3d;
@@ -653,4 +682,18 @@ class CommercialBienApiController extends Controller
              return response()->json(['error' => 'Une erreur est survenue lors de la suppression du bien.'], 500);
          }
      }
- }
+ 
+    /**
+     * Calcule le montant total à l'entrée.
+     * Formule : (avance + caution + frais) * prix
+     */
+    private function calculateMontantTotal($prix, $avance, $caution, $frais)
+    {
+        $prix = (float) str_replace([' ', ' '], '', $prix);
+        $avance = (int) $avance;
+        $caution = (int) $caution;
+        $frais = (int) $frais;
+        
+        return ($avance + $caution + $frais) * $prix;
+    }
+}
