@@ -2493,6 +2493,219 @@
                 ]
             }
         },
+        "/api/commercial/agences/{id}": {
+            "get": {
+                "tags": [
+                    "Commercial - Agences"
+                ],
+                "summary": "Détails d'une agence",
+                "description": "Récupère les détails d'une agence spécifique appartenant au commercial.",
+                "operationId": "getCommercialAgenceById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Code ID de l'agence",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "agence": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Agence non trouvée"
+                    },
+                    "403": {
+                        "description": "Accès non autorisé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Commercial - Agences"
+                ],
+                "summary": "Supprimer une agence",
+                "description": "Permet à un commercial de supprimer une agence qu'il a ajoutée, ainsi que ses abonnements et fichiers associés.",
+                "operationId": "deleteAgenceByCommercial",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Code ID de l'agence",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Agence supprimée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès non autorisé ou agence avec biens actifs"
+                    },
+                    "404": {
+                        "description": "Agence non trouvée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/agences/{id}/update": {
+            "post": {
+                "tags": [
+                    "Commercial - Agences"
+                ],
+                "summary": "Modifier une agence",
+                "description": "Permet à un commercial de modifier les informations d'une agence.",
+                "operationId": "updateAgenceByCommercial",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Code ID de l'agence",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "contact": {
+                                        "type": "string"
+                                    },
+                                    "commune": {
+                                        "type": "string"
+                                    },
+                                    "adresse": {
+                                        "type": "string"
+                                    },
+                                    "rib": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "rccm": {
+                                        "type": "string"
+                                    },
+                                    "rccm_file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "dfe": {
+                                        "type": "string"
+                                    },
+                                    "dfe_file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "profile_image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Agence modifiée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "agence": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    },
+                    "404": {
+                        "description": "Agence non trouvée"
+                    },
+                    "403": {
+                        "description": "Accès non autorisé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/commercial/biens": {
             "get": {
                 "tags": [
@@ -2877,6 +3090,57 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Commercial - Biens"
+                ],
+                "summary": "Supprimer un bien",
+                "description": "Permet à un commercial de supprimer un bien qu'il a ajouté, à condition que celui-ci ne soit pas loué.",
+                "operationId": "deleteBienByCommercial",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du bien",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bien supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé ou bien loué"
+                    },
+                    "404": {
+                        "description": "Bien introuvable"
                     }
                 },
                 "security": [
@@ -3365,6 +3629,215 @@
                     },
                     "422": {
                         "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/proprietaires/{id}": {
+            "get": {
+                "tags": [
+                    "Commercial - Propriétaires"
+                ],
+                "summary": "Détails d'un propriétaire",
+                "description": "Récupère les détails d'un propriétaire spécifique appartenant au commercial.",
+                "operationId": "getCommercialProprietaireById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Code ID du propriétaire",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "proprietaire": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Propriétaire non trouvé"
+                    },
+                    "403": {
+                        "description": "Accès non autorisé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Commercial - Propriétaires"
+                ],
+                "summary": "Supprimer un propriétaire",
+                "description": "Permet à un commercial de supprimer un propriétaire qu'il a ajouté, ainsi que ses abonnements et fichiers associés.",
+                "operationId": "deleteProprietaireByCommercial",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Code ID du propriétaire",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Propriétaire supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès non autorisé ou propriétaire avec biens actifs"
+                    },
+                    "404": {
+                        "description": "Propriétaire non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/proprietaires/{id}/update": {
+            "post": {
+                "tags": [
+                    "Commercial - Propriétaires"
+                ],
+                "summary": "Modifier un propriétaire",
+                "description": "Permet à un commercial de modifier les informations d'un propriétaire.",
+                "operationId": "updateProprietaireByCommercial",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Code ID du propriétaire",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "prenom": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "contact": {
+                                        "type": "string"
+                                    },
+                                    "commune": {
+                                        "type": "string"
+                                    },
+                                    "diaspora": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Oui",
+                                            "Non"
+                                        ]
+                                    },
+                                    "gestion": {
+                                        "type": "string",
+                                        "enum": [
+                                            "agence",
+                                            "personnelle"
+                                        ]
+                                    },
+                                    "profil_image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Propriétaire modifié avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "proprietaire": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    },
+                    "404": {
+                        "description": "Propriétaire non trouvé"
+                    },
+                    "403": {
+                        "description": "Accès non autorisé"
                     }
                 },
                 "security": [

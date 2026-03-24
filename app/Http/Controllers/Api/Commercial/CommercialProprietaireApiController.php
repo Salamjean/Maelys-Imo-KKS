@@ -76,7 +76,9 @@ class CommercialProprietaireApiController extends Controller
      *                  @OA\Property(property="commune", type="string"),
      *                  @OA\Property(property="diaspora", type="string", enum={"Oui", "Non"}),
      *                  @OA\Property(property="gestion", type="string", enum={"agence", "personnelle"}),
-     *                  @OA\Property(property="profil_image", type="string", format="binary")
+     *                  @OA\Property(property="profil_image", type="string", format="binary"),
+     *                  @OA\Property(property="cni", type="string", format="binary"),
+     *                  @OA\Property(property="rib", type="string", format="binary")
      *              )
      *          )
      *      ),
@@ -109,6 +111,8 @@ class CommercialProprietaireApiController extends Controller
             'diaspora' => 'nullable|string|in:Oui,Non',
             'gestion' => 'nullable|string|in:agence,personnelle',
             'profil_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'cni' => 'nullable|file|mimes:pdf,jpeg,png,jpg|max:5120',
+            'rib' => 'nullable|file|mimes:pdf,jpeg,png,jpg|max:5120',
         ]);
 
         try {
@@ -122,6 +126,14 @@ class CommercialProprietaireApiController extends Controller
                 ? $request->file('profil_image')->store('proprietaires/profiles', 'public') 
                 : null;
 
+            $cniPath = $request->hasFile('cni')
+                ? $request->file('cni')->store('cnis', 'public')
+                : null;
+
+            $ribPath = $request->hasFile('rib')
+                ? $request->file('rib')->store('ribs', 'public')
+                : null;
+
             $proprietaire = new Proprietaire();
             $proprietaire->code_id = $codeId;
             $proprietaire->name = $request->name;
@@ -133,6 +145,8 @@ class CommercialProprietaireApiController extends Controller
             $proprietaire->gestion = $request->gestion ?? 'proprietaire';
             $proprietaire->password = Hash::make('password'); // Mot de passe par défaut
             $proprietaire->profil_image = $profilImagePath;
+            $proprietaire->cni = $cniPath;
+            $proprietaire->rib = $ribPath;
             $proprietaire->commercial_id = $commercial->code_id;
             $proprietaire->save();
 
@@ -235,7 +249,9 @@ class CommercialProprietaireApiController extends Controller
      *                  @OA\Property(property="commune", type="string"),
      *                  @OA\Property(property="diaspora", type="string", enum={"Oui", "Non"}),
      *                  @OA\Property(property="gestion", type="string", enum={"agence", "personnelle"}),
-     *                  @OA\Property(property="profil_image", type="string", format="binary")
+     *                  @OA\Property(property="profil_image", type="string", format="binary"),
+     *                  @OA\Property(property="cni", type="string", format="binary"),
+     *                  @OA\Property(property="rib", type="string", format="binary")
      *              )
      *          )
      *      ),
@@ -282,6 +298,8 @@ class CommercialProprietaireApiController extends Controller
             'diaspora' => 'nullable|string|in:Oui,Non',
             'gestion' => 'nullable|string|in:agence,personnelle',
             'profil_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'cni' => 'nullable|file|mimes:pdf,jpeg,png,jpg|max:5120',
+            'rib' => 'nullable|file|mimes:pdf,jpeg,png,jpg|max:5120',
         ]);
 
         try {
@@ -296,6 +314,16 @@ class CommercialProprietaireApiController extends Controller
             if ($request->hasFile('profil_image')) {
                 if ($proprietaire->profil_image) \Illuminate\Support\Facades\Storage::disk('public')->delete($proprietaire->profil_image);
                 $proprietaire->profil_image = $request->file('profil_image')->store('proprietaires/profiles', 'public');
+            }
+
+            if ($request->hasFile('cni')) {
+                if ($proprietaire->cni) \Illuminate\Support\Facades\Storage::disk('public')->delete($proprietaire->cni);
+                $proprietaire->cni = $request->file('cni')->store('cnis', 'public');
+            }
+
+            if ($request->hasFile('rib')) {
+                if ($proprietaire->rib) \Illuminate\Support\Facades\Storage::disk('public')->delete($proprietaire->rib);
+                $proprietaire->rib = $request->file('rib')->store('ribs', 'public');
             }
 
             $proprietaire->save();
