@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Agence;
+
 use App\Http\Controllers\Controller;
 use App\Models\Abonnement;
 use App\Models\Agence;
@@ -23,7 +24,7 @@ class AgenceController extends Controller
 {
     private function calculerSoldeDisponible($agenceId)
     {
-        $totalPaiements = Paiement::where('methode_paiement', 'Mobile Money')
+        $totalPaiements = Paiement::whereIn('methode_paiement', ['Mobile Money', 'Wave'])
             ->whereHas('bien', function ($query) use ($agenceId) {
                 $query->where('agence_id', $agenceId);
             })
@@ -31,9 +32,10 @@ class AgenceController extends Controller
             ->sum('montant');
 
         $totalReversements = Reversement::where('agence_id', $agenceId)
+            ->whereIn('statut', ['En attente', 'Effectué'])
             ->sum('montant');
 
-        return $totalPaiements - $totalReversements;
+        return max(0, $totalPaiements - $totalReversements);
     }
     public function dashboard()
     {
@@ -105,8 +107,8 @@ class AgenceController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         // Récupération de toutes les agences
@@ -122,8 +124,8 @@ class AgenceController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         return view('admin.agence.create', compact('pendingVisits'));
@@ -239,7 +241,6 @@ class AgenceController extends Controller
 
             return redirect()->route('agence.index')
                 ->with('success', 'Agence enregistrée avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Error creating agence: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -254,8 +255,8 @@ class AgenceController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         $agence = Agence::findOrFail($id);
@@ -349,7 +350,6 @@ class AgenceController extends Controller
 
             return redirect()->route('agence.index')
                 ->with('success', 'Agence mise à jour avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Error updating agence: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -365,8 +365,7 @@ class AgenceController extends Controller
             return view('agence.auth.validate', compact('email'));
         } else {
             return redirect()->route('login')->with('error', 'Email inconnu');
-        }
-        ;
+        };
     }
 
     public function submitDefineAccess(Request $request)
@@ -461,7 +460,6 @@ class AgenceController extends Controller
             // 5. Tous les autres cas -> page abonnement
             return redirect()->route('page.abonnement.agence')
                 ->with('error', $this->getAbonnementMessage($abonnement));
-
         } catch (Exception $e) {
             Log::error('Connexion échouée : ' . $e->getMessage());
             auth('agence')->logout();
@@ -481,8 +479,8 @@ class AgenceController extends Controller
             'en_attente' => 'Votre paiement est en cours de validation',
             'suspendu' => 'Votre compte est suspendu',
             'actif' => $abonnement->date_fin < now()
-            ? 'Votre abonnement a expiré'
-            : 'Abonnement requis',
+                ? 'Votre abonnement a expiré'
+                : 'Abonnement requis',
             default => 'Statut d\'abonnement non reconnu',
         };
     }
@@ -555,7 +553,6 @@ class AgenceController extends Controller
             $agence->save();
 
             return redirect()->route('agence.dashboard')->with('success', 'Vos informations on bien été mis à jour!');
-
         } catch (\Exception $e) {
             Log::error('Erreur mise à jour profil agence: ' . $e->getMessage());
             return back()->with('error', 'Une erreur est survenue lors de la mise à jour');
@@ -587,7 +584,6 @@ class AgenceController extends Controller
 
             return redirect()->back()
                 ->with('success', 'Agence et ses abonnements supprimés avec succès.');
-
         } catch (\Exception $e) {
             DB::rollBack(); // Annulation en cas d'erreur
             Log::error('Erreur suppression agence: ' . $e->getMessage());

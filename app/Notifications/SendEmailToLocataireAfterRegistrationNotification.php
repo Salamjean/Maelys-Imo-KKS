@@ -18,13 +18,15 @@ class SendEmailToLocataireAfterRegistrationNotification extends Notification
     public $email;
     public $agenceName;
     public $logoUrl;
+    public $codeId;
 
-    public function __construct($codeToSend, $sendToemail, $agenceName)
+    public function __construct($codeToSend, $sendToemail, $agenceName, $codeId = null)
     {
         $this->code = $codeToSend;
         $this->email = $sendToemail;
         $this->agenceName = $agenceName;
         $this->logoUrl = asset('assets/images/mae-imo.png'); // URL du logo
+        $this->codeId = $codeId;
     }
 
     /**
@@ -43,7 +45,7 @@ class SendEmailToLocataireAfterRegistrationNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject($this->agenceName . ' : Vous êtes enregistré comme locataire') 
+            ->subject($this->agenceName . ' : Vous êtes enregistré comme locataire')
             ->from('contact@maelysimo.com', $this->agenceName)
             ->view('emails.locataire', [
                 'code' => $this->code,
@@ -51,6 +53,7 @@ class SendEmailToLocataireAfterRegistrationNotification extends Notification
                 'locataire' => $notifiable,
                 'email' => $this->email,
                 'logoUrl' => $this->logoUrl,
+                'codeId' => $this->codeId,
             ]);
     }
 

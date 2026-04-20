@@ -44,7 +44,7 @@ use Illuminate\Support\Str;
  */
 class ApiAgentPaiement extends Controller
 {
-     /**
+    /**
      * @OA\Get(
      *     path="/api/agent/paiements/history",
      *     operationId="getPaymentHistory",
@@ -104,7 +104,7 @@ class ApiAgentPaiement extends Controller
     {
         try {
             Carbon::setLocale('fr');
-            
+
             // Vérifier que l'utilisateur est authentifié
             if (!Auth::guard('sanctum')->check()) {
                 return response()->json([
@@ -129,7 +129,6 @@ class ApiAgentPaiement extends Controller
                     'to' => $paiements->lastItem(),
                 ]
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -139,7 +138,7 @@ class ApiAgentPaiement extends Controller
         }
     }
 
-     
+
     /**
      * @OA\Get(
      *     path="/api/agent/locataires/retard",
@@ -175,18 +174,17 @@ class ApiAgentPaiement extends Controller
         Carbon::setLocale('fr');
         $comptable = Auth::guard('sanctum')->user();
         $currentMonth = now()->format('Y-m');
-        
-        if($comptable->agence_id || $comptable->proprietaire_id){
-            $latePayers = Locataire::where(function($query) use ($comptable) {
-                    if ($comptable->agence_id) {
-                        $query->orWhere('agence_id', $comptable->agence_id);
-                    }
-                    elseif($comptable->proprietaire_id) {
-                        $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                    }
-                })
+
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
+            $latePayers = Locataire::where(function ($query) use ($comptable) {
+                if ($comptable->agence_id) {
+                    $query->orWhere('agence_id', $comptable->agence_id);
+                } elseif ($comptable->proprietaire_id) {
+                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                }
+            })
                 ->where('status', 'Actif')
-                ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
+                ->whereDoesntHave('paiements', function ($query) use ($currentMonth) {
                     $query->where('mois_couvert', $currentMonth)
                         ->where('statut', 'payé');
                 })
@@ -196,11 +194,11 @@ class ApiAgentPaiement extends Controller
             $latePayers = Locataire::whereNull('agence_id')
                 ->whereNull('proprietaire_id')
                 ->where('status', 'Actif')
-                ->whereDoesntHave('paiements', function($query) use ($currentMonth) {
+                ->whereDoesntHave('paiements', function ($query) use ($currentMonth) {
                     $query->where('mois_couvert', $currentMonth)
                         ->where('statut', 'payé');
                 })
-                ->select('id','name', 'prenom', 'email', 'contact')
+                ->select('id', 'name', 'prenom', 'email', 'contact')
                 ->get();
         }
 
@@ -211,7 +209,7 @@ class ApiAgentPaiement extends Controller
         ]);
     }
 
-     /**
+    /**
      * @OA\Get(
      *     path="/api/agent/locataires/a-jour",
      *     operationId="getLocatairesAJour",
@@ -245,30 +243,30 @@ class ApiAgentPaiement extends Controller
     {
         $comptable = Auth::guard('sanctum')->user();
         $currentMonth = now()->format('Y-m');
-        
-        if($comptable->agence_id || $comptable->proprietaire_id){
-            $upToDateLocataires = Locataire::where(function($query) use ($comptable) {
-                    if ($comptable->agence_id) {
-                        $query->orWhere('agence_id', $comptable->agence_id);
-                    }
-                    if ($comptable->proprietaire_id) {
-                        $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                    }
-                })
+
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
+            $upToDateLocataires = Locataire::where(function ($query) use ($comptable) {
+                if ($comptable->agence_id) {
+                    $query->orWhere('agence_id', $comptable->agence_id);
+                }
+                if ($comptable->proprietaire_id) {
+                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                }
+            })
                 ->where('status', 'Actif')
-                ->whereHas('paiements', function($query) use ($currentMonth) {
+                ->whereHas('paiements', function ($query) use ($currentMonth) {
                     $query->where('mois_couvert', $currentMonth)
-                          ->where('statut', 'payé');
+                        ->where('statut', 'payé');
                 })
-                ->select('id','name', 'prenom', 'email', 'contact')
+                ->select('id', 'name', 'prenom', 'email', 'contact')
                 ->get();
         } else {
             $upToDateLocataires = Locataire::whereNull('agence_id')
                 ->whereNull('proprietaire_id')
                 ->where('status', 'Actif')
-                ->whereHas('paiements', function($query) use ($currentMonth) {
+                ->whereHas('paiements', function ($query) use ($currentMonth) {
                     $query->where('mois_couvert', $currentMonth)
-                          ->where('statut', 'payé');
+                        ->where('statut', 'payé');
                 })
                 ->select('name', 'prenom', 'email', 'contact')
                 ->get();
@@ -315,30 +313,30 @@ class ApiAgentPaiement extends Controller
     {
         $comptable = Auth::guard('sanctum')->user();
         $currentMonth = now()->format('Y-m');
-        
-        if($comptable->agence_id || $comptable->proprietaire_id){
-            $pendingLocataires = Locataire::where(function($query) use ($comptable) {
-                    if ($comptable->agence_id) {
-                        $query->orWhere('agence_id', $comptable->agence_id);
-                    }
-                    if ($comptable->proprietaire_id) {
-                        $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
-                    }
-                })
+
+        if ($comptable->agence_id || $comptable->proprietaire_id) {
+            $pendingLocataires = Locataire::where(function ($query) use ($comptable) {
+                if ($comptable->agence_id) {
+                    $query->orWhere('agence_id', $comptable->agence_id);
+                }
+                if ($comptable->proprietaire_id) {
+                    $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
+                }
+            })
                 ->where('status', 'Actif')
-                ->whereHas('paiements', function($query) use ($currentMonth) {
+                ->whereHas('paiements', function ($query) use ($currentMonth) {
                     $query->where('mois_couvert', $currentMonth)
-                          ->where('statut', '!=', 'payé');
+                        ->where('statut', '!=', 'payé');
                 })
-                ->select('id','name', 'prenom', 'email', 'contact')
+                ->select('id', 'name', 'prenom', 'email', 'contact')
                 ->get();
         } else {
             $pendingLocataires = Locataire::whereNull('agence_id')
                 ->whereNull('proprietaire_id')
                 ->where('status', 'Actif')
-                ->whereHas('paiements', function($query) use ($currentMonth) {
+                ->whereHas('paiements', function ($query) use ($currentMonth) {
                     $query->where('mois_couvert', $currentMonth)
-                          ->where('statut', '!=', 'payé');
+                        ->where('statut', '!=', 'payé');
                 })
                 ->select('name', 'prenom', 'email', 'contact')
                 ->get();
@@ -351,7 +349,7 @@ class ApiAgentPaiement extends Controller
         ]);
     }
 
-     /**
+    /**
      * @OA\Get(
      *     path="/api/agent/locataire/{id}/details",
      *     operationId="getLocataireDetails",
@@ -416,12 +414,12 @@ class ApiAgentPaiement extends Controller
 
     public function getLocataireDetails($id)
     {
-         $comptable = Auth::guard('sanctum')->user();
-        
+        $comptable = Auth::guard('sanctum')->user();
+
         // Récupérer le locataire avec son bien
         $locataire = Locataire::with('bien')
             ->where('id', $id)
-            ->where(function($query) use ($comptable) {
+            ->where(function ($query) use ($comptable) {
                 if ($comptable->agence_id) {
                     $query->where('agence_id', $comptable->agence_id);
                 }
@@ -449,7 +447,7 @@ class ApiAgentPaiement extends Controller
             $moisAPayer = Carbon::parse($dernierPaiement->mois_couvert)->addMonth();
         } else {
             // Si aucun paiement, utiliser la date d'entrée ou le mois courant
-            $moisAPayer = $locataire->date_entree 
+            $moisAPayer = $locataire->date_entree
                 ? Carbon::parse($locataire->date_entree)
                 : Carbon::now();
         }
@@ -498,31 +496,31 @@ class ApiAgentPaiement extends Controller
         ]);
     }
 
-        private function trouverProchainMoisNonPaye($locataireId, Carbon $dateDebut)
+    private function trouverProchainMoisNonPaye($locataireId, Carbon $dateDebut)
     {
         $dateCourante = $dateDebut->copy();
         $maintenant = Carbon::now();
-        
+
         // Limiter la recherche à 12 mois maximum dans le futur
         $maxMois = 12;
         $compteur = 0;
-        
+
         while ($compteur < $maxMois && $dateCourante <= $maintenant->addMonths(3)) {
             $moisFormatte = $dateCourante->format('Y-m');
-            
+
             $dejaPaye = Paiement::where('locataire_id', $locataireId)
                 ->where('mois_couvert', $moisFormatte)
                 ->where('statut', 'payé')
                 ->exists();
-            
+
             if (!$dejaPaye) {
                 return $dateCourante;
             }
-            
+
             $dateCourante->addMonth();
             $compteur++;
         }
-        
+
         // Si tous les mois sont payés, retourner le mois suivant le dernier trouvé
         return $dateCourante;
     }
@@ -567,215 +565,197 @@ class ApiAgentPaiement extends Controller
      *     ),
      *     @OA\Response(
      *            response=422,
-    *         description="Erreur de validation",
-    *         @OA\JsonContent(
-    *             type="object",
-    *             @OA\Property(
-    *                 property="message",
-    *                 type="string",
-    *                 example="Les données fournies sont invalides"
-    *             ),
-    *             @OA\Property(
-    *                 property="errors",
-    *                 type="object",
-    *                 example={"champ": {"Le champ est requis"}}
-    *             )
-    *         )
-    *     )
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Les données fournies sont invalides"
+     *             ),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 example={"champ": {"Le champ est requis"}}
+     *             )
+     *         )
+     *     )
      * )
      */
     public function generateCashCode(Request $request)
-{
-    $request->validate([
-        'locataire_id' => 'required|exists:locataires,id',
-        'nombre_mois' => 'required|integer|min:1'
-    ]);
-
-    $comptable = Auth::guard('sanctum')->user();
-    $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-    
-    // Vérifier l'accès du comptable
-    if (($comptable->agence_id && $locataire->agence_id != $comptable->agence_id) ||
-        ($comptable->proprietaire_id && $locataire->proprietaire_id != $comptable->proprietaire_id)) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Accès non autorisé à ce locataire'
-        ], 403);
-    }
-
-    // Nettoyer les données du locataire
-    $locataireData = [
-        'id' => $locataire->id,
-        'nom' => $this->cleanUtf8($locataire->name),
-        'prenom' => $this->cleanUtf8($locataire->prenom),
-        'email' => $locataire->email,
-        'telephone' => $locataire->contact
-    ];
-
-    // Nettoyer les données du bien
-    $bienData = $locataire->bien ? [
-        'type' => $this->cleanUtf8($locataire->bien->type),
-        'commune' => $this->cleanUtf8($locataire->bien->commune),
-        'prix' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
-    ] : null;
-
-    // Générer un code aléatoire de 6 caractères
-    $code = Str::upper(Str::random(6));
-    
-    // Calculer le montant total
-    $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
-    $montantTotal = $montantParMois * $request->nombre_mois;
-
-    // Déterminer les mois couverts (nettoyer les données)
-    $moisCouverts = [];
-    $moisCouvertsDisplay = [];
-    $dateActuelle = now();
-    
-    for ($i = 0; $i < $request->nombre_mois; $i++) {
-        $currentDate = $dateActuelle->copy()->addMonths($i);
-        $moisCouverts[] = $currentDate->format('Y-m');
-        $moisCouvertsDisplay[] = $this->cleanUtf8($currentDate->translatedFormat('F Y'));
-    }
-    
-    $moisCouvertsStr = implode(', ', $moisCouvertsDisplay);
-
-    // Générer le QR code
-    try {
-        $options = new QROptions([
-            'version' => 10,
-            'outputType' => QRCode::OUTPUT_IMAGE_PNG,
-            'eccLevel' => QRCode::ECC_L,
-            'scale' => 5,
-            'imageBase64' => false,
-            'quietzoneSize' => 2,
+    {
+        $request->validate([
+            'locataire_id' => 'required|exists:locataires,id',
+            'nombre_mois' => 'required|integer|min:1'
         ]);
 
-        $qrcode = (new QRCode($options))->render($code);
-        $qrCodePath = 'qrcodes/cash_payments/' . $code . '.png';
-        Storage::disk('public')->put($qrCodePath, base64_decode($qrcode));
-    } catch (\Exception $e) {
-        Log::error('Erreur génération QR code: ' . $e->getMessage());
-        $qrCodePath = null;
-        $qrcode = null;
-    }
+        $comptable = Auth::guard('sanctum')->user();
+        $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
 
-    // Créer ou mettre à jour le code
-    $cashCode = CashVerificationCode::updateOrCreate(
-        ['locataire_id' => $locataire->id],
-        [
-            'code' => $code,
-            'expires_at' => now()->addHours(24),
-            'nombre_mois' => $request->nombre_mois,
-            'mois_couverts' => $moisCouvertsStr,
-            'montant_total' => $montantTotal,
-            'is_archived' => false,
-            'used_at' => null,
-            'paiement_id' => null,
-            'qr_code_path' => $qrCodePath,
-            'comptable_id' => $comptable->id
-        ]
-    );
+        // Vérifier l'accès du comptable
+        if (($comptable->agence_id && $locataire->agence_id != $comptable->agence_id) ||
+            ($comptable->proprietaire_id && $locataire->proprietaire_id != $comptable->proprietaire_id)
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès non autorisé à ce locataire'
+            ], 403);
+        }
 
-    // Préparer la réponse avec des données nettoyées
-    $responseData = [
-        'success' => true,
-        'message' => 'Code de paiement généré avec succès',
-        'data' => [
-            'code' => $code,
-            'locataire' => $locataireData,
-            'bien' => $bienData,
-            'details_paiement' => [
-                'nombre_mois' => $request->nombre_mois,
-                'montant_par_mois' => $montantParMois,
-                'montant_total' => $montantTotal,
-                'mois_couverts' => $moisCouverts,
-                'mois_couverts_display' => $moisCouvertsDisplay,
-                'expiration' => now()->addHours(24)->toIso8601String()
-            ],
-            'qr_code' => [
-                'url' => $qrCodePath ? Storage::url($qrCodePath) : null,
-                'base64' => $qrcode
-            ]
-        ]
-    ];
+        // Nettoyer les données du locataire
+        $locataireData = [
+            'id' => $locataire->id,
+            'nom' => $this->cleanUtf8($locataire->name),
+            'prenom' => $this->cleanUtf8($locataire->prenom),
+            'email' => $locataire->email,
+            'telephone' => $locataire->contact
+        ];
 
-    // Envoyer les notifications (email et SMS)
-    $this->sendPaymentCodeNotifications($locataire, $code, $montantTotal, $moisCouvertsStr, $qrCodePath);
+        // Nettoyer les données du bien
+        $bienData = $locataire->bien ? [
+            'type' => $this->cleanUtf8($locataire->bien->type),
+            'commune' => $this->cleanUtf8($locataire->bien->commune),
+            'prix' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
+        ] : null;
 
-    // Retourner la réponse avec encodage JSON forcé
-    return response()->json($responseData, 200, [
-        'Content-Type' => 'application/json; charset=UTF-8'
-    ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
-}
+        // Générer un code aléatoire de 6 caractères
+        $code = Str::upper(Str::random(6));
 
-/**
- * Nettoyer les chaînes UTF-8
- */
-private function cleanUtf8($string)
-{
-    if (!is_string($string)) {
-        return $string;
-    }
-    
-    // Nettoyer les caractères UTF-8 mal formés
-    $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
-    
-    // Supprimer les caractères non-UTF-8
-    $string = preg_replace('/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+/u', '', $string);
-    
-    return $string;
-}
+        // Calculer le montant total
+        $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
+        $montantTotal = $montantParMois * $request->nombre_mois;
 
-/**
- * Envoyer les notifications (email et SMS)
- */
-private function sendPaymentCodeNotifications($locataire, $code, $montantTotal, $moisCouvertsStr, $qrCodePath)
-{
-    // Email
-    try {
-        Mail::to($locataire->email)->send(new \App\Mail\CashPaymentCodeMail(
-            $code, 
-            $locataire,
-            $montantTotal,
-            $moisCouvertsStr,
-            $qrCodePath ? Storage::url($qrCodePath) : null
-        ));
-    } catch (\Exception $e) {
-        Log::error("Erreur envoi email code cash: " . $e->getMessage());
-    }
+        // Déterminer les mois couverts (nettoyer les données)
+        $moisCouverts = [];
+        $moisCouvertsDisplay = [];
+        $dateActuelle = now();
 
-    // SMS
-    try {
-        $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-        
-        $phoneNumber = $this->formatPhoneNumberForSms($locataire->telephone);
-        $smsContent = "Bonjour {$this->cleanUtf8($locataire->prenom)},\n\n"
-                    . "Votre code de paiement cash: {$code}\n"
-                    . "Montant: {$montantTotal} FCFA\n"
-                    . "Mois: {$this->cleanUtf8($moisCouvertsStr)}\n\n"
-                    . "Ce code expire dans 24h.";
+        for ($i = 0; $i < $request->nombre_mois; $i++) {
+            $currentDate = $dateActuelle->copy()->addMonths($i);
+            $moisCouverts[] = $currentDate->format('Y-m');
+            $moisCouvertsDisplay[] = $this->cleanUtf8($currentDate->translatedFormat('F Y'));
+        }
 
-        $message = $twilio->messages->create(
-            $phoneNumber,
+        $moisCouvertsStr = implode(', ', $moisCouvertsDisplay);
+
+        // Générer le QR code
+        try {
+            $options = new QROptions([
+                'version' => 10,
+                'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+                'eccLevel' => QRCode::ECC_L,
+                'scale' => 5,
+                'imageBase64' => false,
+                'quietzoneSize' => 2,
+            ]);
+
+            $qrcode = (new QRCode($options))->render($code);
+            $qrCodePath = 'qrcodes/cash_payments/' . $code . '.png';
+            Storage::disk('public')->put($qrCodePath, base64_decode($qrcode));
+        } catch (\Exception $e) {
+            Log::error('Erreur génération QR code: ' . $e->getMessage());
+            $qrCodePath = null;
+            $qrcode = null;
+        }
+
+        // Créer ou mettre à jour le code
+        $cashCode = CashVerificationCode::updateOrCreate(
+            ['locataire_id' => $locataire->id],
             [
-                'from' => env('TWILIO_PHONE_NUMBER'),
-                'body' => $smsContent
+                'code' => $code,
+                'expires_at' => now()->addHours(24),
+                'nombre_mois' => $request->nombre_mois,
+                'mois_couverts' => $moisCouvertsStr,
+                'montant_total' => $montantTotal,
+                'is_archived' => false,
+                'used_at' => null,
+                'paiement_id' => null,
+                'qr_code_path' => $qrCodePath,
+                'comptable_id' => $comptable->id
             ]
         );
 
-        Log::channel('sms')->info('SMS cash code envoyé', [
-            'locataire_id' => $locataire->id,
-            'code' => $code,
-            'message_sid' => $message->sid
-        ]);
+        // Préparer la réponse avec des données nettoyées
+        $responseData = [
+            'success' => true,
+            'message' => 'Code de paiement généré avec succès',
+            'data' => [
+                'code' => $code,
+                'locataire' => $locataireData,
+                'bien' => $bienData,
+                'details_paiement' => [
+                    'nombre_mois' => $request->nombre_mois,
+                    'montant_par_mois' => $montantParMois,
+                    'montant_total' => $montantTotal,
+                    'mois_couverts' => $moisCouverts,
+                    'mois_couverts_display' => $moisCouvertsDisplay,
+                    'expiration' => now()->addHours(24)->toIso8601String()
+                ],
+                'qr_code' => [
+                    'url' => $qrCodePath ? Storage::url($qrCodePath) : null,
+                    'base64' => $qrcode
+                ]
+            ]
+        ];
 
-    } catch (\Exception $e) {
-        Log::channel('sms')->error('Erreur envoi SMS cash code', [
-            'locataire_id' => $locataire->id,
-            'error' => $e->getMessage()
-        ]);
+        // Envoyer les notifications (email et SMS)
+        $this->sendPaymentCodeNotifications($locataire, $code, $montantTotal, $moisCouvertsStr, $qrCodePath);
+
+        // Retourner la réponse avec encodage JSON forcé
+        return response()->json($responseData, 200, [
+            'Content-Type' => 'application/json; charset=UTF-8'
+        ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     }
-}
+
+    /**
+     * Nettoyer les chaînes UTF-8
+     */
+    private function cleanUtf8($string)
+    {
+        if (!is_string($string)) {
+            return $string;
+        }
+
+        // Nettoyer les caractères UTF-8 mal formés
+        $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
+
+        // Supprimer les caractères non-UTF-8
+        $string = preg_replace('/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+/u', '', $string);
+
+        return $string;
+    }
+
+    /**
+     * Envoyer les notifications (email et SMS)
+     */
+    private function sendPaymentCodeNotifications($locataire, $code, $montantTotal, $moisCouvertsStr, $qrCodePath)
+    {
+        // Email
+        try {
+            Mail::to($locataire->email)->send(new \App\Mail\CashPaymentCodeMail(
+                $code,
+                $locataire,
+                $montantTotal,
+                $moisCouvertsStr,
+                $qrCodePath ? Storage::url($qrCodePath) : null
+            ));
+        } catch (\Exception $e) {
+            Log::error("Erreur envoi email code cash: " . $e->getMessage());
+        }
+
+        // SMS
+        try {
+            $yellika = new \App\Services\YellikaService();
+            $phone = $locataire->telephone ?? $locataire->contact ?? null;
+            if ($phone) {
+                $smsContent = "Bonjour {$this->cleanUtf8($locataire->prenom)}, votre code de paiement cash est : {$code}. Montant : {$montantTotal} FCFA. Mois : {$this->cleanUtf8($moisCouvertsStr)}. Ce code expire dans 24h.";
+                $yellika->send($phone, $smsContent);
+                Log::info('SMS cash code envoyé', ['locataire_id' => $locataire->id, 'code' => $code]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Erreur envoi SMS cash code', ['locataire_id' => $locataire->id, 'error' => $e->getMessage()]);
+        }
+    }
 
 
     /**
@@ -785,7 +765,7 @@ private function sendPaymentCodeNotifications($locataire, $code, $montantTotal, 
     {
         // Nettoyer le numéro
         $phone = preg_replace('/[^0-9]/', '', $phone);
-        
+
         // Ajouter l'indicatif international si absent
         if (strpos($phone, '+') !== 0) {
             // Supposer que c'est un numéro français si pas d'indicatif
@@ -795,11 +775,11 @@ private function sendPaymentCodeNotifications($locataire, $code, $montantTotal, 
                 $phone = '+' . substr($phone, 2);
             }
         }
-        
+
         return $phone;
     }
 
-     /**
+    /**
      * @OA\Post(
      *     path="/api/paiement/verifier-code-especes",
      *     operationId="verifyCashCodeAgent",
@@ -887,7 +867,7 @@ private function sendPaymentCodeNotifications($locataire, $code, $montantTotal, 
                 ->orderBy('mois_couvert', 'desc')
                 ->first();
 
-            $dateDebut = $dernierPaiement 
+            $dateDebut = $dernierPaiement
                 ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
                 : now();
 
@@ -898,7 +878,7 @@ private function sendPaymentCodeNotifications($locataire, $code, $montantTotal, 
 
             for ($i = 0; $i < $nombreMois; $i++) {
                 $moisFormat = $currentDate->format('Y-m');
-                
+
                 $paiementExistant = Paiement::where('locataire_id', $locataire->id)
                     ->where('mois_couvert', $moisFormat)
                     ->where('statut', 'payé')
@@ -950,7 +930,7 @@ private function sendPaymentCodeNotifications($locataire, $code, $montantTotal, 
                     'comptable_id' => Auth::guard('sanctum')->user()->id,
                     'nombre_mois' => $nombreMois
                 ]);
-                
+
                 $paiementsCrees[] = $paiement;
             }
 
@@ -969,9 +949,9 @@ private function sendPaymentCodeNotifications($locataire, $code, $montantTotal, 
             DB::commit();
 
             // Message de confirmation
-            $message = 'Paiement enregistré avec succès pour ' . count($moisAPayer) . ' mois: ' . 
-                      implode(', ', array_column($moisAPayer, 'libelle'));
-            
+            $message = 'Paiement enregistré avec succès pour ' . count($moisAPayer) . ' mois: ' .
+                implode(', ', array_column($moisAPayer, 'libelle'));
+
             if (!empty($moisDejaPayes)) {
                 $message .= ' (Mois déjà payés: ' . implode(', ', $moisDejaPayes) . ')';
             }
@@ -997,11 +977,10 @@ private function sendPaymentCodeNotifications($locataire, $code, $montantTotal, 
                     'nombre_mois_payes' => count($moisAPayer)
                 ]
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Erreur lors de la vérification du code: " . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue lors du traitement du paiement',

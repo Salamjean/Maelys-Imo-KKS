@@ -16,19 +16,21 @@ use function Laravel\Prompts\error;
 
 class AgenceReversementController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         $proprietaireId = Auth::user()->code_id;
         $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
-        $reversements = Reversement::where('proprietaire_id', $proprietaireId)
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
+        $reversements = Reversement::with('rib')
+            ->where('agence_id', $agenceId)
             ->orderBy('created_at', 'desc')
             ->paginate(6);
-        $soldeDisponible = $this->calculerSoldeDisponible($proprietaireId);
+        $soldeDisponible = $this->calculerSoldeDisponible($agenceId);
         return view('agence.reversement.index', compact('reversements', 'soldeDisponible', 'pendingVisits'));
     }
     public function uploadRecu(Request $request, $id)
@@ -55,38 +57,39 @@ class AgenceReversementController extends Controller
 
         return redirect()->back()->with('success', 'Reçu de paiement ajouté avec succès.');
     }
-    private function calculerSoldeDisponible($proprietaireId)
+    private function calculerSoldeDisponible($agenceId)
     {
-        $totalPaiements = Paiement::where('methode_paiement', 'Mobile Money')
-            ->whereHas('bien', function($query) use ($proprietaireId) {
-                $query->where('agence_id', $proprietaireId);
+        $totalPaiements = Paiement::whereIn('methode_paiement', ['Mobile Money', 'Wave'])
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);
             })
             ->where('statut', 'payé')
             ->sum('montant');
-        
-        $totalReversements = Reversement::where('agence_id', $proprietaireId)
+
+        $totalReversements = Reversement::where('agence_id', $agenceId)
+            ->whereIn('statut', ['En attente', 'Effectué'])
             ->sum('montant');
-        
-        return $totalPaiements - $totalReversements;
+
+        return max(0, $totalPaiements - $totalReversements);
     }
 
     public function create()
     {
         $agenceId = Auth::guard('agence')->user()->code_id;
         // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) use ($agenceId) {
-                            $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) use ($agenceId) {
+                $query->where('agence_id', $agenceId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         $agenceId = Auth::user()->code_id;
-        
+
         $ribs = Rib::where('agence_id', $agenceId)
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         $soldeDisponible = $this->calculerSoldeDisponible($agenceId);
-        
+
         // Récupérer les 3 derniers reversements
         $lastReversements = Reversement::with('rib')
             ->where('agence_id', $agenceId)
@@ -101,16 +104,16 @@ class AgenceReversementController extends Controller
     {
         $chiffres = str_shuffle('0123456789');
         $lettres = str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-        
+
         // Prendre 4 chiffres aléatoires
         $partieChiffres = substr($chiffres, 0, 4);
-        
+
         // Prendre 3 lettres aléatoires
         $partieLettres = substr($lettres, 0, 3);
-        
+
         // Combiner et mélanger
         $reference = str_shuffle($partieChiffres . $partieLettres);
-        
+
         return $reference;
     }
 
@@ -118,27 +121,27 @@ class AgenceReversementController extends Controller
     {
         $agenceId = Auth::user()->code_id;
         $soldeDisponible = $this->calculerSoldeDisponible($agenceId);
-        
-        $request->validate([
-            'banque' => 'required|exists:ribs,id',
-            'rib' => 'required',
-            'montant' => [
-                'required',
-                'numeric',
-                'min:0.01',
-            ],
-            'date_reversement' => 'required|date',  
-            'contrat' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
-        ]);
 
-        // Vérification explicite du solde
-        if ($request->montant > $soldeDisponible) {
-            error("Le montant demandé (".number_format($request->montant, 2)." FCFA) dépasse votre solde disponible (".number_format($soldeDisponible, 2)." FCFA)");
+        $typeRetrait = $request->input('type_retrait', 'virement');
+
+        if ($typeRetrait === 'mobile_money') {
+            $request->validate([
+                'reseau_mobile'     => 'required|in:Wave,Orange,Moov,MTN',
+                'numero_mobile'     => 'required|string|min:8|max:15',
+                'montant'           => ['required', 'numeric', 'min:100'],
+                'date_reversement'  => 'required|date',
+            ]);
+        } else {
+            $request->validate([
+                'banque'            => 'required|exists:ribs,id',
+                'rib'               => 'required',
+                'montant'           => ['required', 'numeric', 'min:0.01'],
+                'date_reversement'  => 'required|date',
+            ]);
         }
 
-        $recuPath = null;
-        if ($request->hasFile('recu_paiement')) {
-            $recuPath = $request->file('recu_paiement')->store('recu_paiement', 'public');
+        if ($request->montant > $soldeDisponible) {
+            return back()->withErrors(['montant' => 'Le montant demandé (' . number_format($request->montant, 0, ',', ' ') . ' FCFA) dépasse votre solde disponible (' . number_format($soldeDisponible, 0, ',', ' ') . ' FCFA).'])->withInput();
         }
 
         // Générer une référence unique
@@ -146,19 +149,30 @@ class AgenceReversementController extends Controller
             $reference = $this->genererReference();
         } while (Reversement::where('reference', $reference)->exists());
 
+        // Cas Mobile Money ou virement bancaire : demande en attente
+        $recuPath = null;
+        if ($request->hasFile('recu_paiement')) {
+            $recuPath = $request->file('recu_paiement')->store('recu_paiement', 'public');
+        }
+
         Reversement::create([
-            'montant' => $request->montant,
-            'reference' => $reference,
+            'montant'          => $request->montant,
+            'reference'        => $reference,
             'date_reversement' => $request->date_reversement,
-            'recu_paiement' => $recuPath,
-            'statut' => 'En attente',
-            'rib_id' => $request->banque,
-            'agence_id' => $agenceId,
+            'recu_paiement'    => $recuPath,
+            'statut'           => 'En attente',
+            'type_retrait'     => $typeRetrait,
+            'reseau_mobile'    => $typeRetrait === 'mobile_money' ? $request->reseau_mobile : null,
+            'numero_mobile'    => $typeRetrait === 'mobile_money' ? $request->numero_mobile : null,
+            'rib_id'           => $typeRetrait === 'virement' ? $request->banque : null,
+            'agence_id'        => $agenceId,
         ]);
 
-        return redirect()->route('reversement.create.agence')
-            ->with('success', 'Reversement effectué avec succès! Référence: ' . $reference)
-            ->with('solde', $this->calculerSoldeDisponible($agenceId));
+        $message = $typeRetrait === 'mobile_money'
+            ? 'Demande de retrait ' . $request->reseau_mobile . ' en cours de traitement. Référence: ' . $reference
+            : 'Demande de virement bancaire enregistrée. Référence: ' . $reference;
+
+        return redirect()->route('reversement.create.agence')->with('success', $message);
     }
 
     public function getRib($id)

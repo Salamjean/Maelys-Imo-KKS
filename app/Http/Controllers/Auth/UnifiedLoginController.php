@@ -63,6 +63,12 @@ class UnifiedLoginController extends Controller
 
             // --- A. LOCATAIRE ---
             if (Auth::guard('locataire')->attempt($credentials)) {
+                $locataireUser = Auth::guard('locataire')->user();
+                if (!$locataireUser->bien) {
+                    Auth::guard('locataire')->logout();
+                    return redirect()->back()->withInput($request->except('password'))
+                        ->with('error', 'Vous ne louez plus de bien. Votre accès a été désactivé. Veuillez contacter votre agence/propriétaire.');
+                }
                 return redirect()->route('locataire.dashboard')->with('success', 'Bienvenue sur votre espace.');
             }
 
@@ -122,7 +128,6 @@ class UnifiedLoginController extends Controller
             return redirect()->back()
                 ->with('error', 'Identifiant ou mot de passe incorrect.')
                 ->withInput($request->except('password'));
-
         } catch (\Exception $e) {
             Log::error('Erreur lors de la connexion unifiée : ' . $e->getMessage());
             return redirect()->back()->with('error', 'Une erreur technique est survenue.');
@@ -142,8 +147,8 @@ class UnifiedLoginController extends Controller
             'en_attente' => 'Votre paiement est en cours de validation',
             'suspendu' => 'Votre compte est suspendu',
             'actif' => $abonnement->date_fin < now()
-            ? 'Votre abonnement a expiré'
-            : 'Abonnement requis',
+                ? 'Votre abonnement a expiré'
+                : 'Abonnement requis',
             default => 'Statut d\'abonnement non reconnu',
         };
     }

@@ -8,6 +8,7 @@ use App\Models\Agence;
 use App\Models\Proprietaire;
 use App\Models\ResetCodePasswordAgence;
 use App\Notifications\SendEmailToAgenceAfterRegistrationNotification;
+use App\Services\YellikaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,10 +20,12 @@ use Illuminate\Support\Facades\Storage;
 
 class HomePageController extends Controller
 {
-    public function about(){
+    public function about()
+    {
         return view('home.about');
     }
-    public function contact(){
+    public function contact()
+    {
         return view('home.contact');
     }
     public function send(Request $request)
@@ -38,23 +41,27 @@ class HomePageController extends Controller
 
         return redirect()->route('maelys.contact')->with('success', 'Votre message a été envoyé avec succès!');
     }
-    public function privacy(){
+    public function privacy()
+    {
         return view('home.privacy');
     }
-    public function service(){
+    public function service()
+    {
         return view('home.service');
     }
-    
-    public function abonnement(){
+
+    public function abonnement()
+    {
         return view('home.abonnement');
     }
 
-    public function RegisterAgence(){
+    public function RegisterAgence()
+    {
         return view('agence.home.register');
     }
 
-     public function storeAgence(Request $request)
-    { 
+    public function storeAgence(Request $request)
+    {
         // Validation des données
         $request->validate([
             'name' => 'required|string|max:255',
@@ -69,7 +76,7 @@ class HomePageController extends Controller
             'rccm_file' => 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
             'dfe' => 'required|string|max:255',
             'dfe_file' => 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
-        ],[
+        ], [
             'name.required' => 'Le nom de l\'agence est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
             'email.email' => 'L\'adresse e-mail n\'est pas valide.',
@@ -88,7 +95,7 @@ class HomePageController extends Controller
             'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
             'password.min' => 'Le mot de passe doit comporter au moins 8 caractères'
         ]);
-    
+
         try {
 
             // Génération du code PRO unique
@@ -116,7 +123,7 @@ class HomePageController extends Controller
             if ($request->hasFile('dfe_file')) {
                 $dfe_filePath = $request->file('dfe_file')->store('dfe_files', 'public');
             }
-    
+
             // Création de l'agence
             $agence = new Agence();
             $agence->code_id = $codeId;
@@ -134,33 +141,44 @@ class HomePageController extends Controller
             $agence->profile_image = $profileImagePath;
             $agence->save();
 
-        /************************************************
+            /************************************************
            CRÉATION AUTOMATIQUE DE L'ABONNEMENT
-         ************************************************/
-        $today = now();
-        $dateDebut = $today->format('Y-m-d');
-        $dateFin = $today->copy()->addMonth(3)->format('Y-m-d'); // Abonnement d'3 mois offert lors de l'inscription
-        
-        $abonnementData = [
-            'agence_id' => $agence->code_id,
-            'date_abonnement' => $today,
-            'date_debut' => $dateDebut,
-            'date_fin' => $dateFin,
-            'mois_abonne' => $today->format('m-Y'),
-            'montant' => 0, // À ajuster selon votre logique métier
-            'statut' => 'actif',
-            'type' => 'standard',
-            'mode_paiement' => 'offert', // Ou autre valeur par défaut
-            'reference_paiement' => 'CREA-' . $agence->code_id,
-            'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
-        ];
+             ************************************************/
+            $today = now();
+            $dateDebut = $today->format('Y-m-d');
+            $dateFin = $today->copy()->addMonth(3)->format('Y-m-d'); // Abonnement d'3 mois offert lors de l'inscription
 
-        Abonnement::create($abonnementData);
-        Log::info('Abonnement créé', ['agence_id' => $agence->code_id]);
-        
-            return redirect()->route('agence.login')
+            $abonnementData = [
+                'agence_id' => $agence->code_id,
+                'date_abonnement' => $today,
+                'date_debut' => $dateDebut,
+                'date_fin' => $dateFin,
+                'mois_abonne' => $today->format('m-Y'),
+                'montant' => 0, // À ajuster selon votre logique métier
+                'statut' => 'actif',
+                'type' => 'standard',
+                'mode_paiement' => 'offert', // Ou autre valeur par défaut
+                'reference_paiement' => 'CREA-' . $agence->code_id,
+                'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
+            ];
+
+            Abonnement::create($abonnementData);
+            Log::info('Abonnement créé', ['agence_id' => $agence->code_id]);
+
+            // Envoi du SMS de confirmation avec le code ID
+            try {
+                $yellika = new YellikaService();
+                $smsMessage = "Bienvenue sur Maelys Imo !\nVotre agence a bien ete enregistree.\nVotre code ID de connexion est : {$agence->code_id}\nConservez-le precieusement.";
+                $yellika->send($agence->contact, $smsMessage);
+            } catch (\Throwable $smsException) {
+                Log::error('Erreur envoi SMS inscription agence', [
+                    'agence_id' => $agence->code_id,
+                    'error'     => $smsException->getMessage(),
+                ]);
+            }
+
+            return redirect()->route('login')
                 ->with('success', 'Votre agence a été enregistré avec succès, veuillez-vous connecter.');
-    
         } catch (\Exception $e) {
             Log::error('Error creating agence: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -170,167 +188,179 @@ class HomePageController extends Controller
 
 
     /// Les fonctions d'enregistrement d'un propriétaire par lui meme 
-    public function RegisterOwner(){
+    public function RegisterOwner()
+    {
         return view('proprietaire.home.register');
     }
 
-       public function storeOwner(Request $request)
-{
-    // Validation des données avec messages personnalisés
-    $validatedData = $request->validate([
-        'name' => 'required|string|max:255',
-        'prenom' => 'required|string|max:255',
-        'email' => 'required|email|unique:proprietaires,email',
-        'contact' => 'required|string|min:10',
-        'commune' => 'required|string|max:255',
-        'adresse' => 'required|string|max:255',
-        'password' => 'required|confirmed|min:8',
-        'rib' => 'nullable|file|mimes:pdf|max:2048',
-        'diaspora' => 'nullable|string',
-        'cni' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-    ], [
-        'name.required' => 'Le nom du proprietaire est obligatoire.',
-        'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
-        'email.required' => 'L\'adresse e-mail est obligatoire.',
-        'email.email' => 'L\'adresse e-mail n\'est pas valide.',
-        'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-        'contact.required' => 'Le contact est obligatoire.',
-        'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
-        'commune.required' => 'Lieu de residence est obligatoire.',
-        'rib.max' => 'Le fichier RIB ne doit pas dépasser 2Mo.',
-        'rib.mimes' => 'Le RIB doit être au format PDF, JPG ou PNG.',
-        'profile_image.image' => 'Le fichier doit être une image.',
-        'profile_image.mimes' => 'L\'image doit être au format JPEG, PNG ou JPG.',
-        'profile_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
-    ]);
-
-    DB::beginTransaction();
-
-    try {
-        Log::info('Début de la création du propriétaire', ['email' => $request->email]);
-
-        // Génération du code PRO unique
-        do {
-            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-            $codeId = 'PRO' . $randomNumber;
-            Log::debug('Génération code PRO', ['code' => $codeId]);
-        } while (Proprietaire::where('code_id', $codeId)->exists());
-
-        // Traitement de l'image de profil
-        $profileImagePath = null;
-        if ($request->hasFile('profile_image')) {
-            try {
-                $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
-                Log::info('Image profil enregistrée', ['path' => $profileImagePath]);
-            } catch (\Exception $e) {
-                Log::error('Erreur enregistrement image profil', [
-                    'error' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]);
-                throw new \Exception("Erreur lors de l'enregistrement de l'image de profil");
-            }
-        }
-        // Traitement de la pièce d'identité
-        $cniImagePath = null;
-        if ($request->hasFile('cni')) {
-            try {
-                $cniImagePath = $request->file('cni')->store('cnis', 'public');
-                Log::info('Cni enregistrée', ['path' => $cniImagePath]);
-            } catch (\Exception $e) {
-                Log::error('Erreur enregistrement la pièce', [
-                    'error' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]);
-                throw new \Exception("Erreur lors de l'enregistrement de la pièce");
-            }
-        }
-
-        // Traitement du fichier RIB
-        $ribPath = null;
-        if ($request->hasFile('rib')) {
-            try {
-                $ribPath = $request->file('rib')->store('ribs', 'public');
-                Log::info('RIB enregistré', ['path' => $ribPath]);
-            } catch (\Exception $e) {
-                Log::error('Erreur enregistrement RIB', [
-                    'error' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]);
-                throw new \Exception("Erreur lors de l'enregistrement du RIB");
-            }
-        }
-
-        // Création du Proprietaire
-        $ownerData = [
-            'code_id' => $codeId,
-            'name' => $validatedData['name'],
-            'prenom' => $validatedData['prenom'],
-            'email' => $validatedData['email'],
-            'contact' => $validatedData['contact'],
-            'commune' => $validatedData['commune'],
-            'rib' => $ribPath,
-            'choix_paiement' => 'Virement Bancaire',
-            'password' => Hash::make($request->input('password')), // Mot de passe par défaut si non fourni
-            'profil_image' => $profileImagePath,
-            'cni' => $cniImagePath,
-            'diaspora' => $request->input('diaspora', '0') === '1' ? 'Oui' : 'Non',
-            'gestion' => 'proprietaire',
-        ];
-
-        Log::debug('Données du propriétaire', $ownerData);
-
-        $owner = Proprietaire::create($ownerData);
-        Log::info('Propriétaire créé', ['id' => $owner->id]);
-
-        /************************************************
-         * CRÉATION AUTOMATIQUE DE L'ABONNEMENT
-         ************************************************/
-        $today = now();
-        $dateDebut = $today->format('Y-m-d');
-        $dateFin = $today->copy()->addMonth(3)->format('Y-m-d'); // Abonnement d'3 mois offert lors de l'inscription
-        
-        $abonnementData = [
-            'proprietaire_id' => $owner->code_id,
-            'date_abonnement' => $today,
-            'date_debut' => $dateDebut,
-            'date_fin' => $dateFin,
-            'mois_abonne' => $today->format('m-Y'),
-            'montant' => 0, // À ajuster selon votre logique métier
-            'statut' => 'actif',
-            'type' => 'standard',
-            'mode_paiement' => 'offert', // Ou autre valeur par défaut
-            'reference_paiement' => 'CREA-' . $owner->code_id,
-            'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
-        ];
-
-        Abonnement::create($abonnementData);
-        Log::info('Abonnement créé', ['proprietaire_id' => $owner->code_id]);
-
-        DB::commit();
-
-        return redirect()->route('owner.login')
-            ->with('success', 'Votre compte a été crée avec succès, veuillez-vous connecter.');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        
-        Log::error('Erreur création propriétaire', [
-            'error' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => $e->getTraceAsString(),
-            'request' => $request->all()
+    public function storeOwner(Request $request)
+    {
+        // Validation des données avec messages personnalisés
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'prenom' => 'required|string|max:255',
+            'email' => 'required|email|unique:proprietaires,email',
+            'contact' => 'required|string|min:10',
+            'commune' => 'required|string|max:255',
+            'adresse' => 'required|string|max:255',
+            'password' => 'required|confirmed|min:8',
+            'rib' => 'nullable|file|mimes:pdf|max:2048',
+            'diaspora' => 'nullable|string',
+            'cni' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'name.required' => 'Le nom du proprietaire est obligatoire.',
+            'prenom.required' => 'Le prénom du proprietaire est obligatoire.',
+            'email.required' => 'L\'adresse e-mail est obligatoire.',
+            'email.email' => 'L\'adresse e-mail n\'est pas valide.',
+            'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+            'contact.required' => 'Le contact est obligatoire.',
+            'contact.min' => 'Le contact doit avoir au moins 10 chiffres.',
+            'commune.required' => 'Lieu de residence est obligatoire.',
+            'rib.max' => 'Le fichier RIB ne doit pas dépasser 2Mo.',
+            'rib.mimes' => 'Le RIB doit être au format PDF, JPG ou PNG.',
+            'profile_image.image' => 'Le fichier doit être une image.',
+            'profile_image.mimes' => 'L\'image doit être au format JPEG, PNG ou JPG.',
+            'profile_image.max' => 'L\'image ne doit pas dépasser 2Mo.',
         ]);
 
-        return back()
-            ->withErrors(['error' => 'Une erreur est survenue lors de la création. Veuillez réessayer.'])
-            ->withInput()
-            ->with('error_message', $e->getMessage());
+        DB::beginTransaction();
+
+        try {
+            Log::info('Début de la création du propriétaire', ['email' => $request->email]);
+
+            // Génération du code PRO unique
+            do {
+                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $codeId = 'PRO' . $randomNumber;
+                Log::debug('Génération code PRO', ['code' => $codeId]);
+            } while (Proprietaire::where('code_id', $codeId)->exists());
+
+            // Traitement de l'image de profil
+            $profileImagePath = null;
+            if ($request->hasFile('profile_image')) {
+                try {
+                    $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
+                    Log::info('Image profil enregistrée', ['path' => $profileImagePath]);
+                } catch (\Exception $e) {
+                    Log::error('Erreur enregistrement image profil', [
+                        'error' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine()
+                    ]);
+                    throw new \Exception("Erreur lors de l'enregistrement de l'image de profil");
+                }
+            }
+            // Traitement de la pièce d'identité
+            $cniImagePath = null;
+            if ($request->hasFile('cni')) {
+                try {
+                    $cniImagePath = $request->file('cni')->store('cnis', 'public');
+                    Log::info('Cni enregistrée', ['path' => $cniImagePath]);
+                } catch (\Exception $e) {
+                    Log::error('Erreur enregistrement la pièce', [
+                        'error' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine()
+                    ]);
+                    throw new \Exception("Erreur lors de l'enregistrement de la pièce");
+                }
+            }
+
+            // Traitement du fichier RIB
+            $ribPath = null;
+            if ($request->hasFile('rib')) {
+                try {
+                    $ribPath = $request->file('rib')->store('ribs', 'public');
+                    Log::info('RIB enregistré', ['path' => $ribPath]);
+                } catch (\Exception $e) {
+                    Log::error('Erreur enregistrement RIB', [
+                        'error' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine()
+                    ]);
+                    throw new \Exception("Erreur lors de l'enregistrement du RIB");
+                }
+            }
+
+            // Création du Proprietaire
+            $ownerData = [
+                'code_id' => $codeId,
+                'name' => $validatedData['name'],
+                'prenom' => $validatedData['prenom'],
+                'email' => $validatedData['email'],
+                'contact' => $validatedData['contact'],
+                'commune' => $validatedData['commune'],
+                'rib' => $ribPath,
+                'choix_paiement' => 'Virement Bancaire',
+                'password' => Hash::make($request->input('password')), // Mot de passe par défaut si non fourni
+                'profil_image' => $profileImagePath,
+                'cni' => $cniImagePath,
+                'diaspora' => $request->input('diaspora', '0') === '1' ? 'Oui' : 'Non',
+                'gestion' => 'proprietaire',
+            ];
+
+            Log::debug('Données du propriétaire', $ownerData);
+
+            $owner = Proprietaire::create($ownerData);
+            Log::info('Propriétaire créé', ['id' => $owner->id]);
+
+            /************************************************
+             * CRÉATION AUTOMATIQUE DE L'ABONNEMENT
+             ************************************************/
+            $today = now();
+            $dateDebut = $today->format('Y-m-d');
+            $dateFin = $today->copy()->addMonth(3)->format('Y-m-d'); // Abonnement d'3 mois offert lors de l'inscription
+
+            $abonnementData = [
+                'proprietaire_id' => $owner->code_id,
+                'date_abonnement' => $today,
+                'date_debut' => $dateDebut,
+                'date_fin' => $dateFin,
+                'mois_abonne' => $today->format('m-Y'),
+                'montant' => 0, // À ajuster selon votre logique métier
+                'statut' => 'actif',
+                'type' => 'standard',
+                'mode_paiement' => 'offert', // Ou autre valeur par défaut
+                'reference_paiement' => 'CREA-' . $owner->code_id,
+                'notes' => 'Abonnement créé automatiquement lors de l\'inscription',
+            ];
+
+            Abonnement::create($abonnementData);
+            Log::info('Abonnement créé', ['proprietaire_id' => $owner->code_id]);
+
+            DB::commit();
+
+            // Envoi du SMS de confirmation avec le code ID
+            try {
+                $yellika = new YellikaService();
+                $smsMessage = "Bienvenue sur Maelys Imo !\nVotre inscription a bien ete enregistree.\nVotre Identifiant de connexion est : {$owner->code_id}\nConservez-le precieusement.";
+                $yellika->send($owner->contact, $smsMessage);
+            } catch (\Throwable $smsException) {
+                Log::error('Erreur envoi SMS inscription proprietaire', [
+                    'proprietaire_id' => $owner->code_id,
+                    'error'           => $smsException->getMessage(),
+                ]);
+                // L'echec du SMS ne bloque pas l'inscription
+            }
+
+            return redirect()->route('login')
+                ->with('success', 'Votre compte a été crée avec succès, veuillez-vous connecter.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Erreur création propriétaire', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
+
+            return back()
+                ->withErrors(['error' => 'Une erreur est survenue lors de la création. Veuillez réessayer.'])
+                ->withInput()
+                ->with('error_message', $e->getMessage());
+        }
     }
-}
-   
 }

@@ -18,51 +18,57 @@ use function Laravel\Prompts\error;
 
 class ReversementController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         $proprietaireId = Auth::user()->code_id;
-          $ownerId = Auth::guard('owner')->user()->code_id;
-     // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
-                        ->where('statut', '!=', 'annulée')
-                        ->whereHas('bien', function ($query) use ($ownerId) {
-                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
-        
-        $reversements = Reversement::where('proprietaire_id', $proprietaireId)
+        $ownerId = Auth::guard('owner')->user()->code_id;
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+            ->where('statut', '!=', 'annulée')
+            ->whereHas('bien', function ($query) use ($ownerId) {
+                $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
+
+        $reversements = Reversement::with('rib')
+            ->where('proprietaire_id', $proprietaireId)
             ->orderBy('created_at', 'desc')
             ->paginate(6);
         $soldeDisponible = $this->calculerSoldeDisponible($proprietaireId);
         return view('proprietaire.reversement.index', compact('reversements', 'soldeDisponible', 'pendingVisits'));
     }
-    public function reversementAdmin(){
-           // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
-        $reversements = Reversement::where('statut', 'En attente')
-                    ->paginate(6);
+    public function reversementAdmin()
+    {
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
+            })
+            ->count();
+        $reversements = Reversement::with(['rib', 'proprietaire', 'agence'])
+            ->where('statut', 'En attente')
+            ->paginate(6);
         return view('admin.proprietaire.reversement.index', compact('reversements', 'pendingVisits'));
     }
-    public function reversementEffectue(){
-           // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')
-                        ->whereHas('bien', function ($query) {
-                             $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
-                             $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
-                                ->orWhereHas('proprietaire', function($q) {
-                                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                                });
-                        })
-                        ->count();
-        $reversements = Reversement::where('statut', 'Effectué')
-                    ->paginate(6);
+    public function reversementEffectue()
+    {
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')
+            ->whereHas('bien', function ($query) {
+                $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
+                $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
+                    ->orWhereHas('proprietaire', function ($q) {
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
+            })
+            ->count();
+        $reversements = Reversement::with(['rib', 'proprietaire', 'agence'])
+            ->where('statut', 'Effectué')
+            ->paginate(6);
         return view('admin.proprietaire.reversement.effectue', compact('reversements', 'pendingVisits'));
     }
     public function uploadRecu(Request $request, $id)
@@ -91,37 +97,38 @@ class ReversementController extends Controller
     }
     private function calculerSoldeDisponible($proprietaireId)
     {
-        $totalPaiements = Paiement::where('methode_paiement', 'Mobile Money')
-            ->whereHas('bien', function($query) use ($proprietaireId) {
+        $totalPaiements = Paiement::whereIn('methode_paiement', ['Mobile Money', 'Wave'])
+            ->whereHas('bien', function ($query) use ($proprietaireId) {
                 $query->where('proprietaire_id', $proprietaireId);
             })
             ->where('statut', 'payé')
             ->sum('montant');
-        
+
         $totalReversements = Reversement::where('proprietaire_id', $proprietaireId)
+            ->whereIn('statut', ['En attente', 'Effectué'])
             ->sum('montant');
-        
-        return $totalPaiements - $totalReversements;
+
+        return max(0, $totalPaiements - $totalReversements);
     }
 
     public function create()
     {
-          $ownerId = Auth::guard('owner')->user()->code_id;
-     // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
-                        ->where('statut', '!=', 'annulée')
-                        ->whereHas('bien', function ($query) use ($ownerId) {
-                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+        $ownerId = Auth::guard('owner')->user()->code_id;
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+            ->where('statut', '!=', 'annulée')
+            ->whereHas('bien', function ($query) use ($ownerId) {
+                $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         $proprietaireId = Auth::user()->code_id;
-        
+
         $ribs = Rib::where('proprietaire_id', $proprietaireId)
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         $soldeDisponible = $this->calculerSoldeDisponible($proprietaireId);
-        
+
         // Récupérer les 3 derniers reversements
         $lastReversements = Reversement::with('rib')
             ->where('proprietaire_id', $proprietaireId)
@@ -136,16 +143,16 @@ class ReversementController extends Controller
     {
         $chiffres = str_shuffle('0123456789');
         $lettres = str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-        
+
         // Prendre 4 chiffres aléatoires
         $partieChiffres = substr($chiffres, 0, 4);
-        
+
         // Prendre 3 lettres aléatoires
         $partieLettres = substr($lettres, 0, 3);
-        
+
         // Combiner et mélanger
         $reference = str_shuffle($partieChiffres . $partieLettres);
-        
+
         return $reference;
     }
 
@@ -153,27 +160,27 @@ class ReversementController extends Controller
     {
         $proprietaireId = Auth::user()->code_id;
         $soldeDisponible = $this->calculerSoldeDisponible($proprietaireId);
-        
-        $request->validate([
-            'banque' => 'required|exists:ribs,id',
-            'rib' => 'required',
-            'montant' => [
-                'required',
-                'numeric',
-                'min:0.01',
-            ],
-            'date_reversement' => 'required|date',  
-            'contrat' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
-        ]);
 
-        // Vérification explicite du solde
-        if ($request->montant > $soldeDisponible) {
-            error("Le montant demandé (".number_format($request->montant, 2)." FCFA) dépasse votre solde disponible (".number_format($soldeDisponible, 2)." FCFA)");
+        $typeRetrait = $request->input('type_retrait', 'virement');
+
+        if ($typeRetrait === 'mobile_money') {
+            $request->validate([
+                'reseau_mobile'     => 'required|in:Wave,Orange,Moov,MTN',
+                'numero_mobile'     => 'required|string|min:8|max:15',
+                'montant'           => ['required', 'numeric', 'min:100'],
+                'date_reversement'  => 'required|date',
+            ]);
+        } else {
+            $request->validate([
+                'banque'            => 'required|exists:ribs,id',
+                'rib'               => 'required',
+                'montant'           => ['required', 'numeric', 'min:0.01'],
+                'date_reversement'  => 'required|date',
+            ]);
         }
 
-        $recuPath = null;
-        if ($request->hasFile('recu_paiement')) {
-            $recuPath = $request->file('recu_paiement')->store('recu_paiement', 'public');
+        if ($request->montant > $soldeDisponible) {
+            return back()->withErrors(['montant' => 'Le montant demandé (' . number_format($request->montant, 0, ',', ' ') . ' FCFA) dépasse votre solde disponible (' . number_format($soldeDisponible, 0, ',', ' ') . ' FCFA).'])->withInput();
         }
 
         // Générer une référence unique
@@ -181,19 +188,30 @@ class ReversementController extends Controller
             $reference = $this->genererReference();
         } while (Reversement::where('reference', $reference)->exists());
 
+        // Cas Mobile Money ou virement bancaire : demande en attente
+        $recuPath = null;
+        if ($request->hasFile('recu_paiement')) {
+            $recuPath = $request->file('recu_paiement')->store('recu_paiement', 'public');
+        }
+
         Reversement::create([
-            'montant' => $request->montant,
-            'reference' => $reference,
+            'montant'          => $request->montant,
+            'reference'        => $reference,
             'date_reversement' => $request->date_reversement,
-            'recu_paiement' => $recuPath,
-            'statut' => 'En attente',
-            'rib_id' => $request->banque,
-            'proprietaire_id' => $proprietaireId,
+            'recu_paiement'    => $recuPath,
+            'statut'           => 'En attente',
+            'type_retrait'     => $typeRetrait,
+            'reseau_mobile'    => $typeRetrait === 'mobile_money' ? $request->reseau_mobile : null,
+            'numero_mobile'    => $typeRetrait === 'mobile_money' ? $request->numero_mobile : null,
+            'rib_id'           => $typeRetrait === 'virement' ? $request->banque : null,
+            'proprietaire_id'  => $proprietaireId,
         ]);
 
-        return redirect()->route('reversement.create')
-            ->with('success', 'Reversement effectué avec succès! Référence: ' . $reference)
-            ->with('solde', $this->calculerSoldeDisponible($proprietaireId));
+        $message = $typeRetrait === 'mobile_money'
+            ? 'Demande de retrait ' . $request->reseau_mobile . ' en cours de traitement. Référence: ' . $reference
+            : 'Demande de virement bancaire enregistrée. Référence: ' . $reference;
+
+        return redirect()->route('reversement.create')->with('success', $message);
     }
 
     public function getRib($id)
@@ -202,124 +220,124 @@ class ReversementController extends Controller
         return response()->json(['rib' => $rib->rib]);
     }
 
-    public function subscribe(){
+    public function subscribe()
+    {
         return view('proprietaire.abonnement.subscribe');
     }
 
-public function subscribeAuthenticate(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email|exists:proprietaires,email',
-        'password' => 'required|min:8',
-    ], [
-        'email.required' => 'L\'email est obligatoire.',
-        'email.email' => 'Veuillez entrer une adresse email valide.',
-        'email.exists' => 'Cette adresse email n\'existe pas dans notre système.',
-        'password.required' => 'Le mot de passe est obligatoire.',
-        'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
-    ]);
-
-    try {
-        $credentials = $request->only('email', 'password');
-        
-        if (!auth('owner')->attempt($credentials, $request->filled('remember'))) {
-            return redirect()
-                ->back()
-                ->with('error', 'Email ou mot de passe incorrect.')
-                ->withInput($request->only('email', 'remember'));
-        }
-
-        // Vérification que l'utilisateur est bien chargé
-        $proprietaire = auth('owner')->user();
-        
-        if (!$proprietaire) {
-            auth('owner')->logout();
-            return back()
-                ->with('error', 'Votre compte n\'a pas pu être chargé. Veuillez réessayer.')
-                ->withInput($request->only('email', 'remember'));
-        }
-
-        // Vérification optionnelle de date_fin si nécessaire
-        // if ($proprietaire->date_fin && now()->lt($proprietaire->date_fin)) {
-        //     return redirect()->route('dashboard')
-        //         ->with('info', 'Vous avez déjà un abonnement actif.');
-        // }
-
-        return redirect()
-            ->route('page.abonnement')
-            ->with('success', 'Authentification réussie. Vous pouvez maintenant souscrire à notre offre.');
-
-    } catch (\Exception $e) {
-        Log::error('Échec de l\'authentification : '.$e->getMessage(), [
-            'email' => $request->email,
-            'ip' => $request->ip()
+    public function subscribeAuthenticate(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:proprietaires,email',
+            'password' => 'required|min:8',
+        ], [
+            'email.required' => 'L\'email est obligatoire.',
+            'email.email' => 'Veuillez entrer une adresse email valide.',
+            'email.exists' => 'Cette adresse email n\'existe pas dans notre système.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
         ]);
-        
-        auth('owner')->logout();
-        
-        return back()
-            ->with('error', 'Une erreur technique est survenue. Veuillez réessayer plus tard.')
-            ->withInput($request->only('email', 'remember'));
+
+        try {
+            $credentials = $request->only('email', 'password');
+
+            if (!auth('owner')->attempt($credentials, $request->filled('remember'))) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Email ou mot de passe incorrect.')
+                    ->withInput($request->only('email', 'remember'));
+            }
+
+            // Vérification que l'utilisateur est bien chargé
+            $proprietaire = auth('owner')->user();
+
+            if (!$proprietaire) {
+                auth('owner')->logout();
+                return back()
+                    ->with('error', 'Votre compte n\'a pas pu être chargé. Veuillez réessayer.')
+                    ->withInput($request->only('email', 'remember'));
+            }
+
+            // Vérification optionnelle de date_fin si nécessaire
+            // if ($proprietaire->date_fin && now()->lt($proprietaire->date_fin)) {
+            //     return redirect()->route('dashboard')
+            //         ->with('info', 'Vous avez déjà un abonnement actif.');
+            // }
+
+            return redirect()
+                ->route('page.abonnement')
+                ->with('success', 'Authentification réussie. Vous pouvez maintenant souscrire à notre offre.');
+        } catch (\Exception $e) {
+            Log::error('Échec de l\'authentification : ' . $e->getMessage(), [
+                'email' => $request->email,
+                'ip' => $request->ip()
+            ]);
+
+            auth('owner')->logout();
+
+            return back()
+                ->with('error', 'Une erreur technique est survenue. Veuillez réessayer plus tard.')
+                ->withInput($request->only('email', 'remember'));
+        }
     }
-}
-    public function subscribeAgence(){
+    public function subscribeAgence()
+    {
         return view('agence.abonnement.subscribe');
     }
 
-public function subscribeAuthenticateAgence(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email|exists:agences,email',
-        'password' => 'required|min:8',
-    ], [
-        'email.required' => 'L\'email est obligatoire.',
-        'email.email' => 'Veuillez entrer une adresse email valide.',
-        'email.exists' => 'Cette adresse email n\'existe pas dans notre système.',
-        'password.required' => 'Le mot de passe est obligatoire.',
-        'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
-    ]);
-
-    try {
-        $credentials = $request->only('email', 'password');
-        
-        if (!auth('agence')->attempt($credentials, $request->filled('remember'))) {
-            return redirect()
-                ->back()
-                ->with('error', 'Email ou mot de passe incorrect.')
-                ->withInput($request->only('email', 'remember'));
-        }
-
-        // Vérification que l'utilisateur est bien chargé
-        $proprietaire = auth('agence')->user();
-        
-        if (!$proprietaire) {
-            auth('agence')->logout();
-            return back()
-                ->with('error', 'Votre compte n\'a pas pu être chargé. Veuillez réessayer.')
-                ->withInput($request->only('email', 'remember'));
-        }
-
-        // Vérification optionnelle de date_fin si nécessaire
-        // if ($proprietaire->date_fin && now()->lt($proprietaire->date_fin)) {
-        //     return redirect()->route('dashboard')
-        //         ->with('info', 'Vous avez déjà un abonnement actif.');
-        // }
-
-        return redirect()
-            ->route('page.abonnement.agence')
-            ->with('success', 'Authentification réussie. Vous pouvez maintenant souscrire à notre offre.');
-
-    } catch (\Exception $e) {
-        Log::error('Échec de l\'authentification : '.$e->getMessage(), [
-            'email' => $request->email,
-            'ip' => $request->ip()
+    public function subscribeAuthenticateAgence(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:agences,email',
+            'password' => 'required|min:8',
+        ], [
+            'email.required' => 'L\'email est obligatoire.',
+            'email.email' => 'Veuillez entrer une adresse email valide.',
+            'email.exists' => 'Cette adresse email n\'existe pas dans notre système.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
         ]);
-        
-        auth('owner')->logout();
-        
-        return back()
-            ->with('error', 'Une erreur technique est survenue. Veuillez réessayer plus tard.')
-            ->withInput($request->only('email', 'remember'));
+
+        try {
+            $credentials = $request->only('email', 'password');
+
+            if (!auth('agence')->attempt($credentials, $request->filled('remember'))) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Email ou mot de passe incorrect.')
+                    ->withInput($request->only('email', 'remember'));
+            }
+
+            // Vérification que l'utilisateur est bien chargé
+            $proprietaire = auth('agence')->user();
+
+            if (!$proprietaire) {
+                auth('agence')->logout();
+                return back()
+                    ->with('error', 'Votre compte n\'a pas pu être chargé. Veuillez réessayer.')
+                    ->withInput($request->only('email', 'remember'));
+            }
+
+            // Vérification optionnelle de date_fin si nécessaire
+            // if ($proprietaire->date_fin && now()->lt($proprietaire->date_fin)) {
+            //     return redirect()->route('dashboard')
+            //         ->with('info', 'Vous avez déjà un abonnement actif.');
+            // }
+
+            return redirect()
+                ->route('page.abonnement.agence')
+                ->with('success', 'Authentification réussie. Vous pouvez maintenant souscrire à notre offre.');
+        } catch (\Exception $e) {
+            Log::error('Échec de l\'authentification : ' . $e->getMessage(), [
+                'email' => $request->email,
+                'ip' => $request->ip()
+            ]);
+
+            auth('owner')->logout();
+
+            return back()
+                ->with('error', 'Une erreur technique est survenue. Veuillez réessayer plus tard.')
+                ->withInput($request->only('email', 'remember'));
+        }
     }
-}
 }

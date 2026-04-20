@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Proprietaire;
+
 use App\Http\Controllers\Controller;
 use App\Models\Abonnement;
 use App\Models\Bien;
@@ -27,7 +28,7 @@ class ProprietaireController extends Controller
 {
     private function calculerSoldeDisponible($proprietaireId)
     {
-        $totalPaiements = Paiement::where('methode_paiement', 'Mobile Money')
+        $totalPaiements = Paiement::whereIn('methode_paiement', ['Mobile Money', 'Wave'])
             ->whereHas('bien', function ($query) use ($proprietaireId) {
                 $query->where('proprietaire_id', $proprietaireId);
             })
@@ -35,9 +36,10 @@ class ProprietaireController extends Controller
             ->sum('montant');
 
         $totalReversements = Reversement::where('proprietaire_id', $proprietaireId)
+            ->whereIn('statut', ['En attente', 'Effectué'])
             ->sum('montant');
 
-        return $totalPaiements - $totalReversements;
+        return max(0, $totalPaiements - $totalReversements);
     }
     public function dashboard()
     {
@@ -210,7 +212,6 @@ class ProprietaireController extends Controller
             $this->sendOwnerWelcomeSms($owner, $agence);
 
             return redirect()->route('owner.index')->with('success', 'Propriétaire enregistré avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Erreur création propriétaire: ' . $e->getMessage());
             // Retourner l'erreur exacte pour le débogage (à retirer en prod si besoin)
@@ -257,7 +258,6 @@ class ProprietaireController extends Controller
                 'to' => $phoneNumber,
                 'message_sid' => $message->sid
             ]);
-
         } catch (TwilioException $e) {
             Log::channel('sms')->error('Erreur SMS bienvenue', [
                 'proprietaire_id' => $owner->id,
@@ -363,7 +363,6 @@ class ProprietaireController extends Controller
 
             return redirect()->route('owner.index')
                 ->with('success', 'Propriétaire mis à jour avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Erreur lors de la mise à jour du propriétaire: ' . $e->getMessage());
             return back()
@@ -394,7 +393,6 @@ class ProprietaireController extends Controller
 
             return redirect()->back()
                 ->with('success', 'Propriétaire et ses abonnements supprimés avec succès.');
-
         } catch (\Exception $e) {
             DB::rollBack(); // Annulation en cas d'erreur
             Log::error('Erreur suppression propriétaire: ' . $e->getMessage());
@@ -409,6 +407,15 @@ class ProprietaireController extends Controller
 
             $proprietaire = Proprietaire::findOrFail($id);
             $agence = Auth::guard('agence')->user();
+
+            // Vérifier si le propriétaire a un bien loué
+            $bienLoue = \App\Models\Bien::where('proprietaire_id', $proprietaire->code_id)
+                ->where('status', 'Loué')
+                ->first();
+
+            if ($bienLoue) {
+                return redirect()->back()->with('error', 'Impossible de supprimer ce propriétaire : son bien ' . $bienLoue->type . ' - ' . $bienLoue->commune . ' est actuellement loué.');
+            }
 
             // 1. Récupération LARGE des locataires (Sans filtrer le statut pour être sûr)
             // Cela garantit que si la Vue a vu des locataires, le Contrôleur les voit aussi.
@@ -463,7 +470,6 @@ class ProprietaireController extends Controller
 
             DB::commit();
             return redirect()->back()->with('success', 'Propriétaire supprimé (Historique archivé si nécessaire).');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur suppression propriétaire : ' . $e->getMessage());
@@ -478,8 +484,7 @@ class ProprietaireController extends Controller
             return view('proprietaire.auth.validate', compact('email'));
         } else {
             return redirect()->route('login')->with('error', 'Email inconnu');
-        }
-        ;
+        };
     }
 
     public function submitDefineAccess(Request $request)
@@ -569,7 +574,6 @@ class ProprietaireController extends Controller
             // 5. Tous les autres cas -> page abonnement
             return redirect()->route('page.abonnement')
                 ->with('error', $this->getAbonnementMessage($abonnement));
-
         } catch (Exception $e) {
             Log::error('Connexion échouée : ' . $e->getMessage());
             auth('owner')->logout();
@@ -589,8 +593,8 @@ class ProprietaireController extends Controller
             'en_attente' => 'Votre paiement est en cours de validation',
             'suspendu' => 'Votre compte est suspendu',
             'actif' => $abonnement->date_fin < now()
-            ? 'Votre abonnement a expiré'
-            : 'Abonnement requis',
+                ? 'Votre abonnement a expiré'
+                : 'Abonnement requis',
             default => 'Statut d\'abonnement non reconnu',
         };
     }
@@ -612,8 +616,8 @@ class ProprietaireController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         $agenceId = Auth::guard('admin')->user()->id;
@@ -628,8 +632,8 @@ class ProprietaireController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         return view('admin.proprietaire.create', compact('pendingVisits'));
@@ -802,7 +806,6 @@ class ProprietaireController extends Controller
 
             return redirect()->route('owner.index.admin')
                 ->with('success', 'Propriétaire enregistré avec succès avec son abonnement initial.');
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -829,8 +832,8 @@ class ProprietaireController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         $proprietaire = Proprietaire::findOrFail($id);
@@ -906,7 +909,6 @@ class ProprietaireController extends Controller
 
             return redirect()->route('owner.index.admin')
                 ->with('success', 'Proprietaire de bien mis à jour avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Erreur lors de la mise à jour du proprietaire: ' . $e->getMessage());
             return back()
@@ -914,6 +916,4 @@ class ProprietaireController extends Controller
                 ->withInput();
         }
     }
-
-
 }

@@ -13,6 +13,11 @@ class Reversement extends Model
         'rib_id',
         'proprietaire_id',
         'agence_id',
+        'type_retrait',
+        'reseau_mobile',
+        'numero_mobile',
+        'statut',
+        'recu_paiement',
     ];
 
     public function rib()

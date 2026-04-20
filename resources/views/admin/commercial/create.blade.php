@@ -6,6 +6,20 @@
                 <h4 class="card-title text-center">Ajout d'un nouveau commercial</h4>
                 <p class="card-description text-center">Veuillez renseigner les informations ci-dessous</p>
 
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="alert alert-danger">{{ session('error') }}</div>
+                @endif
+
                 <form class="forms-sample" action="{{ route('admin.commercial.store') }}" method="POST"
                     enctype="multipart/form-data">
                     @csrf
@@ -16,17 +30,21 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Nom</label>
-                                    <input type="text" class="form-control" style="border: 1px solid #ccc;" name="name"
-                                        value="{{ old('name') }}" required>
-                                    @error('name') <small class="text-danger">{{ $message }}</small> @enderror
+                                    <input type="text" class="form-control" style="border: 1px solid #ccc;"
+                                        name="name" value="{{ old('name') }}" required>
+                                    @error('name')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Prénom</label>
-                                    <input type="text" class="form-control" style="border: 1px solid #ccc;" name="prenom"
-                                        value="{{ old('prenom') }}" required>
-                                    @error('prenom') <small class="text-danger">{{ $message }}</small> @enderror
+                                    <input type="text" class="form-control" style="border: 1px solid #ccc;"
+                                        name="prenom" value="{{ old('prenom') }}" required>
+                                    @error('prenom')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -34,17 +52,21 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Email</label>
-                                    <input type="email" class="form-control" style="border: 1px solid #ccc;" name="email"
-                                        value="{{ old('email') }}" required>
-                                    @error('email') <small class="text-danger">{{ $message }}</small> @enderror
+                                    <input type="email" class="form-control" style="border: 1px solid #ccc;"
+                                        name="email" value="{{ old('email') }}" required>
+                                    @error('email')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Contact</label>
-                                    <input type="text" class="form-control" style="border: 1px solid #ccc;" name="contact"
-                                        value="{{ old('contact') }}" required>
-                                    @error('contact') <small class="text-danger">{{ $message }}</small> @enderror
+                                    <input type="text" class="form-control" style="border: 1px solid #ccc;"
+                                        name="contact" value="{{ old('contact') }}" required>
+                                    @error('contact')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -52,9 +74,11 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Commune de résidence</label>
-                                    <input type="text" class="form-control" style="border: 1px solid #ccc;" name="commune"
-                                        value="{{ old('commune') }}" required>
-                                    @error('commune') <small class="text-danger">{{ $message }}</small> @enderror
+                                    <input type="text" class="form-control" style="border: 1px solid #ccc;"
+                                        name="commune" value="{{ old('commune') }}" required>
+                                    @error('commune')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -62,7 +86,9 @@
                                     <label>Date de naissance</label>
                                     <input type="date" class="form-control" style="border: 1px solid #ccc;"
                                         name="date_naissance" value="{{ old('date_naissance') }}" required>
-                                    @error('date_naissance') <small class="text-danger">{{ $message }}</small> @enderror
+                                    @error('date_naissance')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             </div>
                         </div>

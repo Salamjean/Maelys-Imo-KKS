@@ -340,6 +340,24 @@ Route::post('/cinetpay/notify', [PaymentController::class, 'handleCinetPayNotifi
 Route::post('/cinetpay/return', [PaymentController::class, 'handleCinetPayReturn'])
     ->name('cinetpay.return');
 
+// Routes Wave Payment (loyer locataire)
+Route::post('/wave/initiate/{locataire}', [PaymentController::class, 'initWavePayment'])->name('wave.initiate');
+Route::get('/wave/success/{locataire}', [PaymentController::class, 'waveSuccess'])->name('wave.success');
+Route::get('/wave/error/{locataire}', [PaymentController::class, 'waveError'])->name('wave.error');
+
+// Routes Wave Abonnement - Propriétaire
+Route::post('/abonnement/wave/initiate-owner/{abonnement}', [AbonnementController::class, 'waveInitiateOwner'])->name('abonnement.wave.initiate.owner');
+Route::get('/abonnement/wave/success-owner', [AbonnementController::class, 'waveSuccessOwner'])->name('abonnement.wave.success.owner');
+Route::get('/abonnement/wave/error-owner', [AbonnementController::class, 'waveErrorOwner'])->name('abonnement.wave.error.owner');
+
+// Routes Wave Abonnement - Agence
+Route::post('/abonnement/wave/initiate-agence/{abonnement}', [AbonnementController::class, 'waveInitiateAgence'])->name('abonnement.wave.initiate.agence');
+Route::get('/abonnement/wave/success-agence', [AbonnementController::class, 'waveSuccessAgence'])->name('abonnement.wave.success.agence');
+Route::get('/abonnement/wave/error-agence', [AbonnementController::class, 'waveErrorAgence'])->name('abonnement.wave.error.agence');
+Route::post('/wave/webhook', [PaymentController::class, 'handleWaveWebhook'])
+    ->name('wave.webhook')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
 Route::post('/paiements/verify-cash-code', [PaymentController::class, 'verifyCashCode'])->name('paiements.verifyCashCode');
 Route::post('/paiements/verify-cash-code/comptable', [PaymentController::class, 'verifyCashCodeComptable'])->name('paiements.verifyCashCodeComptable');
 Route::post('/paiements/verify-cash-code/agent', [PaymentController::class, 'verifyCashCodeAgent'])->name('paiements.verifyCashCodeAgent');
@@ -356,7 +374,6 @@ Route::middleware('auth:locataire')->prefix('locataire')->group(function () {
     Route::get('/etat-lieux/{id}/download', [EtatAgentLocataire::class, 'download'])->name('etat-lieu.agent.download');
     Route::post('/etat-lieu/{id}/confirm-entree', [EtatLieuLocataireController::class, 'confirmEntree'])->name('etat-lieu.confirm-entree');
     Route::post('/etat-lieu/{id}/confirm-sortie', [EtatLieuLocataireController::class, 'confirmSortie'])->name('etat-lieu.confirm-sortie');
-
 });
 
 Route::post('/locataire/envoyer-email-agence', [LocataireController::class, 'sendEmailToAgency'])->name('locataire.sendEmailToAgency');
@@ -567,7 +584,6 @@ Route::prefix('owner')->group(function () {
     //Souscription abonnement 
     Route::get('suscribe/login', [ReversementController::class, 'subscribe'])->name('owner.subscribe');
     Route::post('suscribe/login', [ReversementController::class, 'subscribeAuthenticate'])->name('owner.suscribe.authenticate');
-
 });
 
 
@@ -664,7 +680,3 @@ Route::prefix('agence')->group(function () {
 Route::get('/test-paiement', function () {
     return view('test-paiement');
 });
-
-
-
-

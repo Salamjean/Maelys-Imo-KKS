@@ -225,9 +225,7 @@
             <div class="form-group mt-3">
                 <label for="locataireStatus">Statut du locataire :</label>
                 <select class="form-control" id="locataireStatus" required>
-                    <option value="">Sélectionnez un statut</option>
                     <option value="Inactif">Déménagement</option>
-                    <option value="Pas sérieux">Pas sérieux</option>
                 </select>
             </div>
             <div class="form-group mt-2" id="motifGroup" style="display: none;">

@@ -1,47 +1,47 @@
 @extends('proprietaire.layouts.template')
 @section('content')
-<meta name="csrf-token" content="{{ csrf_token() }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<link rel="stylesheet" href="{{ asset('abonnement/adminStyle.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.cinetpay.com/seamless/main.js"></script>
-<div class="col-lg-12 stretch-card mt-4">
-    <div class="card subscription-card">
-        <div class="card-header subscription-header">
-            <h4 class="card-title subscription-title text-center text-white"><i class="fas fa-users me-2"></i>Abonnés Actifs</h4>
-            <p class="card-description subscription-subtitle text-center mb-0 text-white">
-                Liste des abonnements actifs (valides et non expirés)
-            </p>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un abonné...">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="{{ asset('abonnement/adminStyle.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <div class="col-lg-12 stretch-card mt-4">
+        <div class="card subscription-card">
+            <div class="card-header subscription-header">
+                <h4 class="card-title subscription-title text-center text-white"><i class="fas fa-users me-2"></i>Abonnés
+                    Actifs</h4>
+                <p class="card-description subscription-subtitle text-center mb-0 text-white">
+                    Liste des abonnements actifs (valides et non expirés)
+                </p>
             </div>
-            <div class="table-responsive">
-                <table class="table subscription-table">
-                    <thead>
-                        <tr class="text-center">
-                            <th>Abonné</th>
-                            <th>Type</th>
-                            <th>Date Début</th>
-                            <th>Date Fin</th>
-                            <th>Jours Restants</th>
-                            <th>Montant</th>
-                            <th>Mois Abonné</th>
-                            <th>Paiement</th>
-                            <th>Statut</th>
-                            <th>Action</th>
+            <div class="card-body">
+                <div class="mb-3">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un abonné...">
+                </div>
+                <div class="table-responsive">
+                    <table class="table subscription-table">
+                        <thead>
+                            <tr class="text-center">
+                                <th>Abonné</th>
+                                <th>Type</th>
+                                <th>Date Début</th>
+                                <th>Date Fin</th>
+                                <th>Jours Restants</th>
+                                <th>Montant</th>
+                                <th>Mois Abonné</th>
+                                <th>Paiement</th>
+                                <th>Statut</th>
+                                <th>Action</th>
 
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($abonnements as $abonnement)
-                            @php
-                                 // Calcul des jours restants (nombre entier)
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($abonnements as $abonnement)
+                                @php
+                                    // Calcul des jours restants (nombre entier)
                                     $joursRestants = now()->diffInDays($abonnement->date_fin, false);
                                     $joursRestants = $joursRestants > 0 ? $joursRestants : 0; // Évite les nombres négatifs
-                                    
+
                                     // Classe CSS en fonction des jours restants
                                     $daysClass = 'success';
                                     if ($joursRestants <= 7 && $joursRestants > 3) {
@@ -49,330 +49,337 @@
                                     } elseif ($joursRestants <= 3) {
                                         $daysClass = 'danger';
                                     }
-                                
-                                // Déterminer le nom de l'abonné
-                                $abonneName = 'N/A';
-                                if ($abonnement->proprietaire) {
-                                    $abonneName = $abonnement->proprietaire->name.' '. $abonnement->proprietaire->prenom ?? 'Propriétaire';
-                                } elseif ($abonnement->agence) {
-                                    $abonneName = $abonnement->agence->name ?? 'Agence';
-                                }
-                            @endphp
-                            
-                            <tr class="text-center">
-                                <td>{{ $abonneName }}</td>
-                                <td>{{$abonnement->type}}</td>
-                                <td>{{ \Carbon\Carbon::parse($abonnement->date_debut)->translatedFormat('d/m/Y') }}</td>
-                                <td>{{ \Carbon\Carbon::parse($abonnement->date_fin)->translatedFormat('d/m/Y') }}</td>
-                                <td>
-                                    <span class="days-remaining {{ $daysClass }}">
-                                        @if($joursRestants > 0)
-                                            {{ sprintf("%02d", $joursRestants) }} jours
+
+                                    // Déterminer le nom de l'abonné
+$abonneName = 'N/A';
+if ($abonnement->proprietaire) {
+    $abonneName =
+        $abonnement->proprietaire->name . ' ' . $abonnement->proprietaire->prenom ??
+        'Propriétaire';
+} elseif ($abonnement->agence) {
+    $abonneName = $abonnement->agence->name ?? 'Agence';
+                                    }
+                                @endphp
+
+                                <tr class="text-center">
+                                    <td>{{ $abonneName }}</td>
+                                    <td>{{ $abonnement->type }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($abonnement->date_debut)->translatedFormat('d/m/Y') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($abonnement->date_fin)->translatedFormat('d/m/Y') }}</td>
+                                    <td>
+                                        <span class="days-remaining {{ $daysClass }}">
+                                            @if ($joursRestants > 0)
+                                                {{ sprintf('%02d', $joursRestants) }} jours
+                                            @else
+                                                Expiré
+                                            @endif
+                                        </span>
+                                    </td>
+                                    <td>{{ number_format($abonnement->montant_actuel, 0, ',', ' ') }} FCFA</td>
+                                    <td>{{ $abonnement->mois_abonne }}</td>
+                                    <td>
+                                        @if ($abonnement->mode_paiement === 'Espèces')
+                                            <span class="payment-method-icon"><i class="fas fa-money-bill-wave"></i></span>
+                                        @elseif($abonnement->mode_paiement === 'Mobile Money')
+                                            <span class="payment-method-icon"><i class="fas fa-mobile-alt"></i></span>
                                         @else
-                                            Expiré
+                                            <span class="payment-method-icon"><i class="fas fa-credit-card"></i></span>
                                         @endif
-                                    </span>
-                                </td>
-                                <td>{{ number_format($abonnement->montant_actuel, 0, ',', ' ') }} FCFA</td>
-                                <td>{{ $abonnement->mois_abonne }}</td>
-                                <td>
-                                    @if($abonnement->mode_paiement === 'Espèces')
-                                        <span class="payment-method-icon"><i class="fas fa-money-bill-wave"></i></span>
-                                    @elseif($abonnement->mode_paiement === 'Mobile Money')
-                                        <span class="payment-method-icon"><i class="fas fa-mobile-alt"></i></span>
-                                    @else
-                                        <span class="payment-method-icon"><i class="fas fa-credit-card"></i></span>
-                                    @endif
-                                    {{ $abonnement->mode_paiement }}
-                                </td>
-                                <td>
-                                    @if($abonnement->statut == 'actif')
-                                        <span class="status-badge status-active"><i class="fas fa-check-circle me-1"></i> Actif</span>
-                                    @elseif($abonnement->statut == 'expiré')
-                                        <span class="status-badge status-expired"><i class="fas fa-times-circle me-1"></i> Expiré</span>
-                                    @else
-                                        <span class="status-badge status-pending"><i class="fas fa-clock me-1"></i> {{ ucfirst($abonnement->statut) }}</span>
-                                    @endif
-                                </td>
-                                 <td>
-                                    <div class="d-flex gap-2 justify-content-center">
-                                        <a href="{{ route('abonnements.pdf', $abonnement->id) }}" 
-                                            class="btn btn-sm btn-danger pdf-btn"
-                                            title="Générer PDF">
-                                            <i class="fas fa-file-pdf"></i> PDF
-                                        </a>
-                                        <button 
-                                            class="btn btn-sm btn-warning cinetpay-btn"
-                                            data-abonnement-id="{{ $abonnement->id }}"
-                                            data-user-type="{{ $abonnement->proprietaire_id ? 'proprietaire' : 'agence' }}"
-                                            title="Renouveler via CinetPay">
-                                            <i class="fas fa-mobile-alt"></i> Renouveler
-                                        </button>
-                                       
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="10">
-                                    <div class="empty-state">
-                                        <div class="empty-icon">
-                                            <i class="fas fa-calendar-times"></i>
+                                        {{ $abonnement->mode_paiement }}
+                                    </td>
+                                    <td>
+                                        @if ($abonnement->statut == 'actif')
+                                            <span class="status-badge status-active"><i
+                                                    class="fas fa-check-circle me-1"></i> Actif</span>
+                                        @elseif($abonnement->statut == 'expiré')
+                                            <span class="status-badge status-expired"><i
+                                                    class="fas fa-times-circle me-1"></i> Expiré</span>
+                                        @else
+                                            <span class="status-badge status-pending"><i class="fas fa-clock me-1"></i>
+                                                {{ ucfirst($abonnement->statut) }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2 justify-content-center">
+                                            <a href="{{ route('abonnements.pdf', $abonnement->id) }}"
+                                                class="btn btn-sm btn-danger pdf-btn" title="Générer PDF">
+                                                <i class="fas fa-file-pdf"></i> PDF
+                                            </a>
+                                            <button class="btn btn-sm btn-warning wave-renew-btn"
+                                                data-abonnement-id="{{ $abonnement->id }}"
+                                                data-user-type="{{ $abonnement->proprietaire_id ? 'proprietaire' : 'agence' }}"
+                                                title="Renouveler via Wave">
+                                                <i class="fas fa-mobile-alt"></i> Renouveler
+                                            </button>
+
                                         </div>
-                                        <h5>Aucun abonnement actif trouvé</h5>
-                                        <p class="text-muted">Il n'y a actuellement aucun abonnement valide.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-                <form id="cinetpayForm" method="POST" action="{{ route('owner.activate') }}" style="display: none;">
-                    @csrf
-                    <input type="hidden" name="transaction_id" id="cinetpay_transaction_id">
-                    <input type="hidden" name="amount" id="cinetpay_amount">
-                    <input type="hidden" name="duration" id="cinetpay_duration">
-                    <input type="hidden" name="type" id="cinetpay_type">
-                </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="10">
+                                        <div class="empty-state">
+                                            <div class="empty-icon">
+                                                <i class="fas fa-calendar-times"></i>
+                                            </div>
+                                            <h5>Aucun abonnement actif trouvé</h5>
+                                            <p class="text-muted">Il n'y a actuellement aucun abonnement valide.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                    @if ($abonnements->hasPages())
+                        <div class="mt-4 d-flex justify-content-center">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination pagination-rounded">
+                                    @if ($abonnements->onFirstPage())
+                                        <li class="page-item disabled">
+                                            <span class="page-link" aria-hidden="true"><i
+                                                    class="fas fa-angle-left"></i></span>
+                                        </li>
+                                    @else
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ $abonnements->previousPageUrl() }}"
+                                                rel="prev" aria-label="Previous">
+                                                <i class="fas fa-angle-left"></i>
+                                            </a>
+                                        </li>
+                                    @endif
 
-                @if($abonnements->hasPages())
-                <div class="mt-4 d-flex justify-content-center">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-rounded">
-                            @if ($abonnements->onFirstPage())
-                                <li class="page-item disabled">
-                                    <span class="page-link" aria-hidden="true"><i class="fas fa-angle-left"></i></span>
-                                </li>
-                            @else
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ $abonnements->previousPageUrl() }}" rel="prev" aria-label="Previous">
-                                        <i class="fas fa-angle-left"></i>
-                                    </a>
-                                </li>
-                            @endif
+                                    @foreach ($abonnements->getUrlRange(1, $abonnements->lastPage()) as $page => $url)
+                                        @if ($page == $abonnements->currentPage())
+                                            <li class="page-item active"><span class="page-link">{{ $page }}</span>
+                                            </li>
+                                        @else
+                                            <li class="page-item"><a class="page-link"
+                                                    href="{{ $url }}">{{ $page }}</a></li>
+                                        @endif
+                                    @endforeach
 
-                            @foreach ($abonnements->getUrlRange(1, $abonnements->lastPage()) as $page => $url)
-                                @if ($page == $abonnements->currentPage())
-                                    <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
-                                @else
-                                    <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
-                                @endif
-                            @endforeach
-
-                            @if ($abonnements->hasMorePages())
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ $abonnements->nextPageUrl() }}" rel="next" aria-label="Next">
-                                        <i class="fas fa-angle-right"></i>
-                                    </a>
-                                </li>
-                            @else
-                                <li class="page-item disabled">
-                                    <span class="page-link" aria-hidden="true"><i class="fas fa-angle-right"></i></span>
-                                </li>
-                            @endif
-                        </ul>
-                    </nav>
+                                    @if ($abonnements->hasMorePages())
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ $abonnements->nextPageUrl() }}" rel="next"
+                                                aria-label="Next">
+                                                <i class="fas fa-angle-right"></i>
+                                            </a>
+                                        </li>
+                                    @else
+                                        <li class="page-item disabled">
+                                            <span class="page-link" aria-hidden="true"><i
+                                                    class="fas fa-angle-right"></i></span>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </nav>
+                        </div>
+                    @endif
                 </div>
-                @endif
             </div>
         </div>
     </div>
-</div>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    $(document).ready(function() {
-        $('.deactivate-btn').click(function() {
-            const abonnementId = $(this).data('abonnement-id');
-            const button = $(this);
-            
-            Swal.fire({
-                title: 'Confirmer la désactivation',
-                text: "Voulez-vous vraiment désactiver cet abonnement?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ffc107',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Oui, désactiver',
-                cancelButtonText: 'Annuler'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '{{ route("abonnements.deactivate") }}',
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            id: abonnementId
-                        },
-                        beforeSend: function() {
-                            button.html('<i class="fas fa-spinner fa-spin"></i>');
-                            button.prop('disabled', true);
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Désactivé!',
-                                'L\'abonnement a été désactivé avec succès.',
-                                'success'
-                            ).then(() => {
-                                location.reload();
-                            });
-                        },
-                        error: function(xhr) {
-                            Swal.fire(
-                                'Erreur!',
-                                xhr.responseJSON.message || 'Une erreur est survenue',
-                                'error'
-                            );
-                            button.html('<i class="fas fa-ban"></i> Désactiver');
-                            button.prop('disabled', false);
-                        }
-                    });
-                }
-            });
-        }); // Fin du gestionnaire pour deactivate-btn
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.deactivate-btn').click(function() {
+                const abonnementId = $(this).data('abonnement-id');
+                const button = $(this);
 
-        // Gestionnaire séparé pour extend-btn
-      $('.extend-btn').click(function() {
-            const abonnementId = $(this).data('abonnement-id');
-            const button = $(this);
-            
-            Swal.fire({
-                title: 'Modifier la durée',
-                html: `
+                Swal.fire({
+                    title: 'Confirmer la désactivation',
+                    text: "Voulez-vous vraiment désactiver cet abonnement?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ffc107',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Oui, désactiver',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '{{ route('abonnements.deactivate') }}',
+                            type: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                id: abonnementId
+                            },
+                            beforeSend: function() {
+                                button.html('<i class="fas fa-spinner fa-spin"></i>');
+                                button.prop('disabled', true);
+                            },
+                            success: function(response) {
+                                Swal.fire(
+                                    'Désactivé!',
+                                    'L\'abonnement a été désactivé avec succès.',
+                                    'success'
+                                ).then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function(xhr) {
+                                Swal.fire(
+                                    'Erreur!',
+                                    xhr.responseJSON.message ||
+                                    'Une erreur est survenue',
+                                    'error'
+                                );
+                                button.html('<i class="fas fa-ban"></i> Désactiver');
+                                button.prop('disabled', false);
+                            }
+                        });
+                    }
+                });
+            }); // Fin du gestionnaire pour deactivate-btn
+
+            // Gestionnaire séparé pour extend-btn
+            $('.extend-btn').click(function() {
+                const abonnementId = $(this).data('abonnement-id');
+                const button = $(this);
+
+                Swal.fire({
+                    title: 'Modifier la durée',
+                    html: `
                     <div class="mb-3">
                         <label class="form-label">Nombre de mois :</label>
                         <input type="number" id="monthsInput" class="form-control" 
                             min="1" max="12" value="1" required>
                     </div>
                 `,
-                focusConfirm: false,
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonText: '<i class="fas fa-plus"></i> Prolonger',
-                denyButtonText: '<i class="fas fa-minus"></i> Réduire',
-                cancelButtonText: 'Annuler',
-                preConfirm: () => {
-                    const input = document.getElementById('monthsInput');
-                    const months = parseInt(input.value);
-                    
-                    if (isNaN(months) || months < 1 || months > 12) {
-                        Swal.showValidationMessage('Veuillez entrer un nombre entre 1 et 12');
-                        return false;
+                    focusConfirm: false,
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-plus"></i> Prolonger',
+                    denyButtonText: '<i class="fas fa-minus"></i> Réduire',
+                    cancelButtonText: 'Annuler',
+                    preConfirm: () => {
+                        const input = document.getElementById('monthsInput');
+                        const months = parseInt(input.value);
+
+                        if (isNaN(months) || months < 1 || months > 12) {
+                            Swal.showValidationMessage(
+                                'Veuillez entrer un nombre entre 1 et 12');
+                            return false;
+                        }
+                        return months;
                     }
-                    return months;
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Pour prolonger, on utilise la valeur retournée par preConfirm
-                    modifyAbonnement(abonnementId, result.value, 'extend');
-                } else if (result.isDenied) {
-                    // Pour réduire, on doit récupérer la valeur depuis l'input
-                    const months = parseInt(document.getElementById('monthsInput').value);
-                    modifyAbonnement(abonnementId, months, 'reduce');
-                }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Pour prolonger, on utilise la valeur retournée par preConfirm
+                        modifyAbonnement(abonnementId, result.value, 'extend');
+                    } else if (result.isDenied) {
+                        // Pour réduire, on doit récupérer la valeur depuis l'input
+                        const months = parseInt(document.getElementById('monthsInput').value);
+                        modifyAbonnement(abonnementId, months, 'reduce');
+                    }
+                });
             });
-        });
 
-    function modifyAbonnement(abonnementId, months, action) {
-    const button = $(`.extend-btn[data-abonnement-id="${abonnementId}"]`);
-    const actionText = action === 'extend' ? 'prolonger' : 'réduire';
-    
-    // Trouver la ligne correspondante dans le tableau
-    const row = button.closest('tr');
-    
-    // Déterminer le type d'abonné (Propriétaire ou Agence)
-    const userType = row.find('td:nth-child(2)').text().trim() === 'Propriétaire' ? 'Propriétaire' : 'Agence';
-    
-    // Définir le prix mensuel en fonction du type d'utilisateur
-    const prixMensuel = userType === 'Propriétaire' ? 5000 : 10000;
-    const montant = months * prixMensuel;
-    
-    const operation = action === 'extend' ? 'ajouter' : 'retirer';
+            function modifyAbonnement(abonnementId, months, action) {
+                const button = $(`.extend-btn[data-abonnement-id="${abonnementId}"]`);
+                const actionText = action === 'extend' ? 'prolonger' : 'réduire';
 
-    // Message différent selon l'action
-    const confirmationMessage = action === 'extend' 
-        ? `Vous êtes sur le point de ${actionText} cet abonnement de ${months} mois.<br>
+                // Trouver la ligne correspondante dans le tableau
+                const row = button.closest('tr');
+
+                // Déterminer le type d'abonné (Propriétaire ou Agence)
+                const userType = row.find('td:nth-child(2)').text().trim() === 'Propriétaire' ? 'Propriétaire' :
+                    'Agence';
+
+                // Définir le prix mensuel en fonction du type d'utilisateur
+                const prixMensuel = userType === 'Propriétaire' ? 5000 : 10000;
+                const montant = months * prixMensuel;
+
+                const operation = action === 'extend' ? 'ajouter' : 'retirer';
+
+                // Message différent selon l'action
+                const confirmationMessage = action === 'extend' ?
+                    `Vous êtes sur le point de ${actionText} cet abonnement de ${months} mois.<br>
            <strong>Montant à ${operation} : ${montant.toLocaleString()} FCFA</strong>
-           <br><small>(Tarif ${userType}: ${prixMensuel.toLocaleString()} FCFA/mois)</small>`
-        : `Vous êtes sur le point de ${actionText} cet abonnement de ${months} mois.<br>
+           <br><small>(Tarif ${userType}: ${prixMensuel.toLocaleString()} FCFA/mois)</small>` :
+                    `Vous êtes sur le point de ${actionText} cet abonnement de ${months} mois.<br>
            <strong>Montant à ${operation} : ${montant.toLocaleString()} FCFA</strong>
            <br><small>(Tarif ${userType}: ${prixMensuel.toLocaleString()} FCFA/mois)</small>`;
 
-    Swal.fire({
-        title: 'Confirmation',
-        html: confirmationMessage,
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: 'Confirmer',
-        cancelButtonText: 'Annuler',
-        reverseButtons: true
-    }).then((result) => {
-        if (!result.isConfirmed) {
-            button.html('<i class="fas fa-calendar-plus"></i> Prolonger');
-            button.prop('disabled', false);
-            return;
-        }
+                Swal.fire({
+                    title: 'Confirmation',
+                    html: confirmationMessage,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmer',
+                    cancelButtonText: 'Annuler',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (!result.isConfirmed) {
+                        button.html('<i class="fas fa-calendar-plus"></i> Prolonger');
+                        button.prop('disabled', false);
+                        return;
+                    }
 
-        $.ajax({
-            url: action === 'extend' ? '{{ route("abonnements.extend") }}' : '{{ route("abonnements.reduce") }}',
-            type: 'POST',
-            data: JSON.stringify({
-                _token: '{{ csrf_token() }}',
-                id: abonnementId,
-                months: months,
-                user_type: userType // Envoyer le type d'utilisateur au serveur
-            }),
-            contentType: 'application/json',
-            beforeSend: function() {
-                button.html('<i class="fas fa-spinner fa-spin"></i>');
-                button.prop('disabled', true);
-            },
-            success: function(response) {
-                if (response.success) {
-                    const successMessage = action === 'extend'
-                        ? `L'abonnement a été prolongé de ${months} mois.<br>
+                    $.ajax({
+                        url: action === 'extend' ? '{{ route('abonnements.extend') }}' :
+                            '{{ route('abonnements.reduce') }}',
+                        type: 'POST',
+                        data: JSON.stringify({
+                            _token: '{{ csrf_token() }}',
+                            id: abonnementId,
+                            months: months,
+                            user_type: userType // Envoyer le type d'utilisateur au serveur
+                        }),
+                        contentType: 'application/json',
+                        beforeSend: function() {
+                            button.html('<i class="fas fa-spinner fa-spin"></i>');
+                            button.prop('disabled', true);
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                const successMessage = action === 'extend' ?
+                                    `L'abonnement a été prolongé de ${months} mois.<br>
                            <strong>Nouveau montant : ${response.nouveau_montant.toLocaleString()} FCFA</strong><br>
-                           Nouvelle date de fin: ${response.nouvelle_date_fin}`
-                        : `L'abonnement a été réduit de ${months} mois.<br>
+                           Nouvelle date de fin: ${response.nouvelle_date_fin}` :
+                                    `L'abonnement a été réduit de ${months} mois.<br>
                            <strong>Nouveau montant : ${response.nouveau_montant.toLocaleString()} FCFA</strong><br>
                            Nouvelle date de fin: ${response.nouvelle_date_fin}`;
 
-                    Swal.fire({
-                        title: 'Succès!',
-                        html: successMessage,
-                        icon: 'success'
-                    }).then(() => {
-                        location.reload();
+                                Swal.fire({
+                                    title: 'Succès!',
+                                    html: successMessage,
+                                    icon: 'success'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Erreur!', response.message || 'Action non effectuée',
+                                    'error');
+                                button.html('<i class="fas fa-calendar-plus"></i> Prolonger');
+                                button.prop('disabled', false);
+                            }
+                        },
+                        error: function(xhr) {
+                            const errorMsg = xhr.responseJSON?.message ||
+                                'Une erreur est survenue';
+                            Swal.fire('Erreur!', errorMsg, 'error');
+                            button.html('<i class="fas fa-calendar-plus"></i> Prolonger');
+                            button.prop('disabled', false);
+                        }
                     });
-                } else {
-                    Swal.fire('Erreur!', response.message || 'Action non effectuée', 'error');
-                    button.html('<i class="fas fa-calendar-plus"></i> Prolonger');
-                    button.prop('disabled', false);
-                }
-            },
-            error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || 'Une erreur est survenue';
-                Swal.fire('Erreur!', errorMsg, 'error');
-                button.html('<i class="fas fa-calendar-plus"></i> Prolonger');
-                button.prop('disabled', false);
+                });
             }
-        });
-    });
-}
-    }); // Fin du gestionnaire pour extend-btn
-</script>
+        }); // Fin du gestionnaire pour extend-btn
+    </script>
 
-<script>
-$(document).ready(function() {
-    // Gestionnaire pour le bouton d'abonnement
-    $('.renew-btn').click(function(e) {
-        e.preventDefault();
-        const abonnementId = $(this).data('abonnement-id');
-        console.log('Bouton cliqué pour l\'abonnement ID:', abonnementId); // Debug
+    <script>
+        $(document).ready(function() {
+            // Gestionnaire pour le bouton d'abonnement
+            $('.renew-btn').click(function(e) {
+                e.preventDefault();
+                const abonnementId = $(this).data('abonnement-id');
+                console.log('Bouton cliqué pour l\'abonnement ID:', abonnementId); // Debug
 
-        Swal.fire({
-            title: 'Renouveler l\'abonnement',
-            html: `
+                Swal.fire({
+                    title: 'Renouveler l\'abonnement',
+                    html: `
                 <div class="mb-3">
                     <label class="form-label">Type d'abonnement :</label>
                     <select id="abonnementType" class="form-select">
@@ -402,293 +409,325 @@ $(document).ready(function() {
                     </small>
                 </div>
             `,
-            showCancelButton: true,
-            confirmButtonText: 'Confirmer le renouvellement',
-            cancelButtonText: 'Annuler',
-            width: '600px',
-            didOpen: () => {
-                updatePriceCalculation();
-                $('#abonnementType, #abonnementDuree').change(updatePriceCalculation);
-            },
-            preConfirm: () => {
-                return {
-                    type: $('#abonnementType').val(),
-                    duree: $('#abonnementDuree').val(),
-                    montant: parseFloat($('#finalPrice').text().replace(/\D/g, ''))
-                };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                console.log('Données à envoyer:', result.value); // Debug
-                renewAbonnement(abonnementId, result.value);
-            }
-        });
-    });
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmer le renouvellement',
+                    cancelButtonText: 'Annuler',
+                    width: '600px',
+                    didOpen: () => {
+                        updatePriceCalculation();
+                        $('#abonnementType, #abonnementDuree').change(updatePriceCalculation);
+                    },
+                    preConfirm: () => {
+                        return {
+                            type: $('#abonnementType').val(),
+                            duree: $('#abonnementDuree').val(),
+                            montant: parseFloat($('#finalPrice').text().replace(/\D/g, ''))
+                        };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        console.log('Données à envoyer:', result.value); // Debug
+                        renewAbonnement(abonnementId, result.value);
+                    }
+                });
+            });
 
-    // Fonction pour mettre à jour le calcul des prix
-    function updatePriceCalculation() {
-        const type = $('#abonnementType').val();
-        const duree = parseInt($('#abonnementDuree').val());
-        
-        // Prix de base selon le type
-        const prixBase = type === 'standard' ? 100 : 100;
-        const prixTotal = prixBase * duree;
-        
-        // Calcul de la réduction
-        let reduction = 0;
-        let reductionText = "Pas de réduction";
-        
-        if (duree === 3 || duree === 6) {
-            reduction = 0.20; // 20% de réduction
-            reductionText = "20% de réduction";
-        } else if (duree === 12) {
-            reduction = 0.17; // 17% de réduction
-            reductionText = "17% de réduction";
-        }
-        
-        const montantFinal = duree === 1 ? prixTotal : prixTotal * (1 - reduction);
-        
-        // Mise à jour de l'affichage
-        $('#basePrice').text(`${prixBase.toLocaleString()} FCFA/mois (${type === 'standard' ? 'Standard' : 'Premium'})`);
-        $('#totalPrice').text(`${prixTotal.toLocaleString()} FCFA (${duree} mois)`);
-        $('#finalPrice').text(`${montantFinal.toLocaleString()} FCFA ${duree === 1 ? '' : 'avec ' + reductionText}`);
-    }
+            // Fonction pour mettre à jour le calcul des prix
+            function updatePriceCalculation() {
+                const type = $('#abonnementType').val();
+                const duree = parseInt($('#abonnementDuree').val());
 
-    // Fonction pour renouveler l'abonnement via AJAX
-    function renewAbonnement(abonnementId, data) {
-        console.log('Envoi des données:', {abonnementId, data}); // Debug
-        
-        Swal.fire({
-            title: 'Traitement en cours',
-            html: 'Veuillez patienter...',
-            allowOutsideClick: true,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+                // Prix de base selon le type
+                const prixBase = type === 'standard' ? 100 : 100;
+                const prixTotal = prixBase * duree;
 
-        $.ajax({
-            url: '{{ route("abonnements.renew") }}',
-            type: 'POST',
-            data: JSON.stringify({
-                _token: '{{ csrf_token() }}',
-                id: abonnementId,
-                type: data.type,
-                duree: parseInt(data.duree),
-                montant: data.montant,
-                reduction: calculateReduction(data.duree)
-            }),
-            contentType: 'application/json',
-            success: function(response) {
-                Swal.close();
-                if (response.success) {
-                    Swal.fire({
-                        title: 'Succès!',
-                        html: `L'abonnement a été renouvelé jusqu'au ${response.new_end_date}<br>
-                               Montant payé: ${response.amount_paid.toLocaleString()} FCFA`,
-                        icon: 'success'
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire('Erreur!', response.message, 'error');
+                // Calcul de la réduction
+                let reduction = 0;
+                let reductionText = "Pas de réduction";
+
+                if (duree === 3 || duree === 6) {
+                    reduction = 0.20; // 20% de réduction
+                    reductionText = "20% de réduction";
+                } else if (duree === 12) {
+                    reduction = 0.17; // 17% de réduction
+                    reductionText = "17% de réduction";
                 }
-            },
-            error: function(xhr) {
-                Swal.close();
-                console.error('Erreur AJAX:', xhr.responseJSON);
-                Swal.fire(
-                    'Erreur!', 
-                    xhr.responseJSON?.message || 'Une erreur est survenue', 
-                    'error'
-                );
+
+                const montantFinal = duree === 1 ? prixTotal : prixTotal * (1 - reduction);
+
+                // Mise à jour de l'affichage
+                $('#basePrice').text(
+                    `${prixBase.toLocaleString()} FCFA/mois (${type === 'standard' ? 'Standard' : 'Premium'})`);
+                $('#totalPrice').text(`${prixTotal.toLocaleString()} FCFA (${duree} mois)`);
+                $('#finalPrice').text(
+                    `${montantFinal.toLocaleString()} FCFA ${duree === 1 ? '' : 'avec ' + reductionText}`);
+            }
+
+            // Fonction pour renouveler l'abonnement via AJAX
+            function renewAbonnement(abonnementId, data) {
+                console.log('Envoi des données:', {
+                    abonnementId,
+                    data
+                }); // Debug
+
+                Swal.fire({
+                    title: 'Traitement en cours',
+                    html: 'Veuillez patienter...',
+                    allowOutsideClick: true,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: '{{ route('abonnements.renew') }}',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        _token: '{{ csrf_token() }}',
+                        id: abonnementId,
+                        type: data.type,
+                        duree: parseInt(data.duree),
+                        montant: data.montant,
+                        reduction: calculateReduction(data.duree)
+                    }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        Swal.close();
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'Succès!',
+                                html: `L'abonnement a été renouvelé jusqu'au ${response.new_end_date}<br>
+                               Montant payé: ${response.amount_paid.toLocaleString()} FCFA`,
+                                icon: 'success'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Erreur!', response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.close();
+                        console.error('Erreur AJAX:', xhr.responseJSON);
+                        Swal.fire(
+                            'Erreur!',
+                            xhr.responseJSON?.message || 'Une erreur est survenue',
+                            'error'
+                        );
+                    }
+                });
+            }
+
+            // Fonction pour calculer le pourcentage de réduction
+            function calculateReduction(duree) {
+                switch (parseInt(duree)) {
+                    case 3:
+                    case 6:
+                        return 20;
+                    case 12:
+                        return 17;
+                    default:
+                        return 0;
+                }
             }
         });
-    }
+    </script>
+    <script>
+        $('.wave-renew-btn').click(async function() {
+            const abonnementId = $(this).data('abonnement-id');
 
-    // Fonction pour calculer le pourcentage de réduction
-    function calculateReduction(duree) {
-        switch(parseInt(duree)) {
-            case 3:
-            case 6: return 20;
-            case 12: return 17;
-            default: return 0;
-        }
-    }
-});
-</script>
-<script>
-$('.cinetpay-btn').click(async function() {
-    const abonnementId = $(this).data('abonnement-id');
-    // 1. Sélection type
-    const { value: type } = await Swal.fire({
-        title: 'Type d\'abonnement',
-        input: 'select',
-        inputOptions: {
-            'standard': 'Standard (5 000 FCFA/mois)',
-            'premium': 'Premium (7 000 FCFA/mois)'
-        },
-        inputValue: 'standard',
-        showCancelButton: true,
-        cancelButtonText: 'Annuler'
-    });
-    if (!type) return;
+            // Étape 1 : Sélection type + durée
+            const {
+                value: formValues
+            } = await Swal.fire({
+                title: 'Renouveler l\'abonnement',
+                html: `
+            <div class="mb-3">
+                <label class="form-label">Type d'abonnement :</label>
+                <select id="typeSelect" class="swal2-input">
+                    <option value="standard">Standard (5 000 FCFA/mois)</option>
+                    <option value="premium">Premium (7 000 FCFA/mois)</option>
+                </select>
+            </div>
+            <div class="mb-3 mt-3">
+                <label class="form-label">Durée :</label>
+                <select id="dureeSelect" class="swal2-input">
+                    <option value="1">1 mois</option>
+                    <option value="3">3 mois (20% de réduction)</option>
+                    <option value="6">6 mois (20% de réduction)</option>
+                    <option value="12">12 mois (17% de réduction)</option>
+                </select>
+            </div>
+            <div class="alert alert-info mt-2">
+                <small><strong>Montant estimé : </strong><span id="montantCalc">5 000 FCFA</span></small>
+            </div>
+        `,
+                showCancelButton: true,
+                confirmButtonText: 'Choisir le mode de paiement &rarr;',
+                cancelButtonText: 'Annuler',
+                didOpen: () => {
+                    function calcMontant() {
+                        const type = document.getElementById('typeSelect').value;
+                        const duree = parseInt(document.getElementById('dureeSelect').value);
+                        const prixBase = type === 'standard' ? 5000 : 7000;
+                        let montant = prixBase * duree;
+                        let reduction = (duree === 3 || duree === 6) ? 0.20 : duree === 12 ? 0.17 :
+                            0;
+                        if (reduction > 0) montant = montant * (1 - reduction);
+                        document.getElementById('montantCalc').textContent = montant.toLocaleString(
+                            'fr-FR') + ' FCFA';
+                    }
+                    document.getElementById('typeSelect').addEventListener('change', calcMontant);
+                    document.getElementById('dureeSelect').addEventListener('change', calcMontant);
+                },
+                preConfirm: () => ({
+                    type: document.getElementById('typeSelect').value,
+                    duree: parseInt(document.getElementById('dureeSelect').value),
+                })
+            });
+            if (!formValues) return;
 
-    // 2. Sélection durée
-    const dureeOptions = {
-        1: {text: '1 mois', reduction: 0},
-        3: {text: '3 mois (20% réduction)', reduction: 20},
-        6: {text: '6 mois (20% réduction)', reduction: 20},
-        12: {text: '12 mois (17% réduction)', reduction: 17}
-    };
-    let dureeHtml = '';
-    for (let d in dureeOptions) {
-        dureeHtml += `<option value="${d}" data-reduction="${dureeOptions[d].reduction}">${dureeOptions[d].text}</option>`;
-    }
-    const { value: duree } = await Swal.fire({
-        title: 'Durée',
-        html: `<select id="dureeSelect" class="swal2-input">${dureeHtml}</select>`,
-        preConfirm: () => $('#dureeSelect').val(),
-        showCancelButton: true,
-        cancelButtonText: 'Annuler',
-    });
-    if (!duree) return;
+            const {
+                type,
+                duree
+            } = formValues;
+            const prixBase = type === 'standard' ? 5000 : 7000;
+            let montant = prixBase * duree;
+            let reduction = (duree === 3 || duree === 6) ? 20 : duree === 12 ? 17 : 0;
+            if (reduction > 0) montant = montant * (1 - reduction / 100);
 
-    // 3. Calcul du montant
-    let prixBase = type === 'standard' ? 100 : 100;
-    let montant = prixBase * duree;
-    let reduction = dureeOptions[duree].reduction;
-    if (reduction > 0) {
-        montant = montant * (1 - reduction / 100);
-    }
+            // Étape 2 : Sélection du moyen de paiement
+            const {
+                isConfirmed: waveChosen
+            } = await Swal.fire({
+                title: 'Choisir un moyen de paiement',
+                html: `
+            <p class="text-muted mb-3">Montant : <strong>${montant.toLocaleString('fr-FR')} FCFA</strong></p>
+            <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                <button id="btn-wave" type="button" style="
+                    background:#fff; border:2px solid #1AA3E8; border-radius:12px;
+                    padding:14px 18px; cursor:pointer; min-width:110px;
+                    display:flex; flex-direction:column; align-items:center; gap:6px;
+                ">
+                    <img src="{{ asset('assets/images/wave.png') }}" style="height:40px;">
+                    <span style="font-weight:600; color:#1AA3E8;">Wave</span>
+                    <small style="color:#28a745; font-size:11px;">Disponible</small>
+                </button>
+                <div style="
+                    background:#f5f5f5; border:2px solid #ddd; border-radius:12px;
+                    padding:14px 18px; min-width:110px; opacity:0.45; cursor:not-allowed;
+                    display:flex; flex-direction:column; align-items:center; gap:6px;
+                ">
+                    <img src="{{ asset('assets/images/orange.png') }}" style="height:40px;">
+                    <span style="font-weight:600; color:#888;">Orange</span>
+                    <small style="color:#999; font-size:11px;">Bientôt disponible</small>
+                </div>
+                <div style="
+                    background:#f5f5f5; border:2px solid #ddd; border-radius:12px;
+                    padding:14px 18px; min-width:110px; opacity:0.45; cursor:not-allowed;
+                    display:flex; flex-direction:column; align-items:center; gap:6px;
+                ">
+                    <img src="{{ asset('assets/images/mtn.png') }}" style="height:40px;">
+                    <span style="font-weight:600; color:#888;">MTN</span>
+                    <small style="color:#999; font-size:11px;">Bientôt disponible</small>
+                </div>
+                <div style="
+                    background:#f5f5f5; border:2px solid #ddd; border-radius:12px;
+                    padding:14px 18px; min-width:110px; opacity:0.45; cursor:not-allowed;
+                    display:flex; flex-direction:column; align-items:center; gap:6px;
+                ">
+                    <img src="{{ asset('assets/images/moov.png') }}" style="height:40px;">
+                    <span style="font-weight:600; color:#888;">Moov</span>
+                    <small style="color:#999; font-size:11px;">Bientôt disponible</small>
+                </div>
+            </div>
+        `,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Annuler',
+                didOpen: () => {
+                    document.getElementById('btn-wave').addEventListener('click', () => Swal
+                        .clickConfirm());
+                }
+            });
+            if (!waveChosen) return;
 
-    // 4. Paiement confirmation
-    const confirmPay = await Swal.fire({
-        title: 'Confirmer le paiement',
-        html: `<div>
-            <strong>Type:</strong> ${type}<br>
-            <strong>Durée:</strong> ${duree} mois<br>
-            <strong>Montant:</strong> ${montant.toLocaleString()} FCFA
-        </div>`,
-        showCancelButton: true,
-        cancelButtonText: 'Annuler',
-        confirmButtonText: 'Payer '
-    });
-    if (!confirmPay.isConfirmed) return;
-
-    // 5. Paiement CinetPay
-    const transactionId = 'ABN-' + Date.now();
-
-    CinetPay.setConfig({
-        apikey: '{{ config("services.cinetpay.api_key") }}',
-        site_id: '{{ config("services.cinetpay.site_id") }}',
-        notify_url: '{{ route("cinetpay.notify") }}',
-        mode: 'PRODUCTION'
-    });
-
-    Swal.fire({
-        title: 'Paiement en cours',
-        html: 'Veuillez compléter le paiement...',
-        allowOutsideClick: true,
-        didOpen: () => Swal.showLoading()
-    });
-
-    CinetPay.getCheckout({
-        transaction_id: transactionId,
-        amount: montant,
-        currency: 'XOF',
-        channels: 'ALL',
-        description: `Renouvellement ${type} (${duree} mois)`
-    });
-
-    CinetPay.waitResponse(function(data) {
-        Swal.close();
-        if (data.status === "ACCEPTED") {
-            // 6. Appel AJAX à /abonnements/renew
+            // Étape 3 : Initier le paiement Wave
             Swal.fire({
-                title: 'Traitement...',
-                html: 'Renouvellement de votre abonnement.',
-                didOpen: () => Swal.showLoading(),
-                allowOutsideClick: true,
+                title: 'Création de la session Wave...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
             });
 
             $.ajax({
-                url: '{{ route("abonnements.renew") }}',
+                url: '/abonnement/wave/initiate-owner/' + abonnementId,
                 type: 'POST',
                 data: JSON.stringify({
                     _token: '{{ csrf_token() }}',
-                    id: abonnementId,
                     type: type,
-                    duree: parseInt(duree),
+                    duree: duree,
                     montant: montant,
                     reduction: reduction
                 }),
                 contentType: 'application/json',
                 success: function(response) {
                     Swal.close();
-                    if (response.success) {
+                    if (response.success && response.wave_launch_url) {
                         Swal.fire({
-                            icon: 'success',
-                            title: 'Succès!',
-                            html: `Abonnement renouvelé jusqu'au ${response.new_end_date}<br>Montant payé: ${response.amount_paid.toLocaleString()} FCFA`
-                        }).then(() => location.reload());
+                            icon: 'info',
+                            title: 'Paiement Wave',
+                            html: 'Une nouvelle fenêtre va s\'ouvrir pour effectuer le paiement.<br><strong>Ne fermez pas cette page.</strong>',
+                            confirmButtonText: 'Ouvrir Wave',
+                            showCancelButton: true,
+                            cancelButtonText: 'Annuler'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.open(response.wave_launch_url, '_blank');
+                            }
+                        });
                     } else {
-                        Swal.fire('Erreur!', response.message, 'error');
+                        Swal.fire('Erreur!', response.error ||
+                            'Impossible d\'initier le paiement Wave.', 'error');
                     }
                 },
                 error: function(xhr) {
                     Swal.close();
-                    Swal.fire('Erreur!', xhr.responseJSON?.message || 'Une erreur est survenue', 'error');
+                    Swal.fire('Erreur!', xhr.responseJSON?.error || 'Une erreur est survenue.',
+                        'error');
                 }
             });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Paiement échoué',
-                text: data.message || 'Le paiement n\'a pas pu être traité.',
-            });
-        }
-    });
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            // Système de recherche en temps réel
+            $('#searchInput').on('keyup', function() {
+                const searchText = $(this).val().toLowerCase();
 
-    CinetPay.onError(function(error) {
-        Swal.close();
-        Swal.fire({
-            icon: 'error',
-            title: 'Erreur de paiement',
-            text: error.message || 'Une erreur technique est survenue.'
-        });
-    });
-});
-</script>
-<script>
-$(document).ready(function() {
-    // Système de recherche en temps réel
-    $('#searchInput').on('keyup', function() {
-        const searchText = $(this).val().toLowerCase();
-        
-        $('.subscription-table tbody tr').each(function() {
-            // Exclure la ligne "Aucun résultat" si elle existe
-            if ($(this).find('td[colspan="10"]').length) {
-                return true; // continue à l'itération suivante
-            }
-            
-            const rowText = $(this).text().toLowerCase();
-            if (rowText.includes(searchText)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-        
-        // Gérer le cas où aucune correspondance n'est trouvée
-        const visibleRows = $('.subscription-table tbody tr:visible').not('tr:has(td[colspan="10"])').length;
-        if (visibleRows === 0) {
-            // Supprimer d'abord les anciens messages "Aucun résultat"
-            $('.subscription-table tbody tr td[colspan="10"]').closest('tr').remove();
-            
-            // Ajouter le nouveau message seulement si ce n'est pas déjà là
-            if ($('.subscription-table tbody tr td[colspan="10"]').length === 0) {
-                $('.subscription-table tbody').append(`
+                $('.subscription-table tbody tr').each(function() {
+                    // Exclure la ligne "Aucun résultat" si elle existe
+                    if ($(this).find('td[colspan="10"]').length) {
+                        return true; // continue à l'itération suivante
+                    }
+
+                    const rowText = $(this).text().toLowerCase();
+                    if (rowText.includes(searchText)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                // Gérer le cas où aucune correspondance n'est trouvée
+                const visibleRows = $('.subscription-table tbody tr:visible').not(
+                    'tr:has(td[colspan="10"])').length;
+                if (visibleRows === 0) {
+                    // Supprimer d'abord les anciens messages "Aucun résultat"
+                    $('.subscription-table tbody tr td[colspan="10"]').closest('tr').remove();
+
+                    // Ajouter le nouveau message seulement si ce n'est pas déjà là
+                    if ($('.subscription-table tbody tr td[colspan="10"]').length === 0) {
+                        $('.subscription-table tbody').append(`
                     <tr>
                         <td colspan="10" class="text-center py-4">
                             <div class="empty-state">
@@ -701,33 +740,33 @@ $(document).ready(function() {
                         </td>
                     </tr>
                 `);
-            }
-        } else {
-            // Supprimer le message "Aucun résultat" s'il existe
-            $('.subscription-table tbody tr td[colspan="10"]').closest('tr').remove();
+                    }
+                } else {
+                    // Supprimer le message "Aucun résultat" s'il existe
+                    $('.subscription-table tbody tr td[colspan="10"]').closest('tr').remove();
+                }
+            });
+        });
+    </script>
+    <style>
+        #searchInput {
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
         }
-    });
-});
-</script>
-<style>
-#searchInput {
-    padding: 10px 15px;
-    border-radius: 20px;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: all 0.3s;
-}
 
-#searchInput:focus {
-    border-color: #4b7bec;
-    box-shadow: 0 2px 10px rgba(75, 123, 236, 0.3);
-    outline: none;
-}
+        #searchInput:focus {
+            border-color: #4b7bec;
+            box-shadow: 0 2px 10px rgba(75, 123, 236, 0.3);
+            outline: none;
+        }
 
-.empty-state .empty-icon {
-    font-size: 3rem;
-    color: #a5b1c2;
-    margin-bottom: 1rem;
-}
-</style>
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            color: #a5b1c2;
+            margin-bottom: 1rem;
+        }
+    </style>
 @endsection

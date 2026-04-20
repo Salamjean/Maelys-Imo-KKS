@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Locataire;
+
 use App\Http\Controllers\Controller;
 
 use App\Models\Bien;
@@ -24,6 +25,7 @@ use Carbon\Carbon;
 use Twilio\Rest\Client;
 use Illuminate\Support\Str;
 use Twilio\Exceptions\TwilioException;
+use App\Services\YellikaService;
 
 class LocataireController extends Controller
 {
@@ -83,8 +85,8 @@ class LocataireController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         // Récupération de tous les locataires
@@ -126,8 +128,8 @@ class LocataireController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         // Récupération de tous les locataires
@@ -160,8 +162,8 @@ class LocataireController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         $biens = Bien::whereNull('agence_id')
@@ -176,38 +178,6 @@ class LocataireController extends Controller
 
     public function store(Request $request)
     {
-        // Vérification des doublons potentiels
-        $existingLocataires = Locataire::where(function ($query) use ($request) {
-            $query->where('name', 'like', $request->name)
-                ->orWhere('prenom', 'like', $request->prenom)
-                ->orWhere('email', $request->email)
-                ->orWhere('contact', $request->contact);
-        })->get();
-
-        $isDuplicate = false;
-        foreach ($existingLocataires as $locataire) {
-            $matchCount = 0;
-            if (strtolower($locataire->name) === strtolower($request->name))
-                $matchCount++;
-            if (strtolower($locataire->prenom) === strtolower($request->prenom))
-                $matchCount++;
-            if ($locataire->email === $request->email)
-                $matchCount++;
-            if ($locataire->contact === $request->contact)
-                $matchCount++;
-
-            if ($matchCount >= 2) {
-                $isDuplicate = true;
-                break;
-            }
-        }
-
-        if ($isDuplicate) {
-            return back()->withErrors([
-                'duplicate' => 'Un locataire avec des informations similaires existe déjà. Veuillez vérifier dans la liste des locataires ou dans locataire pas sérieux.'
-            ])->withInput();
-        }
-
         // Validation des données
         $request->validate([
             'name' => 'required|string|max:255',
@@ -355,58 +325,19 @@ class LocataireController extends Controller
             ]);
 
             Notification::route('mail', $locataire->email)
-                ->notify(new SendEmailToLocataireAfterRegistrationNotification($code, $locataire->email, $agence->name));
+                ->notify(new SendEmailToLocataireAfterRegistrationNotification($code, $locataire->email, $agence->name, $locataire->code_id));
 
-            /**********************************************************************
-             * INTÉGRATION DU SYSTÈME D'ENVOI DE SMS AVEC TWILIO (NOUVEAU CODE)
-             **********************************************************************/
+            // Envoi SMS avec le code ID du locataire
             try {
-                $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-
-                // Configuration SSL
-                $httpClient = new \Twilio\Http\CurlClient([
-                    CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
-                    CURLOPT_SSL_VERIFYPEER => true,
-                    CURLOPT_SSL_VERIFYHOST => 2,
-                ]);
-                $twilio->setHttpClient($httpClient);
-
-                // Formater le numéro
-                $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
-
-                // Construire le message SMS avec code et lien
+                $yellika = new YellikaService();
                 $validationUrl = url('/validate-locataire-account/' . $locataire->email);
-                $smsContent = "Bonjour {$locataire->prenom},\n\n"
-                    . "Votre code de validation: {$code}\n\n"
-                    . "Validez votre compte ici: {$validationUrl}\n\n"
-                    . "Agence: {$agence->name}";
-
-                $message = $twilio->messages->create(
-                    $phoneNumber,
-                    [
-                        'from' => env('TWILIO_PHONE_NUMBER'),
-                        'body' => $smsContent,
-                    ]
-                );
-
-                Log::channel('sms')->info('SMS validation envoyé', [
-                    'locataire_id' => $locataire->id,
-                    'to' => $phoneNumber,
-                    'message_sid' => $message->sid
-                ]);
-
-            } catch (TwilioException $e) {
-                Log::channel('sms')->error('Erreur SMS validation', [
-                    'locataire_id' => $locataire->id,
-                    'error' => $e->getMessage()
-                ]);
+                $smsContent = "Bonjour {$locataire->prenom}, votre compte locataire a ete cree. Votre identifiant de connexion est : {$locataire->code_id}. Definissez votre mot de passe ici : {$validationUrl} (code: {$code}). Agence: {$agence->name}";
+                $yellika->send($locataire->contact, $smsContent);
+            } catch (\Exception $smsEx) {
+                Log::error('Erreur envoi SMS locataire: ' . $smsEx->getMessage());
             }
-            /**********************************************************************
-             * FIN DE L'INTÉGRATION SMS
-             **********************************************************************/
 
             return redirect()->route('locataire.index')->with('success', 'Locataire créé avec succès!');
-
         } catch (\Exception $e) {
             Log::error('Error creating locataire: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -477,8 +408,8 @@ class LocataireController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         $locataire = Locataire::findOrFail($id);
@@ -493,39 +424,6 @@ class LocataireController extends Controller
     public function update(Request $request, $id)
     {
         $locataire = Locataire::findOrFail($id);
-
-        // Vérification des doublons potentiels (en excluant le locataire actuel)
-        $existingLocataires = Locataire::where('id', '!=', $id)
-            ->where(function ($query) use ($request) {
-                $query->where('name', 'like', $request->name)
-                    ->orWhere('prenom', 'like', $request->prenom)
-                    ->orWhere('email', $request->email)
-                    ->orWhere('contact', $request->contact);
-            })->get();
-
-        $isDuplicate = false;
-        foreach ($existingLocataires as $existing) {
-            $matchCount = 0;
-            if (strtolower($existing->name) === strtolower($request->name))
-                $matchCount++;
-            if (strtolower($existing->prenom) === strtolower($request->prenom))
-                $matchCount++;
-            if ($existing->email === $request->email)
-                $matchCount++;
-            if ($existing->contact === $request->contact)
-                $matchCount++;
-
-            if ($matchCount >= 2) {
-                $isDuplicate = true;
-                break;
-            }
-        }
-
-        if ($isDuplicate) {
-            return back()->withErrors([
-                'duplicate' => 'Un locataire avec des informations similaires existe déjà. Veuillez vérifier dans la liste des locataires.'
-            ])->withInput();
-        }
 
         // Validation des données
         $request->validate([
@@ -604,7 +502,6 @@ class LocataireController extends Controller
             $locataire->save();
 
             return redirect()->route('locataire.index')->with('success', 'Locataire mis à jour avec succès!');
-
         } catch (\Exception $e) {
             Log::error('Error updating locataire: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -613,39 +510,6 @@ class LocataireController extends Controller
     public function updateAdmin(Request $request, $id)
     {
         $locataire = Locataire::findOrFail($id);
-
-        // Vérification des doublons potentiels (en excluant le locataire actuel)
-        $existingLocataires = Locataire::where('id', '!=', $id)
-            ->where(function ($query) use ($request) {
-                $query->where('name', 'like', $request->name)
-                    ->orWhere('prenom', 'like', $request->prenom)
-                    ->orWhere('email', $request->email)
-                    ->orWhere('contact', $request->contact);
-            })->get();
-
-        $isDuplicate = false;
-        foreach ($existingLocataires as $existing) {
-            $matchCount = 0;
-            if (strtolower($existing->name) === strtolower($request->name))
-                $matchCount++;
-            if (strtolower($existing->prenom) === strtolower($request->prenom))
-                $matchCount++;
-            if ($existing->email === $request->email)
-                $matchCount++;
-            if ($existing->contact === $request->contact)
-                $matchCount++;
-
-            if ($matchCount >= 2) {
-                $isDuplicate = true;
-                break;
-            }
-        }
-
-        if ($isDuplicate) {
-            return back()->withErrors([
-                'duplicate' => 'Un locataire avec des informations similaires existe déjà. Veuillez vérifier dans la liste des locataires.'
-            ])->withInput();
-        }
 
         // Validation des données
         $request->validate([
@@ -724,7 +588,6 @@ class LocataireController extends Controller
             $locataire->save();
 
             return redirect()->route('locataire.admin.index')->with('success', 'Locataire mis à jour avec succès!');
-
         } catch (\Exception $e) {
             Log::error('Error updating locataire: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -732,38 +595,6 @@ class LocataireController extends Controller
     }
     public function storeAdmin(Request $request)
     {
-        // Vérification des doublons potentiels
-        $existingLocataires = Locataire::where(function ($query) use ($request) {
-            $query->where('name', 'like', $request->name)
-                ->orWhere('prenom', 'like', $request->prenom)
-                ->orWhere('email', $request->email)
-                ->orWhere('contact', $request->contact);
-        })->get();
-
-        $isDuplicate = false;
-        foreach ($existingLocataires as $locataire) {
-            $matchCount = 0;
-            if (strtolower($locataire->name) === strtolower($request->name))
-                $matchCount++;
-            if (strtolower($locataire->prenom) === strtolower($request->prenom))
-                $matchCount++;
-            if ($locataire->email === $request->email)
-                $matchCount++;
-            if ($locataire->contact === $request->contact)
-                $matchCount++;
-
-            if ($matchCount >= 2) {
-                $isDuplicate = true;
-                break;
-            }
-        }
-
-        if ($isDuplicate) {
-            return back()->withErrors([
-                'duplicate' => 'Un locataire avec des informations similaires existe déjà. Veuillez vérifier dans la liste des locataires ou dans locataire pas sérieux.'
-            ])->withInput();
-        }
-
         // Validation des données
         $request->validate([
             'name' => 'required|string|max:255',
@@ -910,58 +741,19 @@ class LocataireController extends Controller
             ]);
 
             Notification::route('mail', $locataire->email)
-                ->notify(new SendEmailToLocataireAfterRegistrationNotification($code, $locataire->email, $agence->name));
+                ->notify(new SendEmailToLocataireAfterRegistrationNotification($code, $locataire->email, $agence->name, $locataire->code_id));
 
-            /**********************************************************************
-             * INTÉGRATION DU SYSTÈME D'ENVOI DE SMS AVEC TWILIO (NOUVEAU CODE)
-             **********************************************************************/
+            // Envoi SMS avec le code ID du locataire
             try {
-                $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-
-                // Configuration SSL
-                $httpClient = new \Twilio\Http\CurlClient([
-                    CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
-                    CURLOPT_SSL_VERIFYPEER => true,
-                    CURLOPT_SSL_VERIFYHOST => 2,
-                ]);
-                $twilio->setHttpClient($httpClient);
-
-                // Formater le numéro
-                $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
-
-                // Construire le message SMS avec code et lien
+                $yellika = new YellikaService();
                 $validationUrl = url('/validate-locataire-account/' . $locataire->email);
-                $smsContent = "Bonjour {$locataire->prenom},\n\n"
-                    . "Votre code de validation: {$code}\n\n"
-                    . "Validez votre compte ici: {$validationUrl}\n\n"
-                    . "Agence: {$agence->name}";
-
-                $message = $twilio->messages->create(
-                    $phoneNumber,
-                    [
-                        'from' => env('TWILIO_PHONE_NUMBER'),
-                        'body' => $smsContent,
-                    ]
-                );
-
-                Log::channel('sms')->info('SMS validation envoyé', [
-                    'locataire_id' => $locataire->id,
-                    'to' => $phoneNumber,
-                    'message_sid' => $message->sid
-                ]);
-
-            } catch (TwilioException $e) {
-                Log::channel('sms')->error('Erreur SMS validation', [
-                    'locataire_id' => $locataire->id,
-                    'error' => $e->getMessage()
-                ]);
+                $smsContent = "Bonjour {$locataire->prenom}, votre compte locataire a ete cree. Votre identifiant de connexion est : {$locataire->code_id}. Definissez votre mot de passe ici : {$validationUrl} (code: {$code}). Agence: {$agence->name}";
+                $yellika->send($locataire->contact, $smsContent);
+            } catch (\Exception $smsEx) {
+                Log::error('Erreur envoi SMS locataire: ' . $smsEx->getMessage());
             }
-            /**********************************************************************
-             * FIN DE L'INTÉGRATION SMS
-             **********************************************************************/
 
             return redirect()->route('locataire.admin.index')->with('success', 'Locataire créé avec succès!');
-
         } catch (\Exception $e) {
             Log::error('Error creating locataire: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -1045,8 +837,7 @@ class LocataireController extends Controller
             return view('agence.locataire.auth.validate', compact('email'));
         } else {
             return redirect()->route('login')->with('error', 'Email inconnu');
-        }
-        ;
+        };
     }
 
     public function submitDefineAccess(Request $request)
@@ -1135,6 +926,15 @@ class LocataireController extends Controller
                     'title' => 'Compte désactivé',
                     'message' => 'Votre compte est désactivé. Veuillez contacter votre propriétaire/agence pour plus d\'informations.',
                     'status' => $locataire->status
+                ]);
+            }
+
+            // Vérifier si le locataire a encore un bien actif
+            if ($locataire && !$locataire->bien) {
+                return back()->withInput()->with('account_error', [
+                    'title' => 'Accès refusé',
+                    'message' => 'Vous ne louez plus de bien. Votre accès a été désactivé. Veuillez contacter votre agence/propriétaire pour plus d\'informations.',
+                    'status' => 'Sans bien'
                 ]);
             }
 
@@ -1232,7 +1032,6 @@ class LocataireController extends Controller
             $locataire->save();
 
             return redirect()->route('locataire.dashboard')->with('success', 'Vos informations on bien été mis à jour!');
-
         } catch (\Exception $e) {
             Log::error('Erreur mise à jour profil agence: ' . $e->getMessage());
             return back()->with('error', 'Une erreur est survenue lors de la mise à jour');
@@ -1264,7 +1063,6 @@ class LocataireController extends Controller
             ));
 
             return response()->json(['success' => true]);
-
         } catch (Exception $e) {
             Log::error('Email error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([

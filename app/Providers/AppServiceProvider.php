@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Interfaces\SMSProviderInterface;
-use App\Services\OrangeSMSService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -27,10 +25,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
-        
+
         $this->configureRoutes();
     }
-    
+
     protected function configureRoutes()
     {
         Route::prefix('api')

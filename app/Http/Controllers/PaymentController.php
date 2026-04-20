@@ -8,6 +8,7 @@ use App\Models\Bien;
 use App\Models\CashVerificationCode;
 use App\Models\Locataire;
 use App\Services\FirebaseService;
+use App\Services\WaveService;
 use App\Models\Paiement;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -20,7 +21,6 @@ use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Twilio\Rest\Client;
 
 class PaymentController extends Controller
 {
@@ -33,18 +33,18 @@ class PaymentController extends Controller
         ]);
 
         $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-        
+
         // Calcul des montants
         $montantLoyer = $locataire->bien->prix ?? 0;
         $tauxMajoration = $request->taux_majoration ?? 0;
         $nouveauMontant = $montantLoyer * (1 + $tauxMajoration / 100);
-        
+
         // Mise à jour BDD
         $bien = $locataire->bien->fresh();
         $bien->montant_majore = $nouveauMontant;
         $bien->save();
-        
-        Log::info('Envoi rappel à: '.$request->email, ['montant' => $nouveauMontant]);
+
+        Log::info('Envoi rappel à: ' . $request->email, ['montant' => $nouveauMontant]);
 
         // 1. ENVOI EMAIL
         try {
@@ -52,46 +52,27 @@ class PaymentController extends Controller
         } catch (\Exception $e) {
             Log::error("Erreur Mail: " . $e->getMessage());
         }
-        
+
         // 2. ENVOI SMS
         try {
-            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-            // Configuration SSL Twilio pour local (Optionnel si prod)
-            /* $httpClient = new \Twilio\Http\CurlClient([
-                CURLOPT_CAINFO => storage_path('app/certs/cacert.pem'), // Adapter le chemin si besoin
-                CURLOPT_SSL_VERIFYPEER => true,
-            ]);
-            $twilio->setHttpClient($httpClient); */
-
-            $phoneNumber = $locataire->contact; // Pense à formater le numéro si nécessaire (+225...)
-            
-            $smsContent = "Bonjour {$locataire->prenom},\n"
-                        . "Rappel Loyer {$bien->type}: " . number_format($nouveauMontant, 0, ',', ' ') . " FCFA\n"
-                        . "Date limite: {$bien->date_fixe} du mois.\n"
-                        . "Merci de régulariser votre situation.";
-
-            $twilio->messages->create(
-                $phoneNumber,
-                [
-                    'from' => env('TWILIO_PHONE_NUMBER'),
-                    'body' => $smsContent,
-                ]
-            );
-            Log::info("SMS envoyé à $phoneNumber");
+            $yellika = new \App\Services\YellikaService();
+            $smsContent = "Bonjour {$locataire->prenom}, rappel loyer {$bien->type} : " . number_format($nouveauMontant, 0, ',', ' ') . " FCFA. Date limite : le {$bien->date_fixe} du mois. Merci de regulariser votre situation.";
+            $yellika->send($locataire->contact, $smsContent);
+            Log::info('SMS rappel loyer envoyé', ['locataire_id' => $locataire->id]);
         } catch (\Exception $e) {
-            Log::error('Erreur SMS: ' . $e->getMessage());
+            Log::error('Erreur SMS rappel: ' . $e->getMessage());
         }
 
         // 3. ENVOI PUSH NOTIFICATION (NOUVEAU)
-       try {
+        try {
             if ($locataire->fcm_token) {
                 $firebaseService = new FirebaseService();
 
                 $titre = "Rappel de Paiement 📅";
                 $message = "Votre loyer de " . number_format($nouveauMontant, 0, ',', ' ') . " FCFA est en attente.";
-                
+
                 // On retire $imageUrl car ton service ne l'utilise plus
-                
+
                 $dataRedirection = [
                     'type' => 'payment_reminder',
                     'montant' => (string) $nouveauMontant, // Converti en string, c'est bien
@@ -107,7 +88,7 @@ class PaymentController extends Controller
                     $message,
                     $dataRedirection
                 );
-                
+
                 Log::info("Notification Push envoyée au locataire ID: " . $locataire->id);
             } else {
                 Log::warning("Pas de fcm_token pour le locataire ID: " . $locataire->id);
@@ -140,7 +121,7 @@ class PaymentController extends Controller
             ->first();
 
         // Déterminer le mois à payer
-        $moisAPayer = $dernierPaiement 
+        $moisAPayer = $dernierPaiement
             ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
             : now();
 
@@ -152,216 +133,216 @@ class PaymentController extends Controller
 
         if ($paiementExistant) {
             return redirect()->route('locataire.paiements.index', $locataire)
-                ->with('error', 'Le loyer pour '.$moisAPayer->translatedFormat('F Y').' a déjà été payé.');
+                ->with('error', 'Le loyer pour ' . $moisAPayer->translatedFormat('F Y') . ' a déjà été payé.');
         }
 
         return view('locataire.paiements.create', [
             'locataire' => $locataire->load('bien'),
-            'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix ,
+            'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
             'mois_couvert' => $moisAPayer->format('Y-m'),
             'mois_couvert_display' => $moisAPayer->translatedFormat('F Y')
         ]);
     }
 
-public function store(Request $request, Locataire $locataire)
-{
-    $request->validate([
-        'mois_couvert' => 'required|date_format:Y-m',
-        'transaction_id' => 'required_if:methode_paiement,mobile_money',
-        'proof_file' => 'required_if:methode_paiement,virement|file|mimes:jpg,jpeg,png,pdf|max:2048',
-    ]);
-
-    // Générer un transaction_id si absent (pour virement)
-    $transaction_id = $request->transaction_id ?? 'VIR_' . Str::random(10);
-
-    // Vérifier si le paiement existe déjà
-    $existingPayment = Paiement::where('transaction_id', $transaction_id)->first();
-    if ($existingPayment) {
-        return redirect()->route('locataire.paiements.index', $locataire)
-            ->with('success', 'Paiement déjà enregistré pour ' . Carbon::parse($request->mois_couvert)->translatedFormat('F Y'));
-    }
-
-    // Déterminer automatiquement le mois à payer
-    $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
-        ->where('statut', 'payé')
-        ->orderBy('mois_couvert', 'desc')
-        ->first();
-
-    $moisAPayer = $dernierPaiement 
-        ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
-        : now();
-
-    // Vérifier si ce mois n'a pas déjà été payé
-    $paiementExistant = Paiement::where('locataire_id', $locataire->id)
-        ->where('mois_couvert', $moisAPayer->format('Y-m'))
-        ->where('statut', 'payé')
-        ->exists();
-
-    if ($paiementExistant) {
-        return back()->with('error', 'Le loyer pour '.$moisAPayer->translatedFormat('F Y').' a déjà été payé.');
-    }
-
-    // Gestion du fichier de preuve
-    $proofPath = null;
-    if ($request->hasFile('proof_file')) {
-        $proofPath = $request->file('proof_file')->store('preuves_virements', 'public');
-    }
-
-    // Déterminer la méthode et le statut
-    $methode = $request->methode_paiement === 'virement' ? 'Virement Bancaire' : 'Mobile Money';
-    $statut = $request->methode_paiement === 'virement' ? 'En attente' : 'payé';
-
-    $typePrefix = '';
-    switch('methode_paiement') {
-        case 'Espèces':
-            $typePrefix = 'PAY-';
-            break;
-        case 'Mobile Money':
-            $typePrefix = 'PAY-';
-            break;
-        case 'Virement Bancaire':
-            $typePrefix = 'PAY-';
-            break;
-        default:
-            $typePrefix = 'PAY-'; // Par défaut si aucun cas ne correspond
-    }
-
-    do {
-        $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-        $numeroId = $typePrefix . $randomNumber;
-    } while (Paiement::where('reference', $numeroId)->exists());
-
-    // Enregistrer le paiement
-    $paiement = Paiement::create([
-        'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
-        'date_paiement' => now(),
-        'mois_couvert' => $moisAPayer->format('Y-m'),
-        'methode_paiement' => $methode,
-        'statut' => $statut,
-        'reference' => $numeroId,
-        'locataire_id' => $locataire->id,
-        'bien_id' => $locataire->bien_id,
-        'transaction_id' => $transaction_id,
-        'proof_path' => $proofPath,
-    ]);
-
-    // Réinitialiser le montant majoré si nécessaire
-    if ($locataire->bien->montant_majore) {
-        $locataire->bien->update(['montant_majore' => null]);
-    }
-
-    return redirect()->route('locataire.paiements.index', $locataire)
-        ->with('success', 'Paiement enregistré avec succès pour le mois de '.$moisAPayer->translatedFormat('F Y'));
-}
-
-   public function handleCinetPayNotification(Request $request, Locataire $locataire)
-{
-    Log::info('Notification CinetPay reçue:', $request->all());
-
-    try {
-        $data = $request->validate([
-            'cpm_trans_id' => 'required',
-            'cpm_amount' => 'required|numeric',
-            'cpm_currency' => 'required',
-            'signature' => 'required',
-            'cpm_result' => 'required|string',
-            'cpm_payment_date' => 'required'
+    public function store(Request $request, Locataire $locataire)
+    {
+        $request->validate([
+            'mois_couvert' => 'required|date_format:Y-m',
+            'transaction_id' => 'required_if:methode_paiement,mobile_money',
+            'proof_file' => 'required_if:methode_paiement,virement|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
-        // 1. Vérification signature
-        $signature = hash_hmac('sha256', 
-            $data['cpm_trans_id'].$data['cpm_amount'].$data['cpm_currency'], 
-            config('services.cinetpay.api_key')
-        );
+        // Générer un transaction_id si absent (pour virement)
+        $transaction_id = $request->transaction_id ?? 'VIR_' . Str::random(10);
 
-        if (!hash_equals($signature, $data['signature'])) {
-            Log::error('Signature invalide', [
-                'received' => $data['signature'],
-                'calculated' => $signature,
-                'data' => $data
-            ]);
-            return response()->json(['status' => 'error', 'message' => 'Signature invalide'], 400);
+        // Vérifier si le paiement existe déjà
+        $existingPayment = Paiement::where('transaction_id', $transaction_id)->first();
+        if ($existingPayment) {
+            return redirect()->route('locataire.paiements.index', $locataire)
+                ->with('success', 'Paiement déjà enregistré pour ' . Carbon::parse($request->mois_couvert)->translatedFormat('F Y'));
         }
 
-        // 2. Vérifier si le paiement a réussi
-        if ($data['cpm_result'] !== '00') {
-            Log::info('Paiement échoué', ['transaction_id' => $data['cpm_trans_id']]);
-            return response()->json(['status' => 'error', 'message' => 'Paiement échoué'], 400);
+        // Déterminer automatiquement le mois à payer
+        $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
+            ->where('statut', 'payé')
+            ->orderBy('mois_couvert', 'desc')
+            ->first();
+
+        $moisAPayer = $dernierPaiement
+            ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
+            : now();
+
+        // Vérifier si ce mois n'a pas déjà été payé
+        $paiementExistant = Paiement::where('locataire_id', $locataire->id)
+            ->where('mois_couvert', $moisAPayer->format('Y-m'))
+            ->where('statut', 'payé')
+            ->exists();
+
+        if ($paiementExistant) {
+            return back()->with('error', 'Le loyer pour ' . $moisAPayer->translatedFormat('F Y') . ' a déjà été payé.');
         }
 
-        // 3. Récupérer les données temporaires depuis la session
-        $paiementData = session()->get('pending_payment');
-
-        if (!$paiementData || $paiementData['transaction_id'] !== $data['cpm_trans_id']) {
-            Log::error('Données de paiement introuvables ou incohérentes');
-            return response()->json(['status' => 'error', 'message' => 'Données de paiement introuvables'], 404);
+        // Gestion du fichier de preuve
+        $proofPath = null;
+        if ($request->hasFile('proof_file')) {
+            $proofPath = $request->file('proof_file')->store('preuves_virements', 'public');
         }
 
-        // 4. Convertir la date de CinetPay
-        try {
-            $paymentDate = Carbon::createFromFormat('Y-m-d H:i:s', $data['cpm_payment_date']);
-        } catch (\Exception $e) {
-            $paymentDate = now();
-            Log::warning('Format de date invalide, utilisation de la date actuelle', [
-                'received_date' => $data['cpm_payment_date'],
-                'error' => $e->getMessage()
-            ]);
+        // Déterminer la méthode et le statut
+        $methode = $request->methode_paiement === 'virement' ? 'Virement Bancaire' : 'Mobile Money';
+        $statut = $request->methode_paiement === 'virement' ? 'En attente' : 'payé';
+
+        $typePrefix = '';
+        switch ('methode_paiement') {
+            case 'Espèces':
+                $typePrefix = 'PAY-';
+                break;
+            case 'Mobile Money':
+                $typePrefix = 'PAY-';
+                break;
+            case 'Virement Bancaire':
+                $typePrefix = 'PAY-';
+                break;
+            default:
+                $typePrefix = 'PAY-'; // Par défaut si aucun cas ne correspond
         }
-         $typePrefix = '';
-    switch('methode_paiement') {
-        case 'Espèces':
-            $typePrefix = 'PAY-';
-            break;
-        case 'Mobile Money':
-            $typePrefix = 'PAY-';
-            break;
-        case 'Virement Bancaire':
-            $typePrefix = 'PAY-';
-            break;
-        default:
-            $typePrefix = 'PAY-'; // Par défaut si aucun cas ne correspond
-    }
 
-    do {
-        $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-        $numeroId = $typePrefix . $randomNumber;
-    } while (Paiement::where('reference', $numeroId)->exists());
+        do {
+            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+            $numeroId = $typePrefix . $randomNumber;
+        } while (Paiement::where('reference', $numeroId)->exists());
 
-
-        // 5. Enregistrer définitivement le paiement
+        // Enregistrer le paiement
         $paiement = Paiement::create([
-            'montant' => $paiementData['montant'],
-            'date_paiement' => $paymentDate,
-            'mois_couvert' => $paiementData['mois_couvert'],
-            'methode_paiement' => 'Mobile Money',
-            'statut' => 'payé',
-            'reference' => '$numeroId',
-            'locataire_id' => $paiementData['locataire_id'],
-            'bien_id' => $paiementData['bien_id'],
-            'comptable_id' => $paiementData['comptable_id'],
-            'transaction_id' => $data['cpm_trans_id']
+            'montant' => $locataire->bien->montant_majore ?? $locataire->bien->prix,
+            'date_paiement' => now(),
+            'mois_couvert' => $moisAPayer->format('Y-m'),
+            'methode_paiement' => $methode,
+            'statut' => $statut,
+            'reference' => $numeroId,
+            'locataire_id' => $locataire->id,
+            'bien_id' => $locataire->bien_id,
+            'transaction_id' => $transaction_id,
+            'proof_path' => $proofPath,
         ]);
 
-        // 6. Supprimer les données temporaires
-        session()->forget('pending_payment');
-
-        // 7. Réinitialiser le montant majoré si nécessaire
+        // Réinitialiser le montant majoré si nécessaire
         if ($locataire->bien->montant_majore) {
             $locataire->bien->update(['montant_majore' => null]);
         }
 
-        Log::info('Paiement enregistré avec succès', ['paiement_id' => $paiement->id]);
-
-        return response()->json(['status' => 'success', 'message' => 'Paiement enregistré']);
-
-    } catch (\Exception $e) {
-        Log::error('Erreur dans handleCinetPayNotification: ' . $e->getMessage(), [
-            'exception' => $e,
-            'request_data' => $request->all()
-        ]);
-        return response()->json(['status' => 'error', 'message' => 'Erreur interne'], 500);
+        return redirect()->route('locataire.paiements.index', $locataire)
+            ->with('success', 'Paiement enregistré avec succès pour le mois de ' . $moisAPayer->translatedFormat('F Y'));
     }
-}
+
+    public function handleCinetPayNotification(Request $request, Locataire $locataire)
+    {
+        Log::info('Notification CinetPay reçue:', $request->all());
+
+        try {
+            $data = $request->validate([
+                'cpm_trans_id' => 'required',
+                'cpm_amount' => 'required|numeric',
+                'cpm_currency' => 'required',
+                'signature' => 'required',
+                'cpm_result' => 'required|string',
+                'cpm_payment_date' => 'required'
+            ]);
+
+            // 1. Vérification signature
+            $signature = hash_hmac(
+                'sha256',
+                $data['cpm_trans_id'] . $data['cpm_amount'] . $data['cpm_currency'],
+                config('services.cinetpay.api_key')
+            );
+
+            if (!hash_equals($signature, $data['signature'])) {
+                Log::error('Signature invalide', [
+                    'received' => $data['signature'],
+                    'calculated' => $signature,
+                    'data' => $data
+                ]);
+                return response()->json(['status' => 'error', 'message' => 'Signature invalide'], 400);
+            }
+
+            // 2. Vérifier si le paiement a réussi
+            if ($data['cpm_result'] !== '00') {
+                Log::info('Paiement échoué', ['transaction_id' => $data['cpm_trans_id']]);
+                return response()->json(['status' => 'error', 'message' => 'Paiement échoué'], 400);
+            }
+
+            // 3. Récupérer les données temporaires depuis la session
+            $paiementData = session()->get('pending_payment');
+
+            if (!$paiementData || $paiementData['transaction_id'] !== $data['cpm_trans_id']) {
+                Log::error('Données de paiement introuvables ou incohérentes');
+                return response()->json(['status' => 'error', 'message' => 'Données de paiement introuvables'], 404);
+            }
+
+            // 4. Convertir la date de CinetPay
+            try {
+                $paymentDate = Carbon::createFromFormat('Y-m-d H:i:s', $data['cpm_payment_date']);
+            } catch (\Exception $e) {
+                $paymentDate = now();
+                Log::warning('Format de date invalide, utilisation de la date actuelle', [
+                    'received_date' => $data['cpm_payment_date'],
+                    'error' => $e->getMessage()
+                ]);
+            }
+            $typePrefix = '';
+            switch ('methode_paiement') {
+                case 'Espèces':
+                    $typePrefix = 'PAY-';
+                    break;
+                case 'Mobile Money':
+                    $typePrefix = 'PAY-';
+                    break;
+                case 'Virement Bancaire':
+                    $typePrefix = 'PAY-';
+                    break;
+                default:
+                    $typePrefix = 'PAY-'; // Par défaut si aucun cas ne correspond
+            }
+
+            do {
+                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $numeroId = $typePrefix . $randomNumber;
+            } while (Paiement::where('reference', $numeroId)->exists());
+
+
+            // 5. Enregistrer définitivement le paiement
+            $paiement = Paiement::create([
+                'montant' => $paiementData['montant'],
+                'date_paiement' => $paymentDate,
+                'mois_couvert' => $paiementData['mois_couvert'],
+                'methode_paiement' => 'Mobile Money',
+                'statut' => 'payé',
+                'reference' => '$numeroId',
+                'locataire_id' => $paiementData['locataire_id'],
+                'bien_id' => $paiementData['bien_id'],
+                'comptable_id' => $paiementData['comptable_id'],
+                'transaction_id' => $data['cpm_trans_id']
+            ]);
+
+            // 6. Supprimer les données temporaires
+            session()->forget('pending_payment');
+
+            // 7. Réinitialiser le montant majoré si nécessaire
+            if ($locataire->bien->montant_majore) {
+                $locataire->bien->update(['montant_majore' => null]);
+            }
+
+            Log::info('Paiement enregistré avec succès', ['paiement_id' => $paiement->id]);
+
+            return response()->json(['status' => 'success', 'message' => 'Paiement enregistré']);
+        } catch (\Exception $e) {
+            Log::error('Erreur dans handleCinetPayNotification: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request_data' => $request->all()
+            ]);
+            return response()->json(['status' => 'error', 'message' => 'Erreur interne'], 500);
+        }
+    }
 
     public function checkPaymentStatus(Request $request)
     {
@@ -370,7 +351,7 @@ public function store(Request $request, Locataire $locataire)
         ]);
 
         $paiement = Paiement::where('transaction_id', $request->transaction_id)
-                          ->firstOrFail();
+            ->firstOrFail();
 
         return response()->json([
             'status' => $paiement->statut,
@@ -380,646 +361,733 @@ public function store(Request $request, Locataire $locataire)
     }
 
     public function generateCashCode(Request $request)
-{
-    $request->validate([
-        'locataire_id' => 'required|exists:locataires,id',
-        'nombre_mois' => 'required|integer|min:1'
-    ]);
+    {
+        $request->validate([
+            'locataire_id' => 'required|exists:locataires,id',
+            'nombre_mois' => 'required|integer|min:1'
+        ]);
 
-    $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-    
-    // Générer un code aléatoire de 6 caractères
-    $code = Str::upper(Str::random(6));
-    
-    // Calculer le montant total
-    $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
-    $montantTotal = $montantParMois * $request->nombre_mois;
+        $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
 
-    // Déterminer les mois couverts
-    $moisCouverts = [];
-    $dateActuelle = now();
-    for ($i = 0; $i < $request->nombre_mois; $i++) {
-        $moisCouverts[] = $dateActuelle->copy()->addMonths($i)->format('Y-m');
-    }
-    $moisCouvertsStr = implode(', ', $moisCouverts);
+        // Générer un code aléatoire de 6 caractères
+        $code = Str::upper(Str::random(6));
 
-    // Options du QR Code
-    $options = new QROptions([
-        'version' => 10,
-        'outputType' => QRCode::OUTPUT_IMAGE_PNG,
-        'eccLevel' => QRCode::ECC_L,
-        'scale' => 5,
-        'imageBase64' => false,
-        'quietzoneSize' => 2,
-    ]);
+        // Calculer le montant total
+        $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
+        $montantTotal = $montantParMois * $request->nombre_mois;
 
-    // Générer le QR code
-    $qrcode = (new QRCode($options))->render($code);
-    $qrCodePath = 'qrcodes/cash_payments/' . $code . '.png';
-    Storage::disk('public')->put($qrCodePath, $qrcode);
+        // Déterminer les mois couverts
+        $moisCouverts = [];
+        $dateActuelle = now();
+        for ($i = 0; $i < $request->nombre_mois; $i++) {
+            $moisCouverts[] = $dateActuelle->copy()->addMonths($i)->format('Y-m');
+        }
+        $moisCouvertsStr = implode(', ', $moisCouverts);
 
-    // Créer ou mettre à jour le code
-    $cashCode = CashVerificationCode::updateOrCreate(
-        ['locataire_id' => $locataire->id],
-        [
-            'code' => $code,
-            'expires_at' => now()->addHours(24),
-            'nombre_mois' => $request->nombre_mois ?? 1,
-            'mois_couverts' => $moisCouvertsStr,
-            'montant_total' => $montantTotal,
-            'is_archived' => false,
-            'used_at' => null,
-            'paiement_id' => null,
-            'qr_code_path' => $qrCodePath
-        ]
-    );
+        // Options du QR Code
+        $options = new QROptions([
+            'version' => 10,
+            'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+            'eccLevel' => QRCode::ECC_L,
+            'scale' => 5,
+            'imageBase64' => false,
+            'quietzoneSize' => 2,
+        ]);
 
-    // Envoyer le code et le QR code par email
-    try {
-        Mail::to($locataire->email)->send(new \App\Mail\CashPaymentCodeMail(
-            $code, 
-            $locataire,
-            $montantTotal,
-            $moisCouvertsStr,
-            Storage::url($qrCodePath)
-        ));
-        
-        /**********************************************************************
-         * ENVOI DU CODE PAR SMS (NOUVEAU CODE)
-         **********************************************************************/
-        try {
-            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-            
-            $httpClient = new \Twilio\Http\CurlClient([
-                CURLOPT_CAINFO => storage_path('certs/cacert.pem'),
-                CURLOPT_SSL_VERIFYPEER => true,
-                CURLOPT_SSL_VERIFYHOST => 2,
-            ]);
-            $twilio->setHttpClient($httpClient);
+        // Générer le QR code
+        $qrcode = (new QRCode($options))->render($code);
+        $qrCodePath = 'qrcodes/cash_payments/' . $code . '.png';
+        Storage::disk('public')->put($qrCodePath, $qrcode);
 
-            $phoneNumber = $this->formatPhoneNumberForSms($locataire->contact);
-
-            $smsContent = "Bonjour {$locataire->prenom},\n\n"
-                        . "Votre code de paiement cash: {$code}\n"
-                        . "Montant: {$montantTotal} FCFA\n"
-                        . "Mois: {$moisCouvertsStr}\n\n"
-                        . "Ce code expire dans 24h.";
-
-            $message = $twilio->messages->create(
-                $phoneNumber,
-                [
-                    'from' => env('TWILIO_PHONE_NUMBER'),
-                    'body' => $smsContent
-                ]
-            );
-
-            Log::channel('sms')->info('SMS cash code envoyé', [
-                'locataire_id' => $locataire->id,
+        // Créer ou mettre à jour le code
+        $cashCode = CashVerificationCode::updateOrCreate(
+            ['locataire_id' => $locataire->id],
+            [
                 'code' => $code,
-                'message_sid' => $message->sid
-            ]);
+                'expires_at' => now()->addHours(24),
+                'nombre_mois' => $request->nombre_mois ?? 1,
+                'mois_couverts' => $moisCouvertsStr,
+                'montant_total' => $montantTotal,
+                'is_archived' => false,
+                'used_at' => null,
+                'paiement_id' => null,
+                'qr_code_path' => $qrCodePath
+            ]
+        );
 
+        // Envoyer le code et le QR code par email
+        try {
+            Mail::to($locataire->email)->send(new \App\Mail\CashPaymentCodeMail(
+                $code,
+                $locataire,
+                $montantTotal,
+                $moisCouvertsStr,
+                Storage::url($qrCodePath)
+            ));
+
+            /**********************************************************************
+             * ENVOI DU CODE PAR SMS (YELLIKA)
+             **********************************************************************/
+            try {
+                $yellika = new \App\Services\YellikaService();
+                $smsContent = "Bonjour {$locataire->prenom}, votre code de paiement cash est : {$code}. Montant : {$montantTotal} FCFA. Mois : {$moisCouvertsStr}. Ce code expire dans 24h.";
+                $yellika->send($locataire->contact, $smsContent);
+                Log::info('SMS cash code envoyé', ['locataire_id' => $locataire->id, 'code' => $code]);
+            } catch (\Exception $e) {
+                Log::error('Erreur envoi SMS cash code', ['locataire_id' => $locataire->id, 'error' => $e->getMessage()]);
+            }
+            /**********************************************************************
+             * FIN DU NOUVEAU CODE
+             **********************************************************************/
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Le code de vérification a été envoyé par email et SMS au locataire.',
+                'mois_couverts' => $moisCouvertsStr,
+                'montant_total' => $montantTotal,
+                'qr_code_url' => Storage::url($qrCodePath),
+                'qr_code_base64' => base64_encode($qrcode)
+            ]);
         } catch (\Exception $e) {
-            Log::channel('sms')->error('Erreur envoi SMS cash code', [
-                'locataire_id' => $locataire->id,
-                'error' => $e->getMessage()
-            ]);
-        }
-        /**********************************************************************
-         * FIN DU NOUVEAU CODE
-         **********************************************************************/
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Le code de vérification a été envoyé par email et SMS au locataire.',
-            'mois_couverts' => $moisCouvertsStr,
-            'montant_total' => $montantTotal,
-            'qr_code_url' => Storage::url($qrCodePath),
-            'qr_code_base64' => base64_encode($qrcode)
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Le code a été généré mais l\'envoi par email a échoué.'
-        ], 500);
-    }
-}
-
-/**
- * Méthode helper pour formater les numéros (à conserver)
- */
-private function formatPhoneNumberForSms(string $phone): string
-{
-    $cleaned = preg_replace('/[^0-9+]/', '', $phone);
-    
-    if (str_starts_with($cleaned, '+225') && strlen($cleaned) === 12) {
-        return $cleaned;
-    }
-    
-    $cleaned = ltrim($cleaned, '+');
-    $cleaned = preg_replace('/^00/', '', $cleaned);
-    $baseNumber = substr($cleaned, -8);
-    
-    if (!preg_match('/^[0-9]{8,15}$/', $baseNumber)) {
-        throw new \Exception('Numéro de téléphone invalide');
-    }
-    
-    return '+225' . $baseNumber;
-}
-    
-public function verifyCashCode(Request $request)
-{
-    $request->validate([
-        'locataire_id' => 'required|exists:locataires,id',
-        'code' => 'required|string|size:6',
-        'nombre_mois' => 'sometimes|integer|min:1'
-    ]);
-
-    DB::beginTransaction();
-
-    try {
-        $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-        $nombreMois = $request->nombre_mois ?? 1;
-
-        // Vérifier le code
-        $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
-            ->where('code', $request->code)
-            ->where('expires_at', '>', now())
-            ->whereNull('used_at')
-            ->first();
-
-        if (!$codeValide) {
             return response()->json([
                 'success' => false,
-                'message' => 'Code invalide ou expiré'
-            ], 400);
+                'message' => 'Le code a été généré mais l\'envoi par email a échoué.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Méthode helper pour formater les numéros (à conserver)
+     */
+    private function formatPhoneNumberForSms(string $phone): string
+    {
+        $cleaned = preg_replace('/[^0-9+]/', '', $phone);
+
+        if (str_starts_with($cleaned, '+225') && strlen($cleaned) === 12) {
+            return $cleaned;
         }
 
-        // Utiliser le nombre de mois du code si disponible
-        if ($codeValide->nombre_mois) {
-            $nombreMois = $codeValide->nombre_mois;
+        $cleaned = ltrim($cleaned, '+');
+        $cleaned = preg_replace('/^00/', '', $cleaned);
+        $baseNumber = substr($cleaned, -8);
+
+        if (!preg_match('/^[0-9]{8,15}$/', $baseNumber)) {
+            throw new \Exception('Numéro de téléphone invalide');
         }
 
-        // Déterminer le mois de départ
-        $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
-            ->where('statut', 'payé')
-            ->orderBy('mois_couvert', 'desc')
-            ->first();
+        return '+225' . $baseNumber;
+    }
 
-        $dateDebut = $dernierPaiement 
-            ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
-            : now();
+    public function verifyCashCode(Request $request)
+    {
+        $request->validate([
+            'locataire_id' => 'required|exists:locataires,id',
+            'code' => 'required|string|size:6',
+            'nombre_mois' => 'sometimes|integer|min:1'
+        ]);
 
-        // Préparer les mois à payer
-        $moisAPayer = [];
-        $moisDejaPayes = [];
-        $currentDate = $dateDebut->copy();
+        DB::beginTransaction();
 
-        for ($i = 0; $i < $nombreMois; $i++) {
-            $moisFormat = $currentDate->format('Y-m');
-            
-            $paiementExistant = Paiement::where('locataire_id', $locataire->id)
-                ->where('mois_couvert', $moisFormat)
-                ->where('statut', 'payé')
-                ->exists();
+        try {
+            $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+            $nombreMois = $request->nombre_mois ?? 1;
 
-            if ($paiementExistant) {
-                $moisDejaPayes[] = $currentDate->translatedFormat('F Y');
-            } else {
-                $moisAPayer[] = [
-                    'mois' => $moisFormat,
-                    'libelle' => $currentDate->translatedFormat('F Y')
-                ];
+            // Vérifier le code
+            $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
+                ->where('code', $request->code)
+                ->where('expires_at', '>', now())
+                ->whereNull('used_at')
+                ->first();
+
+            if (!$codeValide) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Code invalide ou expiré'
+                ], 400);
             }
 
-            $currentDate->addMonth();
-        }
+            // Utiliser le nombre de mois du code si disponible
+            if ($codeValide->nombre_mois) {
+                $nombreMois = $codeValide->nombre_mois;
+            }
 
-        if (empty($moisAPayer)) {
+            // Déterminer le mois de départ
+            $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
+                ->where('statut', 'payé')
+                ->orderBy('mois_couvert', 'desc')
+                ->first();
+
+            $dateDebut = $dernierPaiement
+                ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
+                : now();
+
+            // Préparer les mois à payer
+            $moisAPayer = [];
+            $moisDejaPayes = [];
+            $currentDate = $dateDebut->copy();
+
+            for ($i = 0; $i < $nombreMois; $i++) {
+                $moisFormat = $currentDate->format('Y-m');
+
+                $paiementExistant = Paiement::where('locataire_id', $locataire->id)
+                    ->where('mois_couvert', $moisFormat)
+                    ->where('statut', 'payé')
+                    ->exists();
+
+                if ($paiementExistant) {
+                    $moisDejaPayes[] = $currentDate->translatedFormat('F Y');
+                } else {
+                    $moisAPayer[] = [
+                        'mois' => $moisFormat,
+                        'libelle' => $currentDate->translatedFormat('F Y')
+                    ];
+                }
+
+                $currentDate->addMonth();
+            }
+
+            if (empty($moisAPayer)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tous les mois sélectionnés ont déjà été payés: ' . implode(', ', $moisDejaPayes)
+                ], 400);
+            }
+
+            // Montant par mois
+            $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
+            $montantTotal = $montantParMois * count($moisAPayer);
+
+            // Générer une référence de base
+            $typePrefix = 'PAY-';
+            do {
+                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $referenceBase = $typePrefix . $randomNumber;
+            } while (Paiement::where('reference', 'like', $referenceBase . '%')->exists());
+
+            // Enregistrement des paiements
+            foreach ($moisAPayer as $mois) {
+                Paiement::create([
+                    'montant' => $montantParMois,
+                    'date_paiement' => now(),
+                    'mois_couvert' => $mois['mois'],
+                    'methode_paiement' => 'Espèces',
+                    'statut' => 'payé',
+                    'reference' => $referenceBase . '-' . $mois['mois'],
+                    'locataire_id' => $locataire->id,
+                    'bien_id' => $locataire->bien_id,
+                    'verif_espece' => $request->code,
+                    'nombre_mois' => $nombreMois
+                ]);
+            }
+
+            // Marquer le code comme utilisé
+            $codeValide->update([
+                'used_at' => now(),
+                'paiement_id' => null, // ou l'ID du premier paiement si vous voulez faire le lien
+                'is_archived' => true
+            ]);
+
+            // Réinitialiser le montant majoré si nécessaire
+            if ($locataire->bien->montant_majore) {
+                $locataire->bien->update(['montant_majore' => null]);
+            }
+
+            DB::commit();
+
+            // Message de confirmation
+            $message = 'Paiement enregistré avec succès pour ' . count($moisAPayer) . ' mois: ' .
+                implode(', ', array_column($moisAPayer, 'libelle'));
+
+            if (!empty($moisDejaPayes)) {
+                $message .= ' (Mois déjà payés: ' . implode(', ', $moisDejaPayes) . ')';
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'montant_total' => $montantTotal,
+                'mois_payes' => implode(', ', array_column($moisAPayer, 'libelle')),
+                'redirect_url' => redirect()->back()->getTargetUrl()
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Erreur lors de la vérification du code: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Tous les mois sélectionnés ont déjà été payés: ' . implode(', ', $moisDejaPayes)
-            ], 400);
+                'message' => 'Une erreur est survenue lors du traitement du paiement'
+            ], 500);
         }
-
-        // Montant par mois
-        $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
-        $montantTotal = $montantParMois * count($moisAPayer);
-
-        // Générer une référence de base
-        $typePrefix = 'PAY-';
-        do {
-            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-            $referenceBase = $typePrefix . $randomNumber;
-        } while (Paiement::where('reference', 'like', $referenceBase . '%')->exists());
-
-        // Enregistrement des paiements
-        foreach ($moisAPayer as $mois) {
-            Paiement::create([
-                'montant' => $montantParMois,
-                'date_paiement' => now(),
-                'mois_couvert' => $mois['mois'],
-                'methode_paiement' => 'Espèces',
-                'statut' => 'payé',
-                'reference' => $referenceBase . '-' . $mois['mois'],
-                'locataire_id' => $locataire->id,
-                'bien_id' => $locataire->bien_id,
-                'verif_espece' => $request->code,
-                'nombre_mois' => $nombreMois
-            ]);
-        }
-
-        // Marquer le code comme utilisé
-        $codeValide->update([
-            'used_at' => now(),
-            'paiement_id' => null, // ou l'ID du premier paiement si vous voulez faire le lien
-            'is_archived' => true
+    }
+    public function verifyCashCodeComptable(Request $request)
+    {
+        $request->validate([
+            'locataire_id' => 'required|exists:locataires,id',
+            'code' => 'required|string|size:6',
+            'nombre_mois' => 'sometimes|integer|min:1'
         ]);
 
-        // Réinitialiser le montant majoré si nécessaire
+        DB::beginTransaction();
+
+        try {
+            $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+            $nombreMois = $request->nombre_mois ?? 1;
+
+            // Vérifier le code
+            $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
+                ->where('code', $request->code)
+                ->where('expires_at', '>', now())
+                ->whereNull('used_at')
+                ->first();
+
+            if (!$codeValide) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Code invalide ou expiré'
+                ], 400);
+            }
+
+            // Utiliser le nombre de mois du code si disponible
+            if ($codeValide->nombre_mois) {
+                $nombreMois = $codeValide->nombre_mois;
+            }
+
+            // Déterminer le mois de départ
+            $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
+                ->where('statut', 'payé')
+                ->orderBy('mois_couvert', 'desc')
+                ->first();
+
+            $dateDebut = $dernierPaiement
+                ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
+                : now();
+
+            // Préparer les mois à payer
+            $moisAPayer = [];
+            $moisDejaPayes = [];
+            $currentDate = $dateDebut->copy();
+
+            for ($i = 0; $i < $nombreMois; $i++) {
+                $moisFormat = $currentDate->format('Y-m');
+
+                $paiementExistant = Paiement::where('locataire_id', $locataire->id)
+                    ->where('mois_couvert', $moisFormat)
+                    ->where('statut', 'payé')
+                    ->exists();
+
+                if ($paiementExistant) {
+                    $moisDejaPayes[] = $currentDate->translatedFormat('F Y');
+                } else {
+                    $moisAPayer[] = [
+                        'mois' => $moisFormat,
+                        'libelle' => $currentDate->translatedFormat('F Y')
+                    ];
+                }
+
+                $currentDate->addMonth();
+            }
+
+            if (empty($moisAPayer)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tous les mois sélectionnés ont déjà été payés: ' . implode(', ', $moisDejaPayes)
+                ], 400);
+            }
+
+            // Montant par mois
+            $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
+            $montantTotal = $montantParMois * count($moisAPayer);
+
+            // Générer une référence de base
+            $typePrefix = 'PAY-';
+            do {
+                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $referenceBase = $typePrefix . $randomNumber;
+            } while (Paiement::where('reference', 'like', $referenceBase . '%')->exists());
+
+            // Enregistrement des paiements
+            foreach ($moisAPayer as $mois) {
+                Paiement::create([
+                    'montant' => $montantParMois,
+                    'date_paiement' => now(),
+                    'mois_couvert' => $mois['mois'],
+                    'methode_paiement' => 'Espèces',
+                    'statut' => 'payé',
+                    'reference' => $referenceBase . '-' . $mois['mois'],
+                    'locataire_id' => $locataire->id,
+                    'bien_id' => $locataire->bien_id,
+                    'verif_espece' => $request->code,
+                    'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
+                    'nombre_mois' => $nombreMois
+                ]);
+            }
+
+            // Marquer le code comme utilisé
+            $codeValide->update([
+                'used_at' => now(),
+                'paiement_id' => null, // ou l'ID du premier paiement si vous voulez faire le lien
+                'is_archived' => true
+            ]);
+
+            // Réinitialiser le montant majoré si nécessaire
+            if ($locataire->bien->montant_majore) {
+                $locataire->bien->update(['montant_majore' => null]);
+            }
+
+            DB::commit();
+
+            // Message de confirmation
+            $message = 'Paiement enregistré avec succès pour ' . count($moisAPayer) . ' mois: ' .
+                implode(', ', array_column($moisAPayer, 'libelle'));
+
+            if (!empty($moisDejaPayes)) {
+                $message .= ' (Mois déjà payés: ' . implode(', ', $moisDejaPayes) . ')';
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'montant_total' => $montantTotal,
+                'mois_payes' => implode(', ', array_column($moisAPayer, 'libelle')),
+                'redirect_url' => redirect()->back()->getTargetUrl()
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Erreur lors de la vérification du code: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors du traitement du paiement'
+            ], 500);
+        }
+    }
+    public function verifyCashCodeAgent(Request $request)
+    {
+        $request->validate([
+            'locataire_id' => 'required|exists:locataires,id',
+            'code' => 'required|string|size:6',
+            'nombre_mois' => 'sometimes|integer|min:1'
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
+            $nombreMois = $request->nombre_mois ?? 1;
+
+            // Vérifier le code
+            $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
+                ->where('code', $request->code)
+                ->where('expires_at', '>', now())
+                ->whereNull('used_at')
+                ->first();
+
+            if (!$codeValide) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Code invalide ou expiré'
+                ], 400);
+            }
+
+            // Utiliser le nombre de mois du code si disponible
+            if ($codeValide->nombre_mois) {
+                $nombreMois = $codeValide->nombre_mois;
+            }
+
+            // Déterminer le mois de départ
+            $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
+                ->where('statut', 'payé')
+                ->orderBy('mois_couvert', 'desc')
+                ->first();
+
+            $dateDebut = $dernierPaiement
+                ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
+                : now();
+
+            // Préparer les mois à payer
+            $moisAPayer = [];
+            $moisDejaPayes = [];
+            $currentDate = $dateDebut->copy();
+
+            for ($i = 0; $i < $nombreMois; $i++) {
+                $moisFormat = $currentDate->format('Y-m');
+
+                $paiementExistant = Paiement::where('locataire_id', $locataire->id)
+                    ->where('mois_couvert', $moisFormat)
+                    ->where('statut', 'payé')
+                    ->exists();
+
+                if ($paiementExistant) {
+                    $moisDejaPayes[] = $currentDate->translatedFormat('F Y');
+                } else {
+                    $moisAPayer[] = [
+                        'mois' => $moisFormat,
+                        'libelle' => $currentDate->translatedFormat('F Y')
+                    ];
+                }
+
+                $currentDate->addMonth();
+            }
+
+            if (empty($moisAPayer)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tous les mois sélectionnés ont déjà été payés: ' . implode(', ', $moisDejaPayes)
+                ], 400);
+            }
+
+            // Montant par mois
+            $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
+            $montantTotal = $montantParMois * count($moisAPayer);
+
+            // Générer une référence de base
+            $typePrefix = 'PAY-';
+            do {
+                $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+                $referenceBase = $typePrefix . $randomNumber;
+            } while (Paiement::where('reference', 'like', $referenceBase . '%')->exists());
+
+            // Enregistrement des paiements
+            foreach ($moisAPayer as $mois) {
+                Paiement::create([
+                    'montant' => $montantParMois,
+                    'date_paiement' => now(),
+                    'mois_couvert' => $mois['mois'],
+                    'methode_paiement' => 'Espèces',
+                    'statut' => 'payé',
+                    'reference' => $referenceBase . '-' . $mois['mois'],
+                    'locataire_id' => $locataire->id,
+                    'bien_id' => $locataire->bien_id,
+                    'verif_espece' => $request->code,
+                    'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
+                    'nombre_mois' => $nombreMois
+                ]);
+            }
+
+            // Marquer le code comme utilisé
+            $codeValide->update([
+                'used_at' => now(),
+                'paiement_id' => null, // ou l'ID du premier paiement si vous voulez faire le lien
+                'is_archived' => true
+            ]);
+
+            // Réinitialiser le montant majoré si nécessaire
+            if ($locataire->bien->montant_majore) {
+                $locataire->bien->update(['montant_majore' => null]);
+            }
+
+            DB::commit();
+
+            // Message de confirmation
+            $message = 'Paiement enregistré avec succès pour ' . count($moisAPayer) . ' mois: ' .
+                implode(', ', array_column($moisAPayer, 'libelle'));
+
+            if (!empty($moisDejaPayes)) {
+                $message .= ' (Mois déjà payés: ' . implode(', ', $moisDejaPayes) . ')';
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'montant_total' => $montantTotal,
+                'mois_payes' => implode(', ', array_column($moisAPayer, 'libelle')),
+                'redirect_url' => redirect()->back()->getTargetUrl()
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Erreur lors de la vérification du code: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors du traitement du paiement'
+            ], 500);
+        }
+    }
+
+    // =====================================================================
+    // WAVE PAYMENT
+    // =====================================================================
+
+    public function initWavePayment(Request $request, Locataire $locataire)
+    {
+        $request->validate(['mois_couvert' => 'required|date_format:Y-m']);
+        Carbon::setLocale('fr');
+
+        $moisAPayer = Carbon::createFromFormat('Y-m', $request->mois_couvert);
+        $exists = Paiement::where('locataire_id', $locataire->id)
+            ->where('mois_couvert', $moisAPayer->format('Y-m'))
+            ->where('statut', 'payé')->exists();
+
+        if ($exists) {
+            return response()->json(['success' => false, 'error' => 'Le loyer pour ' . $moisAPayer->translatedFormat('F Y') . ' a déjà été payé.'], 409);
+        }
+
+        $montant = $locataire->bien->montant_majore ?? $locataire->bien->prix;
+        $transactionId = 'WAVE_' . strtoupper(Str::random(12));
+
+        session()->put('pending_wave_payment', [
+            'locataire_id'   => $locataire->id,
+            'bien_id'        => $locataire->bien_id,
+            'montant'        => $montant,
+            'mois_couvert'   => $moisAPayer->format('Y-m'),
+            'transaction_id' => $transactionId,
+        ]);
+
+        $wave = new WaveService();
+        $result = $wave->createCheckoutSession([
+            'amount'           => $montant,
+            'currency'         => 'XOF',
+            'success_url'      => str_replace('http://', 'https://', route('wave.success', $locataire)),
+            'error_url'        => str_replace('http://', 'https://', route('wave.error', $locataire)),
+            'client_reference' => $transactionId,
+        ]);
+
+        if (!$result['success']) {
+            return response()->json(['success' => false, 'error' => $result['error'] ?? 'Impossible d\'initialiser le paiement Wave.'], 500);
+        }
+
+        return response()->json(['success' => true, 'wave_launch_url' => $result['data']['wave_launch_url']]);
+    }
+
+    public function waveSuccess(Request $request, Locataire $locataire)
+    {
+        Carbon::setLocale('fr');
+        $pendingData = session()->get('pending_wave_payment');
+
+        if (!$pendingData || $pendingData['locataire_id'] !== $locataire->id) {
+            return redirect()->route('locataire.paiements.index', $locataire)
+                ->with('error', 'Données de paiement introuvables.');
+        }
+
+        if (Paiement::where('transaction_id', $pendingData['transaction_id'])->exists()) {
+            session()->forget('pending_wave_payment');
+            return redirect()->route('locataire.paiements.index', $locataire)->with('success', 'Paiement déjà enregistré.');
+        }
+
+        do {
+            $reference = 'PAY-' . str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        } while (Paiement::where('reference', $reference)->exists());
+
+        Paiement::create([
+            'montant'          => $pendingData['montant'],
+            'date_paiement'    => now(),
+            'mois_couvert'     => $pendingData['mois_couvert'],
+            'methode_paiement' => 'Wave',
+            'statut'           => 'payé',
+            'reference'        => $reference,
+            'locataire_id'     => $pendingData['locataire_id'],
+            'bien_id'          => $pendingData['bien_id'],
+            'transaction_id'   => $pendingData['transaction_id'],
+        ]);
+
         if ($locataire->bien->montant_majore) {
             $locataire->bien->update(['montant_majore' => null]);
         }
 
-        DB::commit();
-
-        // Message de confirmation
-        $message = 'Paiement enregistré avec succès pour ' . count($moisAPayer) . ' mois: ' . 
-                  implode(', ', array_column($moisAPayer, 'libelle'));
-        
-        if (!empty($moisDejaPayes)) {
-            $message .= ' (Mois déjà payés: ' . implode(', ', $moisDejaPayes) . ')';
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'montant_total' => $montantTotal,
-            'mois_payes' => implode(', ', array_column($moisAPayer, 'libelle')),
-            'redirect_url' => redirect()->back()->getTargetUrl()
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error("Erreur lors de la vérification du code: " . $e->getMessage());
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Une erreur est survenue lors du traitement du paiement'
-        ], 500);
+        session()->forget('pending_wave_payment');
+        $mois = Carbon::createFromFormat('Y-m', $pendingData['mois_couvert'])->translatedFormat('F Y');
+        return redirect()->route('locataire.paiements.index', $locataire)
+            ->with('success', 'Paiement Wave enregistré avec succès pour ' . $mois);
     }
-}
-public function verifyCashCodeComptable(Request $request)
-{
-    $request->validate([
-        'locataire_id' => 'required|exists:locataires,id',
-        'code' => 'required|string|size:6',
-        'nombre_mois' => 'sometimes|integer|min:1'
-    ]);
 
-    DB::beginTransaction();
+    public function waveError(Request $request, Locataire $locataire)
+    {
+        session()->forget('pending_wave_payment');
+        return redirect()->route('locataire.paiements.create', $locataire)
+            ->with('error', 'Le paiement Wave a été annulé ou a échoué. Veuillez réessayer.');
+    }
 
-    try {
-        $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-        $nombreMois = $request->nombre_mois ?? 1;
+    public function handleWaveWebhook(Request $request)
+    {
+        $payload   = $request->getContent();
+        $signature = $request->header('Wave-Signature');
+        $wave = new WaveService();
 
-        // Vérifier le code
-        $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
-            ->where('code', $request->code)
-            ->where('expires_at', '>', now())
-            ->whereNull('used_at')
-            ->first();
-
-        if (!$codeValide) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Code invalide ou expiré'
-            ], 400);
+        if (!$wave->verifyWebhookSignature($payload, $signature ?? '')) {
+            Log::error('Wave webhook: signature invalide');
+            return response()->json(['status' => 'error', 'message' => 'Signature invalide'], 401);
         }
 
-        // Utiliser le nombre de mois du code si disponible
-        if ($codeValide->nombre_mois) {
-            $nombreMois = $codeValide->nombre_mois;
-        }
+        $data   = $request->all();
+        $ref    = $data['client_reference'] ?? null;
+        $status = $data['checkout_status'] ?? null;
+        Log::info('Wave webhook reçu', ['status' => $status, 'ref' => $ref]);
 
-        // Déterminer le mois de départ
-        $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
-            ->where('statut', 'payé')
-            ->orderBy('mois_couvert', 'desc')
-            ->first();
-
-        $dateDebut = $dernierPaiement 
-            ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
-            : now();
-
-        // Préparer les mois à payer
-        $moisAPayer = [];
-        $moisDejaPayes = [];
-        $currentDate = $dateDebut->copy();
-
-        for ($i = 0; $i < $nombreMois; $i++) {
-            $moisFormat = $currentDate->format('Y-m');
-            
-            $paiementExistant = Paiement::where('locataire_id', $locataire->id)
-                ->where('mois_couvert', $moisFormat)
-                ->where('statut', 'payé')
-                ->exists();
-
-            if ($paiementExistant) {
-                $moisDejaPayes[] = $currentDate->translatedFormat('F Y');
-            } else {
-                $moisAPayer[] = [
-                    'mois' => $moisFormat,
-                    'libelle' => $currentDate->translatedFormat('F Y')
-                ];
+        if ($status === 'complete' && $ref) {
+            $paiement = Paiement::where('transaction_id', $ref)->first();
+            if ($paiement && $paiement->statut !== 'payé') {
+                $paiement->update(['statut' => 'payé', 'date_paiement' => now()]);
             }
-
-            $currentDate->addMonth();
         }
 
-        if (empty($moisAPayer)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tous les mois sélectionnés ont déjà été payés: ' . implode(', ', $moisDejaPayes)
-            ], 400);
-        }
-
-        // Montant par mois
-        $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
-        $montantTotal = $montantParMois * count($moisAPayer);
-
-        // Générer une référence de base
-        $typePrefix = 'PAY-';
-        do {
-            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-            $referenceBase = $typePrefix . $randomNumber;
-        } while (Paiement::where('reference', 'like', $referenceBase . '%')->exists());
-
-        // Enregistrement des paiements
-        foreach ($moisAPayer as $mois) {
-            Paiement::create([
-                'montant' => $montantParMois,
-                'date_paiement' => now(),
-                'mois_couvert' => $mois['mois'],
-                'methode_paiement' => 'Espèces',
-                'statut' => 'payé',
-                'reference' => $referenceBase . '-' . $mois['mois'],
-                'locataire_id' => $locataire->id,
-                'bien_id' => $locataire->bien_id,
-                'verif_espece' => $request->code,
-                'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
-                'nombre_mois' => $nombreMois
-            ]);
-        }
-
-        // Marquer le code comme utilisé
-        $codeValide->update([
-            'used_at' => now(),
-            'paiement_id' => null, // ou l'ID du premier paiement si vous voulez faire le lien
-            'is_archived' => true
-        ]);
-
-        // Réinitialiser le montant majoré si nécessaire
-        if ($locataire->bien->montant_majore) {
-            $locataire->bien->update(['montant_majore' => null]);
-        }
-
-        DB::commit();
-
-        // Message de confirmation
-        $message = 'Paiement enregistré avec succès pour ' . count($moisAPayer) . ' mois: ' . 
-                  implode(', ', array_column($moisAPayer, 'libelle'));
-        
-        if (!empty($moisDejaPayes)) {
-            $message .= ' (Mois déjà payés: ' . implode(', ', $moisDejaPayes) . ')';
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'montant_total' => $montantTotal,
-            'mois_payes' => implode(', ', array_column($moisAPayer, 'libelle')),
-            'redirect_url' => redirect()->back()->getTargetUrl()
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error("Erreur lors de la vérification du code: " . $e->getMessage());
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Une erreur est survenue lors du traitement du paiement'
-        ], 500);
+        return response()->json(['status' => 'ok']);
     }
-}
-public function verifyCashCodeAgent(Request $request)
-{
-    $request->validate([
-        'locataire_id' => 'required|exists:locataires,id',
-        'code' => 'required|string|size:6',
-        'nombre_mois' => 'sometimes|integer|min:1'
-    ]);
 
-    DB::beginTransaction();
+    // =====================================================================
 
-    try {
-        $locataire = Locataire::with('bien')->findOrFail($request->locataire_id);
-        $nombreMois = $request->nombre_mois ?? 1;
+    public function generateReceipt(Paiement $paiement)
+    {
+        $paiement = Paiement::with(['locataire', 'bien.locataire', 'bien.agence', 'bien.proprietaire'])->find($paiement->id);
+        \Carbon\Carbon::setLocale('fr');
 
-        // Vérifier le code
-        $codeValide = CashVerificationCode::where('locataire_id', $locataire->id)
-            ->where('code', $request->code)
-            ->where('expires_at', '>', now())
-            ->whereNull('used_at')
-            ->first();
-
-        if (!$codeValide) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Code invalide ou expiré'
-            ], 400);
-        }
-
-        // Utiliser le nombre de mois du code si disponible
-        if ($codeValide->nombre_mois) {
-            $nombreMois = $codeValide->nombre_mois;
-        }
-
-        // Déterminer le mois de départ
-        $dernierPaiement = Paiement::where('locataire_id', $locataire->id)
-            ->where('statut', 'payé')
-            ->orderBy('mois_couvert', 'desc')
-            ->first();
-
-        $dateDebut = $dernierPaiement 
-            ? Carbon::parse($dernierPaiement->mois_couvert)->addMonth()
-            : now();
-
-        // Préparer les mois à payer
-        $moisAPayer = [];
-        $moisDejaPayes = [];
-        $currentDate = $dateDebut->copy();
-
-        for ($i = 0; $i < $nombreMois; $i++) {
-            $moisFormat = $currentDate->format('Y-m');
-            
-            $paiementExistant = Paiement::where('locataire_id', $locataire->id)
-                ->where('mois_couvert', $moisFormat)
-                ->where('statut', 'payé')
-                ->exists();
-
-            if ($paiementExistant) {
-                $moisDejaPayes[] = $currentDate->translatedFormat('F Y');
+        $locataire = Auth::guard('locataire')->user() ?? $paiement->locataire;
+        // 1. Contenu du QR Code formaté de manière lisible
+        $qrContent = "QUITTANCE DE LOYER\n";
+        $qrContent .= "---------------\n";
+        $qrContent .= "Locataire: " . ($locataire ? $locataire->name . ' ' . $locataire->prenom : ($paiement->locataire ? $paiement->locataire->name . ' ' . $paiement->locataire->prenom : 'N/A')) . "\n";
+        $qrContent .= "Loyer : " . number_format($paiement->montant, 0, ',', ' ') . " FCFA\n";
+        $qrContent .= "Mois couvert: " . \Carbon\Carbon::parse($paiement->mois_couvert)->format('m/Y') . "\n";
+        $qrContent .= "Date de paiement : " . \Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y') . "\n";
+        $qrContent .= "Méthode de paiement: {$paiement->methode_paiement}\n";
+        if ($paiement->bien->agence_id) {
+            $qrContent .= "Agence: " . ($paiement->bien->agence->name ?? 'Maelys-imo') . "\n";
+        } elseif ($paiement->bien->proprietaire_id) {
+            if ($paiement->bien->proprietaire->gestion == 'agence') {
+                $qrContent .= "Agence: Maelys-imo\n";
             } else {
-                $moisAPayer[] = [
-                    'mois' => $moisFormat,
-                    'libelle' => $currentDate->translatedFormat('F Y')
-                ];
+                $qrContent .= "Propriétaire: " . ($paiement->bien->proprietaire->name . ' ' . $paiement->bien->proprietaire->prenom ?? 'Maelys-imo') . "\n";
             }
-
-            $currentDate->addMonth();
-        }
-
-        if (empty($moisAPayer)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tous les mois sélectionnés ont déjà été payés: ' . implode(', ', $moisDejaPayes)
-            ], 400);
-        }
-
-        // Montant par mois
-        $montantParMois = $locataire->bien->montant_majore ?? $locataire->bien->prix;
-        $montantTotal = $montantParMois * count($moisAPayer);
-
-        // Générer une référence de base
-        $typePrefix = 'PAY-';
-        do {
-            $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
-            $referenceBase = $typePrefix . $randomNumber;
-        } while (Paiement::where('reference', 'like', $referenceBase . '%')->exists());
-
-        // Enregistrement des paiements
-        foreach ($moisAPayer as $mois) {
-            Paiement::create([
-                'montant' => $montantParMois,
-                'date_paiement' => now(),
-                'mois_couvert' => $mois['mois'],
-                'methode_paiement' => 'Espèces',
-                'statut' => 'payé',
-                'reference' => $referenceBase . '-' . $mois['mois'],
-                'locataire_id' => $locataire->id,
-                'bien_id' => $locataire->bien_id,
-                'verif_espece' => $request->code,
-                'comptable_id' => Auth::guard('comptable')->user()->id, // Assurez-vous que l'agent comptable est authentifié
-                'nombre_mois' => $nombreMois
-            ]);
-        }
-
-        // Marquer le code comme utilisé
-        $codeValide->update([
-            'used_at' => now(),
-            'paiement_id' => null, // ou l'ID du premier paiement si vous voulez faire le lien
-            'is_archived' => true
-        ]);
-
-        // Réinitialiser le montant majoré si nécessaire
-        if ($locataire->bien->montant_majore) {
-            $locataire->bien->update(['montant_majore' => null]);
-        }
-
-        DB::commit();
-
-        // Message de confirmation
-        $message = 'Paiement enregistré avec succès pour ' . count($moisAPayer) . ' mois: ' . 
-                  implode(', ', array_column($moisAPayer, 'libelle'));
-        
-        if (!empty($moisDejaPayes)) {
-            $message .= ' (Mois déjà payés: ' . implode(', ', $moisDejaPayes) . ')';
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'montant_total' => $montantTotal,
-            'mois_payes' => implode(', ', array_column($moisAPayer, 'libelle')),
-            'redirect_url' => redirect()->back()->getTargetUrl()
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error("Erreur lors de la vérification du code: " . $e->getMessage());
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Une erreur est survenue lors du traitement du paiement'
-        ], 500);
-    }
-}
-
-public function generateReceipt( Paiement $paiement)
-{
-    $paiement = Paiement::with(['bien.locataire', 'bien.agence', 'bien.proprietaire'])->find($paiement->id);
-    \Carbon\Carbon::setLocale('fr');
-
-    $locataire = Auth::guard('locataire')->user() ?? $paiement->locataire;
-    // 1. Contenu du QR Code formaté de manière lisible
-    $qrContent = "QUITTANCE DE LOYER\n";
-    $qrContent .= "---------------\n";
-    $qrContent .= "Locataire: {$paiement->bien->locataire->name} {$paiement->bien->locataire->prenom}\n";
-    $qrContent .= "Loyer : ".number_format($paiement->montant, 0, ',', ' ')." FCFA\n";
-    $qrContent .= "Mois couvert: ".\Carbon\Carbon::parse($paiement->mois_couvert)->format('m/Y')."\n";
-    $qrContent .= "Date de paiement : ".\Carbon\Carbon::parse($paiement->date_paiement)->format('d/m/Y')."\n";
-    $qrContent .= "Méthode de paiement: {$paiement->methode_paiement}\n";
-    if ($paiement->bien->agence_id) {
-    $qrContent .= "Agence: ".($paiement->bien->agence->name ?? 'Maelys-imo')."\n";
-    } elseif ($paiement->bien->proprietaire_id) {
-        if ($paiement->bien->proprietaire->gestion == 'agence') {
-            $qrContent .= "Agence: Maelys-imo\n";
         } else {
-            $qrContent .= "Propriétaire: ".($paiement->bien->proprietaire->name.' '.$paiement->bien->proprietaire->prenom ?? 'Maelys-imo')."\n";
+            $qrContent .= "Agence: Maelys-imo\n";
         }
-    } else {
-        $qrContent .= "Agence: Maelys-imo\n";
+        $qrContent .= "Date d'emission : " . \Carbon\Carbon::parse($paiement->create_at)->format('d/m/Y');
+
+        // 2. Configuration du QR Code
+        $options = new QROptions([
+            'version'    => 10,
+            'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+            'eccLevel'   => QRCode::ECC_L,
+            'scale'      => 5,
+        ]);
+
+        // ... le reste de votre méthode reste identique ...
+        $qrCode = (new QRCode($options))->render($qrContent);
+
+        // Sauvegarde et génération du PDF
+        $qrCodeFileName = 'qrcode_paiement_' . $paiement->id . '.png';
+        $qrCodePath = 'public/paiements/qrcodes/' . $qrCodeFileName;
+        Storage::put($qrCodePath, $qrCode);
+
+        $data = [
+            'paiement'      => $paiement,
+            'locataire'     => $locataire,
+            'bien'          => $paiement->bien,
+            'date_emission' => now()->format('d/m/Y'),
+            'reference'     => 'REC-' . strtoupper(Str::random(8)) . '-' . $paiement->id,
+            'qrCode'        => $qrCode,
+            'qrCodePath'    => Storage::url($qrCodePath),
+        ];
+
+        return Pdf::loadView('locataire.paiements.receipt', $data)
+            ->stream('Quittance de loyer-' . $paiement->id . '.pdf');
     }
-    $qrContent .= "Date d'emission : ".\Carbon\Carbon::parse($paiement->create_at)->format('d/m/Y');
 
-    // 2. Configuration du QR Code
-    $options = new QROptions([
-        'version'    => 10,
-        'outputType' => QRCode::OUTPUT_IMAGE_PNG,
-        'eccLevel'   => QRCode::ECC_L,
-        'scale'      => 5,
-    ]);
+    public function getMontantLoyer(Request $request)
+    {
+        $locataire = Locataire::findOrFail($request->locataire_id);
+        // Supposons que le montant du loyer est stocké dans une relation Contrat
+        $montant = $locataire->contrat->montant_loyer ?? 0;
 
-    // ... le reste de votre méthode reste identique ...
-    $qrCode = (new QRCode($options))->render($qrContent);
-
-    // Sauvegarde et génération du PDF
-    $qrCodeFileName = 'qrcode_paiement_' . $paiement->id . '.png';
-    $qrCodePath = 'public/paiements/qrcodes/' . $qrCodeFileName;
-    Storage::put($qrCodePath, $qrCode);
-
-    $data = [
-        'paiement'      => $paiement,
-        'locataire'     => $locataire,
-        'bien'          => $paiement->bien,
-        'date_emission' => now()->format('d/m/Y'),
-        'reference'     => 'REC-' . strtoupper(Str::random(8)) . '-' . $paiement->id,
-        'qrCode'        => $qrCode,
-        'qrCodePath'    => Storage::url($qrCodePath),
-    ];
-
-    return Pdf::loadView('locataire.paiements.receipt', $data)
-              ->stream('Quittance de loyer-' . $paiement->id . '.pdf');
-}
-
-public function getMontantLoyer(Request $request)
-{
-    $locataire = Locataire::findOrFail($request->locataire_id);
-    // Supposons que le montant du loyer est stocké dans une relation Contrat
-    $montant = $locataire->contrat->montant_loyer ?? 0;
-    
-    return response()->json(['montant' => $montant]);
-}
+        return response()->json(['montant' => $montant]);
+    }
 }
