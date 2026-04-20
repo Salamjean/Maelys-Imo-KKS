@@ -16,6 +16,27 @@
                 </div>
                 
                 <div class="card-body p-4">
+                    <!-- Onglets principaux -->
+                    <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                                <i class="fas fa-home me-2"></i>État des lieux
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="historique-tab" data-bs-toggle="tab" data-bs-target="#historique" type="button" role="tab">
+                                <i class="fas fa-history me-2"></i>Historique
+                                @php $totalEtats = ($allEtatsEntree->count() ?? 0) + ($allEtatsSortie->count() ?? 0); @endphp
+                                @if($totalEtats > 0)
+                                    <span class="badge rounded-pill ms-1" style="background-color:#02245b">{{ $totalEtats }}</span>
+                                @endif
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="mainTabsContent">
+                        <!-- Onglet 1 : Vue d'ensemble (contenu existant) -->
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel">
                     <!-- Section QR Code avec animation -->
                     <div class="text-center mb-5 p-4 bg-light rounded-3 border border-2 border-dashed border-primary">
                         <h4 class="mb-3 fw-bold text-primary"><i class="fas fa-qrcode me-2"></i>Code de vérification</h4>
@@ -168,16 +189,18 @@
                             <i class="fas fa-clipboard-list me-2"></i> Détails de l'état des lieux
                         </h4>
                         
-                        @if($etatLieu)
+                        @if($etatLieu || $etatLieuSortie)
                             <!-- Sélecteur d'état des lieux -->
                             <div class="row mb-4">
                                 <div class="col-md-6 mx-auto">
                                     <div class="btn-group w-100" role="group">
-                                        <button type="button" class="btn btn-outline-primary active" id="btn-entree" data-etat="entree">
+                                        @if($etatLieu)
+                                        <button type="button" class="btn btn-outline-primary {{ !$etatLieuSortie ? 'active' : '' }}" id="btn-entree" data-etat="entree">
                                             <i class="fas fa-sign-in-alt me-2"></i>État Entrée
                                         </button>
+                                        @endif
                                         @if($etatLieuSortie)
-                                        <button type="button" class="btn btn-outline-primary" id="btn-sortie" data-etat="sortie">
+                                        <button type="button" class="btn btn-outline-primary {{ !$etatLieu ? 'active' : '' }}" id="btn-sortie" data-etat="sortie">
                                             <i class="fas fa-sign-out-alt me-2"></i>État Sortie
                                         </button>
                                         @endif
@@ -186,8 +209,16 @@
                             </div>
 
                             <!-- Conteneur pour l'état des lieux d'entrée -->
+                            @if($etatLieu)
                             <div id="etat-entree-container">
-                                <!-- Résumé état des lieux entrée -->
+                                {{-- Bouton télécharger PDF entrée --}}
+                                <div class="d-flex justify-content-end mb-3">
+                                    <a href="{{ route('etat-lieu.agent.download', $etatLieu->id) }}"
+                                       class="btn btn-outline-primary btn-sm"
+                                       target="_blank">
+                                        <i class="mdi mdi-file-pdf-box me-1"></i> Télécharger PDF état d'entrée
+                                    </a>
+                                </div>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <div class="card stat-card bg-light-success border-0 h-100">
@@ -336,11 +367,19 @@
                                     @endforeach
                                 </div>
                             </div>
+                            @endif {{-- fin @if($etatLieu) entrée --}}
 
-                            <!-- Conteneur pour l'état des lieux de sortie (caché par défaut) -->
+                            <!-- Conteneur pour l'état des lieux de sortie (caché par défaut si entrée existe) -->
                             @if($etatLieuSortie)
-                            <div id="etat-sortie-container" style="display: none;">
-                                <!-- Résumé état des lieux sortie -->
+                            <div id="etat-sortie-container" style="{{ $etatLieu ? 'display: none;' : '' }}">
+                                {{-- Bouton télécharger PDF sortie --}}
+                                <div class="d-flex justify-content-end mb-3">
+                                    <a href="{{ route('locataire.etat-lieux.sortie.download', $etatLieuSortie->id) }}"
+                                       class="btn btn-outline-danger btn-sm"
+                                       target="_blank">
+                                        <i class="mdi mdi-file-pdf-box me-1"></i> Télécharger PDF état de sortie
+                                    </a>
+                                </div>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <div class="card stat-card bg-light-warning border-0 h-100">
@@ -491,17 +530,128 @@
                             </div>
                             @endif
                         @else
-                            <div class="alert alert-warning d-flex align-items-center">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                Aucun état des lieux disponible
+                            <div class="card border-0 shadow-sm text-center p-5">
+                                <div class="mb-3">
+                                    <i class="mdi mdi-clipboard-text-outline" style="font-size: 60px; color: #02245b; opacity: 0.4;"></i>
+                                </div>
+                                <h5 class="text-muted mb-2">État des lieux non encore effectué</h5>
+                                <p class="text-muted mb-0">L'état des lieux n'a pas encore été réalisé pour votre bien actuel.<br>Il sera visible ici dès qu'il sera rempli par votre agent ou gestionnaire.</p>
                             </div>
-                        @endif
+                        @endif {{-- fin @if($etatLieu || $etatLieuSortie) --}}
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                </div> {{-- fin tab-pane overview --}}
+
+                        <!-- Onglet 2 : Historique des états des lieux -->
+                        <div class="tab-pane fade" id="historique" role="tabpanel">
+                            <h4 class="mb-4 fw-bold text-primary d-flex align-items-center">
+                                <i class="fas fa-history me-2"></i> Historique des états des lieux
+                            </h4>
+
+                            @if(($allEtatsEntree->count() + $allEtatsSortie->count()) === 0)
+                                <div class="card border-0 shadow-sm text-center p-5">
+                                    <div class="mb-3">
+                                        <i class="fas fa-clipboard-list" style="font-size: 60px; color: #02245b; opacity: 0.4;"></i>
+                                    </div>
+                                    <h5 class="text-muted mb-2">Aucun état des lieux enregistré</h5>
+                                    <p class="text-muted mb-0">Vos états des lieux apparaîtront ici dès qu'ils seront créés.</p>
+                                </div>
+                            @else
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-bordered align-middle">
+                                        <thead style="background-color:#02245b; color:#fff;">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Type</th>
+                                                <th>Bien</th>
+                                                <th>Date</th>
+                                                <th>Statut</th>
+                                                <th class="text-center">PDF</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @php $counter = 1; @endphp
+
+                                            @foreach($allEtatsEntree as $el)
+                                            <tr>
+                                                <td>{{ $counter++ }}</td>
+                                                <td>
+                                                    <span class="badge rounded-pill bg-primary">
+                                                        <i class="fas fa-sign-in-alt me-1"></i> Entrée
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if($el->bien)
+                                                        {{ $el->bien->commune ?? '' }}
+                                                        @if($el->bien->type) — {{ $el->bien->type }} @endif
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>{{ $el->created_at ? $el->created_at->format('d/m/Y') : '—' }}</td>
+                                                <td>
+                                                    @if($el->status_etat_entre === 'Oui')
+                                                        <span class="badge rounded-pill bg-success"><i class="fas fa-check me-1"></i>Confirmé</span>
+                                                    @else
+                                                        <span class="badge rounded-pill bg-warning text-dark"><i class="fas fa-clock me-1"></i>En attente</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('etat-lieu.agent.download', $el->id) }}"
+                                                       class="btn btn-sm btn-outline-primary"
+                                                       target="_blank"
+                                                       title="Télécharger PDF état d'entrée">
+                                                        <i class="fas fa-file-pdf me-1"></i> PDF
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+
+                                            @foreach($allEtatsSortie as $es)
+                                            <tr>
+                                                <td>{{ $counter++ }}</td>
+                                                <td>
+                                                    <span class="badge rounded-pill bg-danger">
+                                                        <i class="fas fa-sign-out-alt me-1"></i> Sortie
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if($es->bien)
+                                                        {{ $es->bien->commune ?? '' }}
+                                                        @if($es->bien->type) — {{ $es->bien->type }} @endif
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>{{ $es->created_at ? $es->created_at->format('d/m/Y') : '—' }}</td>
+                                                <td>
+                                                    @if($es->status_sorti === 'Oui')
+                                                        <span class="badge rounded-pill bg-success"><i class="fas fa-check me-1"></i>Confirmé</span>
+                                                    @else
+                                                        <span class="badge rounded-pill bg-warning text-dark"><i class="fas fa-clock me-1"></i>En attente</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('locataire.etat-lieux.sortie.download', $es->id) }}"
+                                                       class="btn btn-sm btn-outline-danger"
+                                                       target="_blank"
+                                                       title="Télécharger PDF état de sortie">
+                                                        <i class="fas fa-file-pdf me-1"></i> PDF
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+                        </div>{{-- fin tab-pane historique --}}
+
+                    </div>{{-- fin tab-content mainTabsContent --}}
+                </div>{{-- fin card-body --}}
+            </div>{{-- fin card --}}
+        </div>{{-- fin col --}}
+    </div>{{-- fin row --}}
+</div>{{-- fin container --}}
 
 <style>
     /* Styles personnalisés */

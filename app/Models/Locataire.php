@@ -80,7 +80,7 @@ class Locataire extends Authenticatable
 
     public function agence()
     {
-        return $this->belongsTo(Agence::class,'agence_id', 'code_id');
+        return $this->belongsTo(Agence::class, 'agence_id', 'code_id');
     }
 
     public function contrat()
@@ -118,6 +118,11 @@ class Locataire extends Authenticatable
     public function etatlieusorti()
     {
         return $this->hasMany(EtatLieuSorti::class);
+    }
+
+    public function historiqueLocations()
+    {
+        return $this->hasMany(HistoriqueLocation::class);
     }
     public function verifycode()
     {

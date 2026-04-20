@@ -6,6 +6,7 @@ use App\Models\Abonnement;
 use App\Models\Bien;
 use App\Services\FirebaseService;
 use App\Models\Agence;
+use App\Models\HistoriqueLocation;
 use App\Models\Locataire;
 use App\Models\Proprietaire;
 use App\Models\Visite;
@@ -26,8 +27,8 @@ class BienController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         $adminId = Auth::guard('admin')->user()->id;
@@ -72,8 +73,8 @@ class BienController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         // Récupération de l'agence connectée
@@ -423,7 +424,6 @@ class BienController extends Controller
             } else {
                 Log::warning("⚠️ Aucun locataire n'a de token FCM enregistré.");
             }
-
         } catch (\Exception $e) {
             Log::error("🔥 EXCEPTION CRITIQUE Notification : " . $e->getMessage());
             Log::error("Trace : " . $e->getTraceAsString());
@@ -441,8 +441,8 @@ class BienController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         $bien = Bien::findOrFail($id);
@@ -551,7 +551,6 @@ class BienController extends Controller
             $bien->save();
 
             return redirect()->route('bien.index')->with('success', 'Le bien a été mis à jour avec succès!');
-
         } catch (\Exception $e) {
             Log::error('Error updating bien: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -674,7 +673,6 @@ class BienController extends Controller
             Log::info("=== FIN PROCESSUS NOTIFICATION ===");
             // --- FIN BLOC NOTIFICATION ---
             return redirect()->route('bien.index.agence')->with('success', 'Le bien a été mis à jour avec succès!');
-
         } catch (\Exception $e) {
             Log::error('Error updating bien: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -783,8 +781,8 @@ class BienController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         // Vérification si l'utilisateur est connecté en tant qu'agence
@@ -823,7 +821,6 @@ class BienController extends Controller
                 'success' => true,
                 'message' => 'Bien supprimé avec succès.'
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error deleting bien: ' . $e->getMessage());
             return response()->json([
@@ -859,7 +856,6 @@ class BienController extends Controller
                 'success' => true,
                 'message' => 'Bien supprimé avec succès.'
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error deleting bien: ' . $e->getMessage());
             return response()->json([
@@ -924,6 +920,15 @@ class BienController extends Controller
         $bien->status = 'Loué';
         $bien->save();
 
+        // Créer l'entrée dans l'historique des locations
+        HistoriqueLocation::create([
+            'locataire_id'    => $locataire->id,
+            'bien_id'         => $bien->id,
+            'agence_id'       => $bien->agence_id ?? null,
+            'proprietaire_id' => $bien->proprietaire_id ?? null,
+            'date_entree'     => now()->toDateString(),
+        ]);
+
         return response()->json(['success' => 'Bien attribué avec succès au locataire']);
     }
     public function getBiensDisponiblesAgence()
@@ -959,6 +964,15 @@ class BienController extends Controller
         // Mettre à jour le statut du bien
         $bien->status = 'Loué';
         $bien->save();
+
+        // Créer l'entrée dans l'historique des locations
+        HistoriqueLocation::create([
+            'locataire_id'    => $locataire->id,
+            'bien_id'         => $bien->id,
+            'agence_id'       => $bien->agence_id ?? Auth::user()->code_id,
+            'proprietaire_id' => $bien->proprietaire_id ?? null,
+            'date_entree'     => now()->toDateString(),
+        ]);
 
         return response()->json(['success' => 'Bien attribué avec succès au locataire']);
     }

@@ -96,6 +96,11 @@ class Bien extends Model
         return $this->hasMany(EtatLieu::class);
     }
 
+    public function historiqueLocations()
+    {
+        return $this->hasMany(HistoriqueLocation::class);
+    }
+
     public function proprietaire()
     {
         return $this->belongsTo(Proprietaire::class, 'proprietaire_id', 'code_id');
@@ -191,5 +196,4 @@ class Bien extends Model
 
         return $url;
     }
-
 }

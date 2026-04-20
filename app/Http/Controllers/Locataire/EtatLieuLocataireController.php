@@ -26,8 +26,11 @@ class EtatLieuLocataireController extends Controller
         $comptable = $locataire->comptable;
         
         // Récupérer l'état des lieux s'il existe
-        $etatLieu = EtatLieu::where('locataire_id', $locataire->id)
+        // (locataire_id peut être stocké comme id numérique OU code_id selon le contrôleur créateur)
+        $locataireIds = array_filter([$locataire->id, $locataire->code_id]);
+        $etatLieu = EtatLieu::whereIn('locataire_id', $locataireIds)
             ->where('bien_id', $locataire->bien_id)
+            ->latest()
             ->first();
         
         // Décoder les champs JSON si ils existent
@@ -41,8 +44,9 @@ class EtatLieuLocataireController extends Controller
         }
 
         // Récupérer l'état des lieux s'il existe
-        $etatLieuSortie = EtatLieuSorti::where('locataire_id', $locataire->id)
+        $etatLieuSortie = EtatLieuSorti::whereIn('locataire_id', $locataireIds)
             ->where('bien_id', $locataire->bien_id)
+            ->latest()
             ->first();
         
         // Décoder les champs JSON si ils existent
@@ -60,7 +64,11 @@ class EtatLieuLocataireController extends Controller
         if ($verificationData && Storage::exists($verificationData->path_qr_code)) {
             $qrCodeBase64 = base64_encode(Storage::get($verificationData->path_qr_code));
         }
-        
+
+        // Récupérer tous les états des lieux (historique complet)
+        $allEtatsEntree = EtatLieu::whereIn('locataire_id', $locataireIds)->latest()->get();
+        $allEtatsSortie = EtatLieuSorti::whereIn('locataire_id', $locataireIds)->latest()->get();
+
         return view('locataire.etat_lieu.show', [
             'locataire' => $locataire,
             'verificationCode' => $verificationData->code ?? null,
@@ -69,6 +77,8 @@ class EtatLieuLocataireController extends Controller
             'comptable' => $comptable,
             'etatLieu' => $etatLieu,
             'etatLieuSortie' => $etatLieuSortie,
+            'allEtatsEntree' => $allEtatsEntree,
+            'allEtatsSortie' => $allEtatsSortie,
         ]);
     }
 

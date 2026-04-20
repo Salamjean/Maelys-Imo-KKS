@@ -13,6 +13,7 @@ use App\Http\Controllers\Agent\CommercialController;
 use App\Http\Controllers\Agent\ComptableController;
 use App\Http\Controllers\Agent\ComptablePasswordResetController;
 use App\Http\Controllers\ContratController;
+use App\Http\Controllers\DemenagementController;
 use App\Http\Controllers\EtatAgentLocataire;
 use App\Http\Controllers\EtatLieuController;
 use App\Http\Controllers\HomePageController;
@@ -198,6 +199,12 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     //Locataire qui a demenager 
     Route::get('/move/out', [AdminController::class, 'move'])->name('admin.tenant.move');
 
+    // Déménagement & historique des locations
+    Route::get('/demenagement/{locataire_id}', [DemenagementController::class, 'show'])->name('demenagement.show');
+    Route::post('/demenagement/{locataire_id}/confirmer', [DemenagementController::class, 'confirmer'])->name('demenagement.confirmer');
+    Route::get('/demenagement/{locataire_id}/historique', [DemenagementController::class, 'historique'])->name('demenagement.historique');
+    Route::get('/demenagement/sortie/{historique_id}/pdf', [DemenagementController::class, 'downloadSortie'])->name('demenagement.download.sortie');
+
     // Routes pour la gestion des commerciaux par l'admin
     Route::prefix('commercials')->group(function () {
         Route::get('/', [AdminCommercialController::class, 'index'])->name('admin.commercial.index');
@@ -323,6 +330,12 @@ Route::middleware('auth:agence')->prefix('agence')->group(function () {
     });
 
     Route::get('/move/out', [AgencePasswordResetController::class, 'move'])->name('agence.tenant.move');
+
+    // Déménagement & historique (agence)
+    Route::get('/demenagement/{locataire_id}', [DemenagementController::class, 'show'])->name('agence.demenagement.show');
+    Route::post('/demenagement/{locataire_id}/confirmer', [DemenagementController::class, 'confirmer'])->name('agence.demenagement.confirmer');
+    Route::get('/demenagement/{locataire_id}/historique', [DemenagementController::class, 'historique'])->name('agence.demenagement.historique');
+    Route::get('/demenagement/sortie/{historique_id}/pdf', [DemenagementController::class, 'downloadSortie'])->name('agence.demenagement.download.sortie');
 });
 // Routes pour la gestion des paiements
 Route::post('/locataires/send-payment-reminder', [PaymentController::class, 'sendPaymentReminder'])->name('locataires.sendPaymentReminder');
@@ -372,6 +385,7 @@ Route::middleware('auth:locataire')->prefix('locataire')->group(function () {
 
     Route::get('/etat-lieu', [EtatLieuLocataireController::class, 'etat_lieu'])->name('locataire.etat_lieu');
     Route::get('/etat-lieux/{id}/download', [EtatAgentLocataire::class, 'download'])->name('etat-lieu.agent.download');
+    Route::get('/etat-lieux/sortie/{id}/download', [EtatAgentLocataire::class, 'downloadSortie'])->name('locataire.etat-lieux.sortie.download');
     Route::post('/etat-lieu/{id}/confirm-entree', [EtatLieuLocataireController::class, 'confirmEntree'])->name('etat-lieu.confirm-entree');
     Route::post('/etat-lieu/{id}/confirm-sortie', [EtatLieuLocataireController::class, 'confirmSortie'])->name('etat-lieu.confirm-sortie');
 });
@@ -535,7 +549,11 @@ Route::middleware('auth:owner')->prefix('owner')->group(function () {
 
     Route::get('/move/out', [LocataireOwnerController::class, 'move'])->name('owner.tenant.move');
 
-    Route::get('/move/out', [LocataireOwnerController::class, 'move'])->name('owner.tenant.move');
+    // Déménagement & historique (propriétaire)
+    Route::get('/demenagement/{locataire_id}', [DemenagementController::class, 'show'])->name('owner.demenagement.show');
+    Route::post('/demenagement/{locataire_id}/confirmer', [DemenagementController::class, 'confirmer'])->name('owner.demenagement.confirmer');
+    Route::get('/demenagement/{locataire_id}/historique', [DemenagementController::class, 'historique'])->name('owner.demenagement.historique');
+    Route::get('/demenagement/sortie/{historique_id}/pdf', [DemenagementController::class, 'downloadSortie'])->name('owner.demenagement.download.sortie');
 });
 
 

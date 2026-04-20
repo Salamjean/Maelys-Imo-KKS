@@ -1,455 +1,478 @@
 @extends('proprietaire.layouts.template')
 @section('content')
-<meta name="csrf-token" content="{{ csrf_token() }}">
-<style>
-    .send-reminder-btn {
-        color: white;
-        background-color: #3a7bd5;
-        border-color: #3a7bd5;
-    }
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        .send-reminder-btn {
+            color: white;
+            background-color: #3a7bd5;
+            border-color: #3a7bd5;
+        }
 
-    .send-reminder-btn:hover {
-        background-color: #2c5fb3;
-        border-color: #2c5fb3;
-    }
-    
-    .pagination {
-        --bs-pagination-color: #02245b;
-        --bs-pagination-bg: #fff;
-        --bs-pagination-border-color: #dee2e6;
-        --bs-pagination-hover-color: #fff;
-        --bs-pagination-hover-bg: #02245b;
-        --bs-pagination-hover-border-color: #02245b;
-        --bs-pagination-focus-color: #fff;
-        --bs-pagination-focus-bg: #02245b;
-        --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(2, 36, 91, 0.25);
-        --bs-pagination-active-color: #fff;
-        --bs-pagination-active-bg: #02245b;
-        --bs-pagination-active-border-color: #02245b;
-        --bs-pagination-disabled-color: #6c757d;
-        --bs-pagination-disabled-bg: #fff;
-        --bs-pagination-disabled-border-color: #dee2e6;
-    }
+        .send-reminder-btn:hover {
+            background-color: #2c5fb3;
+            border-color: #2c5fb3;
+        }
 
-    .pagination-rounded .page-item:first-child .page-link {
-        border-top-left-radius: 20px;
-        border-bottom-left-radius: 20px;
-    }
+        .pagination {
+            --bs-pagination-color: #02245b;
+            --bs-pagination-bg: #fff;
+            --bs-pagination-border-color: #dee2e6;
+            --bs-pagination-hover-color: #fff;
+            --bs-pagination-hover-bg: #02245b;
+            --bs-pagination-hover-border-color: #02245b;
+            --bs-pagination-focus-color: #fff;
+            --bs-pagination-focus-bg: #02245b;
+            --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(2, 36, 91, 0.25);
+            --bs-pagination-active-color: #fff;
+            --bs-pagination-active-bg: #02245b;
+            --bs-pagination-active-border-color: #02245b;
+            --bs-pagination-disabled-color: #6c757d;
+            --bs-pagination-disabled-bg: #fff;
+            --bs-pagination-disabled-border-color: #dee2e6;
+        }
 
-    .pagination-rounded .page-item:last-child .page-link {
-        border-top-right-radius: 20px;
-        border-bottom-right-radius: 20px;
-    }
+        .pagination-rounded .page-item:first-child .page-link {
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+        }
 
-    .page-link {
-        padding: 0.5rem 1rem;
-        margin: 0 0.15rem;
-        border-radius: 50%;
-        min-width: 40px;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
+        .pagination-rounded .page-item:last-child .page-link {
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
 
-    .page-item.active .page-link {
-        font-weight: bold;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
+        .page-link {
+            padding: 0.5rem 1rem;
+            margin: 0 0.15rem;
+            border-radius: 50%;
+            min-width: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
 
-    .page-item:not(.active):not(.disabled) .page-link:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+        .page-item.active .page-link {
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
 
-    .preview-image:hover {
-        transform: scale(1.05);
-        transition: transform 0.3s ease;
-        box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
-</style>
+        .page-item:not(.active):not(.disabled) .page-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-<div class="col-lg-12 stretch-card">
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title text-center">Locataires actuels</h4>
-            <p class="card-description text-center">
-                Listes des locations de votre agence
-            </p>
+        .preview-image:hover {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
 
-            <!-- Modal pour afficher les images -->
-            <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="imageModalLabel">Visualisation de l'image</h5>
-                            <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body text-center p-0">
-                            <img id="modalImage" src="" class="img-fluid" style="max-height: 80vh; width: auto;">
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="col-lg-12 stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title text-center">Locataires actuels</h4>
+                <p class="card-description text-center">
+                    Listes des locations de votre agence
+                </p>
 
-
-            <!-- Modal pour changer le statut -->
-            <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="statusModalLabel">Changer le statut du locataire</h5>
-                            <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form id="statusForm" method="POST">
-                            @csrf
-                            @method('PUT')
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="newStatus" class="form-label">Nouveau statut</label>
-                                    <select class="form-select" id="newStatus" name="status" required>
-                                        <option value="Actif">Actif</option>
-                                        <option value="Inactif">Inactif</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="motifField">
-                                    <label for="motif" class="form-label">Motif (obligatoire si inactif ou pas sérieux)</label>
-                                    <textarea class="form-control" id="motif" name="motif" rows="3"></textarea>
-                                </div>
+                <!-- Modal pour afficher les images -->
+                <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title" id="imageModalLabel">Visualisation de l'image</h5>
+                                <button type="button" class="btn-close text-white" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center p-0">
+                                <img id="modalImage" src="" class="img-fluid"
+                                    style="max-height: 80vh; width: auto;">
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
-           <div class="mb-3">
-                <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
-            </div>
 
-            <div class="table-responsive pt-3">
-                <table class="table table-bordered table-hover">
-                    <thead style="background-color: #02245b; color: white;">
-                        <tr class="text-center">
-                            <th>ID du locataire</th>
-                            <th>Nom</th>
-                            <th>Prénom</th>
-                            <th>Contact</th>
-                            <th>Profession</th>
-                            <th>Adresse complète</th>
-                            <th>Pièce d'identité</th>
-                            <th>Statut</th>
-                            <th>Contrat</th>
-                            <th>Actions</th>
-                            <th>Faire l'état des lieux</th>
-                            <th>Paiement</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($locataires as $locataire)
-                            <tr class="text-center pt-3" style="height: 30px">
-                                <td><strong>{{ $locataire->code_id }}</strong></td>
-                                <td><strong>{{ $locataire->name }}</strong></td>
-                                <td><strong>{{ $locataire->prenom }}</strong></td>
-                                <td>{{ $locataire->contact }}</td>
-                                <td>{{ $locataire->profession }}</td>
-                                <td>{{ $locataire->adresse }}</td>
-                                <td>
-                                    @if($locataire->piece)
-                                        <button class="btn btn-sm btn-info preview-image"
-                                                data-image="{{ asset('storage/'.$locataire->piece) }}"
+
+                <!-- Modal pour changer le statut -->
+                <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title" id="statusModalLabel">Changer le statut du locataire</h5>
+                                <button type="button" class="btn-close text-white" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <form id="statusForm" method="POST">
+                                @csrf
+                                @method('PUT')
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="newStatus" class="form-label">Nouveau statut</label>
+                                        <select class="form-select" id="newStatus" name="status" required>
+                                            <option value="Actif">Actif</option>
+                                            <option value="Inactif">Inactif</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3" id="motifField">
+                                        <label for="motif" class="form-label">Motif (obligatoire si inactif ou pas
+                                            sérieux)</label>
+                                        <textarea class="form-control" id="motif" name="motif" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Annuler</button>
+                                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un locataire...">
+                </div>
+
+                <div class="table-responsive pt-3">
+                    <table class="table table-bordered table-hover">
+                        <thead style="background-color: #02245b; color: white;">
+                            <tr class="text-center">
+                                <th>ID du locataire</th>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>Contact</th>
+                                <th>Profession</th>
+                                <th>Adresse complète</th>
+                                <th>Pièce d'identité</th>
+                                <th>Statut</th>
+                                <th>Contrat</th>
+                                <th>Actions</th>
+                                <th>Faire l'état des lieux</th>
+                                <th>Paiement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($locataires as $locataire)
+                                <tr class="text-center pt-3" style="height: 30px">
+                                    <td><strong>{{ $locataire->code_id }}</strong></td>
+                                    <td><strong>{{ $locataire->name }}</strong></td>
+                                    <td><strong>{{ $locataire->prenom }}</strong></td>
+                                    <td>{{ $locataire->contact }}</td>
+                                    <td>{{ $locataire->profession }}</td>
+                                    <td>{{ $locataire->adresse }}</td>
+                                    <td>
+                                        @if ($locataire->piece)
+                                            <button class="btn btn-sm btn-info preview-image"
+                                                data-image="{{ asset('storage/' . $locataire->piece) }}"
                                                 data-title="Pièce d'identité de {{ $locataire->name }}">
-                                            Voir
-                                        </button>
-                                    @else
-                                        <span class="text-muted">Non fournie</span>
-                                    @endif
-                                </td>
-                               
-                                
-                                <td>
-                                    @if($locataire->status == 'Actif')
-                                        <span class="badge bg-success text-white">Actif</span>
-                                    @elseif($locataire->status == 'Inactif')
-                                        <span class="badge bg-danger text-white">Inactif</span>
-                                    @else
-                                        <span class="badge bg-warning text-dark">Pas sérieux</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($locataire->contrat)
-                                        <div class="btn-group d-flex gap-2" role="group">
-                                            <!-- Bouton Voir -->
-                                            <a href="{{ asset('storage/'.$locataire->contrat) }}" 
-                                            class="btn btn-sm btn-info"
-                                            target="_blank"
-                                            title="Voir le contrat">
-                                                <i class="mdi mdi-eye"></i>
-                                            </a>
-
-                                            <!-- Bouton Télécharger -->
-                                            <a href="{{ route('locataires.downloadContrat', $locataire->id) }}"
-                                            class="btn btn-sm btn-primary"
-                                            title="Télécharger le contrat">
-                                                <i class="mdi mdi-download"></i>
-                                            </a>
-                                        </div>
-                                    @else
-                                        <span class="text-muted">Aucun contrat</span>
-                                    @endif
-                                </td>
-                                <td class="text-center ">
-                                    <div class="btn-group gap-2" role="group">
-                                        <a href="{{ route('locataire.edit.owner', $locataire->id) }}" class="btn btn-sm btn-warning" title="Modifier">
-                                            <i class="mdi mdi-pencil"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-danger change-status-btn"
-                                                data-locataire-id="{{ $locataire->id }}"
-                                                data-current-status="{{ $locataire->status }}"
-                                                title="Changer statut">
-                                            <i class="mdi mdi-account-convert"></i>
-                                        </button>
-                                         @if(is_null($locataire->bien_id) && $locataire->status === 'Inactif')
-                                            <button class="btn btn-sm btn-primary attribuer-bien-btn"
-                                                    data-locataire-id="{{ $locataire->id }}"
-                                                    title="Attribuer un bien">
-                                                <i class="mdi mdi-home-plus"></i>
+                                                Voir
                                             </button>
+                                        @else
+                                            <span class="text-muted">Non fournie</span>
                                         @endif
-                                        {{-- <form action="#" method="POST" class="d-inline">
+                                    </td>
+
+
+                                    <td>
+                                        @if ($locataire->status == 'Actif')
+                                            <span class="badge bg-success text-white">Actif</span>
+                                        @elseif($locataire->status == 'Inactif')
+                                            <span class="badge bg-danger text-white">Inactif</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark">Pas sérieux</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($locataire->contrat)
+                                            <div class="btn-group d-flex gap-2" role="group">
+                                                <!-- Bouton Voir -->
+                                                <a href="{{ asset('storage/' . $locataire->contrat) }}"
+                                                    class="btn btn-sm btn-info" target="_blank" title="Voir le contrat">
+                                                    <i class="mdi mdi-eye"></i>
+                                                </a>
+
+                                                <!-- Bouton Télécharger -->
+                                                <a href="{{ route('locataires.downloadContrat', $locataire->id) }}"
+                                                    class="btn btn-sm btn-primary" title="Télécharger le contrat">
+                                                    <i class="mdi mdi-download"></i>
+                                                </a>
+                                            </div>
+                                        @else
+                                            <span class="text-muted">Aucun contrat</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center ">
+                                        <div class="btn-group gap-2" role="group">
+                                            <a href="{{ route('locataire.edit.owner', $locataire->id) }}"
+                                                class="btn btn-sm btn-warning" title="Modifier">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-danger change-status-btn"
+                                                data-locataire-id="{{ $locataire->id }}"
+                                                data-current-status="{{ $locataire->status }}" title="Changer statut">
+                                                <i class="mdi mdi-account-convert"></i>
+                                            </button>
+                                            @if (is_null($locataire->bien_id) && $locataire->status === 'Inactif')
+                                                <button class="btn btn-sm btn-primary attribuer-bien-btn"
+                                                    data-locataire-id="{{ $locataire->id }}" title="Attribuer un bien">
+                                                    <i class="mdi mdi-home-plus"></i>
+                                                </button>
+                                            @endif
+                                            @if ($locataire->status === 'Actif')
+                                                <a href="{{ route('owner.demenagement.show', $locataire->id) }}"
+                                                    class="btn btn-sm btn-danger" title="Déménagement">
+                                                    <i class="mdi mdi-home-export-outline"></i>
+                                                </a>
+                                            @endif
+                                            <a href="{{ route('owner.demenagement.historique', $locataire->id) }}"
+                                                class="btn btn-sm btn-secondary" title="Historique des locations">
+                                                <i class="mdi mdi-history"></i>
+                                            </a>
+                                            {{-- <form action="#" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-danger delete-btn" title="Supprimer">
                                                 <i class="mdi mdi-delete"></i>
                                             </button>
                                         </form> --}}
-                                    </div>
-                                </td>
-                                <td>
+                                        </div>
+                                    </td>
+                                    <td>
                                         @php
-                                            $etatExiste = App\Models\EtatLieu::where('locataire_id', $locataire->code_id)->first();
+                                            $etatExiste = App\Models\EtatLieu::where(
+                                                'locataire_id',
+                                                $locataire->code_id,
+                                            )->first();
                                         @endphp
-                                                                                            
-                                        @if($etatExiste)
-                                            <button class="btn btn-sm btn-info view-etat-btn" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#etatLieuModal"
-                                                    data-etat-lieu="{{ json_encode($etatExiste) }}"
-                                                    title="Voir l'état des lieux">
+
+                                        @if ($etatExiste)
+                                            <button class="btn btn-sm btn-info view-etat-btn" data-bs-toggle="modal"
+                                                data-bs-target="#etatLieuModal"
+                                                data-etat-lieu="{{ json_encode($etatExiste) }}"
+                                                title="Voir l'état des lieux">
                                                 <i class="mdi mdi-eye"></i> Voir
                                             </button>
                                         @elseif($locataire->comptable)
                                             <span class="badge bg-primary text-white" style="font-size: 20px">
-                                                <i class="mdi mdi-account-check"></i> {{ $locataire->comptable->name }} {{ $locataire->comptable->prenom }}
+                                                <i class="mdi mdi-account-check"></i> {{ $locataire->comptable->name }}
+                                                {{ $locataire->comptable->prenom }}
                                             </span>
                                         @else
                                             <button class="btn btn-sm btn-warning assign-comptable-btn"
-                                                    data-locataire-id="{{ $locataire->id }}"
-                                                    title="Attribuer un agent de recouvrement">
+                                                data-locataire-id="{{ $locataire->id }}"
+                                                title="Attribuer un agent de recouvrement">
                                                 <i class="mdi mdi-account-plus"></i> Attribuer
                                             </button>
                                         @endif
                                     </td>
 
-                                <td>
-                                    @if($locataire->status === 'Actif') <!-- Vérifiez le statut du locataire -->
-                                        @if($locataire->show_reminder_button)
-                                            <button class="btn btn-sm btn-primary send-reminder-btn"
+                                    <td>
+                                        @if ($locataire->status === 'Actif')
+                                            <!-- Vérifiez le statut du locataire -->
+                                            @if ($locataire->show_reminder_button)
+                                                <button class="btn btn-sm btn-primary send-reminder-btn"
                                                     data-locataire-id="{{ $locataire->id }}"
                                                     data-locataire-email="{{ $locataire->email }}"
                                                     title="Envoyer un rappel de paiement">
-                                                <i class="mdi mdi-email-open"></i> Rappel
-                                            </button>
-                                        @endif
+                                                    <i class="mdi mdi-email-open"></i> Rappel
+                                                </button>
+                                            @endif
 
-                                        <button class="btn btn-sm btn-success generate-cash-code"
+                                            <button class="btn btn-sm btn-success generate-cash-code"
                                                 data-locataire-id="{{ $locataire->id }}"
                                                 title="Générer un code pour paiement en espèces">
-                                            <i class="mdi mdi-cash"></i>Espèces
-                                        </button>
-                                        
-                                        <button class="btn btn-sm btn-warning verify-cash-code"
+                                                <i class="mdi mdi-cash"></i>Espèces
+                                            </button>
+
+                                            <button class="btn btn-sm btn-warning verify-cash-code"
                                                 data-locataire-id="{{ $locataire->id }}"
                                                 title="Saisir le code de vérification">
-                                            <i class="mdi mdi-key"></i>
-                                        </button>
+                                                <i class="mdi mdi-key"></i>
+                                            </button>
+                                        @else
+                                            <span class="text-danger">Locataire inactif - aucune action disponible.</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="12" class="text-center py-4">
+                                        <div class="alert alert-info">
+                                            Aucun locataire enregistré pour le moment.
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+
+                    @if ($locataires->hasPages())
+                        <div class="mt-4 d-flex justify-content-center">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination pagination-rounded">
+                                    @if ($locataires->onFirstPage())
+                                        <li class="page-item disabled">
+                                            <span class="page-link" aria-hidden="true">«</span>
+                                        </li>
                                     @else
-                                        <span class="text-danger">Locataire inactif - aucune action disponible.</span>
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ $locataires->previousPageUrl() }}"
+                                                rel="prev" aria-label="Previous">«</a>
+                                        </li>
                                     @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="12" class="text-center py-4">
-                                    <div class="alert alert-info">
-                                        Aucun locataire enregistré pour le moment.
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
 
-                @if($locataires->hasPages())
-                <div class="mt-4 d-flex justify-content-center">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-rounded">
-                            @if ($locataires->onFirstPage())
-                                <li class="page-item disabled">
-                                    <span class="page-link" aria-hidden="true">«</span>
-                                </li>
-                            @else
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ $locataires->previousPageUrl() }}" rel="prev" aria-label="Previous">«</a>
-                                </li>
-                            @endif
+                                    @foreach ($locataires->getUrlRange(1, $locataires->lastPage()) as $page => $url)
+                                        @if ($page == $locataires->currentPage())
+                                            <li class="page-item active"><span
+                                                    class="page-link">{{ $page }}</span></li>
+                                        @else
+                                            <li class="page-item"><a class="page-link"
+                                                    href="{{ $url }}">{{ $page }}</a></li>
+                                        @endif
+                                    @endforeach
 
-                            @foreach ($locataires->getUrlRange(1, $locataires->lastPage()) as $page => $url)
-                                @if ($page == $locataires->currentPage())
-                                    <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
-                                @else
-                                    <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
-                                @endif
-                            @endforeach
-
-                            @if ($locataires->hasMorePages())
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ $locataires->nextPageUrl() }}" rel="next" aria-label="Next">»</a>
-                                </li>
-                            @else
-                                <li class="page-item disabled">
-                                    <span class="page-link" aria-hidden="true">»</span>
-                                </li>
-                            @endif
-                        </ul>
-                    </nav>
+                                    @if ($locataires->hasMorePages())
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ $locataires->nextPageUrl() }}" rel="next"
+                                                aria-label="Next">»</a>
+                                        </li>
+                                    @else
+                                        <li class="page-item disabled">
+                                            <span class="page-link" aria-hidden="true">»</span>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </nav>
+                        </div>
+                    @endif
                 </div>
-                @endif
             </div>
         </div>
     </div>
-</div>
 
-<!-- Scripts nécessaires -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- Scripts nécessaires -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
-<script>
-$(document).ready(function() {
-    // CSRF Token pour AJAX
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-
-    // Notification SweetAlert2 pour succès
-    @if(session('success'))
-    Swal.fire({
-        title: 'Succès !',
-        text: '{{ session('success') }}',
-        icon: 'success',
-        confirmButtonColor: '#3085d6',
-        confirmButtonText: 'OK',
-    });
-    @endif
-
-    // Gestion des images dans la modal
-    $('.preview-image').on('click', function() {
-        const imgUrl = $(this).data('image');
-        const title = $(this).data('title');
-
-        $('#modalImage').attr('src', imgUrl);
-        $('#imageModalLabel').text(title);
-
-        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
-        imageModal.show();
-    });
-
-    // Confirmation de suppression Locataire
-    $('.delete-btn').on('click', function(e) {
-        e.preventDefault();
-        const form = $(this).closest('form');
-
-        Swal.fire({
-            title: 'Confirmer la suppression',
-            text: "Êtes-vous sûr de vouloir supprimer ce locataire ?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Oui, supprimer!',
-            cancelButtonText: 'Annuler'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit();
-            }
-        });
-    });
-
-    // Fonction pour afficher ou cacher le champ motif
-    function toggleMotifField(status) {
-        if (status === 'Inactif' || status === 'Pas sérieux') {
-            $('#motifField').show();
-            $('#motif').prop('required', true);
-        } else {
-            $('#motifField').hide();
-            $('#motif').prop('required', false);
-        }
-    }
-
-    // Gestion du changement de statut
-    $('.change-status-btn').on('click', function() {
-        const locataireId = $(this).data('locataire-id');
-        const currentStatus = $(this).data('current-status');
-
-        const form = $('#statusForm');
-        form.attr('action', "{{ route('locataires.updateStatus.owner', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId));
-
-        const statusSelect = $('#newStatus');
-        statusSelect.val(currentStatus);
-
-        toggleMotifField(currentStatus);
-
-        statusSelect.off('change').on('change', function() {
-            toggleMotifField($(this).val());
-        });
-
-        const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
-        statusModal.show();
-    });
-
-    // Validation du formulaire statut avant soumission
-    $('#statusForm').on('submit', function(e) {
-        const selectedStatus = $('#newStatus').val();
-        const motifValue = $('#motif').val().trim();
-
-        if ((selectedStatus === 'Inactif' || selectedStatus === 'Pas sérieux') && motifValue === '') {
-            e.preventDefault();
-            Swal.fire({
-                title: 'Erreur de validation',
-                text: 'Veuillez saisir un motif pour le statut sélectionné.',
-                icon: 'error',
-                confirmButtonText: 'OK'
+    <script>
+        $(document).ready(function() {
+            // CSRF Token pour AJAX
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
             });
-        }
-    });
 
-    // Gestion de l'envoi de rappel de paiement
-    $('body').on('click', '.send-reminder-btn', function() {
-        const button = $(this);
-        const locataireId = button.data('locataire-id');
-        const locataireEmail = button.data('locataire-email');
-        
-        // Afficher un modal avec les options de taux
-        Swal.fire({
-            title: 'Envoyer un rappel de paiement',
-            html: `
+            // Notification SweetAlert2 pour succès
+            @if (session('success'))
+                Swal.fire({
+                    title: 'Succès !',
+                    text: '{{ session('success') }}',
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK',
+                });
+            @endif
+
+            // Gestion des images dans la modal
+            $('.preview-image').on('click', function() {
+                const imgUrl = $(this).data('image');
+                const title = $(this).data('title');
+
+                $('#modalImage').attr('src', imgUrl);
+                $('#imageModalLabel').text(title);
+
+                const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+                imageModal.show();
+            });
+
+            // Confirmation de suppression Locataire
+            $('.delete-btn').on('click', function(e) {
+                e.preventDefault();
+                const form = $(this).closest('form');
+
+                Swal.fire({
+                    title: 'Confirmer la suppression',
+                    text: "Êtes-vous sûr de vouloir supprimer ce locataire ?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Oui, supprimer!',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+
+            // Fonction pour afficher ou cacher le champ motif
+            function toggleMotifField(status) {
+                if (status === 'Inactif' || status === 'Pas sérieux') {
+                    $('#motifField').show();
+                    $('#motif').prop('required', true);
+                } else {
+                    $('#motifField').hide();
+                    $('#motif').prop('required', false);
+                }
+            }
+
+            // Gestion du changement de statut
+            $('.change-status-btn').on('click', function() {
+                const locataireId = $(this).data('locataire-id');
+                const currentStatus = $(this).data('current-status');
+
+                const form = $('#statusForm');
+                form.attr('action',
+                    "{{ route('locataires.updateStatus.owner', ['locataire' => 'LOCATAIRE_ID']) }}"
+                    .replace('LOCATAIRE_ID', locataireId));
+
+                const statusSelect = $('#newStatus');
+                statusSelect.val(currentStatus);
+
+                toggleMotifField(currentStatus);
+
+                statusSelect.off('change').on('change', function() {
+                    toggleMotifField($(this).val());
+                });
+
+                const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+                statusModal.show();
+            });
+
+            // Validation du formulaire statut avant soumission
+            $('#statusForm').on('submit', function(e) {
+                const selectedStatus = $('#newStatus').val();
+                const motifValue = $('#motif').val().trim();
+
+                if ((selectedStatus === 'Inactif' || selectedStatus === 'Pas sérieux') && motifValue ===
+                    '') {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Erreur de validation',
+                        text: 'Veuillez saisir un motif pour le statut sélectionné.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+
+            // Gestion de l'envoi de rappel de paiement
+            $('body').on('click', '.send-reminder-btn', function() {
+                const button = $(this);
+                const locataireId = button.data('locataire-id');
+                const locataireEmail = button.data('locataire-email');
+
+                // Afficher un modal avec les options de taux
+                Swal.fire({
+                    title: 'Envoyer un rappel de paiement',
+                    html: `
                 <div class="mb-3">
                     <label for="tauxMajoration" class="form-label">Taux de majoration :</label>
                     <select class="form-select" id="tauxMajoration">
@@ -462,157 +485,167 @@ $(document).ready(function() {
                 </div>
                 <p>Êtes-vous sûr de vouloir envoyer un rappel de paiement à <strong>${locataireEmail}</strong> ?</p>
             `,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#3a7bd5',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Oui, envoyer',
-            cancelButtonText: 'Annuler',
-            didOpen: () => {
-                // Récupérer le montant du loyer via AJAX
-                $.ajax({
-                    url: "{{ route('locataires.getMontantLoyer') }}",
-                    type: 'GET',
-                    data: { locataire_id: locataireId },
-                    success: function(response) {
-                        $('#montantLoyer').val(response.montant + ' FCFA');
-                        $('#nouveauMontant').val(response.montant + ' FCFA');
-                    }
-                });
-
-                // Calculer le nouveau montant quand le taux change
-                $('#tauxMajoration').on('change', function() {
-                    const taux = parseFloat($(this).val()) || 0;
-                    const montant = parseFloat($('#montantLoyer').val().replace(' FCFA', '')) || 0;
-                    const nouveauMontant = montant * (1 + taux / 100);
-                    $('#nouveauMontant').val(nouveauMontant.toFixed(0) + ' FCFA');
-                });
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const tauxMajoration = $('#tauxMajoration').val();
-                
-                button.prop('disabled', true);
-                button.html('<i class="mdi mdi-loading mdi-spin"></i>');
-                
-                $.ajax({
-                    url: "{{ route('locataires.sendPaymentReminder') }}",
-                    type: 'POST',
-                    data: {
-                        locataire_id: locataireId,
-                        email: locataireEmail,
-                        taux_majoration: tauxMajoration // Ce paramètre est maintenant envoyé
-                    },
-                    success: function(response) {
-                        Swal.fire({
-                            title: 'Succès!',
-                            text: response.message || 'Le rappel a été envoyé avec succès',
-                            icon: 'success'
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3a7bd5',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Oui, envoyer',
+                    cancelButtonText: 'Annuler',
+                    didOpen: () => {
+                        // Récupérer le montant du loyer via AJAX
+                        $.ajax({
+                            url: "{{ route('locataires.getMontantLoyer') }}",
+                            type: 'GET',
+                            data: {
+                                locataire_id: locataireId
+                            },
+                            success: function(response) {
+                                $('#montantLoyer').val(response.montant + ' FCFA');
+                                $('#nouveauMontant').val(response.montant +
+                                ' FCFA');
+                            }
                         });
-                    },
-                    error: function(xhr) {
-                        let errorMsg = 'Une erreur est survenue lors de l\'envoi';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMsg = xhr.responseJSON.message;
-                        }
-                        Swal.fire('Erreur!', errorMsg, 'error');
-                    },
-                    complete: function() {
-                        button.prop('disabled', false);
-                        button.html('<i class="mdi mdi-email-open"></i>Rappel');
+
+                        // Calculer le nouveau montant quand le taux change
+                        $('#tauxMajoration').on('change', function() {
+                            const taux = parseFloat($(this).val()) || 0;
+                            const montant = parseFloat($('#montantLoyer').val().replace(
+                                ' FCFA', '')) || 0;
+                            const nouveauMontant = montant * (1 + taux / 100);
+                            $('#nouveauMontant').val(nouveauMontant.toFixed(0) +
+                                ' FCFA');
+                        });
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const tauxMajoration = $('#tauxMajoration').val();
+
+                        button.prop('disabled', true);
+                        button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+                        $.ajax({
+                            url: "{{ route('locataires.sendPaymentReminder') }}",
+                            type: 'POST',
+                            data: {
+                                locataire_id: locataireId,
+                                email: locataireEmail,
+                                taux_majoration: tauxMajoration // Ce paramètre est maintenant envoyé
+                            },
+                            success: function(response) {
+                                Swal.fire({
+                                    title: 'Succès!',
+                                    text: response.message ||
+                                        'Le rappel a été envoyé avec succès',
+                                    icon: 'success'
+                                });
+                            },
+                            error: function(xhr) {
+                                let errorMsg =
+                                    'Une erreur est survenue lors de l\'envoi';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMsg = xhr.responseJSON.message;
+                                }
+                                Swal.fire('Erreur!', errorMsg, 'error');
+                            },
+                            complete: function() {
+                                button.prop('disabled', false);
+                                button.html('<i class="mdi mdi-email-open"></i>Rappel');
+                            }
+                        });
                     }
                 });
-            }
+            });
         });
-    });
-});
 
-// Gestion de la génération du code pour paiement en espèces
-$('body').on('click', '.generate-cash-code', function() {
-    const locataireId = $(this).data('locataire-id');
-    const button = $(this);
-    
-    button.prop('disabled', true);
-    button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+        // Gestion de la génération du code pour paiement en espèces
+        $('body').on('click', '.generate-cash-code', function() {
+            const locataireId = $(this).data('locataire-id');
+            const button = $(this);
 
-    // D'abord demander le nombre de mois
-    Swal.fire({
-        title: 'Nombre de mois à payer',
-        html: `
+            button.prop('disabled', true);
+            button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+            // D'abord demander le nombre de mois
+            Swal.fire({
+                title: 'Nombre de mois à payer',
+                html: `
             <div class="mb-3">
                 <label for="nombreMois" class="form-label">Combien de mois voulez-vous payer ?</label>
                 <input type="number" class="form-control" id="nombreMois" min="1" value="1">
             </div>
         `,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Continuer',
-        cancelButtonText: 'Annuler',
-        preConfirm: () => {
-            const mois = $('#nombreMois').val();
-            if (!mois || mois < 1) {
-                Swal.showValidationMessage('Veuillez entrer un nombre valide (au moins 1 mois)');
-                return false;
-            }
-            return { mois: mois };
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const nombreMois = result.value.mois;
-            
-            // Générer le code via AJAX
-            $.ajax({
-                url: "{{ route('paiements.generateCashCode') }}",
-                type: 'POST',
-                data: { 
-                    locataire_id: locataireId,
-                    nombre_mois: nombreMois
-                },
-                success: function(response) {
-                    if (response.success) {
-                        // Afficher le message de succès et lancer directement le scanner
-                        Swal.fire({
-                            title: 'Code généré',
-                            text: response.message,
-                            icon: 'success',
-                            confirmButtonText: 'Scanner le QR code',
-                            showCancelButton: true,
-                            cancelButtonText: 'Annuler'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                startQRScanner(locataireId, nombreMois);
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Continuer',
+                cancelButtonText: 'Annuler',
+                preConfirm: () => {
+                    const mois = $('#nombreMois').val();
+                    if (!mois || mois < 1) {
+                        Swal.showValidationMessage(
+                        'Veuillez entrer un nombre valide (au moins 1 mois)');
+                        return false;
+                    }
+                    return {
+                        mois: mois
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const nombreMois = result.value.mois;
+
+                    // Générer le code via AJAX
+                    $.ajax({
+                        url: "{{ route('paiements.generateCashCode') }}",
+                        type: 'POST',
+                        data: {
+                            locataire_id: locataireId,
+                            nombre_mois: nombreMois
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Afficher le message de succès et lancer directement le scanner
+                                Swal.fire({
+                                    title: 'Code généré',
+                                    text: response.message,
+                                    icon: 'success',
+                                    confirmButtonText: 'Scanner le QR code',
+                                    showCancelButton: true,
+                                    cancelButtonText: 'Annuler'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        startQRScanner(locataireId, nombreMois);
+                                    }
+                                });
+                            } else {
+                                Swal.fire('Erreur', response.message, 'error');
                             }
-                        });
-                    } else {
-                        Swal.fire('Erreur', response.message, 'error');
-                    }
-                },
-                error: function(xhr) {
-                    let errorMsg = 'Une erreur est survenue';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    }
-                    Swal.fire('Erreur', errorMsg, 'error');
-                },
-                complete: function() {
+                        },
+                        error: function(xhr) {
+                            let errorMsg = 'Une erreur est survenue';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            Swal.fire('Erreur', errorMsg, 'error');
+                        },
+                        complete: function() {
+                            button.prop('disabled', false);
+                            button.html('<i class="mdi mdi-cash"></i> Espèces');
+                        }
+                    });
+                } else {
                     button.prop('disabled', false);
                     button.html('<i class="mdi mdi-cash"></i> Espèces');
                 }
             });
-        } else {
-            button.prop('disabled', false);
-            button.html('<i class="mdi mdi-cash"></i> Espèces');
-        }
-    });
-});
+        });
 
-// Fonction pour démarrer le scan du QR code
-function startQRScanner(locataireId, nombreMois) {
-    let scanning = true; // Variable pour contrôler le scan
-    
-    const scannerModal = Swal.fire({
-        title: 'Scanner le QR Code du locataire',
-        html: `
+        // Fonction pour démarrer le scan du QR code
+        function startQRScanner(locataireId, nombreMois) {
+            let scanning = true; // Variable pour contrôler le scan
+
+            const scannerModal = Swal.fire({
+                title: 'Scanner le QR Code du locataire',
+                html: `
             <div class="text-center">
                 <div id="camera-status" class="mb-3">
                     <div class="spinner-border text-primary" role="status">
@@ -640,212 +673,225 @@ function startQRScanner(locataireId, nombreMois) {
                 </button>
             </div>
         `,
-        showCancelButton: true,
-        cancelButtonText: 'Annuler',
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        didOpen: async () => {
-            const videoElement = document.getElementById('qr-video');
-            const cameraStatus = document.getElementById('camera-status');
-            const cameraError = document.getElementById('camera-error');
-            const errorMessage = document.getElementById('error-message');
-            const retryButton = document.getElementById('retry-camera');
-            
-            // Gestion du bouton de saisie manuelle
-            $('#enter-code-manually').on('click', function() {
-                scanning = false; // Arrêter le scan
-                Swal.close(); // Fermer le modal
-                showManualCodeInput(locataireId, nombreMois);
-            });
-            
-            // Gestion du bouton retry
-            $('#retry-camera').on('click', function() {
-                initializeCamera();
-            });
-            
-            async function initializeCamera() {
-                try {
-                    // Masquer les éléments d'erreur
-                    cameraError.style.display = 'none';
-                    retryButton.style.display = 'none';
-                    cameraStatus.style.display = 'block';
-                    videoElement.style.display = 'none';
-                    
-                    // Arrêter toute caméra existante
-                    if (videoElement.srcObject) {
-                        videoElement.srcObject.getTracks().forEach(track => track.stop());
-                    }
-                    
-                    // Vérifier si l'API est disponible
-                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                        throw new Error('API caméra non supportée par ce navigateur');
-                    }
-                    
-                    // Différentes configurations à essayer
-                    const constraints = [
-                        { 
-                            video: { 
-                                facingMode: "environment",
-                                width: { ideal: 1280 },
-                                height: { ideal: 720 }
-                            } 
-                        },
-                        { 
-                            video: { 
-                                facingMode: "environment",
-                                width: { ideal: 640 },
-                                height: { ideal: 480 }
-                            } 
-                        },
-                        { 
-                            video: { 
-                                facingMode: "environment"
-                            } 
-                        },
-                        { 
-                            video: { 
-                                facingMode: "user"
-                            } 
-                        },
-                        { video: true }
-                    ];
-                    
-                    let stream = null;
-                    let lastError = null;
-                    
-                    for (const constraint of constraints) {
+                showCancelButton: true,
+                cancelButtonText: 'Annuler',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                didOpen: async () => {
+                    const videoElement = document.getElementById('qr-video');
+                    const cameraStatus = document.getElementById('camera-status');
+                    const cameraError = document.getElementById('camera-error');
+                    const errorMessage = document.getElementById('error-message');
+                    const retryButton = document.getElementById('retry-camera');
+
+                    // Gestion du bouton de saisie manuelle
+                    $('#enter-code-manually').on('click', function() {
+                        scanning = false; // Arrêter le scan
+                        Swal.close(); // Fermer le modal
+                        showManualCodeInput(locataireId, nombreMois);
+                    });
+
+                    // Gestion du bouton retry
+                    $('#retry-camera').on('click', function() {
+                        initializeCamera();
+                    });
+
+                    async function initializeCamera() {
                         try {
-                            console.log('Tentative avec:', constraint);
-                            stream = await navigator.mediaDevices.getUserMedia(constraint);
-                            break;
+                            // Masquer les éléments d'erreur
+                            cameraError.style.display = 'none';
+                            retryButton.style.display = 'none';
+                            cameraStatus.style.display = 'block';
+                            videoElement.style.display = 'none';
+
+                            // Arrêter toute caméra existante
+                            if (videoElement.srcObject) {
+                                videoElement.srcObject.getTracks().forEach(track => track.stop());
+                            }
+
+                            // Vérifier si l'API est disponible
+                            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                                throw new Error('API caméra non supportée par ce navigateur');
+                            }
+
+                            // Différentes configurations à essayer
+                            const constraints = [{
+                                    video: {
+                                        facingMode: "environment",
+                                        width: {
+                                            ideal: 1280
+                                        },
+                                        height: {
+                                            ideal: 720
+                                        }
+                                    }
+                                },
+                                {
+                                    video: {
+                                        facingMode: "environment",
+                                        width: {
+                                            ideal: 640
+                                        },
+                                        height: {
+                                            ideal: 480
+                                        }
+                                    }
+                                },
+                                {
+                                    video: {
+                                        facingMode: "environment"
+                                    }
+                                },
+                                {
+                                    video: {
+                                        facingMode: "user"
+                                    }
+                                },
+                                {
+                                    video: true
+                                }
+                            ];
+
+                            let stream = null;
+                            let lastError = null;
+
+                            for (const constraint of constraints) {
+                                try {
+                                    console.log('Tentative avec:', constraint);
+                                    stream = await navigator.mediaDevices.getUserMedia(constraint);
+                                    break;
+                                } catch (err) {
+                                    console.log('Échec avec constraint:', constraint, err);
+                                    lastError = err;
+                                    continue;
+                                }
+                            }
+
+                            if (!stream) {
+                                throw lastError || new Error('Impossible d\'obtenir l\'accès à la caméra');
+                            }
+
+                            // Succès - configurer la vidéo
+                            videoElement.srcObject = stream;
+                            cameraStatus.style.display = 'none';
+                            videoElement.style.display = 'block';
+
+                            // Attendre que la vidéo soit prête
+                            await new Promise((resolve, reject) => {
+                                videoElement.onloadedmetadata = () => {
+                                    videoElement.play().then(resolve).catch(reject);
+                                };
+                                videoElement.onerror = reject;
+                            });
+
+                            // Démarrer le scan
+                            startScanning();
+
                         } catch (err) {
-                            console.log('Échec avec constraint:', constraint, err);
-                            lastError = err;
-                            continue;
+                            console.error("Erreur camera détaillée:", err);
+                            handleCameraError(err);
                         }
                     }
-                    
-                    if (!stream) {
-                        throw lastError || new Error('Impossible d\'obtenir l\'accès à la caméra');
+
+                    function handleCameraError(err) {
+                        cameraStatus.style.display = 'none';
+                        cameraError.style.display = 'block';
+                        retryButton.style.display = 'inline-block';
+
+                        let userMessage = 'Erreur inconnue';
+
+                        if (err.name === 'NotAllowedError') {
+                            userMessage =
+                                'Permission d\'accès à la caméra refusée. Veuillez autoriser l\'accès dans les paramètres de votre navigateur.';
+                        } else if (err.name === 'NotFoundError') {
+                            userMessage = 'Aucune caméra trouvée sur cet appareil.';
+                        } else if (err.name === 'NotReadableError') {
+                            userMessage = 'Caméra occupée par une autre application.';
+                        } else if (err.name === 'OverconstrainedError') {
+                            userMessage = 'Caméra ne supporte pas les paramètres demandés.';
+                        } else if (err.name === 'AbortError') {
+                            userMessage = 'Accès à la caméra interrompu.';
+                        } else if (err.name === 'NotSupportedError') {
+                            userMessage = 'Caméra non supportée par ce navigateur.';
+                        } else if (err.message) {
+                            userMessage = err.message;
+                        }
+
+                        errorMessage.textContent = userMessage;
+
+                        // Auto-focus sur le bouton manuel après quelques secondes
+                        setTimeout(() => {
+                            $('#enter-code-manually').addClass('btn-primary').removeClass(
+                                'btn-secondary');
+                        }, 2000);
                     }
-                    
-                    // Succès - configurer la vidéo
-                    videoElement.srcObject = stream;
-                    cameraStatus.style.display = 'none';
-                    videoElement.style.display = 'block';
-                    
-                    // Attendre que la vidéo soit prête
-                    await new Promise((resolve, reject) => {
-                        videoElement.onloadedmetadata = () => {
-                            videoElement.play().then(resolve).catch(reject);
-                        };
-                        videoElement.onerror = reject;
-                    });
-                    
-                    // Démarrer le scan
-                    startScanning();
-                    
-                } catch (err) {
-                    console.error("Erreur camera détaillée:", err);
-                    handleCameraError(err);
-                }
-            }
-            
-            function handleCameraError(err) {
-                cameraStatus.style.display = 'none';
-                cameraError.style.display = 'block';
-                retryButton.style.display = 'inline-block';
-                
-                let userMessage = 'Erreur inconnue';
-                
-                if (err.name === 'NotAllowedError') {
-                    userMessage = 'Permission d\'accès à la caméra refusée. Veuillez autoriser l\'accès dans les paramètres de votre navigateur.';
-                } else if (err.name === 'NotFoundError') {
-                    userMessage = 'Aucune caméra trouvée sur cet appareil.';
-                } else if (err.name === 'NotReadableError') {
-                    userMessage = 'Caméra occupée par une autre application.';
-                } else if (err.name === 'OverconstrainedError') {
-                    userMessage = 'Caméra ne supporte pas les paramètres demandés.';
-                } else if (err.name === 'AbortError') {
-                    userMessage = 'Accès à la caméra interrompu.';
-                } else if (err.name === 'NotSupportedError') {
-                    userMessage = 'Caméra non supportée par ce navigateur.';
-                } else if (err.message) {
-                    userMessage = err.message;
-                }
-                
-                errorMessage.textContent = userMessage;
-                
-                // Auto-focus sur le bouton manuel après quelques secondes
-                setTimeout(() => {
-                    $('#enter-code-manually').addClass('btn-primary').removeClass('btn-secondary');
-                }, 2000);
-            }
-            
-            function startScanning() {
-                const canvasElement = document.createElement('canvas');
-                const canvasContext = canvasElement.getContext('2d');
-                
-                function scanQR() {
-                    // Vérifier si le scan doit continuer
-                    if (!scanning) return;
-                    
-                    try {
-                        if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
-                            canvasElement.height = videoElement.videoHeight;
-                            canvasElement.width = videoElement.videoWidth;
-                            canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-                            
-                            const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                            const code = jsQR(imageData.data, imageData.width, imageData.height);
-                            
-                            if (code) {
-                                scanning = false; // Arrêter le scan
-                                document.getElementById('qr-detected-code').textContent = code.data;
-                                document.getElementById('qr-result').style.display = 'block';
-                                
-                                // Feedback visuel
-                                videoElement.style.border = '3px solid #28a745';
-                                
-                                // Fermer le scanner et valider le code
-                                setTimeout(() => {
-                                    Swal.close();
-                                    verifyAndSubmitPayment(locataireId, code.data, nombreMois);
-                                }, 1000);
-                            } else {
+
+                    function startScanning() {
+                        const canvasElement = document.createElement('canvas');
+                        const canvasContext = canvasElement.getContext('2d');
+
+                        function scanQR() {
+                            // Vérifier si le scan doit continuer
+                            if (!scanning) return;
+
+                            try {
+                                if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                                    canvasElement.height = videoElement.videoHeight;
+                                    canvasElement.width = videoElement.videoWidth;
+                                    canvasContext.drawImage(videoElement, 0, 0, canvasElement.width,
+                                        canvasElement.height);
+
+                                    const imageData = canvasContext.getImageData(0, 0, canvasElement.width,
+                                        canvasElement.height);
+                                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                                    if (code) {
+                                        scanning = false; // Arrêter le scan
+                                        document.getElementById('qr-detected-code').textContent = code.data;
+                                        document.getElementById('qr-result').style.display = 'block';
+
+                                        // Feedback visuel
+                                        videoElement.style.border = '3px solid #28a745';
+
+                                        // Fermer le scanner et valider le code
+                                        setTimeout(() => {
+                                            Swal.close();
+                                            verifyAndSubmitPayment(locataireId, code.data, nombreMois);
+                                        }, 1000);
+                                    } else {
+                                        requestAnimationFrame(scanQR);
+                                    }
+                                } else {
+                                    requestAnimationFrame(scanQR);
+                                }
+                            } catch (err) {
+                                console.error('Erreur pendant le scan:', err);
                                 requestAnimationFrame(scanQR);
                             }
-                        } else {
-                            requestAnimationFrame(scanQR);
                         }
-                    } catch (err) {
-                        console.error('Erreur pendant le scan:', err);
-                        requestAnimationFrame(scanQR);
+
+                        scanQR();
+                    }
+
+                    // Initialiser la caméra
+                    await initializeCamera();
+                },
+                willClose: () => {
+                    // Arrêter le scan et la caméra quand le modal se ferme
+                    scanning = false;
+                    const videoElement = document.getElementById('qr-video');
+                    if (videoElement && videoElement.srcObject) {
+                        videoElement.srcObject.getTracks().forEach(track => track.stop());
                     }
                 }
-                
-                scanQR();
-            }
-            
-            // Initialiser la caméra
-            await initializeCamera();
-        },
-        willClose: () => {
-            // Arrêter le scan et la caméra quand le modal se ferme
-            scanning = false;
-            const videoElement = document.getElementById('qr-video');
-            if (videoElement && videoElement.srcObject) {
-                videoElement.srcObject.getTracks().forEach(track => track.stop());
-            }
+            });
         }
-    });
-}
 
-// Fonction pour afficher l'input de code manuel (inchangée)
-function showManualCodeInput(locataireId, nombreMois) {
-    Swal.fire({
-        title: 'Saisie du code manuelle',
-        html: `
+        // Fonction pour afficher l'input de code manuel (inchangée)
+        function showManualCodeInput(locataireId, nombreMois) {
+            Swal.fire({
+                title: 'Saisie du code manuelle',
+                html: `
             <div class="mb-3">
                 <label for="cashVerificationCode" class="form-label">
                     Entrez le code à 6 caractères du locataire :
@@ -858,50 +904,52 @@ function showManualCodeInput(locataireId, nombreMois) {
                 <small class="text-muted">Le code contient 6 caractères (lettres et chiffres)</small>
             </div>
         `,
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: 'Valider',
-        cancelButtonText: 'Annuler',
-        didOpen: () => {
-            const input = document.getElementById('cashVerificationCode');
-            input.focus();
-            
-            // Convertir en majuscules automatiquement
-            input.addEventListener('input', function() {
-                this.value = this.value.toUpperCase();
-            });
-            
-            // Valider avec Enter
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && this.value.length === 6) {
-                    Swal.clickConfirm();
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Valider',
+                cancelButtonText: 'Annuler',
+                didOpen: () => {
+                    const input = document.getElementById('cashVerificationCode');
+                    input.focus();
+
+                    // Convertir en majuscules automatiquement
+                    input.addEventListener('input', function() {
+                        this.value = this.value.toUpperCase();
+                    });
+
+                    // Valider avec Enter
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter' && this.value.length === 6) {
+                            Swal.clickConfirm();
+                        }
+                    });
+                },
+                preConfirm: () => {
+                    const code = document.getElementById('cashVerificationCode').value.trim();
+                    if (!code) {
+                        Swal.showValidationMessage('Veuillez entrer un code');
+                        return false;
+                    }
+                    if (code.length !== 6) {
+                        Swal.showValidationMessage('Le code doit contenir exactement 6 caractères');
+                        return false;
+                    }
+                    return {
+                        code: code
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    verifyAndSubmitPayment(locataireId, result.value.code, nombreMois);
                 }
             });
-        },
-        preConfirm: () => {
-            const code = document.getElementById('cashVerificationCode').value.trim();
-            if (!code) {
-                Swal.showValidationMessage('Veuillez entrer un code');
-                return false;
-            }
-            if (code.length !== 6) {
-                Swal.showValidationMessage('Le code doit contenir exactement 6 caractères');
-                return false;
-            }
-            return { code: code };
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            verifyAndSubmitPayment(locataireId, result.value.code, nombreMois);
-        }
-    });
-}
 
-// Fonction pour vérifier et soumettre le paiement (inchangée)
-function verifyAndSubmitPayment(locataireId, code, nombreMois = 1) {
-    Swal.fire({
-        title: 'Validation en cours',
-        html: `
+        // Fonction pour vérifier et soumettre le paiement (inchangée)
+        function verifyAndSubmitPayment(locataireId, code, nombreMois = 1) {
+            Swal.fire({
+                title: 'Validation en cours',
+                html: `
             <div class="text-center">
                 <div class="spinner-border text-primary mb-3" role="status">
                     <span class="visually-hidden"></span>
@@ -909,23 +957,23 @@ function verifyAndSubmitPayment(locataireId, code, nombreMois = 1) {
                 <p>Vérification du code <strong>${code}</strong>...</p>
             </div>
         `,
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        didOpen: () => {
-            $.ajax({
-                url: "{{ route('paiements.verifyCashCode') }}",
-                type: 'POST',
-                data: { 
-                    locataire_id: locataireId,
-                    code: code,
-                    nombre_mois: nombreMois
-                },
-                timeout: 30000, // 30 secondes de timeout
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            title: 'Paiement réussi !',
-                            html: `
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    $.ajax({
+                        url: "{{ route('paiements.verifyCashCode') }}",
+                        type: 'POST',
+                        data: {
+                            locataire_id: locataireId,
+                            code: code,
+                            nombre_mois: nombreMois
+                        },
+                        timeout: 30000, // 30 secondes de timeout
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'Paiement réussi !',
+                                    html: `
                                 <div class="text-center">
                                     <i class="mdi mdi-check-circle text-success" style="font-size: 3rem;"></i>
                                     <p class="mt-3"><strong>${response.message}</strong></p>
@@ -935,121 +983,124 @@ function verifyAndSubmitPayment(locataireId, code, nombreMois = 1) {
                                     </div>
                                 </div>
                             `,
-                            icon: 'success',
-                            confirmButtonText: 'OK',
-                            confirmButtonColor: '#28a745'
-                        }).then(() => {
-                            if (response.redirect_url) {
-                                window.location.href = response.redirect_url;
+                                    icon: 'success',
+                                    confirmButtonText: 'OK',
+                                    confirmButtonColor: '#28a745'
+                                }).then(() => {
+                                    if (response.redirect_url) {
+                                        window.location.href = response.redirect_url;
+                                    } else {
+                                        location.reload();
+                                    }
+                                });
                             } else {
-                                location.reload();
+                                Swal.fire({
+                                    title: 'Code invalide',
+                                    text: response.message,
+                                    icon: 'error',
+                                    confirmButtonText: 'Réessayer',
+                                    showCancelButton: true,
+                                    cancelButtonText: 'Annuler'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        showManualCodeInput(locataireId, nombreMois);
+                                    }
+                                });
                             }
-                        });
-                    } else {
-                        Swal.fire({
-                            title: 'Code invalide',
-                            text: response.message,
-                            icon: 'error',
-                            confirmButtonText: 'Réessayer',
-                            showCancelButton: true,
-                            cancelButtonText: 'Annuler'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                showManualCodeInput(locataireId, nombreMois);
+                        },
+                        error: function(xhr) {
+                            let errorMsg = 'Erreur lors de la vérification du code';
+                            if (xhr.responseJSON?.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            } else if (xhr.status === 0) {
+                                errorMsg = 'Problème de connexion réseau';
+                            } else if (xhr.status === 500) {
+                                errorMsg = 'Erreur du serveur';
                             }
-                        });
-                    }
-                },
-                error: function(xhr) {
-                    let errorMsg = 'Erreur lors de la vérification du code';
-                    if (xhr.responseJSON?.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    } else if (xhr.status === 0) {
-                        errorMsg = 'Problème de connexion réseau';
-                    } else if (xhr.status === 500) {
-                        errorMsg = 'Erreur du serveur';
-                    }
-                    
-                    Swal.fire({
-                        title: 'Erreur',
-                        text: errorMsg,
-                        icon: 'error',
-                        confirmButtonText: 'Réessayer',
-                        showCancelButton: true,
-                        cancelButtonText: 'Annuler'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            showManualCodeInput(locataireId, nombreMois);
+
+                            Swal.fire({
+                                title: 'Erreur',
+                                text: errorMsg,
+                                icon: 'error',
+                                confirmButtonText: 'Réessayer',
+                                showCancelButton: true,
+                                cancelButtonText: 'Annuler'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    showManualCodeInput(locataireId, nombreMois);
+                                }
+                            });
                         }
                     });
                 }
             });
         }
-    });
-}
 
-// Gestion du bouton de vérification manuelle existant
-$('body').on('click', '.verify-cash-code', function() {
-    const locataireId = $(this).data('locataire-id');
-    startQRScanner(locataireId);
-});
-function submitCashPayment(locataireId, code) {
-    const form = $('<form>', {
-        'method': 'POST',
-        'action': "{{ route('locataire.paiements.store', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId)
-    }).append($('<input>', {
-        'type': 'hidden',
-        'name': '_token',
-        'value': '{{ csrf_token() }}'
-    })).append($('<input>', {
-        'type': 'hidden',
-        'name': 'methode_paiement',
-        'value': 'Espèces'
-    })).append($('<input>', {
-        'type': 'hidden',
-        'name': 'verif_espece',
-        'value': code
-    }));
-
-    $('body').append(form);
-    form.submit();
-}
-</script>
-<script>
-// Gestion de l'attribution de bien
-$(document).on('click', '.attribuer-bien-btn', function() {
-    const locataireId = $(this).data('locataire-id');
-    const button = $(this);
-    
-    button.prop('disabled', true);
-    button.html('<i class="mdi mdi-loading mdi-spin"></i>');
-
-    // Charger la liste des biens disponibles
-    $.get("{{ route('biens.disponibles.owner') }}", function(biens) {
-        button.prop('disabled', false);
-        button.html('<i class="mdi mdi-home-plus"></i>');
-        
-        if (biens.length === 0) {
-            Swal.fire({
-                title: 'Aucun bien disponible',
-                text: 'Il n\'y a actuellement aucun bien disponible à attribuer.',
-                icon: 'warning',
-                confirmButtonColor: '#3085d6',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
-
-        // Préparer les options pour le select
-        let options = '';
-        biens.forEach(bien => {
-            options += `<option value="${bien.id}">${bien.type} - ${bien.commune} (${bien.prix} FCFA/mois)</option>`;
+        // Gestion du bouton de vérification manuelle existant
+        $('body').on('click', '.verify-cash-code', function() {
+            const locataireId = $(this).data('locataire-id');
+            startQRScanner(locataireId);
         });
 
-        // Afficher le popup de sélection
-        Swal.fire({
-            title: 'Attribuer un nouveau bien',
-            html: `
+        function submitCashPayment(locataireId, code) {
+            const form = $('<form>', {
+                'method': 'POST',
+                'action': "{{ route('locataire.paiements.store', ['locataire' => 'LOCATAIRE_ID']) }}".replace(
+                    'LOCATAIRE_ID', locataireId)
+            }).append($('<input>', {
+                'type': 'hidden',
+                'name': '_token',
+                'value': '{{ csrf_token() }}'
+            })).append($('<input>', {
+                'type': 'hidden',
+                'name': 'methode_paiement',
+                'value': 'Espèces'
+            })).append($('<input>', {
+                'type': 'hidden',
+                'name': 'verif_espece',
+                'value': code
+            }));
+
+            $('body').append(form);
+            form.submit();
+        }
+    </script>
+    <script>
+        // Gestion de l'attribution de bien
+        $(document).on('click', '.attribuer-bien-btn', function() {
+            const locataireId = $(this).data('locataire-id');
+            const button = $(this);
+
+            button.prop('disabled', true);
+            button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+            // Charger la liste des biens disponibles
+            $.get("{{ route('biens.disponibles.owner') }}", function(biens) {
+                button.prop('disabled', false);
+                button.html('<i class="mdi mdi-home-plus"></i>');
+
+                if (biens.length === 0) {
+                    Swal.fire({
+                        title: 'Aucun bien disponible',
+                        text: 'Il n\'y a actuellement aucun bien disponible à attribuer.',
+                        icon: 'warning',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+
+                // Préparer les options pour le select
+                let options = '';
+                biens.forEach(bien => {
+                    options +=
+                        `<option value="${bien.id}">${bien.type} - ${bien.commune} (${bien.prix} FCFA/mois)</option>`;
+                });
+
+                // Afficher le popup de sélection
+                Swal.fire({
+                    title: 'Attribuer un nouveau bien',
+                    html: `
                 <form id="attributionForm">
                     <div class="form-group">
                         <label for="bienSelect" class="form-label">Sélectionnez un bien :</label>
@@ -1060,93 +1111,97 @@ $(document).on('click', '.attribuer-bien-btn', function() {
                     </div>
                 </form>
             `,
-            showCancelButton: true,
-            confirmButtonColor: '#02245b',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Attribuer',
-            cancelButtonText: 'Annuler',
-            preConfirm: () => {
-                const bienId = $('#bienSelect').val();
-                if (!bienId) {
-                    Swal.showValidationMessage('Veuillez sélectionner un bien');
-                    return false;
-                }
-                return { bienId };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Envoyer la requête d'attribution
-                button.prop('disabled', true);
-                button.html('<i class="mdi mdi-loading mdi-spin"></i>');
-                
-                $.ajax({
-                    url: "{{ route('locataire.attribuer-bien.owner', ['locataire' => 'LOCATAIRE_ID']) }}".replace('LOCATAIRE_ID', locataireId),
-                    method: 'POST',
-                    data: {
-                        bien_id: result.value.bienId,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        Swal.fire({
-                            title: 'Succès !',
-                            text: response.success,
-                            icon: 'success',
-                            confirmButtonColor: '#3085d6',
-                            confirmButtonText: 'OK'
-                        }).then(() => {
-                            location.reload();
+                    showCancelButton: true,
+                    confirmButtonColor: '#02245b',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Attribuer',
+                    cancelButtonText: 'Annuler',
+                    preConfirm: () => {
+                        const bienId = $('#bienSelect').val();
+                        if (!bienId) {
+                            Swal.showValidationMessage('Veuillez sélectionner un bien');
+                            return false;
+                        }
+                        return {
+                            bienId
+                        };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Envoyer la requête d'attribution
+                        button.prop('disabled', true);
+                        button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+                        $.ajax({
+                            url: "{{ route('locataire.attribuer-bien.owner', ['locataire' => 'LOCATAIRE_ID']) }}"
+                                .replace('LOCATAIRE_ID', locataireId),
+                            method: 'POST',
+                            data: {
+                                bien_id: result.value.bienId,
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                Swal.fire({
+                                    title: 'Succès !',
+                                    text: response.success,
+                                    icon: 'success',
+                                    confirmButtonColor: '#3085d6',
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function(xhr) {
+                                Swal.fire({
+                                    title: 'Erreur !',
+                                    text: xhr.responseJSON.error ||
+                                        'Une erreur est survenue',
+                                    icon: 'error',
+                                    confirmButtonColor: '#3085d6',
+                                    confirmButtonText: 'OK'
+                                });
+                            },
+                            complete: function() {
+                                button.prop('disabled', false);
+                                button.html('<i class="mdi mdi-home-plus"></i>');
+                            }
                         });
-                    },
-                    error: function(xhr) {
-                        Swal.fire({
-                            title: 'Erreur !',
-                            text: xhr.responseJSON.error || 'Une erreur est survenue',
-                            icon: 'error',
-                            confirmButtonColor: '#3085d6',
-                            confirmButtonText: 'OK'
-                        });
-                    },
-                    complete: function() {
-                        button.prop('disabled', false);
-                        button.html('<i class="mdi mdi-home-plus"></i>');
                     }
                 });
-            }
-        });
-    }).fail(function() {
-        button.prop('disabled', false);
-        button.html('<i class="mdi mdi-home-plus"></i>');
-        
-        Swal.fire({
-            title: 'Erreur !',
-            text: 'Impossible de charger la liste des biens',
-            icon: 'error',
-            confirmButtonColor: '#3085d6',
-            confirmButtonText: 'OK'
-        });
-    });
-});
-</script>
-<script>
-$(document).ready(function() {
-    $('#searchInput').on('keyup', function() {
-        const searchText = $(this).val().toLowerCase();
-        let hasResults = false;
+            }).fail(function() {
+                button.prop('disabled', false);
+                button.html('<i class="mdi mdi-home-plus"></i>');
 
-        $('table tbody tr').each(function() {
-            const rowText = $(this).text().toLowerCase();
-            if (rowText.includes(searchText)) {
-                $(this).show();
-                hasResults = true;
-            } else {
-                $(this).hide();
-            }
+                Swal.fire({
+                    title: 'Erreur !',
+                    text: 'Impossible de charger la liste des biens',
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
+            });
         });
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('#searchInput').on('keyup', function() {
+                const searchText = $(this).val().toLowerCase();
+                let hasResults = false;
 
-        // Affichage message "Aucun résultat"
-        if (!hasResults) {
-            if ($('.no-results-message').length === 0) {
-                $('table tbody').append(`
+                $('table tbody tr').each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    if (rowText.includes(searchText)) {
+                        $(this).show();
+                        hasResults = true;
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                // Affichage message "Aucun résultat"
+                if (!hasResults) {
+                    if ($('.no-results-message').length === 0) {
+                        $('table tbody').append(`
                     <tr class="no-results-message">
                         <td colspan="18" class="text-center py-4">
                             <div class="alert alert-warning mb-0">
@@ -1155,108 +1210,109 @@ $(document).ready(function() {
                         </td>
                     </tr>
                 `);
-            }
-        } else {
-            $('.no-results-message').remove();
-        }
-    });
-});
-
-</script>
-
-{{-- Attribuer un agent de recouvrement a un locataire pour l'etat des lieux  --}}
-<script>
-    // Gestion de l'attribution d'agent de recouvrement
-$(document).on('click', '.assign-comptable-btn', function() {
-    const locataireId = $(this).data('locataire-id');
-    const button = $(this);
-    
-    // Afficher le modal
-    const modal = $('#assignComptableModal');
-    $('#locataireId').val(locataireId);
-    
-    // Charger la liste des agents de recouvrement
-    $.ajax({
-        url: "{{ route('comptables.recouvrement.owner') }}",
-        type: 'GET',
-        data: {
-            proprietaire_id: "{{ Auth::guard('owner')->user()->code_id }}"
-        },
-        beforeSend: function() {
-            $('#comptableSelect').html('<option value="">Chargement en cours...</option>');
-        },
-        success: function(response) {
-            if (response.length > 0) {
-                let options = '<option value="">-- Choisir un agent --</option>';
-                response.forEach(comptable => {
-                    options += `<option value="${comptable.id}">${comptable.name} ${comptable.prenom} (${comptable.contact})</option>`;
-                });
-                $('#comptableSelect').html(options);
-            } else {
-                $('#comptableSelect').html('<option value="">Aucun agent disponible</option>');
-                Swal.fire({
-                    title: 'Aucun agent disponible',
-                    text: 'Aucun agent de recouvrement n\'est disponible dans votre agence.',
-                    icon: 'warning',
-                    confirmButtonText: 'OK'
-                });
-                return;
-            }
-            modal.modal('show');
-        },
-        error: function() {
-            Swal.fire({
-                title: 'Erreur',
-                text: 'Impossible de charger la liste des agents',
-                icon: 'error',
-                confirmButtonText: 'OK'
+                    }
+                } else {
+                    $('.no-results-message').remove();
+                }
             });
-        }
-    });
-});
+        });
+    </script>
 
-// Soumission du formulaire d'attribution
-// Soumission du formulaire d'attribution
-// Gestion de l'attribution d'agent de recouvrement avec SweetAlert2
-$(document).on('click', '.assign-comptable-btn', function() {
-    const locataireId = $(this).data('locataire-id');
-    const button = $(this);
-    
-    // Afficher un indicateur de chargement
-    button.prop('disabled', true);
-    button.html('<i class="mdi mdi-loading mdi-spin"></i>');
-    
-    // Charger la liste des agents de recouvrement
-    $.ajax({
-        url: "{{ route('comptables.recouvrement.owner') }}",
-        type: 'GET',
-        data: {
-            proprietaire_id: "{{ Auth::guard('owner')->user()->code_id }}"
-        },
-        success: function(response) {
-            button.prop('disabled', false);
-            button.html('<i class="mdi mdi-account-plus"></i> Attribuer');
-            
-            if (response.length === 0) {
-                Swal.fire({
-                    title: 'Aucun agent disponible',
-                    text: 'Aucun agent de recouvrement n\'est disponible dans votre agence.',
-                    icon: 'warning',
-                    confirmButtonText: 'OK'
-                });
-                return;
-            }
-            
-            // Préparer les options pour le select
-            let options = '';
-            response.forEach(comptable => {
-                options += `<option value="${comptable.id}">${comptable.name} ${comptable.prenom} (${comptable.contact})</option>`;
+    {{-- Attribuer un agent de recouvrement a un locataire pour l'etat des lieux  --}}
+    <script>
+        // Gestion de l'attribution d'agent de recouvrement
+        $(document).on('click', '.assign-comptable-btn', function() {
+            const locataireId = $(this).data('locataire-id');
+            const button = $(this);
+
+            // Afficher le modal
+            const modal = $('#assignComptableModal');
+            $('#locataireId').val(locataireId);
+
+            // Charger la liste des agents de recouvrement
+            $.ajax({
+                url: "{{ route('comptables.recouvrement.owner') }}",
+                type: 'GET',
+                data: {
+                    proprietaire_id: "{{ Auth::guard('owner')->user()->code_id }}"
+                },
+                beforeSend: function() {
+                    $('#comptableSelect').html('<option value="">Chargement en cours...</option>');
+                },
+                success: function(response) {
+                    if (response.length > 0) {
+                        let options = '<option value="">-- Choisir un agent --</option>';
+                        response.forEach(comptable => {
+                            options +=
+                                `<option value="${comptable.id}">${comptable.name} ${comptable.prenom} (${comptable.contact})</option>`;
+                        });
+                        $('#comptableSelect').html(options);
+                    } else {
+                        $('#comptableSelect').html('<option value="">Aucun agent disponible</option>');
+                        Swal.fire({
+                            title: 'Aucun agent disponible',
+                            text: 'Aucun agent de recouvrement n\'est disponible dans votre agence.',
+                            icon: 'warning',
+                            confirmButtonText: 'OK'
+                        });
+                        return;
+                    }
+                    modal.modal('show');
+                },
+                error: function() {
+                    Swal.fire({
+                        title: 'Erreur',
+                        text: 'Impossible de charger la liste des agents',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
             });
-            
-            // Afficher le popup SweetAlert2
-            Swal.fire({
-                title: 'Attribuer un agent de recouvrement',
-                html: `
+        });
+
+        // Soumission du formulaire d'attribution
+        // Soumission du formulaire d'attribution
+        // Gestion de l'attribution d'agent de recouvrement avec SweetAlert2
+        $(document).on('click', '.assign-comptable-btn', function() {
+            const locataireId = $(this).data('locataire-id');
+            const button = $(this);
+
+            // Afficher un indicateur de chargement
+            button.prop('disabled', true);
+            button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+            // Charger la liste des agents de recouvrement
+            $.ajax({
+                url: "{{ route('comptables.recouvrement.owner') }}",
+                type: 'GET',
+                data: {
+                    proprietaire_id: "{{ Auth::guard('owner')->user()->code_id }}"
+                },
+                success: function(response) {
+                    button.prop('disabled', false);
+                    button.html('<i class="mdi mdi-account-plus"></i> Attribuer');
+
+                    if (response.length === 0) {
+                        Swal.fire({
+                            title: 'Aucun agent disponible',
+                            text: 'Aucun agent de recouvrement n\'est disponible dans votre agence.',
+                            icon: 'warning',
+                            confirmButtonText: 'OK'
+                        });
+                        return;
+                    }
+
+                    // Préparer les options pour le select
+                    let options = '';
+                    response.forEach(comptable => {
+                        options +=
+                            `<option value="${comptable.id}">${comptable.name} ${comptable.prenom} (${comptable.contact})</option>`;
+                    });
+
+                    // Afficher le popup SweetAlert2
+                    Swal.fire({
+                        title: 'Attribuer un agent de recouvrement',
+                        html: `
                     <form id="swalAssignForm">
                         <input type="hidden" name="locataire_id" value="${locataireId}">
                         <div class="mb-3">
@@ -1268,103 +1324,109 @@ $(document).on('click', '.assign-comptable-btn', function() {
                         </div>
                     </form>
                 `,
-                showCancelButton: true,
-                confirmButtonText: 'Attribuer',
-                cancelButtonText: 'Annuler',
-                focusConfirm: false,
-                preConfirm: () => {
-                    const selectedId = $('#swalComptableSelect').val();
-                    if (!selectedId) {
-                        Swal.showValidationMessage('Veuillez sélectionner un agent');
-                        return false;
-                    }
-                    return {
-                        locataire_id: locataireId,
-                        comptable_id: selectedId
-                    };
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Envoyer la requête d'attribution
-                    button.prop('disabled', true);
-                    button.html('<i class="mdi mdi-loading mdi-spin"></i>');
-                    
-                    $.ajax({
-                        url: "{{ route('locataire.assign.comptable.owner') }}",
-                        type: 'POST',
-                        data: result.value,
-                        success: function(response) {
-                            // Trouver le bouton "Attribuer" correspondant à ce locataire
-                            const assignBtn = $(`.assign-comptable-btn[data-locataire-id="${locataireId}"]`);
-                            
-                            // Remplacer le bouton par le badge avec le nom du comptable
-                            assignBtn.replaceWith(`
+                        showCancelButton: true,
+                        confirmButtonText: 'Attribuer',
+                        cancelButtonText: 'Annuler',
+                        focusConfirm: false,
+                        preConfirm: () => {
+                            const selectedId = $('#swalComptableSelect').val();
+                            if (!selectedId) {
+                                Swal.showValidationMessage(
+                                'Veuillez sélectionner un agent');
+                                return false;
+                            }
+                            return {
+                                locataire_id: locataireId,
+                                comptable_id: selectedId
+                            };
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Envoyer la requête d'attribution
+                            button.prop('disabled', true);
+                            button.html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+                            $.ajax({
+                                url: "{{ route('locataire.assign.comptable.owner') }}",
+                                type: 'POST',
+                                data: result.value,
+                                success: function(response) {
+                                    // Trouver le bouton "Attribuer" correspondant à ce locataire
+                                    const assignBtn = $(
+                                        `.assign-comptable-btn[data-locataire-id="${locataireId}"]`
+                                        );
+
+                                    // Remplacer le bouton par le badge avec le nom du comptable
+                                    assignBtn.replaceWith(`
                                 <span class="badge bg-primary text-white" style="font-size: 20px">
                                     <i class="mdi mdi-account-check"></i> 
                                     ${response.comptable.name} ${response.comptable.prenom}
                                 </span>
                             `);
-                            
-                            Swal.fire({
-                                title: 'Succès !',
-                                text: response.success,
-                                icon: 'success',
-                                confirmButtonText: 'OK'
+
+                                    Swal.fire({
+                                        title: 'Succès !',
+                                        text: response.success,
+                                        icon: 'success',
+                                        confirmButtonText: 'OK'
+                                    });
+                                },
+                                error: function(xhr) {
+                                    let errorMsg = 'Une erreur est survenue';
+                                    if (xhr.responseJSON && xhr.responseJSON
+                                        .message) {
+                                        errorMsg = xhr.responseJSON.message;
+                                    }
+                                    Swal.fire({
+                                        title: 'Erreur !',
+                                        text: errorMsg,
+                                        icon: 'error',
+                                        confirmButtonText: 'OK'
+                                    });
+                                },
+                                complete: function() {
+                                    button.prop('disabled', false);
+                                    button.html(
+                                        '<i class="mdi mdi-account-plus"></i> Attribuer'
+                                        );
+                                }
                             });
-                        },
-                        error: function(xhr) {
-                            let errorMsg = 'Une erreur est survenue';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMsg = xhr.responseJSON.message;
-                            }
-                            Swal.fire({
-                                title: 'Erreur !',
-                                text: errorMsg,
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
-                        },
-                        complete: function() {
-                            button.prop('disabled', false);
-                            button.html('<i class="mdi mdi-account-plus"></i> Attribuer');
                         }
+                    });
+                },
+                error: function() {
+                    button.prop('disabled', false);
+                    button.html('<i class="mdi mdi-account-plus"></i> Attribuer');
+
+                    Swal.fire({
+                        title: 'Erreur',
+                        text: 'Impossible de charger la liste des agents',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
                     });
                 }
             });
-        },
-        error: function() {
-            button.prop('disabled', false);
-            button.html('<i class="mdi mdi-account-plus"></i> Attribuer');
-            
-            Swal.fire({
-                title: 'Erreur',
-                text: 'Impossible de charger la liste des agents',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
+        });
+    </script>
+    <style>
+        #searchInput {
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
         }
-    });
-});
-</script>
-<style>
-#searchInput {
-    padding: 10px 15px;
-    border-radius: 20px;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: all 0.3s;
-}
 
-#searchInput:focus {
-    border-color: #4b7bec;
-    box-shadow: 0 2px 10px rgba(75, 123, 236, 0.3);
-    outline: none;
-}
+        #searchInput:focus {
+            border-color: #4b7bec;
+            box-shadow: 0 2px 10px rgba(75, 123, 236, 0.3);
+            outline: none;
+        }
 
-.empty-state .empty-icon {
-    font-size: 3rem;
-    color: #a5b1c2;
-    margin-bottom: 1rem;
-}
-</style>
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            color: #a5b1c2;
+            margin-bottom: 1rem;
+        }
+    </style>
 @endsection
