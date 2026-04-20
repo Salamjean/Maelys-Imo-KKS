@@ -12,19 +12,20 @@ use Illuminate\Support\Facades\Storage;
 
 class EtatLieuLocataireController extends Controller
 {
-    public function etat_lieu() {
+    public function etat_lieu()
+    {
         // Récupérer le locataire connecté
         $locataire = Auth::user();
-        
+
         // Récupérer le dernier code de vérification non expiré
         $verificationData = VerificationCode::where('locataire_id', $locataire->id)
             ->where('expires_at', '>', now())
             ->where('is_used', false)
             ->first();
-        
+
         // Récupérer le comptable associé au locataire
         $comptable = $locataire->comptable;
-        
+
         // Récupérer l'état des lieux s'il existe
         // (locataire_id peut être stocké comme id numérique OU code_id selon le contrôleur créateur)
         $locataireIds = array_filter([$locataire->id, $locataire->code_id]);
@@ -32,7 +33,7 @@ class EtatLieuLocataireController extends Controller
             ->where('bien_id', $locataire->bien_id)
             ->latest()
             ->first();
-        
+
         // Décoder les champs JSON si ils existent
         if ($etatLieu) {
             if ($etatLieu->parties_communes) {
@@ -48,7 +49,7 @@ class EtatLieuLocataireController extends Controller
             ->where('bien_id', $locataire->bien_id)
             ->latest()
             ->first();
-        
+
         // Décoder les champs JSON si ils existent
         if ($etatLieuSortie) {
             if ($etatLieuSortie->parties_communes) {
@@ -58,7 +59,7 @@ class EtatLieuLocataireController extends Controller
                 $etatLieuSortie->chambres = json_decode($etatLieuSortie->chambres, true);
             }
         }
-        
+
         // Lire le QR code depuis le stockage
         $qrCodeBase64 = null;
         if ($verificationData && Storage::exists($verificationData->path_qr_code)) {
@@ -86,22 +87,21 @@ class EtatLieuLocataireController extends Controller
     {
         try {
             $etatLieu = EtatLieu::findOrFail($id);
-            
+
             if ($etatLieu->status_etat_entre === 'Oui') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cet état des lieux est déjà confirmé'
                 ], 400);
             }
-            
+
             $etatLieu->status_etat_entre = 'Oui';
             $etatLieu->save();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'État des lieux confirmé avec succès'
             ]);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -113,22 +113,21 @@ class EtatLieuLocataireController extends Controller
     {
         try {
             $etatLieuSortie = EtatLieuSorti::findOrFail($id);
-            
+
             if ($etatLieuSortie->status_sorti === 'Oui') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cet état des lieux est déjà confirmé'
                 ], 400);
             }
-            
+
             $etatLieuSortie->status_sorti = 'Oui';
             $etatLieuSortie->save();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'État des lieux confirmé avec succès'
             ]);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
