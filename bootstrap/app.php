@@ -4,6 +4,7 @@ use App\Http\Middleware\AgenceMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Http\Request;
 
@@ -25,6 +26,29 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // Redirection login selon le contexte (session expirée / non connecté)
+        $loginRedirect = function (Request $request) {
+            if ($request->expectsJson()) {
+                return null; // laisser le handler JSON par défaut
+            }
+            if ($request->is('admin') || $request->is('admin/*')) {
+                return redirect()->route('admin.login')->withErrors(['error' => 'Votre session a expiré. Veuillez vous reconnecter.']);
+            }
+            return redirect()->route('login')->withErrors(['error' => 'Votre session a expiré. Veuillez vous reconnecter.']);
+        };
+
+        // AuthenticationException (middleware auth standard)
+        $exceptions->renderable(function (AuthenticationException $e, Request $request) use ($loginRedirect) {
+            return $loginRedirect($request);
+        });
+
+        // ErrorException : "Attempt to read property on null" = session expirée
+        $exceptions->renderable(function (\ErrorException $e, Request $request) use ($loginRedirect) {
+            if (str_contains($e->getMessage(), 'Attempt to read property') || str_contains($e->getMessage(), 'on null')) {
+                return $loginRedirect($request);
+            }
+        });
+
         // Session expirée → redirection vers la page de connexion
         $exceptions->renderable(function (TokenMismatchException $e, Request $request) {
             if ($request->expectsJson()) {
