@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Proprietaire;
+
 use App\Http\Controllers\Controller;
 use App\Models\Comptable;
 use App\Models\ResetCodePasswordComptable;
@@ -15,28 +16,30 @@ use Illuminate\Support\Facades\Storage;
 
 class OwnerComptableController extends Controller
 {
-    public function index(){
-          $ownerId = Auth::guard('owner')->user()->code_id;
-     // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
-                        ->where('statut', '!=', 'annulée')
-                        ->whereHas('bien', function ($query) use ($ownerId) {
-                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+    public function index()
+    {
+        $ownerId = Auth::guard('owner')->user()->code_id;
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+            ->where('statut', '!=', 'annulée')
+            ->whereHas('bien', function ($query) use ($ownerId) {
+                $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         $comptables = Comptable::where('proprietaire_id', $ownerId)->paginate(6);
         return view('proprietaire.comptable.index', compact('comptables', 'pendingVisits'));
     }
-    
-    public function create(){
-          $ownerId = Auth::guard('owner')->user()->code_id;
-     // Demandes de visite en attente
-       $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
-                        ->where('statut', '!=', 'annulée')
-                        ->whereHas('bien', function ($query) use ($ownerId) {
-                             $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
-                        })
-                        ->count();
+
+    public function create()
+    {
+        $ownerId = Auth::guard('owner')->user()->code_id;
+        // Demandes de visite en attente
+        $pendingVisits = Visite::where('statut', 'en attente')->where('statut', '!=', 'effectuée')
+            ->where('statut', '!=', 'annulée')
+            ->whereHas('bien', function ($query) use ($ownerId) {
+                $query->where('proprietaire_id', $ownerId);  // Filtrer par l'ID de l'agence
+            })
+            ->count();
         return view('proprietaire.comptable.create', compact('pendingVisits'));
     }
 
@@ -49,9 +52,9 @@ class OwnerComptableController extends Controller
             'email' => 'required|email|unique:comptables,email',
             'contact' => 'required|string|min:10',
             'commune' => 'required|string|max:255',
-            'user_type' =>'required',
+            'user_type' => 'required',
             'date_naissance' => 'required|max:255',
-        ],[
+        ], [
             'name.required' => 'Le nom du comptable est obligatoire.',
             'prenom.required' => 'Le prénom du comptable est obligatoire.',
             'email.required' => 'L\'adresse e-mail est obligatoire.',
@@ -63,7 +66,7 @@ class OwnerComptableController extends Controller
             'date_naissance.required' => 'La date de naissance est obligatoire.',
             'user_type.required' => 'Le type d\'agent est obligatoire'
         ]);
-    
+
         try {
             $ownerId = Auth::guard('owner')->user()->code_id;
             // Traitement de l'image de profil
@@ -71,7 +74,7 @@ class OwnerComptableController extends Controller
             if ($request->hasFile('profile_image')) {
                 $profileImagePath = $request->file('profile_image')->store('profile_images', 'public');
             }
-    
+
             // Création de l'agent
             $comptable = new Comptable();
             $comptable->name = $request->name;
@@ -86,7 +89,7 @@ class OwnerComptableController extends Controller
             $comptable->profile_image = $profileImagePath;
             $comptable->proprietaire_id = $ownerId;
             $comptable->save();
-    
+
             // Envoi de l'e-mail de vérification
             ResetCodePasswordComptable::where('email', $comptable->email)->delete();
             $code = rand(1000, 4000);
@@ -96,18 +99,17 @@ class OwnerComptableController extends Controller
             ]);
 
             Notification::route('mail', $comptable->email)
-                ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email));
-        
+                ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email, $comptable->code_id));
+
             return redirect()->route('accounting.index.owner')
                 ->with('success', 'Agent enregistrée avec succès.');
-    
         } catch (\Exception $e) {
             Log::error('Error creating Agent: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
     }
 
-        private function generateUniqueCodeId()
+    private function generateUniqueCodeId()
     {
         do {
             $code = 'AGT' . str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -116,18 +118,18 @@ class OwnerComptableController extends Controller
         return $code;
     }
 
-      public function destroy($id)
+    public function destroy($id)
     {
         try {
             $comptable = Comptable::findOrFail($id);
-            
+
             // Supprimer le RIB si existant
             if ($comptable->rib) {
                 Storage::delete('public/' . $comptable->rib);
             }
-            
+
             $comptable->delete();
-            
+
             return redirect()->back()->with('success', 'Agent supprimé avec succès.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur lors de la suppression du comptable.');

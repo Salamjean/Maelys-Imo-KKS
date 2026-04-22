@@ -237,7 +237,7 @@ class AgenceController extends Controller
             ]);
 
             Notification::route('mail', $agence->email)
-                ->notify(new SendEmailToAgenceAfterRegistrationNotification($code, $agence->email));
+                ->notify(new SendEmailToAgenceAfterRegistrationNotification($code, $agence->email, $agence->code_id));
 
             return redirect()->route('agence.index')
                 ->with('success', 'Agence enregistrée avec succès.');

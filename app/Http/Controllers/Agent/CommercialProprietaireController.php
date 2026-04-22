@@ -29,8 +29,8 @@ class CommercialProprietaireController extends Controller
                 $query->whereNull('agence_id');
                 $query->whereNull('proprietaire_id')
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence');
-                });
+                        $q->where('gestion', 'agence');
+                    });
             })
             ->count();
         $proprietaires = Proprietaire::whereNull('agence_id')->paginate(6);
@@ -44,8 +44,8 @@ class CommercialProprietaireController extends Controller
                 $query->whereNull('agence_id');
                 $query->whereNull('proprietaire_id')
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence');
-                });
+                        $q->where('gestion', 'agence');
+                    });
             })
             ->count();
         return view('commercial.proprietaire.create', compact('pendingVisits'));
@@ -146,7 +146,7 @@ class CommercialProprietaireController extends Controller
                         'email' => $owner->email,
                     ]);
                     Notification::route('mail', $owner->email)
-                        ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email));
+                        ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email, $owner->code_id));
                 } catch (\Exception $e) {
                     // Log the error but proceed
                 }
@@ -154,7 +154,6 @@ class CommercialProprietaireController extends Controller
 
             DB::commit();
             return redirect()->route('commercial.proprietaires.index')->with('success', 'Propriétaire enregistré avec succès.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -169,8 +168,8 @@ class CommercialProprietaireController extends Controller
                 $query->whereNull('agence_id');
                 $query->whereNull('proprietaire_id')
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence');
-                });
+                        $q->where('gestion', 'agence');
+                    });
             })
             ->count();
         return view('commercial.proprietaire.edit', compact('proprietaire', 'pendingVisits'));
@@ -198,9 +197,9 @@ class CommercialProprietaireController extends Controller
             $proprietaire->email = $validatedData['email'];
             $proprietaire->contact = $validatedData['contact'];
             $proprietaire->commune = $validatedData['commune'];
-            if(isset($validatedData['pourcentage'])) $proprietaire->pourcentage = $validatedData['pourcentage'];
-            if(isset($validatedData['choix_paiement'])) $proprietaire->choix_paiement = $validatedData['choix_paiement'];
-            if($request->has('rib')) $proprietaire->rib = $validatedData['rib'];
+            if (isset($validatedData['pourcentage'])) $proprietaire->pourcentage = $validatedData['pourcentage'];
+            if (isset($validatedData['choix_paiement'])) $proprietaire->choix_paiement = $validatedData['choix_paiement'];
+            if ($request->has('rib')) $proprietaire->rib = $validatedData['rib'];
 
             if ($request->hasFile('contrat')) {
                 if ($proprietaire->contrat && Storage::exists($proprietaire->contrat)) {
@@ -213,7 +212,6 @@ class CommercialProprietaireController extends Controller
 
             return redirect()->route('commercial.proprietaires.index')
                 ->with('success', 'Propriétaire mis à jour avec succès.');
-
         } catch (\Exception $e) {
             return back()->with('error', 'Une erreur est survenue lors de la mise à jour.')->withInput();
         }
@@ -235,7 +233,6 @@ class CommercialProprietaireController extends Controller
             DB::commit();
 
             return redirect()->back()->with('success', 'Propriétaire et ses abonnements supprimés avec succès.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());

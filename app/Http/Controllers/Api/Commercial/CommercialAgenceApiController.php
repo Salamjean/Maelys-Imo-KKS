@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
- use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 
@@ -45,9 +45,9 @@ class CommercialAgenceApiController extends Controller
     public function index()
     {
         $commercial = auth()->user();
-        
+
         if (!$commercial || !($commercial instanceof \App\Models\Commercial)) {
-             return response()->json(['error' => 'Accès non autorisé'], 403);
+            return response()->json(['error' => 'Accès non autorisé'], 403);
         }
 
         $agences = Agence::where('commercial_id', $commercial->code_id)
@@ -180,14 +180,13 @@ class CommercialAgenceApiController extends Controller
             ]);
 
             Notification::route('mail', $agence->email)
-                ->notify(new SendEmailToAgenceAfterRegistrationNotification($code, $agence->email));
+                ->notify(new SendEmailToAgenceAfterRegistrationNotification($code, $agence->email, $agence->code_id));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Agence enregistrée avec succès. Un email a été envoyé à l\'agence pour définir son mot de passe.',
                 'agence' => $agence
             ], 201);
-
         } catch (Exception $e) {
             Log::error('API Error creating agence par commercial: ' . $e->getMessage());
             return response()->json(['error' => 'Une erreur est survenue lors de la création de l\'agence.'], 500);
@@ -357,100 +356,98 @@ class CommercialAgenceApiController extends Controller
             }
 
             $agence->save();
- 
-             return response()->json([
-                 'success' => true,
-                 'message' => 'Informations de l\'agence mises à jour avec succès.',
-                 'agence' => $agence
-             ]);
- 
-         } catch (Exception $e) {
-             Log::error('API Error updating agence by commercial: ' . $e->getMessage());
-             return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour des informations.'], 500);
-         }
-     }
- 
-     /**
-      * @OA\Delete(
-      *      path="/api/commercial/agences/{id}",
-      *      operationId="deleteAgenceByCommercial",
-      *      tags={"Commercial - Agences"},
-      *      summary="Supprimer une agence",
-      *      description="Permet à un commercial de supprimer une agence qu'il a ajoutée, ainsi que ses abonnements et fichiers associés.",
-      *      security={{"sanctum":{}}},
-      *      @OA\Parameter(
-      *          name="id",
-      *          in="path",
-      *          required=true,
-      *          description="Code ID de l'agence",
-      *          @OA\Schema(type="string")
-      *      ),
-      *      @OA\Response(
-      *          response=200,
-      *          description="Agence supprimée avec succès",
-      *          @OA\JsonContent(
-      *              @OA\Property(property="success", type="boolean", example=true),
-      *              @OA\Property(property="message", type="string")
-      *          )
-      *      ),
-      *      @OA\Response(response=403, description="Accès non autorisé ou agence avec biens actifs"),
-      *      @OA\Response(response=404, description="Agence non trouvée")
-      * )
-      */
-     public function destroy($id)
-     {
-         $commercial = auth()->user();
- 
-         if (!$commercial || !($commercial instanceof \App\Models\Commercial)) {
-             return response()->json(['error' => 'Accès non autorisé'], 403);
-         }
- 
-         $agence = Agence::where('code_id', $id)
-             ->where('commercial_id', $commercial->code_id)
-             ->first();
- 
-         if (!$agence) {
-             return response()->json(['error' => 'Agence non trouvée'], 404);
-         }
- 
-         // Vérification de sécurité : ne pas supprimer si l'agence a des biens gérés via elle
-         if ($agence->biens()->exists()) {
-             return response()->json(['error' => 'Impossible de supprimer une agence possédant des biens enregistrés.'], 403);
-         }
- 
-         try {
-             DB::beginTransaction();
- 
-             // Suppression des abonnements
-             Abonnement::where('agence_id', $agence->code_id)->delete();
- 
-             // Suppression des fichiers physiques
-             $filesToDelete = [
-                 $agence->profile_image,
-                 $agence->rib,
-                 $agence->rccm_file,
-                 $agence->dfe_file
-             ];
- 
-             foreach ($filesToDelete as $filePath) {
-                 if ($filePath && Storage::disk('public')->exists($filePath)) {
-                     Storage::disk('public')->delete($filePath);
-                 }
-             }
- 
-             $agence->delete();
- 
-             DB::commit();
- 
-             return response()->json([
-                 'success' => true,
-                 'message' => 'L\'agence et ses données associées ont été supprimées avec succès.'
-             ]);
- 
-         } catch (Exception $e) {
-             DB::rollBack();
-             Log::error('API Error deleting agence by commercial: ' . $e->getMessage());
-             return response()->json(['error' => 'Une erreur est survenue lors de la suppression de l\'agence.'], 500);
-         }
-     }
- }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Informations de l\'agence mises à jour avec succès.',
+                'agence' => $agence
+            ]);
+        } catch (Exception $e) {
+            Log::error('API Error updating agence by commercial: ' . $e->getMessage());
+            return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour des informations.'], 500);
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *      path="/api/commercial/agences/{id}",
+     *      operationId="deleteAgenceByCommercial",
+     *      tags={"Commercial - Agences"},
+     *      summary="Supprimer une agence",
+     *      description="Permet à un commercial de supprimer une agence qu'il a ajoutée, ainsi que ses abonnements et fichiers associés.",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="Code ID de l'agence",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Agence supprimée avec succès",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string")
+     *          )
+     *      ),
+     *      @OA\Response(response=403, description="Accès non autorisé ou agence avec biens actifs"),
+     *      @OA\Response(response=404, description="Agence non trouvée")
+     * )
+     */
+    public function destroy($id)
+    {
+        $commercial = auth()->user();
+
+        if (!$commercial || !($commercial instanceof \App\Models\Commercial)) {
+            return response()->json(['error' => 'Accès non autorisé'], 403);
+        }
+
+        $agence = Agence::where('code_id', $id)
+            ->where('commercial_id', $commercial->code_id)
+            ->first();
+
+        if (!$agence) {
+            return response()->json(['error' => 'Agence non trouvée'], 404);
+        }
+
+        // Vérification de sécurité : ne pas supprimer si l'agence a des biens gérés via elle
+        if ($agence->biens()->exists()) {
+            return response()->json(['error' => 'Impossible de supprimer une agence possédant des biens enregistrés.'], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Suppression des abonnements
+            Abonnement::where('agence_id', $agence->code_id)->delete();
+
+            // Suppression des fichiers physiques
+            $filesToDelete = [
+                $agence->profile_image,
+                $agence->rib,
+                $agence->rccm_file,
+                $agence->dfe_file
+            ];
+
+            foreach ($filesToDelete as $filePath) {
+                if ($filePath && Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
+                }
+            }
+
+            $agence->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'L\'agence et ses données associées ont été supprimées avec succès.'
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('API Error deleting agence by commercial: ' . $e->getMessage());
+            return response()->json(['error' => 'Une erreur est survenue lors de la suppression de l\'agence.'], 500);
+        }
+    }
+}

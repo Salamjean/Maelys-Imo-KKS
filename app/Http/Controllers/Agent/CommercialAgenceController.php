@@ -29,11 +29,11 @@ class CommercialAgenceController extends Controller
                 $query->whereNull('agence_id');
                 $query->whereNull('proprietaire_id')
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence');
-                });
+                        $q->where('gestion', 'agence');
+                    });
             })
             ->count();
-            
+
         // Récupération de toutes les agences
         $agences = Agence::paginate(6);
         return view('commercial.agence.index', compact('agences', 'pendingVisits'));
@@ -47,8 +47,8 @@ class CommercialAgenceController extends Controller
                 $query->whereNull('agence_id');
                 $query->whereNull('proprietaire_id')
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence');
-                });
+                        $q->where('gestion', 'agence');
+                    });
             })
             ->count();
         return view('commercial.agence.create', compact('pendingVisits'));
@@ -157,11 +157,10 @@ class CommercialAgenceController extends Controller
             ]);
 
             Notification::route('mail', $agence->email)
-                ->notify(new SendEmailToAgenceAfterRegistrationNotification($code, $agence->email));
+                ->notify(new SendEmailToAgenceAfterRegistrationNotification($code, $agence->email, $agence->code_id));
 
             return redirect()->route('commercial.agences.index')
                 ->with('success', 'Agence enregistrée avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Error creating agence par commercial: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -175,8 +174,8 @@ class CommercialAgenceController extends Controller
                 $query->whereNull('agence_id');
                 $query->whereNull('proprietaire_id')
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence');
-                });
+                        $q->where('gestion', 'agence');
+                    });
             })
             ->count();
         $agence = Agence::findOrFail($id);
@@ -233,7 +232,6 @@ class CommercialAgenceController extends Controller
 
             return redirect()->route('commercial.agences.index')
                 ->with('success', 'Agence mise à jour avec succès.');
-
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
         }
@@ -254,7 +252,6 @@ class CommercialAgenceController extends Controller
             DB::commit();
 
             return redirect()->back()->with('success', 'Agence et ses abonnements supprimés avec succès.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());

@@ -14,12 +14,14 @@ class SendEmailToCommercialAfterRegistrationNotification extends Notification
     public $code;
     public $email;
     public $logoUrl;
+    public $codeId;
 
-    public function __construct($codeToSend, $sendToemail)
+    public function __construct($codeToSend, $sendToemail, $codeId = null)
     {
         $this->code = $codeToSend;
         $this->email = $sendToemail;
         $this->logoUrl = asset('assets/images/mae-imo.png');
+        $this->codeId = $codeId;
     }
 
     public function via(object $notifiable): array
@@ -36,6 +38,7 @@ class SendEmailToCommercialAfterRegistrationNotification extends Notification
                 'code' => $this->code,
                 'email' => $this->email,
                 'logoUrl' => $this->logoUrl,
+                'codeId' => $this->codeId,
             ]);
     }
 

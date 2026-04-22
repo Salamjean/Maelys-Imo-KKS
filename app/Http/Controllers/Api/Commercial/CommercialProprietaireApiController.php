@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Exception;
- use Illuminate\Support\Facades\DB;
- use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @OA\Tag(
@@ -40,9 +40,9 @@ class CommercialProprietaireApiController extends Controller
     public function index()
     {
         $commercial = auth()->user();
-        
+
         if (!$commercial || !($commercial instanceof \App\Models\Commercial)) {
-             return response()->json(['error' => 'Accès non autorisé'], 403);
+            return response()->json(['error' => 'Accès non autorisé'], 403);
         }
 
         $proprietaires = Proprietaire::where('commercial_id', $commercial->code_id)
@@ -122,8 +122,8 @@ class CommercialProprietaireApiController extends Controller
                 $codeId = 'PROP' . $randomNumber;
             } while (Proprietaire::where('code_id', $codeId)->exists());
 
-            $profilImagePath = $request->hasFile('profil_image') 
-                ? $request->file('profil_image')->store('proprietaires/profiles', 'public') 
+            $profilImagePath = $request->hasFile('profil_image')
+                ? $request->file('profil_image')->store('proprietaires/profiles', 'public')
                 : null;
 
             $cniPath = $request->hasFile('cni')
@@ -159,14 +159,13 @@ class CommercialProprietaireApiController extends Controller
             ]);
 
             \Illuminate\Support\Facades\Notification::route('mail', $proprietaire->email)
-                ->notify(new \App\Notifications\SendEmailToProprietaireAfterRegistrationNotification($code, $proprietaire->email));
+                ->notify(new \App\Notifications\SendEmailToProprietaireAfterRegistrationNotification($code, $proprietaire->email, $proprietaire->code_id));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Propriétaire enregistré avec succès. Un email a été envoyé pour la définition du mot de passe.',
                 'proprietaire' => $proprietaire
             ], 201);
-
         } catch (Exception $e) {
             Log::error('API Error creating proprietaire par commercial: ' . $e->getMessage());
             return response()->json(['error' => 'Une erreur est survenue lors de la création du propriétaire.'], 500);
@@ -327,100 +326,98 @@ class CommercialProprietaireApiController extends Controller
             }
 
             $proprietaire->save();
- 
-             return response()->json([
-                 'success' => true,
-                 'message' => 'Informations du propriétaire mises à jour avec succès.',
-                 'proprietaire' => $proprietaire
-             ]);
- 
-         } catch (Exception $e) {
-             Log::error('API Error updating proprietaire by commercial: ' . $e->getMessage());
-             return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour des informations.'], 500);
-         }
-     }
- 
-     /**
-      * @OA\Delete(
-      *      path="/api/commercial/proprietaires/{id}",
-      *      operationId="deleteProprietaireByCommercial",
-      *      tags={"Commercial - Propriétaires"},
-      *      summary="Supprimer un propriétaire",
-      *      description="Permet à un commercial de supprimer un propriétaire qu'il a ajouté, ainsi que ses abonnements et fichiers associés.",
-      *      security={{"sanctum":{}}},
-      *      @OA\Parameter(
-      *          name="id",
-      *          in="path",
-      *          required=true,
-      *          description="Code ID du propriétaire",
-      *          @OA\Schema(type="string")
-      *      ),
-      *      @OA\Response(
-      *          response=200,
-      *          description="Propriétaire supprimé avec succès",
-      *          @OA\JsonContent(
-      *              @OA\Property(property="success", type="boolean", example=true),
-      *              @OA\Property(property="message", type="string")
-      *          )
-      *      ),
-      *      @OA\Response(response=403, description="Accès non autorisé ou propriétaire avec biens actifs"),
-      *      @OA\Response(response=404, description="Propriétaire non trouvé")
-      * )
-      */
-     public function destroy($id)
-     {
-         $commercial = auth()->user();
- 
-         if (!$commercial || !($commercial instanceof \App\Models\Commercial)) {
-             return response()->json(['error' => 'Accès non autorisé'], 403);
-         }
- 
-         $proprietaire = Proprietaire::where('code_id', $id)
-             ->where('commercial_id', $commercial->code_id)
-             ->first();
- 
-         if (!$proprietaire) {
-             return response()->json(['error' => 'Propriétaire non trouvé'], 404);
-         }
- 
-         // Vérification de sécurité : ne pas supprimer si le propriétaire a des biens
-         if ($proprietaire->biens()->exists()) {
-             return response()->json(['error' => 'Impossible de supprimer un propriétaire possédant des biens enregistrés.'], 403);
-         }
- 
-         try {
-             DB::beginTransaction();
- 
-             // Suppression des abonnements
-             \App\Models\Abonnement::where('proprietaire_id', $proprietaire->code_id)->delete();
- 
-             // Suppression des fichiers physiques
-             $filesToDelete = [
-                 $proprietaire->profil_image,
-                 $proprietaire->cni,
-                 $proprietaire->rib,
-                 $proprietaire->contrat
-             ];
- 
-             foreach ($filesToDelete as $filePath) {
-                 if ($filePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
-                     \Illuminate\Support\Facades\Storage::disk('public')->delete($filePath);
-                 }
-             }
- 
-             $proprietaire->delete();
- 
-             DB::commit();
- 
-             return response()->json([
-                 'success' => true,
-                 'message' => 'Le propriétaire et ses données associées ont été supprimés avec succès.'
-             ]);
- 
-         } catch (Exception $e) {
-             DB::rollBack();
-             Log::error('API Error deleting proprietaire by commercial: ' . $e->getMessage());
-             return response()->json(['error' => 'Une erreur est survenue lors de la suppression du propriétaire.'], 500);
-         }
-     }
- }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Informations du propriétaire mises à jour avec succès.',
+                'proprietaire' => $proprietaire
+            ]);
+        } catch (Exception $e) {
+            Log::error('API Error updating proprietaire by commercial: ' . $e->getMessage());
+            return response()->json(['error' => 'Une erreur est survenue lors de la mise à jour des informations.'], 500);
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *      path="/api/commercial/proprietaires/{id}",
+     *      operationId="deleteProprietaireByCommercial",
+     *      tags={"Commercial - Propriétaires"},
+     *      summary="Supprimer un propriétaire",
+     *      description="Permet à un commercial de supprimer un propriétaire qu'il a ajouté, ainsi que ses abonnements et fichiers associés.",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(
+     *          name="id",
+     *          in="path",
+     *          required=true,
+     *          description="Code ID du propriétaire",
+     *          @OA\Schema(type="string")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Propriétaire supprimé avec succès",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string")
+     *          )
+     *      ),
+     *      @OA\Response(response=403, description="Accès non autorisé ou propriétaire avec biens actifs"),
+     *      @OA\Response(response=404, description="Propriétaire non trouvé")
+     * )
+     */
+    public function destroy($id)
+    {
+        $commercial = auth()->user();
+
+        if (!$commercial || !($commercial instanceof \App\Models\Commercial)) {
+            return response()->json(['error' => 'Accès non autorisé'], 403);
+        }
+
+        $proprietaire = Proprietaire::where('code_id', $id)
+            ->where('commercial_id', $commercial->code_id)
+            ->first();
+
+        if (!$proprietaire) {
+            return response()->json(['error' => 'Propriétaire non trouvé'], 404);
+        }
+
+        // Vérification de sécurité : ne pas supprimer si le propriétaire a des biens
+        if ($proprietaire->biens()->exists()) {
+            return response()->json(['error' => 'Impossible de supprimer un propriétaire possédant des biens enregistrés.'], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Suppression des abonnements
+            \App\Models\Abonnement::where('proprietaire_id', $proprietaire->code_id)->delete();
+
+            // Suppression des fichiers physiques
+            $filesToDelete = [
+                $proprietaire->profil_image,
+                $proprietaire->cni,
+                $proprietaire->rib,
+                $proprietaire->contrat
+            ];
+
+            foreach ($filesToDelete as $filePath) {
+                if ($filePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($filePath);
+                }
+            }
+
+            $proprietaire->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Le propriétaire et ses données associées ont été supprimés avec succès.'
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('API Error deleting proprietaire by commercial: ' . $e->getMessage());
+            return response()->json(['error' => 'Une erreur est survenue lors de la suppression du propriétaire.'], 500);
+        }
+    }
+}

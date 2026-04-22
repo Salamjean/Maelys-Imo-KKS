@@ -17,12 +17,14 @@ class SendEmailToOwnerAfterRegistrationNotification extends Notification
     public $code;
     public $email;
     public $logoUrl;
+    public $codeId;
 
-    public function __construct($codeToSend, $sendToemail)
+    public function __construct($codeToSend, $sendToemail, $codeId = null)
     {
         $this->code = $codeToSend;
         $this->email = $sendToemail;
         $this->logoUrl = asset('assets/images/mae-imo.png'); // URL du logo
+        $this->codeId = $codeId;
     }
 
     /**
@@ -41,12 +43,13 @@ class SendEmailToOwnerAfterRegistrationNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Maelys-imo : Vous êtes enregistré en tant que propriétaire') 
+            ->subject('Maelys-imo : Vous êtes enregistré en tant que propriétaire')
             ->from('contact@maelysimo.com', 'Maelys-imo')
             ->view('emails.proprietaire', [
                 'code' => $this->code,
                 'email' => $this->email,
                 'logoUrl' => $this->logoUrl,
+                'codeId' => $this->codeId,
             ]);
     }
 

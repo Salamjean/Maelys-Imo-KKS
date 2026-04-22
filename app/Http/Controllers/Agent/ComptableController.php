@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Agent;
+
 use App\Http\Controllers\Controller;
 
 use App\Models\Bien;
@@ -58,8 +59,7 @@ class ComptableController extends Controller
                     $query->orWhere('proprietaire_id', $comptable->proprietaire_id);
                 }
             })
-                ->where('status', 'Actif')->
-                count();
+                ->where('status', 'Actif')->count();
         } else {
             $locatairesActifs = Locataire::whereNull('agence_id')
                 ->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
@@ -111,7 +111,8 @@ class ComptableController extends Controller
                     }
                 });
             })
-                ->selectRaw("
+                ->selectRaw(
+                    "
                 COUNT(*) as total,
                 SUM(CASE WHEN statut = 'payé' THEN 1 ELSE 0 END) as count_paye,
                 SUM(CASE WHEN statut = 'En attente' THEN 1 ELSE 0 END) as count_attente,
@@ -130,7 +131,8 @@ class ComptableController extends Controller
                         $q->where('gestion', 'agence');
                     });
             })
-                ->selectRaw("
+                ->selectRaw(
+                    "
                 COUNT(*) as total,
                 SUM(CASE WHEN statut = 'payé' THEN 1 ELSE 0 END) as count_paye,
                 SUM(CASE WHEN statut = 'En attente' THEN 1 ELSE 0 END) as count_attente,
@@ -205,7 +207,8 @@ class ComptableController extends Controller
                     });
             }
         })
-            ->selectRaw("
+            ->selectRaw(
+                "
         DATE_FORMAT(mois_couvert, '%Y-%m') as mois, 
         SUM(montant) as total"
             )
@@ -289,7 +292,6 @@ class ComptableController extends Controller
                 ->orderBy('days_late', 'desc')
                 ->limit(5)
                 ->get();
-
         } else {
             $latePayers = Locataire::with([
                 'bien',
@@ -312,7 +314,6 @@ class ComptableController extends Controller
                 ->orderBy('days_late', 'desc')
                 ->limit(5)
                 ->get();
-
         }
 
 
@@ -448,11 +449,10 @@ class ComptableController extends Controller
             ]);
 
             Notification::route('mail', $comptable->email)
-                ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email));
+                ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email, $comptable->code_id));
 
             return redirect()->route('accounting.index')
                 ->with('success', 'Agent enregistrée avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Error creating Agent: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -538,7 +538,6 @@ class ComptableController extends Controller
 
             return redirect()->route('accounting.index')
                 ->with('success', 'Agent mis à jour avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Erreur lors de la mise à jour du comptable: ' . $e->getMessage());
             return back()
@@ -555,8 +554,7 @@ class ComptableController extends Controller
             return view('comptable.auth.validate', compact('email'));
         } else {
             return redirect()->route('login')->with('error', 'Email inconnu');
-        }
-        ;
+        };
     }
 
     public function submitDefineAccess(Request $request)
@@ -663,7 +661,6 @@ class ComptableController extends Controller
                     ->with('error', 'Identifiant ou mot de passe incorrect.')
                     ->withInput($request->except('password'));
             }
-
         } catch (Exception $e) {
             Log::error('Erreur login comptable: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Une erreur technique est survenue.');
@@ -698,8 +695,7 @@ class ComptableController extends Controller
             $locataires = Locataire::with(['bien', 'paiements', 'agence'])
                 ->whereNull('agence_id')
                 ->whereNull('proprietaire_id')
-                ->get();
-            ;
+                ->get();;
         }
 
         return view('comptable.locataire.index', compact('locataires'));
@@ -773,8 +769,8 @@ class ComptableController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         $agenceId = Auth::guard('admin')->user()->id;
@@ -792,8 +788,8 @@ class ComptableController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         return view('admin.comptable.create', compact('pendingVisits'));
@@ -855,11 +851,10 @@ class ComptableController extends Controller
             ]);
 
             Notification::route('mail', $comptable->email)
-                ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email));
+                ->notify(new SendEmailToComptableAfterRegistrationNotification($code, $comptable->email, $comptable->code_id));
 
             return redirect()->route('accounting.index.admin')
                 ->with('success', 'Agent enregistrée avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Error creating Agent: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()])->withInput();
@@ -874,8 +869,8 @@ class ComptableController extends Controller
                 $query->whereNull('agence_id');  // Filtrer par l'ID de l'agence
                 $query->whereNull('proprietaire_id') // 1er cas: bien sans propriétaire
                     ->orWhereHas('proprietaire', function ($q) {
-                    $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
-                });
+                        $q->where('gestion', 'agence'); // 2ème cas: bien avec propriétaire gestion agence
+                    });
             })
             ->count();
         $comptable = Comptable::findOrFail($id);
@@ -939,7 +934,6 @@ class ComptableController extends Controller
 
             return redirect()->route('accounting.index.admin')
                 ->with('success', 'Agent mis à jour avec succès.');
-
         } catch (\Exception $e) {
             Log::error('Erreur lors de la mise à jour du comptable: ' . $e->getMessage());
             return back()

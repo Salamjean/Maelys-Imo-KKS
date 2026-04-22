@@ -16,6 +16,9 @@
             <td>
                 <h1>Bienvenue parmi nos commerciaux</h1>
                 <p>Votre compte commercial a été créé avec succès par l'administration.</p>
+                @if (!empty($codeId))
+                    <p>Votre identifiant de connexion (Code ID) est : <strong>{{ $codeId }}</strong></p>
+                @endif
                 <p>Pour activer votre accès et définir votre mot de passe, veuillez valider votre compte.</p>
                 <p>Votre code de validation est : <strong>{{ $code }}</strong></p>
                 <p><a href="{{ url('/validate-commercial-account/' . $email) }}"

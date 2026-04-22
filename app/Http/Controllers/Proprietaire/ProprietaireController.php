@@ -789,7 +789,7 @@ class ProprietaireController extends Controller
                     ]);
 
                     Notification::route('mail', $owner->email)
-                        ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email));
+                        ->notify(new SendEmailToOwnerAfterRegistrationNotification($code, $owner->email, $owner->code_id));
 
                     Log::info('Email de vérification envoyé', ['email' => $owner->email]);
                 } catch (\Exception $e) {

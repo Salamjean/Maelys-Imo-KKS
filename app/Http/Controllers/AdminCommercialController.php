@@ -66,7 +66,7 @@ class AdminCommercialController extends Controller
             ]);
 
             Notification::route('mail', $commercial->email)
-                ->notify(new SendEmailToCommercialAfterRegistrationNotification($code, $commercial->email));
+                ->notify(new SendEmailToCommercialAfterRegistrationNotification($code, $commercial->email, $commercial->code_id));
 
             return redirect()->route('admin.commercial.index')->with('success', 'Commercial créé avec succès et email envoyé.');
         } catch (\Exception $e) {
@@ -155,11 +155,11 @@ class AdminCommercialController extends Controller
         if ($request->has('search') && !empty($request->search)) {
             $isSearch = true;
             $search = $request->search;
-            $commercials = Commercial::where(function($q) use ($search) {
+            $commercials = Commercial::where(function ($q) use ($search) {
                 $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('prenom', 'like', '%' . $search . '%')
-                  ->orWhere('code_id', 'like', '%' . $search . '%')
-                  ->orWhere('email', 'like', '%' . $search . '%');
+                    ->orWhere('prenom', 'like', '%' . $search . '%')
+                    ->orWhere('code_id', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%');
             })->get();
         }
 
@@ -225,7 +225,7 @@ class AdminCommercialController extends Controller
     {
         \Carbon\Carbon::setLocale('fr');
         $commercial = Commercial::findOrFail($id);
-        
+
         // Données globales
         $totalAgences = \App\Models\Agence::where('commercial_id', $commercial->code_id)->count();
         $totalProprietaires = \App\Models\Proprietaire::where('commercial_id', $commercial->code_id)->count();
